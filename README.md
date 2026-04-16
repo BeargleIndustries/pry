@@ -1,21 +1,21 @@
 # Pry
 
-Pry open the black box. A local-first desktop app for exploring what small transformer LLMs are doing inside -- no code required.
+Pry open the black box. See what a language model is actually doing when it predicts text, without writing a single line of code or needing a background in machine learning.
+
+Pry runs a small transformer locally on your machine, then gives you tools to look inside it. Every tool explains what you're seeing in plain language, with a built-in tutorial that walks you through the concepts step by step. If you're curious about how AI models work under the hood but don't want to set up a Python notebook to find out, this is for you.
 
 ![Pry screenshot](docs/screenshot.png)
 
-## Features
+## What You Can Do
 
-- **Attention visualization** -- per-head heatmaps with automatic pattern detection
-- **SAE feature explorer** -- top-activating examples, feature search, layer selection
-- **Logit lens** -- layer-by-layer token predictions showing how the model refines its output
-- **Direct Logit Attribution (DLA)** -- decompose each component's contribution to the final logits
-- **Activation steering** -- inject scaled direction vectors and see how outputs change
-- **Ablation** -- zero or mean ablation per head or layer to test what matters
-- **Activation patching** -- causal interventions to isolate which components carry specific information
-- **Circuit discovery** -- automated path tracing to find computational subgraphs
-- **Driven tutorial** -- guided walkthrough of interpretability concepts built right into the app
-- **Contextual tooltips** -- hover help throughout so you're never lost
+- **See what the model predicts** -- ranked list of the model's top guesses for the next word, with confidence scores
+- **Watch where it pays attention** -- heatmaps showing which earlier words the model looked at when making each prediction
+- **Explore internal concepts** -- the model has thousands of internal "features" (things like "past-tense verb" or "professional role"). Pry shows you which ones fired and how strongly
+- **See the model change its mind** -- the logit lens shows what the model would predict at each layer, so you can watch it refine its answer from confused to confident
+- **Find out why it predicted that** -- the DLA chart breaks down which specific parts of the model pushed toward or against the predicted word
+- **Poke it and see what happens** -- steer a feature up or down and watch the output change. Zero out an attention head and see if the prediction breaks. These are one-click experiments, not code.
+- **Find the wiring** -- activation patching swaps pieces between two prompts to find which parts matter. Circuit view draws the connections as a graph.
+- **Learn as you go** -- a guided tutorial walks you through two demo prompts, explaining every panel. Contextual tooltips appear the first time you encounter each tool. Everything is written for someone who's curious, not someone who already knows.
 
 ## Supported Models
 
