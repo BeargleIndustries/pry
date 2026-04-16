@@ -79,4 +79,4 @@ MIT. See [LICENSE](LICENSE).
 
 ## Credits
 
-Built by Brad at [Beargle Industries](https://beargle.com).
+Built by Brad at [Beargle Industries](https://beargleindustries.com).
