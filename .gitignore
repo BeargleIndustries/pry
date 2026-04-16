@@ -1,0 +1,83 @@
+# ── Rust / Cargo ──────────────────────────────────────────────────────────────
+target/
+src-tauri/target/
+src-tauri/gen/
+**/*.rs.bk
+
+# ── Node / SvelteKit ──────────────────────────────────────────────────────────
+node_modules/
+dist/
+build/
+.svelte-kit/
+.parcel-cache/
+
+# ── Python / sidecar ──────────────────────────────────────────────────────────
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+dist-info/
+.eggs/
+
+# ── Model / SAE weights (never commit these) ──────────────────────────────────
+models/
+saes/
+cache/
+*.onnx
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.ckpt
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Env / secrets ─────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# ── OS / editor artifacts ─────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+# keep settings.json.example if someone adds one:
+!.vscode/settings.json.example
+
+# ── Pry dev artifacts ────────────────────────────────────────────────────────
+# NOTE: bare `.omc/` matches at ANY directory level in git, so this single
+# pattern covers root/.omc/, src-tauri/.omc/, sidecar/.omc/, and any other
+# nested .omc/ directories. No additional patterns needed.
+.omc/
+sidecar.hash
+
+# ── Claude Code internal config (NOT a contributor guide) ────────────────────
+CLAUDE.md
+
+# ── Build outputs (SvelteKit) ────────────────────────────────────────────────
+ui/build/
+ui/.svelte-kit/
+
+# ── Installer / bundle artifacts ─────────────────────────────────────────────
+*.exe
+*.msi
+*.nsis
+
+# ── Crash logs ───────────────────────────────────────────────────────────────
+crash-*.log
+
+# ── Phase 0.5 launcher state (per-clone, lives in %LOCALAPPDATA%) ─────────────
+.pry-bootstrap.json
+.claude/

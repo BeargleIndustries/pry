@@ -1,0 +1,43 @@
+{
+  "presets": [
+    {
+      "id": "gpt2-small",
+      "model": { "hf_id": "gpt2", "size_mb": 500, "tl_name": "gpt2" },
+      "sae": { "source": "neuronpedia", "release": "gpt2-small-res-jb", "hook": "hook_resid_pre", "layer": 8, "size_mb": 100 },
+      "total_download_mb": 600,
+      "vram_estimate_mb": 1800,
+      "license_gate": null,
+      "tier": "flagship"
+    },
+    {
+      "id": "pythia-70m",
+      "model": { "hf_id": "EleutherAI/pythia-70m-deduped", "size_mb": 300, "tl_name": "pythia-70m-deduped" },
+      "sae": { "source": "eleuther", "release": "pythia-70m-deduped-res-sm", "hook": "hook_resid_post", "layer": 3, "size_mb": 50 },
+      "total_download_mb": 350,
+      "vram_estimate_mb": 1200,
+      "license_gate": null,
+      "tier": "standard"
+    },
+    {
+      "id": "gemma-2-2b",
+      "model": { "hf_id": "google/gemma-2-2b", "size_mb": 6000, "tl_name": "gemma-2-2b" },
+      "sae": { "source": "gemmascope", "release": "gemma-scope-2b-pt-res", "hook": "hook_resid_post", "layer": 12, "size_mb": 400 },
+      "total_download_mb": 6400,
+      "vram_estimate_mb": 8000,
+      "license_gate": "huggingface_gemma",
+      "tier": "power_user",
+      "enabled": false,
+      "enabled_comment": "Tier 2 preset stays disabled until Bet 3 (Gemma-2 TL + Gemma Scope SAE) passes. See plan §7 Phase 1/Bet 3."
+    },
+    {
+      "id": "gemma-2-9b",
+      "model": { "hf_id": "google/gemma-2-9b", "size_mb": 20000, "tl_name": "gemma-2-9b" },
+      "sae": { "source": "gemmascope", "release": "gemma-scope-9b-pt-res", "hook": "hook_resid_post", "layer": 20, "size_mb": 400 },
+      "total_download_mb": 20400,
+      "vram_estimate_mb": 18000,
+      "license_gate": "huggingface_gemma",
+      "tier": "stretch",
+      "enabled": false
+    }
+  ]
+}
