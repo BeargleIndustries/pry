@@ -3,6 +3,8 @@
     id: string;
     label: string;
     icon?: string;
+    /** Tooltip shown on hover — use for expanded plain-language descriptions. */
+    title?: string;
   }
 
   interface Props {
@@ -54,6 +56,7 @@
           aria-selected={isActive}
           tabindex={isActive ? 0 : -1}
           onclick={() => select(tab.id)}
+          title={tab.title}
           class="relative -mb-px border-b-2 px-1 py-1.5 text-xs transition-colors"
           class:border-indigo-400={isActive}
           class:text-indigo-300={isActive}
