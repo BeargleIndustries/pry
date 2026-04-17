@@ -718,15 +718,31 @@
   // ---------------------------------------------------------------------------
   const leftTabs: TabDef[] = [
     { id: 'attention', label: 'Attention' },
-    { id: 'logit-lens', label: 'Logit Lens' },
-    { id: 'dla', label: 'DLA' },
-    { id: 'patching', label: 'Patching' },
-    { id: 'circuit', label: 'Circuit' },
+    {
+      id: 'logit-lens',
+      label: 'Logit Lens',
+      title: 'Watch the model change its mind layer by layer — each row shows what it would predict if forced to answer at that depth.',
+    },
+    {
+      id: 'dla',
+      label: 'Why (DLA)',
+      title: 'Direct Logit Attribution — which parts of the model pushed toward or against the predicted word.',
+    },
+    {
+      id: 'patching',
+      label: 'Swap & Compare',
+      title: 'Activation Patching — swap part of the model\'s internal state from one prompt into another to see what changes.',
+    },
+    {
+      id: 'circuit',
+      label: 'Circuit Map',
+      title: 'Circuit view — a wiring diagram showing how attention heads and processing layers connect for this prediction.',
+    },
   ];
   const rightTabs: TabDef[] = [
-    { id: 'features', label: 'Features' },
-    { id: 'predictions', label: 'Predictions' },
-    { id: 'steering', label: 'Steering' },
+    { id: 'features', label: 'Features', title: 'Internal concepts the model activated for each word — what it "knew" while processing your prompt.' },
+    { id: 'predictions', label: 'Predictions', title: "What the model thinks the next word should be, with its confidence in each guess." },
+    { id: 'steering', label: 'Steering', title: "Turn a feature up or down and re-run — see how the model's answer shifts." },
   ];
   let leftActiveTab = $state('attention');
   let rightActiveTab = $state('features');
@@ -791,7 +807,7 @@
           onkeydown={onPromptKeydown}
           data-tour="prompt-input"
           autofocus
-          placeholder="Enter a prompt..."
+          placeholder="e.g. The cat sat on the"
           class="flex-1 rounded border border-zinc-700 bg-zinc-950 px-3 py-1 text-sm text-zinc-100 placeholder-zinc-600 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
         />
         <button
@@ -866,7 +882,7 @@
           onkeydown={onPromptKeydown}
           data-tour="prompt-input"
           autofocus
-          placeholder="Enter a prompt..."
+          placeholder="e.g. The cat sat on the"
           class="flex-1 rounded border border-zinc-700 bg-zinc-950 px-3 py-1.5 text-sm text-zinc-100 placeholder-zinc-600 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
         />
         <button

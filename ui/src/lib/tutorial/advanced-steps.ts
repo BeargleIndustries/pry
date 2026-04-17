@@ -50,7 +50,7 @@ export const advancedDrivenSteps: DrivenStep[] = [
   {
     id: 'adv.5',
     blurb:
-      "Back on the Attention and Features tabs, look for the ablation toggle. It lets you mark individual heads or features for removal, then re-run the model without them. If the prediction shifts, that piece was doing real work.",
+      "Back on the Attention and Features tabs, look for the ablation toggle. Ablation means turning a piece off to see what breaks — if removing a head or feature changes the prediction, it was load-bearing. Mark individual heads or features for removal, then re-run the model without them.",
     why:
       "This is the flip side of steering. Instead of amplifying something, you remove it entirely. It answers a different question: not 'what does this part do' but 'does the model actually need it?' A lot of attention heads turn out to be redundant for any given input. The ones that aren't are the core circuit, and finding them is the first step toward understanding how the model actually works.",
     target: null,

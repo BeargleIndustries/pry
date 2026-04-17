@@ -40,7 +40,7 @@ export const drivenSteps: DrivenStep[] = [
     blurb:
       "Hitting Run. First time it has to load the model into memory, so give it a second. After that it's basically instant.",
     why:
-      "Under the hood, Pry talks to a little Python process that handles the model itself (TransformerLens plus SAELens, if library names are your thing). First Run on a fresh session wakes it up, which is why you see a progress bar the first time and never again. After that, every Run just ships the prompt off and gets back one big JSON blob. The tokenization, the attention numbers for every head, and the SAE features that fired on every token. No hidden state between runs, no learning, no memory. Everything you're about to see in the panels comes from that one response, which is nice, because it means nothing is happening behind your back.",
+      "Under the hood, Pry talks to a little Python process that handles the model itself. First Run on a fresh session wakes it up, which is why you see a progress bar the first time and never again. After that, every Run just ships the prompt off and gets back one big JSON blob. The tokenization, the attention numbers for every head, and the SAE features that fired on every token. No hidden state between runs, no learning, no memory. Everything you're about to see in the panels comes from that one response, which is nice, because it means nothing is happening behind your back.",
     target: 'run-button',
     awaitGenerate: true,
     action: async (ctx) => {
@@ -180,7 +180,7 @@ export const drivenSteps: DrivenStep[] = [
   {
     id: '2.7b',
     blurb:
-      "There's more to explore. The tabs at the top of each panel unlock predictions, logit lens, steering, and more. Hit the ? icon and try the Advanced Tour when you're ready.",
+      "There's more to explore. The tabs unlock more tools: what the model predicted, how it changed its mind layer by layer, and ways to poke the model and see what shifts. Hit the ? icon and try the Advanced Tour when you're ready.",
     why: null,
     target: null,
     action: () => {
