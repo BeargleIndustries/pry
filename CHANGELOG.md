@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.1
+
+### New
+- **Find and steer any concept.** In Steering, type a concept like "the ocean" and Pry finds features whose labels match it, then lets you push the model toward one of them. The search text goes to Neuronpedia (neuronpedia.org), and the panel says so before you search. When Neuronpedia can't be reached, search switches off with a plain message.
+- **Compare two prompts.** Compare mode runs two prompts side by side ("The doctor said that" vs "The nurse said that") and shows which next words gained or lost, which features appear in only one, and which attention heads behave most differently. It says plainly that these differences go along with the prompt change and don't prove what causes what.
+- **Watch it write.** In Predictions, replay the model writing one word at a time, with the chance of the word it picked and the runner-up at each step. A temperature slider shows how sampling changes the output, and "reuse the same random draws" makes a run repeatable.
+
 ## 0.3.0
 
 ### New
