@@ -16,6 +16,7 @@ import {
   runPatching,
   fetchCircuit,
 } from './sidecar';
+import { sidecarErrorMessage } from './sidecar-errors';
 import type {
   GenerateResponse,
   LogitLensResponse,
@@ -159,7 +160,10 @@ export class AnalysisController {
           top_k_features: 5,
         }),
       });
-      if (!resp.ok) throw new Error(`/generate failed: ${resp.status}`);
+      if (!resp.ok) {
+        const body = await resp.text().catch(() => '');
+        throw new Error(sidecarErrorMessage(body) ?? `/generate failed: ${resp.status}`);
+      }
       const response = (await resp.json()) as GenerateResponse;
       s.response = response;
       // Clear stale Phase B/C/D responses on new generate
