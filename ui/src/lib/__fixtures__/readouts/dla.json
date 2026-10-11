@@ -1,0 +1,25 @@
+{
+  "preset_id": "gpt2-small",
+  "prompt": "The capital of France is",
+  "tokens": [
+    { "index": 0, "text": "The" },
+    { "index": 1, "text": " capital" },
+    { "index": 2, "text": " of" },
+    { "index": 3, "text": " France" },
+    { "index": 4, "text": " is" }
+  ],
+  "target_token_index": 4,
+  "target_token": " is",
+  "predicted_token": " Paris",
+  "components": [
+    { "name": "MLP.10", "type": "mlp", "layer": 10, "head": null, "contribution": 4.812 },
+    { "name": "L9.H8", "type": "attention", "layer": 9, "head": 8, "contribution": 2.977 },
+    { "name": "L11.H0", "type": "attention", "layer": 11, "head": 0, "contribution": -2.104 },
+    { "name": "MLP.11", "type": "mlp", "layer": 11, "head": null, "contribution": 1.630 },
+    { "name": "L10.H7", "type": "attention", "layer": 10, "head": 7, "contribution": -1.211 },
+    { "name": "L8.H1", "type": "attention", "layer": 8, "head": 1, "contribution": 0.402 },
+    { "name": "MLP.0", "type": "mlp", "layer": 0, "head": null, "contribution": -0.118 }
+  ],
+  "timing_ms": { "forward_ms": 30.1, "dla_ms": 4.4, "total_ms": 36.9 },
+  "status": "ok"
+}

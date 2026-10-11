@@ -1,0 +1,75 @@
+{
+  "preset_id": "gpt2-small",
+  "prompt": "The cat sat on",
+  "tokens": [
+    { "index": 0, "text": "The" },
+    { "index": 1, "text": " cat" },
+    { "index": 2, "text": " sat" },
+    { "index": 3, "text": " on" }
+  ],
+  "attention": [
+    {
+      "layer": 0,
+      "heads": [
+        [
+          [1.0, 0.0, 0.0, 0.0],
+          [0.7, 0.3, 0.0, 0.0],
+          [0.5, 0.2, 0.3, 0.0],
+          [0.4, 0.1, 0.1, 0.4]
+        ],
+        [
+          [1.0, 0.0, 0.0, 0.0],
+          [0.2, 0.8, 0.0, 0.0],
+          [0.1, 0.6, 0.3, 0.0],
+          [0.1, 0.2, 0.6, 0.1]
+        ]
+      ]
+    },
+    {
+      "layer": 1,
+      "heads": [
+        [
+          [1.0, 0.0, 0.0, 0.0],
+          [0.9, 0.1, 0.0, 0.0],
+          [0.8, 0.1, 0.1, 0.0],
+          [0.76, 0.05, 0.05, 0.14]
+        ],
+        [
+          [1.0, 0.0, 0.0, 0.0],
+          [0.5, 0.5, 0.0, 0.0],
+          [0.05, 0.9, 0.05, 0.0],
+          [0.05, 0.72, 0.18, 0.05]
+        ]
+      ]
+    }
+  ],
+  "attention_truncated": false,
+  "sae_features": [
+    {
+      "token_index": 2,
+      "top_k": [
+        { "id": 4120, "activation": 3.1, "description": "past-tense verbs of motion", "label_detail": "detailed" },
+        { "id": 88, "activation": 1.2, "description": null, "label_detail": "none" }
+      ]
+    },
+    {
+      "token_index": 3,
+      "top_k": [
+        { "id": 902, "activation": 2.4, "description": "the word on", "label_detail": "short" },
+        { "id": 15301, "activation": 6.8, "description": "prepositions before a location ", "label_detail": "detailed" },
+        { "id": 77, "activation": 1.9, "description": "x", "label_detail": "none" },
+        { "id": 5, "activation": 0.4, "description": "end of a short phrase", "label_detail": "detailed" }
+      ]
+    }
+  ],
+  "sae_layer_used": 8,
+  "top_predictions": [
+    { "token": " the", "probability": 0.6234, "rank": 1 },
+    { "token": " a", "probability": 0.1149, "rank": 2 },
+    { "token": " top", "probability": 0.0412, "rank": 3 },
+    { "token": "\n", "probability": 0.0031, "rank": 4 }
+  ],
+  "timing_ms": { "total_ms": 41.2 },
+  "status": "ok",
+  "generation": null
+}
