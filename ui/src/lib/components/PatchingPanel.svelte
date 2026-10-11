@@ -12,9 +12,11 @@
     onRun?: (cleanPrompt: string, corruptedPrompt: string, patchType: 'head' | 'mlp' | 'resid') => void;
     /** Token counter (`analysis.tokenize`). Without it the counters are hidden and Run isn't gated. */
     tokenize?: (text: string) => Promise<TokenizeResponse | null>;
+    /** Pair to pre-fill (experiment cards). Applied on mount and whenever a new object is passed. */
+    preset?: { clean: string; corrupted: string; patchType: 'head' | 'mlp' | 'resid' } | null;
   }
 
-  let { response, loading = false, onRun, tokenize }: Props = $props();
+  let { response, loading = false, onRun, tokenize, preset = null }: Props = $props();
 
   // Default pair: indirect object identification (IOI). Same token length in GPT-2.
   const IOI_CLEAN = 'When Mary and John went to the store, John gave a drink to';
@@ -23,6 +25,12 @@
   let cleanPrompt = $state(IOI_CLEAN);
   let corruptedPrompt = $state(IOI_CHANGED);
   let patchType = $state<'head' | 'mlp' | 'resid'>('head');
+  $effect(() => {
+    if (!preset) return;
+    cleanPrompt = preset.clean;
+    corruptedPrompt = preset.corrupted;
+    patchType = preset.patchType;
+  });
 
   // Live token counts, debounced. A sequence number drops stale replies.
   let cleanCount = $state<number | null>(null);
