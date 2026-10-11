@@ -48,6 +48,7 @@ from pry_sidecar.schemas import (
     DLARequest,
     FeatureResponse,
     GenerateRequest,
+    HeadScoresRequest,
     LoadProgressEvent,
     LoadRequest,
     LogitLensRequest,
@@ -782,6 +783,46 @@ async def tokenize(request: Request) -> JSONResponse:
         )
 
 
+async def head_scores(request: Request) -> JSONResponse:
+    """POST /head-scores -- score every head as an induction ("copying") head
+    and as a previous-token head (T20)."""
+    try:
+        body_bytes = await request.body()
+        req = HeadScoresRequest.model_validate_json(body_bytes)
+    except ValidationError as e:
+        return JSONResponse(
+            {"error": "validation_error", "detail": e.errors()},
+            status_code=400,
+        )
+    except Exception as e:
+        return JSONResponse(
+            {"error": "internal_error", "detail": str(e)},
+            status_code=500,
+        )
+
+    if req.preset_id not in PRESETS:
+        return _error(f"Unknown preset: {req.preset_id!r}", status=400)
+
+    loaded = REGISTRY.get(req.preset_id)
+    if loaded is None:
+        return _error(f"preset {req.preset_id!r} not loaded; POST /load first", status=409)
+
+    try:
+        from pry_sidecar.inference import run_head_scores
+
+        response = await asyncio.to_thread(run_head_scores, req, loaded)
+        return _json(response.model_dump())
+    except ValueError as e:
+        # Prompt too short to score previous-token heads
+        return _error(str(e), status=400)
+    except Exception as e:
+        logger.exception("head_scores failed for preset %r", req.preset_id)
+        return JSONResponse(
+            {"error": "inference_error", "detail": str(e)},
+            status_code=500,
+        )
+
+
 async def circuit(request: Request) -> JSONResponse:
     """POST /circuit -- build circuit subgraph from DLA or patching results."""
     try:
@@ -908,6 +949,7 @@ routes = [
     Route("/patch", patch, methods=["POST"]),
     Route("/tokenize", tokenize, methods=["POST"]),
     Route("/circuit", circuit, methods=["POST"]),
+    Route("/head-scores", head_scores, methods=["POST"]),
     Route("/feature/{feature_id:int}", feature_info, methods=["GET"]),
 ]
 

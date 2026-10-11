@@ -42,6 +42,7 @@
   import ExperimentGallery from '$lib/components/ExperimentGallery.svelte';
   import { loadExperiments, applyExperiment } from '$lib/experiments/experiments';
   import type { Experiment, ExperimentActions, PatchType } from '$lib/experiments/experiments';
+  import { demoFromParams } from '$lib/head-scores';
 
   // ---------------------------------------------------------------------------
   // Hardware probe state
@@ -454,11 +455,33 @@
   // ---------------------------------------------------------------------------
   let panelAAggregation = $state<import('$lib/attention-agg').Aggregation>('max');
 
+  // ?demo=induction-heads (T20): open the attention panel on the copying-heads
+  // view instead of the tour, and score the heads once the model has loaded.
+  let headScoresDemoPending = $state(false);
+  $effect(() => {
+    if (!headScoresDemoPending) return;
+    if (loadState === 'loaded') {
+      headScoresDemoPending = false;
+      untrack(() => analysis.showHeadScores());
+    } else if (loadState === 'error') {
+      // The panel falls back to its "Score the heads" retry button.
+      headScoresDemoPending = false;
+    }
+  });
+
   onMount(() => {
     if (typeof localStorage === 'undefined') return;
     const seen = localStorage.getItem('pry:tutorial_seen') === 'true';
     const params = $page.url.searchParams;
-    const forced = params.get('tutorial') === '1' || params.get('demo') === 'tour';
+    const demo = demoFromParams(params);
+    if (demo === 'induction-heads') {
+      st.headScoresMode = true;
+      leftActiveTab = 'attention';
+      activeTab = 'attention';
+      headScoresDemoPending = true;
+      return;
+    }
+    const forced = params.get('tutorial') === '1' || demo === 'tour';
     if (!seen || forced) tutorialState.start();
   });
 
@@ -852,6 +875,12 @@
                     onToggleAblation={toggleHeadAblation}
                     onRunAblation={handleHeadAblation}
                     onToggleAblationMode={(v) => { st.headAblationMode = v; }}
+                    headScoresMode={st.headScoresMode}
+                    headScoresResponse={st.headScoresResponse}
+                    headScoresLoading={st.headScoresLoading}
+                    headScoresWaiting={headScoresDemoPending}
+                    onShowHeadScores={() => analysis.showHeadScores()}
+                    onHideHeadScores={() => analysis.hideHeadScores()}
                   />
                 {:else if tab === 'logit-lens'}
                   <LogitLensPanel
@@ -974,6 +1003,12 @@
                     onToggleAblation={toggleHeadAblation}
                     onRunAblation={handleHeadAblation}
                     onToggleAblationMode={(v) => { st.headAblationMode = v; }}
+                    headScoresMode={st.headScoresMode}
+                    headScoresResponse={st.headScoresResponse}
+                    headScoresLoading={st.headScoresLoading}
+                    headScoresWaiting={headScoresDemoPending}
+                    onShowHeadScores={() => analysis.showHeadScores()}
+                    onHideHeadScores={() => analysis.hideHeadScores()}
                   />
                 {:else if tab === 'logit-lens'}
                   <LogitLensPanel

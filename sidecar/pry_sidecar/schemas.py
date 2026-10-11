@@ -353,6 +353,46 @@ class PatchResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Head scores: induction + previous-token heads (T20)
+# ---------------------------------------------------------------------------
+
+
+class HeadScoresRequest(BaseModel):
+    preset_id: str = "gpt2-small"
+    # Text for the previous-token score. Omitted: score it on the same
+    # repeated random sequence as the induction score.
+    prompt: str | None = Field(default=None, max_length=4000)
+    top_k: int = Field(default=8, ge=1, le=64)
+
+
+class HeadScore(BaseModel):
+    layer: int
+    head: int
+    # Mean attention from each second-repeat token to the token that came
+    # right after its first occurrence (0-1).
+    induction: float
+    # Mean attention from each token to the token just before it (0-1).
+    previous_token: float
+
+
+class HeadScoresResponse(BaseModel):
+    preset_id: str
+    n_layers: int
+    n_heads: int
+    # The test sequence (without BOS): ``repeat_len`` random tokens, then the
+    # same tokens again.
+    repeat_len: int
+    sequence_tokens: list[str] = Field(default_factory=list)
+    # Where the previous-token score was measured: "repeated_sequence" or "prompt".
+    previous_token_source: Literal["repeated_sequence", "prompt"] = "repeated_sequence"
+    scores: list[HeadScore] = Field(default_factory=list)  # every head, layer-major
+    top_induction: list[HeadScore] = Field(default_factory=list)  # highest first
+    top_previous_token: list[HeadScore] = Field(default_factory=list)  # highest first
+    timing_ms: dict[str, float] = Field(default_factory=dict)
+    status: str = "ok"
+
+
+# ---------------------------------------------------------------------------
 # Circuit Subgraph Visualization (Phase D11)
 # ---------------------------------------------------------------------------
 
