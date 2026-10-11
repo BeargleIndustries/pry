@@ -207,6 +207,8 @@ def test_license_gate_error_names_the_missing_step(monkeypatch):
     assert license_gate_error(m, RuntimeError("CUDA error: device-side assert")) is None
     assert license_gate_error(PRESETS["gpt2-small"], _chained(_http_error("GatedRepoError", 403))) is None
     for msg in (str(no_token.value), str(license_missing), str(bad_token)):
+        # ui/src/lib/hf-gate.ts gateStepMissing() keys on this phrase.
+        assert "needs one more setup step" in msg
         # errors.ts maps a bare "403" to an engine-auth message; stay clear of it.
         assert "403" not in msg and "401" not in msg
 

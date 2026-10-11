@@ -399,7 +399,15 @@ mod tests {
         let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../sidecar");
         let json = load_presets_json(&dir).unwrap();
         let n = json["presets"].as_array().unwrap().len();
-        assert_eq!(evaluate_all(&fake_4070_super(), &json).len(), n);
+        let out = evaluate_all(&fake_4070_super(), &json);
+        assert_eq!(out.len(), n);
+        // T31: Gemma 2 2B is enabled and fits a 12 GB card (bf16); 9B stays off.
+        let by_id = |id: &str| out.iter().find(|c| c.preset_id == id).unwrap();
+        let g2 = by_id("gemma-2-2b");
+        assert!(g2.enabled);
+        assert_eq!(g2.verdict, Compatibility::Comfortable);
+        assert!(g2.notes.iter().any(|n| n.contains("HuggingFace")));
+        assert!(!by_id("gemma-2-9b").enabled);
     }
 
     // Tight: fake a GPU with just barely enough VRAM

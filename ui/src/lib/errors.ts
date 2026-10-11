@@ -2,6 +2,8 @@
 // Known messages map to a friendly line; anything else keeps the server text.
 // `details` carries the raw text for a "Details" disclosure.
 
+import { gateStepMissing } from './hf-gate';
+
 export interface FriendlyError {
   /** What to show the user. */
   message: string;
@@ -50,6 +52,8 @@ const RULES: Rule[] = [
 export function friendlyError(raw: unknown): FriendlyError {
   const text = (raw instanceof Error ? raw.message : String(raw ?? '')).trim();
   if (!text) return { message: 'Something went wrong in Pry.', details: null };
+  // A license-gate message already names the missing step in plain words.
+  if (gateStepMissing(text)) return { message: text, details: null };
   for (const rule of RULES) {
     if (rule.test.test(text)) {
       return { message: rule.message, details: text === rule.message ? null : text };

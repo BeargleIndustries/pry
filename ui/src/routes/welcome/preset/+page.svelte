@@ -9,10 +9,13 @@
     evaluatePresets,
     type PresetCompatibility,
   } from '$lib/tauri';
-  import { needsHfToken } from '$lib/preset-display';
+  import { displayName, needsHfToken } from '$lib/preset-display';
+  import LicenseGateSteps from '$lib/components/LicenseGateSteps.svelte';
 
   let presets = $state<PresetCompatibility[]>([]);
   let error = $state<string | null>(null);
+  // T31: a gated preset (Gemma) was picked; explain the license first.
+  let gated = $state<PresetCompatibility | null>(null);
 
   onMount(async () => {
     try {
@@ -27,7 +30,7 @@
     const c = presets.find((p) => p.preset_id === id);
     localStorage.setItem('pry:onboarding_preset', id);
     if (c && needsHfToken(c)) {
-      goto('/welcome/hf-token');
+      gated = c;
     } else {
       goto('/welcome/downloading');
     }
@@ -67,11 +70,34 @@
     </div>
   {/if}
 
-  <div class="space-y-3">
-    {#each presets as c (c.preset_id)}
-      <PresetPickerCard compat={c} locked={needsHfToken(c)} onpick={pick} />
-    {/each}
-  </div>
+  {#if gated}
+    <div class="rounded-lg border border-indigo-800/60 bg-zinc-950/40 p-5">
+      <h3 class="mb-3 text-base font-semibold text-zinc-100">Before {displayName(gated)}: two steps on Hugging Face</h3>
+      <LicenseGateSteps name={displayName(gated)} onAddToken={() => goto('/welcome/hf-token')} />
+      <div class="mt-5 flex items-center justify-between">
+        <button
+          type="button"
+          onclick={() => (gated = null)}
+          class="text-sm text-zinc-500 hover:text-zinc-300"
+        >
+          Pick a different model
+        </button>
+        <button
+          type="button"
+          onclick={() => goto('/welcome/hf-token')}
+          class="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-500"
+        >
+          I've accepted it. Next: the token
+        </button>
+      </div>
+    </div>
+  {:else}
+    <div class="space-y-3">
+      {#each presets as c (c.preset_id)}
+        <PresetPickerCard compat={c} locked={needsHfToken(c)} onpick={pick} />
+      {/each}
+    </div>
+  {/if}
 
   <div class="mt-8 flex items-center justify-between border-t border-zinc-800 pt-6">
     <button
