@@ -33,6 +33,18 @@
         { "path": "$DOWNLOAD/**" },
         { "path": "$APPDATA/notebook.json" }
       ]
+    },
+    {
+      "identifier": "fs:allow-read-text-file",
+      "allow": [{ "path": "$APPDATA/notebook.json" }]
+    },
+    {
+      "identifier": "fs:allow-exists",
+      "allow": [{ "path": "$APPDATA" }, { "path": "$APPDATA/notebook.json" }]
+    },
+    {
+      "identifier": "fs:allow-mkdir",
+      "allow": [{ "path": "$APPDATA" }]
     }
   ]
 }
