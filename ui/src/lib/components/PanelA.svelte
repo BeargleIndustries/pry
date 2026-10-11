@@ -593,6 +593,7 @@
           response,
           effectiveFocusArrayPos,
           expandedLayer !== null && expandedHead !== null ? { layer: expandedLayer, head: expandedHead } : null,
+          focusMode,
         )}
       />
     </div>

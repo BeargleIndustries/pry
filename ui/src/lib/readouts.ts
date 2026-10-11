@@ -140,7 +140,9 @@ export function attentionReadout(
   response: GenerateResponse | null,
   focusPos: number,
   head: HeadRef | null = null,
+  direction: 'from' | 'to' = 'from',
 ): string | null {
+  if (direction === 'to') return attentionToReadout(response, focusPos, head);
   if (!response || response.tokens.length < 2 || response.attention.length === 0) return null;
   const tokens = response.tokens;
   const focusTok = tokens[focusPos];
@@ -179,6 +181,44 @@ export function attentionReadout(
   let text = `${where} looks mostly at ${name(top.k)} (${pct(top.weight)} of its attention).`;
   if (next && next.weight >= 0.1) text += ` Next: ${name(next.k)} (${pct(next.weight)}).`;
   return text;
+}
+
+/** "To" view: which later word looks at the focus word the most. */
+function attentionToReadout(
+  response: GenerateResponse | null,
+  focusPos: number,
+  head: HeadRef | null,
+): string | null {
+  if (!response || response.tokens.length < 2 || response.attention.length === 0) return null;
+  const tokens = response.tokens;
+  const focusTok = tokens[focusPos];
+  if (!focusTok) return null;
+  const word = quoteToken(focusTok.text);
+
+  const matrices = head
+    ? [response.attention[head.layer]?.heads?.[head.head]].filter((m): m is number[][] => !!m)
+    : response.attention.flatMap((layer) => layer.heads);
+  if (matrices.length === 0) return `There is no attention data for ${word}.`;
+
+  // Later words only: earlier ones can't look ahead.
+  const received: { k: number; weight: number }[] = [];
+  for (let k = focusPos + 1; k < tokens.length; k++) {
+    let sum = 0;
+    let n = 0;
+    for (const m of matrices) {
+      const v = m[k]?.[focusPos];
+      if (v === undefined) continue;
+      sum += v;
+      n++;
+    }
+    if (n > 0) received.push({ k, weight: sum / n });
+  }
+  if (received.length === 0) return `No later word looks back at ${word}.`;
+
+  received.sort((a, b) => b.weight - a.weight);
+  const top = received[0];
+  const where = head ? `In layer ${head.layer}, head ${head.head}` : `Averaged over all ${matrices.length} heads`;
+  return `${where}, the word that looks at ${word} most is ${quoteToken(tokens[top.k]?.text ?? '')} (${pct(top.weight)} of its attention).`;
 }
 
 // ---------------------------------------------------------------------------

@@ -152,6 +152,18 @@ describe('attentionReadout', () => {
     expect(attentionReadout(generate, 0)).toBe('The first word, "The", can only look at itself.');
   });
 
+  it('"to" view: names the later word that looks at the focus word most', () => {
+    const m = generate.attention[1].heads[1];
+    const later = [2, 3].map((k) => ({ k, w: m[k][1] })).sort((x, y) => y.w - x.w)[0];
+    const text = attentionReadout(generate, 1, { layer: 1, head: 1 }, 'to')!;
+    expect(text.startsWith('In layer 1, head 1, the word that looks at "·cat" most is ')).toBe(true);
+    expect(text).toContain(`"${generate.tokens[later.k].text.replace(/^ /, '·')}"`);
+  });
+
+  it('"to" view: nothing comes after the last word', () => {
+    expect(attentionReadout(generate, 3, null, 'to')).toBe('No later word looks back at "·on".');
+  });
+
   it('golden: focused word has no attention row (past the cutoff)', () => {
     const r = clone(generate);
     r.tokens.push({ index: 4, text: ' the' });
