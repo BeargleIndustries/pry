@@ -23,7 +23,7 @@
     "frontendDist": "../ui/build",
     "devUrl": "http://localhost:5173",
     "beforeDevCommand": "npm run dev --prefix ./ui",
-    "beforeBuildCommand": "npm run build"
+    "beforeBuildCommand": "npm run build --prefix ./ui"
   },
   "bundle": {
     "active": true,
