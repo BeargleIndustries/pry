@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy, untrack } from 'svelte';
-  import { CircleHelp, Settings, Download } from 'lucide-svelte';
+  import { CircleHelp, Settings, Download, FlaskConical } from 'lucide-svelte';
   import PryLogo from '$lib/components/icons/PryLogo.svelte';
   import { health, loadPreset, unloadPreset, listModels } from '$lib/sidecar';
   import type { LoadProgress, PresetInfo } from '$lib/sidecar';
@@ -39,6 +39,9 @@
   import { CUSTOM_MODELS_ENABLED } from '$lib/flags';
   import { friendlyError } from '$lib/errors';
   import { displayName, findPreset } from '$lib/preset-display';
+  import ExperimentGallery from '$lib/components/ExperimentGallery.svelte';
+  import { loadExperiments, applyExperiment } from '$lib/experiments/experiments';
+  import type { Experiment, ExperimentActions, PatchType } from '$lib/experiments/experiments';
 
   // ---------------------------------------------------------------------------
   // Hardware probe state
@@ -539,6 +542,48 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Experiment cards (T22)
+  // ---------------------------------------------------------------------------
+  const experiments = loadExperiments();
+  let experimentsOpen = $state(false);
+  let activeExperiment = $state<Experiment | null>(null);
+  let experimentBusy = $state(false);
+  let patchingPreset = $state<{ clean: string; corrupted: string; patchType: PatchType } | null>(null);
+
+  const experimentActions: ExperimentActions = {
+    activePresetId: () => activePresetId,
+    switchModel: (id) => handleSwitch(id),
+    setPrompt: (t) => { prompt = t; },
+    runGenerate: () => handleGenerate(),
+    openLeftTab: (tab) => {
+      if (!isWide) activeTab = 'attention';
+      onLeftTabChange(tab);
+    },
+    openRightTab: (tab) => {
+      if (!isWide) activeTab = 'features';
+      rightActiveTab = tab;
+    },
+    setAggregation: (agg) => { panelAAggregation = agg; },
+    presetPatching: (p) => { patchingPreset = { ...p }; },
+    presetHeadAblations: (heads) => {
+      st.headAblations = heads.map((h) => ({ ...h }));
+      st.headAblationMode = true;
+    },
+  };
+
+  async function pickExperiment(exp: Experiment) {
+    if (experimentBusy) return;
+    experimentsOpen = false;
+    activeExperiment = exp;
+    experimentBusy = true;
+    try {
+      await applyExperiment(exp, experimentActions);
+    } finally {
+      experimentBusy = false;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // Tabbed panels — used in both wide (split) and narrow modes
   // ---------------------------------------------------------------------------
   const leftTabs: TabDef[] = [
@@ -667,6 +712,14 @@
         class="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 disabled:opacity-30 disabled:cursor-not-allowed"
       >
         <Download class="h-4 w-4" />
+      </button>
+      <button
+        onclick={() => (experimentsOpen = true)}
+        title="Try a guided experiment"
+        class="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+      >
+        <FlaskConical class="h-4 w-4" />
+        Experiments
       </button>
       <div class="relative">
         <button onclick={() => { tourMenuOpen = !tourMenuOpen; }} aria-label="Open tutorial" data-tour="header-help"
@@ -813,6 +866,7 @@
                 {:else if tab === 'patching'}
                   <PatchingPanel
                     tokenize={(t) => analysis.tokenize(t)}
+                    preset={patchingPreset}
                     response={st.patchResponse}
                     loading={st.patchLoading}
                     onRun={handlePatching}
@@ -934,6 +988,7 @@
                 {:else if tab === 'patching'}
                   <PatchingPanel
                     tokenize={(t) => analysis.tokenize(t)}
+                    preset={patchingPreset}
                     response={st.patchResponse}
                     loading={st.patchLoading}
                     onRun={handlePatching}
@@ -1128,6 +1183,17 @@
 
   <!-- Driven tutorial -->
   <DrivenTutorial generating={st.generating} response={st.response} {loadState} {bannerVisible} saeLayerSwitching={st.layerSwitching} error={st.error} actions={tutorialActions} />
+
+  <ExperimentGallery
+    open={experimentsOpen}
+    {experiments}
+    active={activeExperiment}
+    busy={experimentBusy}
+    presetLabel={(id) => displayName(id, presets)}
+    onPick={pickExperiment}
+    onClose={() => (experimentsOpen = false)}
+    onDismissGuide={() => (activeExperiment = null)}
+  />
 
   <!-- First-time contextual tips (registry-driven) -->
   <FirstTimeTip />
