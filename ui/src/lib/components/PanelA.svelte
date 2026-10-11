@@ -20,8 +20,11 @@
     aggregateHead,
     type Aggregation,
   } from '$lib/attention-agg';
-  import { attentionReadout } from '$lib/readouts';
+  import { attentionReadout, isStartMarker } from '$lib/readouts';
   import Readout from './Readout.svelte';
+  import Term from './Term.svelte';
+  import { clampCell, focusGridCell, handleGridKey, type GridCell } from '$lib/grid-nav';
+  import { signedHex, signedNumber } from '$lib/signed-color';
   import {
     DEFAULT_GEOMETRY,
     LINE_THRESHOLD,
@@ -234,16 +237,73 @@
     };
   });
 
-  function onCellClick(l: number, h: number) {
+  async function onCellClick(l: number, h: number) {
+    gridCurrent = { row: l, col: h };
     expandedLayer = l;
     expandedHead = h;
     // Remember the pick so the lines view shows the same head if the user switches.
     linesPick = { layer: l, head: h };
+    // The grid unmounts; move focus into the detail view so keyboard users aren't stranded.
+    await tick();
+    closeBtn?.focus();
   }
 
-  function closeExpanded() {
+  async function closeExpanded() {
     expandedLayer = null;
     expandedHead = null;
+    // Back to the cell that was opened.
+    await tick();
+    focusGridCell(gridSvg, gridCurrent);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Keyboard model for the layer x head grid (T29): roving tabindex. One Tab
+  // stop; arrows move, Home/End, Ctrl+Home/End; Enter/Space opens the head (or
+  // toggles it in ablation mode). Focus shows the same tooltip as hovering.
+  // ---------------------------------------------------------------------------
+
+  const uid = $props.id();
+  const readoutId = `attn-readout-${uid}`;
+  const gridDescId = `attn-grid-desc-${uid}`;
+  let gridSvg = $state<SVGSVGElement | null>(null);
+  let closeBtn = $state<HTMLButtonElement | null>(null);
+  let gridCurrent = $state<GridCell>({ row: 0, col: 0 });
+  let gridFocused = $state(false);
+  const gridShape = $derived({ rows: nLayers, cols: nHeads });
+  const gridTabStop = $derived(clampCell(gridCurrent, gridShape));
+
+  function activateCell(l: number, h: number) {
+    if (ablationMode) onToggleAblation?.(l, h);
+    else void onCellClick(l, h);
+  }
+
+  function onGridKey(e: KeyboardEvent) {
+    if (!gridTabStop) return;
+    const next = handleGridKey(e, gridTabStop, gridShape, gridSvg, {
+      activate: (c) => activateCell(c.row, c.col),
+    });
+    if (next) gridCurrent = next;
+  }
+
+  function onCellFocus(l: number, h: number, e: FocusEvent) {
+    gridCurrent = { row: l, col: h };
+    gridFocused = true;
+    const r = (e.currentTarget as SVGElement).getBoundingClientRect();
+    tooltipLayer = l;
+    tooltipHead = h;
+    tooltipX = r.x;
+    tooltipY = r.y;
+  }
+
+  function onCellBlur() {
+    gridFocused = false;
+    onCellMouseLeave();
+  }
+
+  function cellLabel(l: number, h: number, rawVal: number | null): string {
+    const base = rawVal === null ? `Layer ${l}, head ${h}: ${nullCellMsg}` : `Layer ${l}, head ${h}: score ${rawVal.toFixed(3)}`;
+    if (!ablationMode) return base;
+    return `${base}. ${isAblated(l, h) ? 'Knocked out' : 'Not knocked out'}`;
   }
 
   // ---------------------------------------------------------------------------
@@ -484,7 +544,7 @@
   <!-- Panel header -->
   <div class="mb-4 flex items-center justify-between">
     <h2 class="text-sm font-semibold uppercase tracking-widest text-zinc-400">
-      Attention
+      <Term key="attention">Attention</Term>
     </h2>
     <div class="flex items-center gap-2">
       {#if response && !headScoresMode}
@@ -517,10 +577,10 @@
          Copying heads (induction heads), T20
          ----------------------------------------------------------------------- -->
     <div>
-      <h3 class="mb-2 text-sm font-semibold text-zinc-200">Copying heads</h3>
+      <h3 class="mb-2 text-sm font-semibold text-zinc-200"><Term key="induction-head">Copying heads</Term></h3>
       <p class="mb-3 text-xs leading-relaxed text-zinc-400">
         A model can't guess random words. But if the same random words come round a second time, it
-        can guess each one, as long as it remembers what came next last time. Some attention heads do
+        can guess each one, as long as it remembers what came next last time. Some <Term key="attention-head">attention heads</Term> do
         exactly that. To find them, Pry gives the model a test: {headScoresResponse?.repeat_len ?? 25}
         random word-pieces (the chunks the model reads text in), then the same ones again in the same
         order. Then it checks where every head looks during the second time through.
@@ -705,6 +765,7 @@
     <!-- Plain-language readout (T21) -->
     <div class="mb-3">
       <Readout
+        id={readoutId}
         text={attentionReadout(
           response,
           effectiveFocusArrayPos,
@@ -712,6 +773,12 @@
           focusMode,
         )}
       />
+      {#if isStartMarker(tokens[0]?.text ?? '')}
+        <p class="mt-2 text-[11px] leading-relaxed text-zinc-500">
+          The first token, {displayToken(tokens[0].text)}, is the model's
+          <Term key="attention-sink">start-of-text marker</Term>, not a word you typed. It is often bright.
+        </p>
+      {/if}
     </div>
     {#if truncated}
       <p class="mb-3 rounded border border-amber-800/60 bg-amber-950/30 px-3 py-1.5 text-xs text-amber-300">
@@ -884,8 +951,8 @@
             {#each ablateResponse.prediction_delta.slice(0, 5) as d}
               <div class="flex items-center gap-2 text-[11px]">
                 <span class="flex-1 font-mono text-zinc-300">{d.token}</span>
-                <span class="tabular-nums" class:text-red-400={d.delta < 0} class:text-emerald-400={d.delta > 0}>
-                  {d.delta > 0 ? '+' : ''}{(d.delta * 100).toFixed(1)}%
+                <span class="tabular-nums" style="color: {d.delta === 0 ? '#a1a1aa' : signedHex(d.delta)};">
+                  {signedNumber(d.delta * 100, 1)}%
                 </span>
               </div>
             {/each}
@@ -984,6 +1051,7 @@
                 viewBox="0 0 {linesSvgW} {linesSvgH}"
                 class="block flex-shrink-0"
                 role="img"
+                aria-describedby={readoutId}
                 aria-label={`Attention lines for ${linesHeadDesc}. Each word on the left is joined to the earlier words it looks at on the right; darker lines mean more attention. ${linesArcs.length} lines shown, ${linesHidden} under ${weightPct(LINE_THRESHOLD)} hidden.`}
               >
                 {#each otherArcs as a (`${a.from}-${a.to}`)}
@@ -1081,6 +1149,7 @@
             </span>
           </div>
           <button
+            bind:this={closeBtn}
             onclick={closeExpanded}
             class="flex h-6 w-6 items-center justify-center rounded border border-zinc-700 bg-zinc-800 text-zinc-400 transition hover:border-zinc-500 hover:text-zinc-200"
             aria-label="Close expanded view"
@@ -1090,7 +1159,12 @@
             </svg>
           </button>
         </div>
-        <div class="overflow-auto">
+        <div
+          class="overflow-auto"
+          role="img"
+          aria-label={`Attention matrix for layer ${expandedLayer}, head ${expandedHead}: ${tokens.length} rows of words doing the looking by ${tokens.length} columns of words being looked at. Brighter means more attention.`}
+          aria-describedby={readoutId}
+        >
           <canvas bind:this={canvasEl}></canvas>
         </div>
         <div class="mt-3 flex items-center gap-3">
@@ -1106,20 +1180,24 @@
     {:else}
       <!-- SVG Overview grid -->
       <div class="relative" data-tour="panel-a-heatmap" data-tip="panel-a-heatmap">
-        <p class="mb-2 text-[10px] font-medium uppercase tracking-widest text-zinc-600">
-          Layers × Heads — click a cell to expand
+        <p id={gridDescId} class="mb-2 text-[10px] font-medium uppercase tracking-widest text-zinc-500">
+          Layers × Heads — click a cell to expand<span class="sr-only">. Arrow keys move between cells; Enter {ablationMode ? 'knocks the head out or puts it back' : 'opens the head'}.</span>
         </p>
         <div class="overflow-x-auto">
           <svg
+            bind:this={gridSvg}
             width={svgWidth}
             height={svgHeight}
             class="block"
             role="grid"
-            aria-label="Attention overview grid"
+            tabindex="-1"
+            aria-label="Attention overview grid, layer by head"
+            aria-describedby="{readoutId} {gridDescId}"
           >
-            <!-- Head labels (top) -->
+            <!-- Head labels (top); each cell's label already names its layer and head -->
             {#each { length: nHeads } as _, h}
               <text
+                aria-hidden="true"
                 x={LABEL_W + h * (CELL + GAP) + CELL / 2}
                 y={LABEL_H - 6}
                 text-anchor="middle"
@@ -1130,6 +1208,7 @@
             <!-- Layer labels (left) -->
             {#each { length: nLayers } as _, l}
               <text
+                aria-hidden="true"
                 x={LABEL_W - 6}
                 y={LABEL_H + l * (CELL + GAP) + CELL / 2}
                 text-anchor="end"
@@ -1139,8 +1218,9 @@
               >{l}</text>
             {/each}
 
-            <!-- Cells -->
+            <!-- Cells: one grid row per layer -->
             {#each { length: nLayers } as _, l}
+              <g role="row">
               {#each { length: nHeads } as _, h}
                 {@const val = normalizedGrid[l]?.[h] ?? 0}
                 {@const rawVal = rawGrid[l]?.[h] ?? null}
@@ -1148,23 +1228,46 @@
                 {@const cy = LABEL_H + l * (CELL + GAP)}
                 {@const isHovered = tooltipLayer === l && tooltipHead === h}
                 {@const isAbl = ablationMode && isAblated(l, h)}
+                {@const isTabStop = gridTabStop?.row === l && gridTabStop?.col === h}
+                {@const isFocused = gridFocused && isTabStop}
                 <rect
                   x={cx}
                   y={cy}
                   width={CELL}
                   height={CELL}
                   fill={isAbl ? '#991b1b' : rawVal === null ? '#3f3f46' : viridis(val)}
-                  stroke={isAbl ? '#f87171' : isHovered ? '#6366f1' : 'transparent'}
-                  stroke-width={isAbl ? 2 : isHovered ? 2 : 0}
+                  stroke={isFocused ? '#ffffff' : isAbl ? '#f87171' : isHovered ? '#6366f1' : 'transparent'}
+                  stroke-width={isFocused || isAbl || isHovered ? 2 : 0}
                   rx="2"
-                  style="cursor: pointer;"
+                  style="cursor: pointer; outline: none;"
                   role="gridcell"
-                  aria-label={rawVal === null ? `Layer ${l} Head ${h}: ${nullCellMsg}` : `Layer ${l} Head ${h} value ${rawVal.toFixed(3)}`}
+                  tabindex={isTabStop ? 0 : -1}
+                  data-row={l}
+                  data-col={h}
+                  aria-selected={ablationMode ? isAbl : expandedLayer === l && expandedHead === h}
+                  aria-label={cellLabel(l, h, rawVal)}
                   onmouseenter={(e) => onCellMouseEnter(l, h, e)}
                   onmouseleave={onCellMouseLeave}
-                  onclick={() => { if (ablationMode) { onToggleAblation?.(l, h); } else { onCellClick(l, h); } }}
+                  onfocus={(e) => onCellFocus(l, h, e)}
+                  onblur={onCellBlur}
+                  onkeydown={onGridKey}
+                  onclick={() => activateCell(l, h)}
                 />
+                {#if isAbl}
+                  <!-- Non-colour cue for knocked-out heads -->
+                  <text
+                    aria-hidden="true"
+                    x={cx + CELL / 2}
+                    y={cy + CELL / 2}
+                    text-anchor="middle"
+                    dominant-baseline="central"
+                    fill="#fecaca"
+                    pointer-events="none"
+                    style="font-size: 12px; font-weight: 700;"
+                  >×</text>
+                {/if}
               {/each}
+              </g>
             {/each}
           </svg>
         </div>

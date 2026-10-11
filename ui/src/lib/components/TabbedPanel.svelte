@@ -16,9 +16,9 @@
 
   let { tabs, activeTab = $bindable(), onTabChange, children }: Props = $props();
 
-  // Default to first tab if none set
-  let internal = $state(tabs[0]?.id ?? '');
-  const current = $derived(activeTab ?? internal);
+  // Default to first tab if none set (and follow `tabs` if it changes).
+  let internal = $state<string | null>(null);
+  const current = $derived(activeTab ?? internal ?? tabs[0]?.id ?? '');
 
   function select(id: string) {
     internal = id;
@@ -44,6 +44,7 @@
   {#if tabs.length > 1}
     <div
       role="tablist"
+      tabindex="-1"
       aria-label="Panel tabs"
       onkeydown={onTabKey}
       class="flex flex-shrink-0 gap-4 border-b border-zinc-800 px-3"

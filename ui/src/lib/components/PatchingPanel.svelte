@@ -294,7 +294,7 @@
                   data-row={l}
                   data-col={h}
                   tabindex={tabStop?.row === l && tabStop?.col === h ? 0 : -1}
-                  aria-selected={selectedComponent !== null && selectedComponent === comp}
+                  aria-selected={comp !== undefined && selectedComponent?.name === comp.name}
                   onfocus={() => { gridCurrent = { row: l, col: h }; }}
                   onclick={() => { selectedComponent = comp ?? null; }}
                   class="flex h-5 w-5 items-center justify-center rounded-sm border border-zinc-800 text-[10px] font-bold leading-none transition-colors hover:border-zinc-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
@@ -341,7 +341,7 @@
                   data-row={l}
                   data-col={p}
                   tabindex={tabStop?.row === l && tabStop?.col === p ? 0 : -1}
-                  aria-selected={selectedComponent !== null && selectedComponent === comp}
+                  aria-selected={comp !== undefined && selectedComponent?.name === comp.name}
                   onfocus={() => { gridCurrent = { row: l, col: p }; }}
                   onclick={() => { selectedComponent = comp ?? null; }}
                   class="flex h-5 min-w-5 items-center justify-center rounded-sm border border-zinc-800 text-[10px] font-bold leading-none transition-colors hover:border-zinc-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"

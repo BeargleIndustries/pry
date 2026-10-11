@@ -187,7 +187,7 @@ export function attentionReadout(
 }
 
 /** Special tokens like `<|endoftext|>` that models use as a start marker. */
-function isStartMarker(text: string): boolean {
+export function isStartMarker(text: string): boolean {
   return /^<\|.*\|>$/.test(text);
 }
 

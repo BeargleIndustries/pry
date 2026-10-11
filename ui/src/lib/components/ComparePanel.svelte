@@ -18,6 +18,8 @@
   import { pct, quoteToken } from '$lib/readouts';
   import { viridis } from '$lib/viridis';
   import Readout from './Readout.svelte';
+  import { clampCell, handleGridKey, type GridCell } from '$lib/grid-nav';
+  import { signedHex } from '$lib/signed-color';
 
   interface Props {
     compare: CompareController;
@@ -51,6 +53,26 @@
 
   function prob(p: number | null, cut: number): string {
     return p === null ? `<${pct(cut).replace(/^[<>]/, '')}` : pct(p);
+  }
+
+  // Keyboard model for the head-difference grid (T29): roving tabindex, arrows,
+  // Home/End. The focused cell's value is also shown in text under the grid.
+  const uid = $props.id();
+  const readoutId = `compare-readout-${uid}`;
+  const attnDescId = `compare-attn-desc-${uid}`;
+  let attnTable: HTMLTableElement | undefined = $state();
+  let attnCurrent = $state<GridCell>({ row: 0, col: 0 });
+  let attnFocused = $state(false);
+  const attnShape = $derived(attn?.ok ? { rows: attn.grid.length, cols: attn.nHeads } : { rows: 0, cols: 0 });
+  const attnTabStop = $derived(clampCell(attnCurrent, attnShape));
+  const focusedDiff = $derived(
+    attn?.ok && attnFocused && attnTabStop ? (attn.grid[attnTabStop.row]?.[attnTabStop.col] ?? null) : null,
+  );
+
+  function onAttnKey(e: KeyboardEvent) {
+    if (!attnTabStop) return;
+    const next = handleGridKey(e, attnTabStop, attnShape, attnTable);
+    if (next) attnCurrent = next;
   }
 </script>
 
@@ -94,7 +116,7 @@
       </p>
     </div>
   {:else}
-    <Readout text={summary} />
+    <Readout id={readoutId} text={summary} />
 
     <!-- Tokens + position picker -->
     <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-zinc-400">
@@ -140,9 +162,8 @@
                   <td class="py-1 text-right tabular-nums text-zinc-400">{prob(r.probA, preds.cutoffA)}</td>
                   <td class="py-1 text-right tabular-nums text-zinc-400">{prob(r.probB, preds.cutoffB)}</td>
                   <td class="py-1 text-right tabular-nums"
-                    class:text-emerald-400={r.change > 0}
-                    class:text-rose-400={r.change < 0}
-                    class:text-zinc-500={r.change === 0}>
+                    class:text-zinc-500={r.change === 0}
+                    style={r.change === 0 ? undefined : `color: ${signedHex(r.change)}`}>
                     {changeLabel(r)}
                   </td>
                 </tr>
@@ -195,7 +216,7 @@
       {#if attn && !attn.ok}
         <p class="text-xs text-zinc-500">{attn.reason}</p>
       {:else if attn && attn.ok}
-        <p class="mb-3 text-xs text-zinc-500">
+        <p id={attnDescId} class="mb-3 text-xs text-zinc-500">
           {#if attn.mode === 'positions'}
             Both prompts have the same number of <Term key="token">tokens</Term>, so each <Term key="head">head</Term>’s attention is compared position by position.
             0% = the head spreads its attention exactly the same way; 100% = no overlap at all.
@@ -207,21 +228,38 @@
           Brighter = more different. Average over all heads: {pct(attn.mean)}.
         </p>
         <div class="overflow-x-auto">
-          <table class="border-separate border-spacing-0.5 text-[10px] text-zinc-500">
+          <table
+            bind:this={attnTable}
+            role="grid"
+            tabindex="-1"
+            aria-label="How differently each head looks, layer by head"
+            aria-describedby="{attnDescId} {readoutId}"
+            onkeydown={onAttnKey}
+            class="border-separate border-spacing-0.5 text-[10px] text-zinc-500"
+          >
             <thead>
               <tr>
                 <th class="pr-1 text-right font-normal">layer \ head</th>
                 {#each Array(attn.nHeads) as _, h}
-                  <th class="w-6 text-center font-normal">{h}</th>
+                  <th class="w-6 text-center font-normal" aria-label="Head {h}">{h}</th>
                 {/each}
               </tr>
             </thead>
             <tbody>
               {#each attn.grid as row, l}
                 <tr>
-                  <th class="pr-1 text-right font-normal">{l}</th>
+                  <th class="pr-1 text-right font-normal" aria-label="Layer {l}">{l}</th>
                   {#each row as d, h}
-                    <td class="h-5 w-6 rounded-sm" style="background-color: {viridis(d / maxCell)}"
+                    <td
+                      role="gridcell"
+                      data-row={l}
+                      data-col={h}
+                      tabindex={attnTabStop?.row === l && attnTabStop?.col === h ? 0 : -1}
+                      aria-label="Layer {l}, head {h}: {pct(d)} different"
+                      onfocus={() => { attnCurrent = { row: l, col: h }; attnFocused = true; }}
+                      onblur={() => { attnFocused = false; }}
+                      class="h-5 w-6 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                      style="background-color: {viridis(d / maxCell)}"
                       title="Layer {l}, head {h}: {pct(d)} different"></td>
                   {/each}
                 </tr>
@@ -229,6 +267,11 @@
             </tbody>
           </table>
         </div>
+        <p class="mt-1 h-4 text-[11px] text-zinc-400" aria-hidden="true">
+          {#if focusedDiff !== null && attnTabStop}
+            Layer {attnTabStop.row}, head {attnTabStop.col}: {pct(focusedDiff)} different
+          {/if}
+        </p>
         <p class="mt-2 text-xs text-zinc-400">
           Most different:
           {attn.ranked.slice(0, 3).map((h) => `layer ${h.layer} head ${h.head} (${pct(h.distance)})`).join(', ')}.
