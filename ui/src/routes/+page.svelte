@@ -29,6 +29,7 @@
   import { resetAllTips } from '$lib/tips/coordinate';
   import { invoke } from '@tauri-apps/api/core';
   import LoadProgressBanner from '$lib/components/LoadProgressBanner.svelte';
+  import RuntimeUpdatePrompt from '$lib/components/RuntimeUpdatePrompt.svelte';
   import ModelSwitcher from '$lib/components/ModelSwitcher.svelte';
   import { tutorialState } from '$lib/tutorial/tutorial-store.svelte';
   import type { TutorialActions } from '$lib/tutorial/actions';
@@ -708,6 +709,7 @@
     onRetry={() => handleSwitch(bannerTargetPreset ?? activePresetId ?? 'gpt2-small')}
     onDismiss={() => { bannerPhase = 'idle'; bannerError = null; bannerMessage = null; }}
   />
+  <RuntimeUpdatePrompt />
 
   <!-- Error card — full width, compact -->
   {#if st.error}

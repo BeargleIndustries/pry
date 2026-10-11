@@ -1,22 +1,98 @@
-use super::{errors::BootstrapError, events::*, probe::CudaVariant, venv};
+use super::{errors::BootstrapError, events::*, probe::CudaVariant};
 use std::os::windows::process::CommandExt;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 
 // Embedded at compile time — the canonical runtime requirements.
 const REQUIREMENTS_BASE: &str = include_str!("../../resources/requirements-runtime.txt");
 
+/// One pip invocation in the install sequence.
+#[derive(Debug, Clone)]
+pub enum PipStep {
+    Torch,
+    TransformerLens,
+    SaeLens,
+    /// `-r <requirements file>`
+    Extras(PathBuf),
+    /// Local pry_sidecar source tree.
+    Sidecar(PathBuf),
+    /// `--force-reinstall --no-deps <sidecar source>` (bundle hash changed).
+    ReinstallSidecar(PathBuf),
+}
+
+/// A fully specified pip process: always `<venv python> -m pip ...`.
+#[derive(Debug, Clone)]
+pub struct PipInvocation {
+    pub program: PathBuf,
+    pub args: Vec<String>,
+    pub env: Vec<(String, String)>,
+}
+
+/// The single builder for every pip command (pure; unit-testable).
+///
+/// T3 HOOK: add `PIP_CONSTRAINT=<runtime_dir>\constraints.txt` to `env` and
+/// `--extra-index-url <variant torch index>` to `args` here, for every step.
+pub fn pip_command_for_step(
+    step: &PipStep,
+    variant: CudaVariant,
+    venv_python: &Path,
+    _runtime_dir: &Path,
+) -> PipInvocation {
+    let mut args: Vec<String> = vec!["-m".into(), "pip".into(), "install".into()];
+    let s = |p: &Path| p.to_string_lossy().into_owned();
+    match step {
+        PipStep::Torch => {
+            // --no-cache-dir: keep the ~2.5 GB wheel out of the pip cache so an
+            // update doesn't need room for a second copy.
+            args.extend([
+                "--no-cache-dir".into(),
+                "--index-url".into(),
+                variant.pip_index_url().into(),
+                "--extra-index-url".into(),
+                "https://pypi.org/simple".into(),
+                variant.torch_spec().into(),
+            ]);
+        }
+        PipStep::TransformerLens => args.push("transformer-lens>=2.11,<3".into()),
+        PipStep::SaeLens => args.push("sae-lens>=5.0,<6".into()),
+        PipStep::Extras(req) => args.extend(["-r".into(), s(req)]),
+        PipStep::Sidecar(src) => args.push(s(src)),
+        PipStep::ReinstallSidecar(src) => {
+            args.extend(["--force-reinstall".into(), "--no-deps".into(), s(src)])
+        }
+    }
+    PipInvocation {
+        program: venv_python.to_path_buf(),
+        args,
+        env: Vec::new(),
+    }
+}
+
+async fn run_step(
+    emit: &Emitter,
+    step: PipStep,
+    variant: CudaVariant,
+    venv_python: &Path,
+    runtime_dir: &Path,
+) -> Result<(), BootstrapError> {
+    let inv = pip_command_for_step(&step, variant, venv_python, runtime_dir);
+    stream_pip_install(emit, &inv).await
+}
+
+/// Install the full dependency set into the venv whose interpreter is
+/// `venv_python`. `venv_dir` holds per-build scratch files.
 pub async fn install_runtime_deps(
     emit: &Emitter,
     runtime_dir: &Path,
+    venv_dir: &Path,
+    venv_python: &Path,
     cuda_variant: CudaVariant,
 ) -> Result<(), BootstrapError> {
-    let pip = venv::venv_pip(runtime_dir);
-    if !pip.exists() {
+    if !venv_python.exists() {
         return Err(BootstrapError::PipInstall(format!(
-            "pip not found at {}",
-            pip.display()
+            "venv python not found at {}",
+            venv_python.display()
         )));
     }
 
@@ -25,88 +101,32 @@ pub async fn install_runtime_deps(
         BootstrapStage::InstallingTorch,
         format!("installing torch ({})", cuda_variant.wheel_tag()),
     );
-
-    let torch_index = cuda_variant.pip_index_url();
-    let torch_spec = cuda_variant.torch_spec();
-
-    stream_pip_install(
-        emit,
-        &pip,
-        &[
-            "install",
-            "--index-url",
-            torch_index,
-            "--extra-index-url",
-            "https://pypi.org/simple",
-            torch_spec,
-        ],
-        BootstrapStage::InstallingTorch,
-    )
-    .await?;
+    run_step(emit, PipStep::Torch, cuda_variant, venv_python, runtime_dir).await?;
 
     // 2. transformer-lens
     emit.stage(
         BootstrapStage::InstallingTransformerLens,
         "installing transformer-lens...",
     );
-    stream_pip_install(
-        emit,
-        &pip,
-        &["install", "transformer-lens>=2.11,<3"],
-        BootstrapStage::InstallingTransformerLens,
-    )
-    .await?;
+    run_step(emit, PipStep::TransformerLens, cuda_variant, venv_python, runtime_dir).await?;
 
     // 3. sae-lens
     emit.stage(BootstrapStage::InstallingSaeLens, "installing sae-lens...");
-    stream_pip_install(
-        emit,
-        &pip,
-        &["install", "sae-lens>=5.0,<6"],
-        BootstrapStage::InstallingSaeLens,
-    )
-    .await?;
+    run_step(emit, PipStep::SaeLens, cuda_variant, venv_python, runtime_dir).await?;
 
     // 4. extras from embedded requirements-runtime.txt
     emit.stage(BootstrapStage::InstallingExtras, "installing extras...");
-    let req_path = runtime_dir.join("requirements-extras.txt");
+    let req_path = venv_dir.join("requirements-extras.txt");
     tokio::fs::write(&req_path, REQUIREMENTS_BASE)
         .await
         .map_err(|e| BootstrapError::Io(e.to_string()))?;
-    let req_path_str = req_path.to_str().ok_or_else(|| {
-        BootstrapError::Internal(format!(
-            "requirements path not valid UTF-8: {}",
-            req_path.display()
-        ))
-    })?;
-    stream_pip_install(
-        emit,
-        &pip,
-        &["install", "-r", req_path_str],
-        BootstrapStage::InstallingExtras,
-    )
-    .await?;
+    run_step(emit, PipStep::Extras(req_path), cuda_variant, venv_python, runtime_dir).await?;
 
     // 5. Install the local pry_sidecar package so `python -m pry_sidecar.main` works.
     emit.stage(BootstrapStage::InstallingExtras, "installing pry_sidecar package...");
     let sidecar_source = locate_sidecar_source()?;
-    stream_pip_install(
-        emit,
-        &pip,
-        &["install", sidecar_source.to_str().ok_or_else(|| BootstrapError::Internal("sidecar path not utf8".into()))?],
-        BootstrapStage::InstallingExtras,
-    )
-    .await?;
-
-    // 6. Write initial sidecar hash marker so subsequent bootstraps recognize
-    //    the install as current and only reinstall pry_sidecar when source changes.
-    if let Ok(hash) = super::bundle_hash() {
-        if let Ok(marker) = super::sidecar_hash_marker_path() {
-            if let Err(e) = tokio::fs::write(&marker, &hash).await {
-                tracing::warn!("failed to write initial sidecar hash marker: {e}");
-            }
-        }
-    }
+    run_step(emit, PipStep::Sidecar(sidecar_source), cuda_variant, venv_python, runtime_dir)
+        .await?;
 
     emit.progress(
         BootstrapStage::InstallingExtras,
@@ -120,44 +140,31 @@ pub async fn install_runtime_deps(
 /// (used when the bundle hash differs from the installed marker). Uses
 /// `--force-reinstall --no-deps` so only the pry_sidecar package is
 /// touched — torch, transformer-lens, and sae-lens are NOT reinstalled.
+/// The caller writes the new hash marker.
 pub async fn reinstall_sidecar_package(
     emit: &Emitter,
     runtime_dir: &Path,
+    venv_python: &Path,
+    variant: CudaVariant,
 ) -> Result<(), BootstrapError> {
     emit.stage(BootstrapStage::InstallingExtras, "updating sidecar package...");
 
-    let pip = venv::venv_pip(runtime_dir);
-    if !pip.exists() {
+    if !venv_python.exists() {
         return Err(BootstrapError::PipInstall(format!(
-            "venv pip not found at {}",
-            pip.display()
+            "venv python not found at {}",
+            venv_python.display()
         )));
     }
 
     let sidecar_source = locate_sidecar_source()?;
-    let src_str = sidecar_source.to_str().ok_or_else(|| {
-        BootstrapError::Internal(format!(
-            "sidecar source path not utf8: {}",
-            sidecar_source.display()
-        ))
-    })?;
-
-    stream_pip_install(
+    run_step(
         emit,
-        &pip,
-        &["install", "--force-reinstall", "--no-deps", src_str],
-        BootstrapStage::InstallingExtras,
+        PipStep::ReinstallSidecar(sidecar_source),
+        variant,
+        venv_python,
+        runtime_dir,
     )
     .await?;
-
-    // Write the new hash marker
-    let new_hash = super::bundle_hash()
-        .map_err(|e| BootstrapError::Internal(format!("bundle_hash: {e}")))?;
-    let marker_path = super::sidecar_hash_marker_path()
-        .map_err(|e| BootstrapError::Internal(format!("marker_path: {e}")))?;
-    tokio::fs::write(&marker_path, &new_hash)
-        .await
-        .map_err(|e| BootstrapError::Io(format!("write sidecar hash marker: {e}")))?;
 
     emit.progress(
         BootstrapStage::InstallingExtras,
@@ -204,17 +211,15 @@ pub fn locate_sidecar_source() -> Result<std::path::PathBuf, BootstrapError> {
     ))
 }
 
-async fn stream_pip_install(
-    emit: &Emitter,
-    pip: &Path,
-    args: &[&str],
-    _stage: BootstrapStage,
-) -> Result<(), BootstrapError> {
+async fn stream_pip_install(emit: &Emitter, inv: &PipInvocation) -> Result<(), BootstrapError> {
     use std::sync::{Arc, Mutex};
     use std::collections::VecDeque;
 
-    let mut cmd = Command::new(pip);
-    cmd.args(args);
+    // T3 HOOK (log persistence): tee every line emitted below to the
+    // bootstrap log file as well as the `bootstrap:log` event.
+    let mut cmd = Command::new(&inv.program);
+    cmd.args(&inv.args);
+    cmd.envs(inv.env.iter().map(|(k, v)| (k.as_str(), v.as_str())));
     cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
     cmd.stdout(std::process::Stdio::piped());
     cmd.stderr(std::process::Stdio::piped());
@@ -292,4 +297,33 @@ async fn stream_pip_install(
         )));
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn every_step_runs_python_dash_m_pip() {
+        let py = Path::new(r"C:\rt\venvs\x-cu124\Scripts\python.exe");
+        let rt = Path::new(r"C:\rt");
+        let steps = [
+            PipStep::Torch,
+            PipStep::TransformerLens,
+            PipStep::SaeLens,
+            PipStep::Extras(PathBuf::from(r"C:\rt\req.txt")),
+            PipStep::Sidecar(PathBuf::from(r"C:\src\sidecar")),
+            PipStep::ReinstallSidecar(PathBuf::from(r"C:\src\sidecar")),
+        ];
+        for v in [CudaVariant::Cu124, CudaVariant::Cpu] {
+            for step in &steps {
+                let inv = pip_command_for_step(step, v, py, rt);
+                assert_eq!(inv.program, py, "{step:?}");
+                assert_eq!(&inv.args[..3], ["-m", "pip", "install"], "{step:?}");
+            }
+        }
+        let torch = pip_command_for_step(&PipStep::Torch, CudaVariant::Cu124, py, rt);
+        assert!(torch.args.iter().any(|a| a == "--no-cache-dir"));
+        assert!(torch.args.iter().any(|a| a == CudaVariant::Cu124.pip_index_url()));
+    }
 }

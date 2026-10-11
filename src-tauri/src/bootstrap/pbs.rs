@@ -1,4 +1,4 @@
-use super::{errors::BootstrapError, events::*};
+use super::{errors::BootstrapError, events::*, layout};
 use futures_util::StreamExt;
 use std::path::Path;
 use tokio::io::AsyncWriteExt;
@@ -42,8 +42,20 @@ pub async fn download_and_extract(
         return Err(BootstrapError::Download(format!("HTTP {}", resp.status())));
     }
 
+    // Download + extract into a staging subfolder so a half-finished attempt
+    // never mixes with the root, and re-extraction never touches venvs.
+    let staging = runtime_dir.join(STAGING_DIR);
+    if staging.exists() {
+        tokio::fs::remove_dir_all(&staging)
+            .await
+            .map_err(|e| BootstrapError::Io(format!("clear pbs staging: {e}")))?;
+    }
+    tokio::fs::create_dir_all(&staging)
+        .await
+        .map_err(|e| BootstrapError::Io(format!("mkdir pbs staging: {e}")))?;
+
     let total = resp.content_length().unwrap_or(0);
-    let tmp_path = runtime_dir.join("pbs.tar.gz");
+    let tmp_path = staging.join("pbs.tar.gz");
     let mut file = tokio::fs::File::create(&tmp_path)
         .await
         .map_err(|e| BootstrapError::Io(e.to_string()))?;
@@ -93,12 +105,12 @@ pub async fn download_and_extract(
     // Extract tar.gz on a blocking thread (tar crate is sync).
     emit.stage(BootstrapStage::ExtractingPbs, "extracting Python runtime...");
     let tmp_path_clone = tmp_path.clone();
-    let runtime_dir_clone = runtime_dir.to_path_buf();
+    let staging_clone = staging.clone();
     tokio::task::spawn_blocking(move || -> Result<(), String> {
         let file = std::fs::File::open(&tmp_path_clone).map_err(|e| e.to_string())?;
         let gz = flate2::read::GzDecoder::new(file);
         let mut archive = tar::Archive::new(gz);
-        archive.unpack(&runtime_dir_clone).map_err(|e| e.to_string())?;
+        archive.unpack(&staging_clone).map_err(|e| e.to_string())?;
         Ok(())
     })
     .await
@@ -106,28 +118,60 @@ pub async fn download_and_extract(
     .map_err(BootstrapError::Extract)?;
 
     // python-build-standalone extracts into a `python/` subdirectory — move its
-    // contents up one level so `runtime_dir/python.exe` is the canonical path.
-    let py_subdir = runtime_dir.join("python");
-    if py_subdir.exists() {
-        let mut entries = tokio::fs::read_dir(&py_subdir)
-            .await
-            .map_err(|e| BootstrapError::Io(e.to_string()))?;
-        while let Some(entry) = entries
-            .next_entry()
-            .await
-            .map_err(|e| BootstrapError::Io(e.to_string()))?
+    // contents up to the runtime root so `runtime_dir/python.exe` is the
+    // canonical path. Same-named leftovers from a half-finished earlier
+    // extraction are replaced; venv folders and pointer files are never touched.
+    let py_subdir = staging.join("python");
+    let mut entries = tokio::fs::read_dir(&py_subdir)
+        .await
+        .map_err(|e| BootstrapError::Extract(format!("no python/ in archive: {e}")))?;
+    while let Some(entry) = entries
+        .next_entry()
+        .await
+        .map_err(|e| BootstrapError::Io(e.to_string()))?
+    {
+        let name = entry.file_name();
+        if PROTECTED_ROOT_NAMES
+            .iter()
+            .any(|p| name.to_string_lossy().eq_ignore_ascii_case(p))
         {
-            let src = entry.path();
-            let dst = runtime_dir.join(entry.file_name());
-            tokio::fs::rename(&src, &dst)
-                .await
-                .map_err(|e| BootstrapError::Io(format!("move {}: {}", src.display(), e)))?;
+            tracing::warn!("pbs archive entry {name:?} collides with runtime layout; skipped");
+            continue;
         }
-        let _ = tokio::fs::remove_dir_all(&py_subdir).await;
+        let src = entry.path();
+        let dst = runtime_dir.join(&name);
+        if dst.is_dir() {
+            tokio::fs::remove_dir_all(&dst).await
+        } else if dst.exists() {
+            tokio::fs::remove_file(&dst).await
+        } else {
+            Ok(())
+        }
+        .map_err(|e| BootstrapError::Io(format!("replace {}: {}", dst.display(), e)))?;
+        tokio::fs::rename(&src, &dst)
+            .await
+            .map_err(|e| BootstrapError::Io(format!("move {}: {}", src.display(), e)))?;
     }
+    let _ = tokio::fs::remove_dir_all(&staging).await;
 
-    let _ = tokio::fs::remove_file(&tmp_path).await;
+    // Completion marker: python.exe without this is a half-extracted interpreter.
+    tokio::fs::write(runtime_dir.join(layout::PBS_MARKER), PBS_VERSION)
+        .await
+        .map_err(|e| BootstrapError::Io(format!("pbs marker: {e}")))?;
 
     emit.progress(BootstrapStage::ExtractingPbs, "python runtime ready", 1.0);
     Ok(())
 }
+
+const STAGING_DIR: &str = "pbs-staging";
+
+/// Root names owned by the venv layout; PBS extraction must never replace them.
+const PROTECTED_ROOT_NAMES: &[&str] = &[
+    layout::LEGACY_VENV,
+    layout::VENVS_DIR,
+    layout::ACTIVE_FILE,
+    layout::ACTIVE_TMP_FILE,
+    layout::READY_MARKER,
+    layout::SIDECAR_HASH_FILE,
+    STAGING_DIR,
+];

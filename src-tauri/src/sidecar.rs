@@ -1,7 +1,7 @@
 // sidecar.rs — Phase 2: full sidecar lifecycle manager
 //
 // Phase 8.3: Python resolution uses managed-runtime-first strategy:
-//   1. Managed venv:  %LOCALAPPDATA%/Pry/runtime/venv/Scripts/python.exe
+//   1. Managed venv:  the venv named by %LOCALAPPDATA%/Pry/runtime/active.json
 //   2. Env override:  PRY_PYTHON_OVERRIDE
 //   3. System Python: which python / python3  (DEV MODE fallback)
 //
@@ -177,7 +177,7 @@ impl Drop for SidecarHandle {
 /// Indicates where the Python executable came from.
 #[derive(Debug)]
 pub enum PythonSource {
-    /// %LOCALAPPDATA%/Pry/runtime/venv/Scripts/python.exe — managed installer runtime
+    /// Active venv from %LOCALAPPDATA%/Pry/runtime/active.json — managed installer runtime
     ManagedRuntime,
     /// PRY_PYTHON_OVERRIDE env var — advanced user escape hatch
     EnvOverride,
@@ -188,17 +188,14 @@ pub enum PythonSource {
 /// Find the Python executable using managed-runtime-first resolution.
 ///
 /// Priority:
-///   1. Managed venv  (bootstrap::is_runtime_ready() + venv path exists)
+///   1. Managed venv  (active.json pointer, health Ok/UpdateAvailable)
 ///   2. PRY_PYTHON_OVERRIDE env var
 ///   3. System PATH  (dev mode — cargo tauri dev without managed runtime)
 fn find_python() -> anyhow::Result<(PathBuf, PythonSource)> {
-    // 1. Managed runtime
-    if crate::bootstrap::is_runtime_ready() {
-        if let Ok(runtime_dir) = crate::bootstrap::runtime_dir() {
-            let venv_python = runtime_dir.join("venv").join("Scripts").join("python.exe");
-            if venv_python.exists() {
-                return Ok((venv_python, PythonSource::ManagedRuntime));
-            }
+    // 1. Managed runtime: the venv named by runtime\active.json
+    if let Ok(venv_python) = crate::bootstrap::active_runtime_python() {
+        if venv_python.exists() {
+            return Ok((venv_python, PythonSource::ManagedRuntime));
         }
     }
 

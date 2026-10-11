@@ -1,5 +1,8 @@
 import { invoke } from '@tauri-apps/api/core';
+import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { isTauri } from './is-tauri';
+import type { RuntimeUpdateStatus } from './runtime-update';
+export type { RuntimeUpdateStatus } from './runtime-update';
 export type { TokenInfo, AttentionLayer, FeatureHit, TokenFeatures, GenerateResponse } from './types';
 
 // ---------------------------------------------------------------------------
@@ -167,6 +170,32 @@ export async function bootstrapRuntime(): Promise<void> {
   } catch (e) {
     throw new Error(formatTauriError(e));
   }
+}
+
+export async function runtimeUpdateStatus(): Promise<RuntimeUpdateStatus | null> {
+  if (!isTauri()) return null;
+  try {
+    return await invoke<RuntimeUpdateStatus>('runtime_update_status');
+  } catch (e) {
+    throw new Error(formatTauriError(e));
+  }
+}
+
+/** Build a new engine venv beside the current one, switch to it, restart the sidecar. */
+export async function runtimeUpdate(): Promise<void> {
+  if (!isTauri()) return;
+  try {
+    await invoke('runtime_update');
+  } catch (e) {
+    throw new Error(formatTauriError(e));
+  }
+}
+
+export async function onRuntimeUpdateAvailable(
+  handler: (s: RuntimeUpdateStatus) => void,
+): Promise<UnlistenFn> {
+  if (!isTauri()) return () => {};
+  return listen<RuntimeUpdateStatus>('runtime:update-available', (e) => handler(e.payload));
 }
 
 export async function copyDiagnostic(): Promise<string> {
