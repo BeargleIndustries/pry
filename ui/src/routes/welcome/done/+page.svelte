@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Term from '$lib/components/Term.svelte';
   import { goto } from '$app/navigation';
   import { Sparkles, PlayCircle, ArrowRight, Copy } from 'lucide-svelte';
 
@@ -65,7 +66,7 @@
 
     <p class="mt-6 text-xs text-zinc-500">
       <span class="text-zinc-400">Find the copying heads</span> gives the model you just set up a short
-      test: 25 random word-pieces, then the same ones again. Pry then rings the attention heads that,
+      test: 25 random <Term key="word-pieces">word-pieces</Term>, then the same ones again. Pry then rings the <Term key="attention-head">attention heads</Term> that,
       the second time through, look at whatever came next last time. That is one way models copy.
     </p>
     <p class="mt-2 text-xs text-zinc-500">

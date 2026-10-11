@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Term from '$lib/components/Term.svelte';
   import { goto } from '$app/navigation';
   import { ArrowRight, ChevronDown } from 'lucide-svelte';
 
@@ -49,8 +50,8 @@
         <p>
           Pry is a desktop app for learning how language models work by looking inside one. It runs
           small, open models (like GPT-2) on your own computer and shows you what's going on
-          inside: which words the model pays attention to, and which concepts (we call them
-          features) light up as it reads.
+          inside: which words the model pays <Term key="attention">attention</Term> to, and which concepts (we call them
+          <Term key="feature">features</Term>) light up as it reads.
         </p>
         <p>
           Everything runs on your computer. The first launch downloads the tools Pry needs to run a

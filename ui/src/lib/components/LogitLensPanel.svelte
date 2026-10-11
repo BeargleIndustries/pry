@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Term from './Term.svelte';
   import type { LogitLensResponse } from '$lib/types';
   import { logitLensReadout } from '$lib/readouts';
   import Readout from './Readout.svelte';
@@ -59,7 +60,7 @@
   data-tip="logit-lens-heatmap"
 >
   <div class="flex items-baseline gap-2">
-    <h2 class="text-sm font-semibold text-zinc-100">Logit Lens</h2>
+    <h2 class="text-sm font-semibold text-zinc-100"><Term key="logit-lens">Logit Lens</Term></h2>
     <span class="text-xs text-zinc-600">Per-layer predictions</span>
     {#if loading}
       <span class="ml-auto inline-flex items-center gap-1.5 text-xs text-zinc-500">

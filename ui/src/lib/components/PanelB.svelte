@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Term from './Term.svelte';
   import type { GenerateResponse, TokenFeatures, AblateResponse, PresetDisplay } from '$lib/types';
   import FeatureCard from './FeatureCard.svelte';
   import Readout from './Readout.svelte';
@@ -105,8 +106,8 @@
 <section class="flex flex-col gap-4 rounded-lg border border-zinc-800 bg-zinc-950 p-5">
   <!-- Panel header -->
   <div class="flex items-baseline gap-2">
-    <h2 class="text-sm font-semibold text-zinc-100">Features</h2>
-    <span class="text-xs text-zinc-600">Concepts that lit up (SAE)</span>
+    <h2 class="text-sm font-semibold text-zinc-100"><Term key="feature">Features</Term></h2>
+    <span class="text-xs text-zinc-600">Concepts that lit up (<Term key="sae">SAE</Term>)</span>
     {#if response}
       {#if availableSaeLayers.length > 1}
         <div class="ml-auto flex items-center gap-1.5" data-tip="panel-b-layer-selector" data-tour="panel-b-layer-selector">

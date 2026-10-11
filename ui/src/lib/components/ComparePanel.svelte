@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Term from './Term.svelte';
   // Compare mode (T25): two prompts side by side. All diff logic is in
   // $lib/compare.ts; this component only lays it out.
   import type { CompareController } from '$lib/compare-run';
@@ -196,10 +197,10 @@
       {:else if attn && attn.ok}
         <p class="mb-3 text-xs text-zinc-500">
           {#if attn.mode === 'positions'}
-            Both prompts have the same number of tokens, so each head’s attention is compared position by position.
+            Both prompts have the same number of <Term key="token">tokens</Term>, so each <Term key="head">head</Term>’s attention is compared position by position.
             0% = the head spreads its attention exactly the same way; 100% = no overlap at all.
           {:else}
-            The prompts have different numbers of tokens, so positions don’t line up. Each head’s attention is split into
+            The prompts have different numbers of <Term key="token">tokens</Term>, so positions don’t line up. Each <Term key="head">head</Term>’s attention is split into
             three shares — the first token, the words in between, and the word itself — and those shares are compared.
             This is coarse: it can miss shifts between the words in between.
           {/if}
