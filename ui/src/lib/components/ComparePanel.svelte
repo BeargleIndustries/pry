@@ -11,7 +11,7 @@
     diffPredictions,
     featureName,
     featuresAt,
-    points,
+    changeLabel,
     type FeatureChange,
   } from '$lib/compare';
   import { pct, quoteToken } from '$lib/readouts';
@@ -79,7 +79,7 @@
       </button>
     </div>
     {#if compare.edited}
-      <p role="status" class="mt-2 text-xs text-amber-400">Prompts edited — press Compare to analyze the new text</p>
+      <p role="status" class="mt-2 text-xs text-amber-400">Prompts edited — press Run both to analyze the new text</p>
     {/if}
     {#if s.error}
       <p role="alert" class="mt-2 text-xs text-red-400">{s.error}</p>
@@ -89,7 +89,7 @@
   {#if !ready}
     <div class="flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 py-12">
       <p class="max-w-md text-center text-sm text-zinc-500">
-        Type two prompts that differ in one word, for example “doctor” vs “nurse”, and press Compare.
+        Type two prompts that differ in one word, for example “doctor” vs “nurse”, and press Run both.
       </p>
     </div>
   {:else}
@@ -142,7 +142,7 @@
                     class:text-emerald-400={r.change > 0}
                     class:text-rose-400={r.change < 0}
                     class:text-zinc-500={r.change === 0}>
-                    {r.approximate ? (r.change === 0 ? 'unclear' : `≥ ${points(r.change)}`) : points(r.change)}
+                    {changeLabel(r)}
                   </td>
                 </tr>
               {/each}

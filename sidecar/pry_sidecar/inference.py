@@ -125,7 +125,8 @@ def _stepwise_generate(
     Temperature 0 takes the argmax (identical to the old greedy generate) and
     reports the plain softmax. Above 0 it samples from softmax(logits / T)
     with a CPU generator seeded by ``seed``, so the same seed gives the same
-    tokens on any device. Stops at end-of-text; that token is not a step.
+    tokens on the same machine (GPU and CPU logits differ by ~1e-5, which can
+    flip a borderline draw across devices). Stops at end-of-text; that token is not a step.
     Returns (new token ids incl. a final EOS if hit, steps).
     """
     import torch
@@ -140,6 +141,7 @@ def _stepwise_generate(
     kv = HookedTransformerKeyValueCache.init_cache(model.cfg, model.cfg.device, 1)
     new_ids: list[int] = []
     steps: list[GenerationStep] = []
+    committed = ""
     step_input = prompt_tokens
     with torch.no_grad():
         for _ in range(max_new_tokens):
@@ -157,10 +159,16 @@ def _stepwise_generate(
             top2_vals, top2_ids = torch.topk(probs, 2)
             ru_idx = 1 if int(top2_ids[0]) == chosen else 0
             ru_id = int(top2_ids[ru_idx])
+            decoded = model.tokenizer.decode(new_ids)
+            if decoded.endswith("�"):
+                text = ""  # a character still waiting for its next byte
+            else:
+                text, committed = decoded[len(committed):], decoded
             steps.append(
                 GenerationStep(
                     token=model.to_single_str_token(chosen),
                     token_id=chosen,
+                    text=text,
                     probability=float(probs[chosen]),
                     runner_up=model.to_single_str_token(ru_id),
                     runner_up_probability=float(top2_vals[ru_idx]),

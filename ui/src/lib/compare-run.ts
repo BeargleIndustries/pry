@@ -89,6 +89,7 @@ export class CompareController {
     }
     s.running = true;
     s.error = null;
+    const gen = this.generation;
     try {
       await this.deps.ensureLoaded();
       const preset = this.deps.getSelectedPreset();
@@ -96,17 +97,22 @@ export class CompareController {
       // One after the other: the engine runs one model call at a time anyway.
       const a = await generateOne(preset, s.promptA, layer);
       const b = await generateOne(preset, s.promptB, layer);
+      // A model switch cleared things while this ran: drop the old model's results.
+      if (gen !== this.generation) return;
       s.a = a;
       s.b = b;
       s.positionIndex = 0;
     } catch (e) {
-      s.error = (e as { message?: string })?.message ?? String(e);
+      if (gen === this.generation) s.error = (e as { message?: string })?.message ?? String(e);
     } finally {
       s.running = false;
     }
   }
 
+  private generation = 0;
+
   clear() {
+    this.generation++;
     this.state.a = null;
     this.state.b = null;
     this.state.positionIndex = 0;

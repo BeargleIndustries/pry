@@ -80,5 +80,20 @@ def test_generate_stepwise_probs(gpt2_loaded, gpt2_client):
     body = ok.json()
     assert len(body["generation_steps"]) == 3
     assert set(body["generation_steps"][0]) == {
-        "token", "token_id", "probability", "runner_up", "runner_up_probability"
+        "token", "token_id", "text", "probability", "runner_up", "runner_up_probability"
     }
+
+
+def test_step_text_never_shows_broken_characters(gpt2_loaded):
+    """Emoji span several byte-level tokens; step ``text`` holds whole characters."""
+    from pry_sidecar.inference import run_generate
+
+    prompt = "I love you \u2764\ufe0f\u2764\ufe0f\u2764\ufe0f\u2764\ufe0f"
+    resp = run_generate(GenerateRequest(preset_id="gpt2-small", prompt=prompt, max_new_tokens=8), gpt2_loaded)
+    steps = resp.generation_steps
+    # The raw per-token strings do contain broken bytes for this prompt...
+    assert any("\ufffd" in s.token for s in steps)
+    # ...but the readable text never does, and it adds up to the decoded output.
+    assert all("\ufffd" not in s.text for s in steps)
+    assert any(s.text == "" for s in steps)
+    assert resp.generation == prompt + "".join(s.text for s in steps)

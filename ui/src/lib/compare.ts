@@ -358,3 +358,13 @@ export function compareSummary(
   parts.push(CORRELATION_NOTE);
   return parts.join(' ');
 }
+
+/**
+ * Table cell for a change. A bound (word missing from one top-10 list) points
+ * the right way: a gain is at least this big (≥), a loss at least this deep (≤).
+ */
+export function changeLabel(r: Pick<PredictionChange, 'change' | 'approximate'>): string {
+  if (!r.approximate) return points(r.change);
+  if (r.change === 0) return 'unclear';
+  return `${r.change > 0 ? '≥' : '≤'} ${points(r.change)}`;
+}
