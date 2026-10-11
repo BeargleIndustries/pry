@@ -1,11 +1,9 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { goto } from '$app/navigation';
-  import { listen, type UnlistenFn } from '@tauri-apps/api/event';
   import { Download, CheckCircle2 } from 'lucide-svelte';
   import { loadPreset, type LoadProgress } from '$lib/sidecar';
   import { fmtBytes } from '$lib/bootstrap-events';
-  import { isTauri } from '$lib/is-tauri';
 
   // LoadProgress is imported from $lib/sidecar — shared SSE event type.
 
@@ -23,10 +21,8 @@
   let bytesDownloaded = $state<number | undefined>(undefined);
   let bytesTotal = $state<number | undefined>(undefined);
   let error = $state<string | null>(null);
-  let unlistenEvt: UnlistenFn | null = null;
   let sseAbort: AbortController | null = null;
-  // H2 fix: guard against dual progress sources (Tauri events + SSE) both
-  // firing the ready-phase goto, which causes a double-navigation error.
+  // Guard against the ready-phase goto firing twice (double-navigation error).
   let doneFired = false;
   let retrying = $state(false);
 
@@ -87,18 +83,10 @@
       goto('/welcome/preset');
       return;
     }
-    if (isTauri()) {
-      // Prefer Tauri-emitted event channel if the sidecar rebroadcasts it.
-      unlistenEvt = await listen<LoadProgress>('preset_download_progress', (e) =>
-        applyEvent(e.payload),
-      );
-    }
     await startSse();
   });
 
   onDestroy(() => {
-    unlistenEvt?.();
-    unlistenEvt = null;
     sseAbort?.abort();
     sseAbort = null;
   });
@@ -106,7 +94,7 @@
   const pct = $derived(Math.max(0, Math.min(100, Math.round(progress * 100))));
   const phaseLabel = $derived(
     phase === 'model' ? 'Downloading model weights' :
-    phase === 'sae' ? 'Downloading SAE features' :
+    phase === 'sae' ? 'Downloading the feature detector (SAE)' :
     'Ready',
   );
 </script>
@@ -115,8 +103,8 @@
   <div class="mb-1 font-mono text-xs uppercase tracking-widest text-indigo-400">step 05</div>
   <h2 class="mb-2 text-2xl font-semibold text-zinc-100">Downloading {presetId}</h2>
   <p class="mb-6 text-sm text-zinc-400">
-    Pulling weights and sparse autoencoder features from HuggingFace. Downloads are cached — next
-    time this is instant.
+    Downloading the model and its feature detector (SAE) from HuggingFace. They're saved on
+    your computer, so you only download them once.
   </p>
 
   {#if error}
@@ -170,7 +158,7 @@
       <div class="h-px w-4 bg-zinc-800"></div>
       <div class="flex items-center gap-2">
         <div class="h-1.5 w-1.5 rounded-full {phase === 'sae' || phase === 'ready' ? 'bg-indigo-500' : 'bg-zinc-700'}"></div>
-        <span>SAE features</span>
+        <span>Features</span>
       </div>
       <div class="h-px w-4 bg-zinc-800"></div>
       <div class="flex items-center gap-2">

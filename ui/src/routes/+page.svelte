@@ -331,7 +331,7 @@
   const handleFeatureAblation = () => analysis.runFeatureAblation();
   const handlePatching = (cleanPrompt: string, corruptedPrompt: string, patchType: 'head' | 'mlp' | 'resid') =>
     analysis.patching(cleanPrompt, corruptedPrompt, patchType);
-  const handleCircuit = (source: 'dla' | 'patching', threshold?: number) => analysis.circuit(source, threshold);
+  const handleCircuit = (threshold?: number) => analysis.circuit('dla', threshold);
 
   function handleExportJSON() {
     const data = {
@@ -526,13 +526,13 @@
     },
     {
       id: 'circuit',
-      label: 'Circuit Map',
-      title: 'Circuit view — a wiring diagram showing how attention heads and processing layers connect for this prediction.',
+      label: 'Key parts',
+      title: "The attention heads and layers that pushed this prediction the most. It doesn't show how they connect.",
     },
   ];
   const rightTabs: TabDef[] = [
     { id: 'features', label: 'Features', title: 'Internal concepts the model activated for each word — what it "knew" while processing your prompt.' },
-    { id: 'predictions', label: 'Predictions', title: "What the model thinks the next word should be, with its confidence in each guess." },
+    { id: 'predictions', label: 'Predictions', title: "What the model thinks the next word should be, and how likely it thinks each guess is." },
     { id: 'steering', label: 'Steering', title: "Turn a feature up or down and re-run — see how the model's answer shifts." },
   ];
   let leftActiveTab = $state('attention');
@@ -546,7 +546,7 @@
     } else if (tabId === 'dla' && !st.dlaResponse && !st.dlaLoading && st.response) {
       handleDLA();
     } else if (tabId === 'circuit' && !st.circuitResponse && !st.circuitLoading && st.response) {
-      handleCircuit('dla');
+      handleCircuit();
     }
   }
 
@@ -566,7 +566,7 @@
   // Narrow-mode left sub-tabs handler
   function onNarrowLeftTabChange(tabId: string) {
     if (tabId === 'circuit' && !st.circuitResponse && !st.circuitLoading && st.response) {
-      handleCircuit('dla');
+      handleCircuit();
     } else if (tabId === 'logit-lens' && !st.logitLensResponse && !st.logitLensLoading && st.response) {
       handleLogitLens();
     } else if (tabId === 'dla' && !st.dlaResponse && !st.dlaLoading && st.response) {

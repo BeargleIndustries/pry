@@ -108,6 +108,14 @@
 
   const NOT_DEFINED_MSG = 'Not defined for the first word: it can only look at itself.';
 
+  // The sidecar only keeps attention for the first 64 words of long prompts.
+  const ATTENTION_LIMIT = 64;
+  const truncated = $derived(response?.attention_truncated === true);
+  const focusPastLimit = $derived(truncated && effectiveFocusArrayPos >= ATTENTION_LIMIT);
+  const nullCellMsg = $derived(
+    focusPastLimit ? `No attention data past the first ${ATTENTION_LIMIT} words.` : NOT_DEFINED_MSG,
+  );
+
   const aggOptions = $derived(focusMode === 'from' ? FROM_OPTIONS : TO_OPTIONS);
 
   // If the current aggregation isn't valid for this mode, fall back to the default.
@@ -120,6 +128,10 @@
     if (!response || nLayers === 0 || nHeads === 0) return [];
     const fi = effectiveFocusArrayPos;
     const grid: (number | null)[][] = [];
+    if (focusPastLimit) {
+      for (let l = 0; l < nLayers; l++) grid.push(new Array<number | null>(nHeads).fill(null));
+      return grid;
+    }
     for (let l = 0; l < nLayers; l++) {
       const row: (number | null)[] = [];
       for (let h = 0; h < nHeads; h++) {
@@ -304,13 +316,13 @@
 </script>
 
 <!-- =========================================================================
-     Panel A — Attention Visualization
+     Attention Visualization
      ========================================================================= -->
 <div class="rounded-xl border border-zinc-700/60 bg-zinc-900 p-5 shadow-xl">
   <!-- Panel header -->
   <div class="mb-4 flex items-center justify-between">
     <h2 class="text-sm font-semibold uppercase tracking-widest text-zinc-400">
-      Panel A — Attention
+      Attention
     </h2>
     {#if response}
       <span class="rounded-full border border-zinc-700 px-2 py-0.5 text-[10px] text-zinc-500">
@@ -334,6 +346,11 @@
       <p class="text-sm text-zinc-500">Attention visualization requires at least 2 tokens.</p>
     </div>
   {:else}
+    {#if truncated}
+      <p class="mb-3 rounded border border-amber-800/60 bg-amber-950/30 px-3 py-1.5 text-xs text-amber-300">
+        Showing the first {ATTENTION_LIMIT} words. Pry only keeps attention for the start of long prompts{focusPastLimit ? ', so the word you picked is past the cutoff' : ''}.
+      </p>
+    {/if}
     <!-- -----------------------------------------------------------------------
          Token strip
          ----------------------------------------------------------------------- -->
@@ -346,6 +363,7 @@
             onclick={() => { handleTokenClick(token.index); }}
             class={[
               'rounded px-2 py-1 font-mono text-xs transition-all',
+              truncated && tokens.indexOf(token) >= ATTENTION_LIMIT ? 'opacity-40' : '',
               token.index === effectiveFocusIdx
                 ? 'border border-indigo-500 bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-500/50'
                 : 'border border-zinc-700 bg-zinc-800 text-zinc-300 hover:border-zinc-500 hover:text-zinc-100',
@@ -568,7 +586,7 @@
                   rx="2"
                   style="cursor: pointer;"
                   role="gridcell"
-                  aria-label={rawVal === null ? `Layer ${l} Head ${h}: ${NOT_DEFINED_MSG}` : `Layer ${l} Head ${h} value ${rawVal.toFixed(3)}`}
+                  aria-label={rawVal === null ? `Layer ${l} Head ${h}: ${nullCellMsg}` : `Layer ${l} Head ${h} value ${rawVal.toFixed(3)}`}
                   onmouseenter={(e) => onCellMouseEnter(l, h, e)}
                   onmouseleave={onCellMouseLeave}
                   onclick={() => { if (ablationMode) { onToggleAblation?.(l, h); } else { onCellClick(l, h); } }}
@@ -598,7 +616,7 @@
           >
             <span class="text-zinc-300">L{tooltipLayer} H{tooltipHead}</span>
             <span class="mx-1.5 text-zinc-600">·</span>
-            <span class="font-mono text-indigo-300">{tv === null ? NOT_DEFINED_MSG : tv.toFixed(4)}</span>
+            <span class="font-mono text-indigo-300">{tv === null ? nullCellMsg : tv.toFixed(4)}</span>
           </div>
         {/if}
       </div>

@@ -2,12 +2,14 @@
   import { goto } from '$app/navigation';
   import { Sparkles, PlayCircle, ArrowRight } from 'lucide-svelte';
 
-  function finish(withDemo: boolean) {
+  function finish(withTour: boolean) {
     localStorage.setItem('pry:onboarding_done', 'true');
     localStorage.removeItem('pry:onboarding_step');
-    if (withDemo) {
-      goto('/?demo=induction-heads');
+    if (withTour) {
+      goto('/?tutorial=1');
     } else {
+      // Skipping: don't auto-start the tour. It's still under the ? icon.
+      localStorage.setItem('pry:tutorial_seen', 'true');
       goto('/');
     }
   }
@@ -41,7 +43,7 @@
         class="group inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 font-medium text-white transition hover:bg-indigo-500 hover:shadow-[0_0_24px_-4px_rgba(99,102,241,0.8)]"
       >
         <PlayCircle class="h-4 w-4" />
-        Run the first demo
+        Take the tour
       </button>
       <button
         onclick={() => finish(false)}
@@ -53,8 +55,9 @@
     </div>
 
     <p class="mt-6 text-xs text-zinc-500">
-      The demo walks you through the classic induction-heads experiment on GPT-2 small. Takes
-      about 2 minutes.
+      The tour walks you through two guided demos on GPT-2 small: one on attention (which words
+      the model looks at) and one on features (which concepts light up). You can skip it and come
+      back anytime from the ? icon.
     </p>
   </div>
 </div>

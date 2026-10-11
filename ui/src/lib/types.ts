@@ -15,7 +15,10 @@ export interface FeatureHit {
   id: number;
   activation: number;
   description: string | null;
-  confidence: 'high' | 'medium' | 'low' | 'none' | null;
+  /** How much detail the feature's label has (based on label length, not accuracy). */
+  label_detail?: 'detailed' | 'short' | 'none' | null;
+  /** @deprecated One-release alias for `label_detail` (high→detailed, medium/low→short). */
+  confidence?: 'high' | 'medium' | 'low' | 'none' | null;
   /** Top-activating example snippets from Neuronpedia — may be absent on older responses */
   top_activating_snippets?: string[];
 }
@@ -36,6 +39,8 @@ export interface GenerateResponse {
   prompt: string;
   tokens: TokenInfo[];
   attention: AttentionLayer[];
+  /** True when attention was only captured for the first 64 tokens. */
+  attention_truncated?: boolean;
   sae_features: TokenFeatures[];
   sae_layer_used: number;
   top_predictions?: TopPrediction[];
@@ -195,6 +200,8 @@ export interface CircuitResponse {
   source: string;
   nodes: CircuitNode[];
   edges: CircuitEdge[];
+  /** How edges were computed; "none" means no edges are reported. */
+  edges_method?: string;
   timing_ms: Record<string, number>;
   status?: string;
 }

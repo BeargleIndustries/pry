@@ -22,7 +22,7 @@ Pry runs a small transformer locally on your machine, then gives you tools to lo
 - GPT-2 Small
 - Pythia-70M
 
-Gemma-2B and Gemma-9B support is planned.
+Support for Google's Gemma-2-2B is planned.
 
 ## System Requirements
 

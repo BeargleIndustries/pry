@@ -6,7 +6,7 @@ export const advancedDrivenSteps: DrivenStep[] = [
   {
     id: 'adv.1',
     blurb:
-      "Click the Predictions tab on the right panel. This is the model's ranked list of guesses for the next word, sorted by confidence.",
+      "Click the Predictions tab on the right panel. This is the model's ranked list of guesses for the next word, sorted by probability.",
     why:
       "This tab shows you where the model landed. The attention and features tabs explain *how* it got there. Predictions shows you *what it actually decided*. Having both visible at the same time is the whole point of the split layout.",
     target: null,
@@ -28,9 +28,9 @@ export const advancedDrivenSteps: DrivenStep[] = [
   {
     id: 'adv.3',
     blurb:
-      "Click the DLA tab on the left. This chart shows which specific parts of the model pushed toward or against the predicted word. Blue bars helped, red bars fought it.",
+      "Click the Why (DLA) tab on the left. This chart shows which specific parts of the model pushed toward or against the predicted word. Blue bars helped, red bars fought it.",
     why:
-      "If the model predicts 'mat,' this chart shows which of its 144 heads and 12 processing layers most wanted that answer. The tallest blue bar is the part that pushed hardest for 'mat.' The tallest red bar wanted something else. Once you know which parts are responsible, you can start asking how they connect to each other.",
+      "If the model predicts 'mat,' this chart shows which of its attention heads and processing layers (144 heads and 12 layers in GPT-2 small) most wanted that answer. The tallest blue bar is the part that pushed hardest for 'mat.' The tallest red bar wanted something else. It's a simplified estimate, so treat it as a list of suspects worth testing, not a final verdict.",
     target: null,
     action: (ctx) => {
       ctx.setLeftTab?.('dla');

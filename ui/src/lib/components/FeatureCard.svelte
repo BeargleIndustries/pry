@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { FeatureHit, TokenFeatures } from '$lib/types';
+  import { isNamedFeature, labelDetailOf } from '$lib/feature-label';
 
   interface Props {
     hit: FeatureHit;
@@ -16,9 +17,8 @@
 
   const barPct = $derived(maxActivation > 0 ? (hit.activation / maxActivation) * 100 : 0);
 
-  const isNamed = $derived(
-    hit.confidence === 'high' || hit.confidence === 'medium'
-  );
+  const isNamed = $derived(isNamedFeature(hit));
+  const labelDetail = $derived(labelDetailOf(hit));
 
   const barColor = $derived(
     isNamed ? 'bg-indigo-500' : 'bg-slate-500'
@@ -115,7 +115,9 @@
   {#if isNamed && hit.description}
     <p class="mb-2 text-xs text-zinc-300">
       "{hit.description}"
-      <span class="ml-1 text-zinc-600">· confidence: {hit.confidence}</span>
+      {#if labelDetail !== 'none'}
+        <span class="ml-1 text-zinc-600">· {labelDetail === 'detailed' ? 'detailed label' : 'short label'}</span>
+      {/if}
     </p>
   {:else}
     <p class="mb-2 text-xs text-zinc-600 italic">
