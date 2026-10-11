@@ -32,6 +32,7 @@ from .schemas import (
     DLARequest,
     DLAResponse,
     FeatureHit,
+    GenerationStep,
     GenerateRequest,
     GenerateResponse,
     HeadScore,
@@ -114,6 +115,59 @@ def _generate_continuation(model, prompt_tokens, max_new_tokens: int) -> str:
     if eos is not None and eos in new_ids:
         new_ids = new_ids[: new_ids.index(eos)]  # generate pads with EOS after stopping
     return model.to_string(new_ids) if new_ids else ""
+
+
+def _stepwise_generate(
+    model, prompt_tokens, max_new_tokens: int, temperature: float, seed: Optional[int]
+) -> tuple[list[int], list[GenerationStep]]:
+    """Write up to ``max_new_tokens`` tokens one at a time, recording each pick.
+
+    Temperature 0 takes the argmax (identical to the old greedy generate) and
+    reports the plain softmax. Above 0 it samples from softmax(logits / T)
+    with a CPU generator seeded by ``seed``, so the same seed gives the same
+    tokens on any device. Stops at end-of-text; that token is not a step.
+    Returns (new token ids incl. a final EOS if hit, steps).
+    """
+    import torch
+    from transformer_lens.past_key_value_caching import HookedTransformerKeyValueCache
+
+    eos = getattr(getattr(model, "tokenizer", None), "eos_token_id", None)
+    gen = None
+    if temperature > 0:
+        gen = torch.Generator(device="cpu")
+        gen.manual_seed(int(seed if seed is not None else 0))
+
+    kv = HookedTransformerKeyValueCache.init_cache(model.cfg, model.cfg.device, 1)
+    new_ids: list[int] = []
+    steps: list[GenerationStep] = []
+    step_input = prompt_tokens
+    with torch.no_grad():
+        for _ in range(max_new_tokens):
+            logits = model(step_input, return_type="logits", past_kv_cache=kv)
+            final = logits[0, -1, :].float()
+            if temperature > 0:
+                probs = torch.softmax(final / temperature, dim=-1).cpu()
+                chosen = int(torch.multinomial(probs, 1, generator=gen).item())
+            else:
+                probs = torch.softmax(final, dim=-1).cpu()
+                chosen = int(final.argmax().item())
+            new_ids.append(chosen)
+            if eos is not None and chosen == eos:
+                break
+            top2_vals, top2_ids = torch.topk(probs, 2)
+            ru_idx = 1 if int(top2_ids[0]) == chosen else 0
+            ru_id = int(top2_ids[ru_idx])
+            steps.append(
+                GenerationStep(
+                    token=model.to_single_str_token(chosen),
+                    token_id=chosen,
+                    probability=float(probs[chosen]),
+                    runner_up=model.to_single_str_token(ru_id),
+                    runner_up_probability=float(top2_vals[ru_idx]),
+                )
+            )
+            step_input = torch.tensor([[chosen]], device=prompt_tokens.device)
+    return new_ids, steps
 
 
 # Word-count bucket of an auto-interp label -> how detailed the label is.
@@ -381,31 +435,23 @@ def run_generate(req: GenerateRequest, loaded: LoadedModel) -> GenerateResponse:
         except Exception:
             pass  # non-critical — degrade gracefully
 
-        # -- optional generation --------------------------------------------
+        # -- optional generation (T26: stepwise, with per-step chances) -------
         generation: Optional[str] = None
+        generation_steps: list[GenerationStep] = []
+        seed_used: Optional[int] = None
         if req.max_new_tokens > 0:
-            with torch.no_grad():
-                gen_output = model.generate(
-                    req.prompt,
-                    max_new_tokens=req.max_new_tokens,
-                    temperature=0.0,
-                    # H4 fix: do_sample=False is redundant with temperature=0.0 and
-                    # may warn/error in some TL versions. Pass only what's needed.
+            if req.temperature > 0:
+                seed_used = (
+                    req.seed if req.seed is not None
+                    else int(torch.randint(0, 2**31 - 1, (1,)).item())
                 )
-            # H4 fix: TL.generate may return a tensor of token ids or a string
-            # depending on version. Use model.to_string() for tensor output to get
-            # a proper decoded string rather than repr(tensor) junk.
-            if isinstance(gen_output, str):
-                generation = gen_output
-            else:
-                try:
-                    generation = model.to_string(gen_output)
-                except Exception:
-                    # Fallback: to_string on a 2-D tensor needs squeeze
-                    try:
-                        generation = model.to_string(gen_output.squeeze(0))
-                    except Exception:
-                        generation = str(gen_output)
+            new_ids, generation_steps = _stepwise_generate(
+                model, tokens_tensor, req.max_new_tokens, req.temperature, seed_used
+            )
+            # Same text TL's generate(prompt) returned: prompt + continuation,
+            # special tokens (BOS/EOS) dropped.
+            all_ids = tokens_tensor[0].tolist() + new_ids
+            generation = model.tokenizer.decode(all_ids, skip_special_tokens=True)
 
     # Lock released — Neuronpedia fetches (network I/O) outside lock
 
@@ -447,6 +493,9 @@ def run_generate(req: GenerateRequest, loaded: LoadedModel) -> GenerateResponse:
         prompt=req.prompt,
         tokens=tokens,
         generation=generation,
+        generation_steps=generation_steps,
+        temperature_used=req.temperature,
+        seed_used=seed_used,
         attention=attention_layers,
         attention_truncated=attention_truncated,
         sae_features=sae_features,

@@ -350,6 +350,26 @@ export async function steerGenerate(
   });
 }
 
+/** T26: write a continuation and get each step's chosen token + runner-up. */
+export async function generateStepwise(
+  presetId: string,
+  prompt: string,
+  opts: { maxNewTokens: number; temperature: number; seed?: number | null },
+): Promise<import('./types').GenerateResponse> {
+  return request('/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      preset_id: presetId,
+      prompt,
+      max_new_tokens: opts.maxNewTokens,
+      temperature: opts.temperature,
+      ...(opts.seed != null ? { seed: opts.seed } : {}),
+      top_k_features: 1,
+    }),
+  });
+}
+
 export async function ablateHeads(
   presetId: string,
   prompt: string,

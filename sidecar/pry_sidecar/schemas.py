@@ -32,6 +32,11 @@ class GenerateRequest(BaseModel):
     max_new_tokens: int = Field(default=0, ge=0, le=256)  # 0 = analyze only
     sae_layer: int | None = Field(default=None, ge=0, le=47)  # override preset default
     top_k_features: int = Field(default=5, ge=1, le=50)
+    # T26: 0 = always take the most likely next token (the old behaviour).
+    # Above 0 the next token is drawn at random, flattened (>1) or sharpened (<1).
+    temperature: float = Field(default=0.0, ge=0.0, le=2.0)
+    # Fixes the random draws when temperature > 0. None = pick one and report it.
+    seed: int | None = Field(default=None, ge=0, le=2**31 - 1)
 
 
 # ---------------------------------------------------------------------------
@@ -103,11 +108,31 @@ class TopPrediction(BaseModel):
     rank: int
 
 
+class GenerationStep(BaseModel):
+    """One written token of the continuation (T26 "watch it write").
+
+    Probabilities come from the softmax at the sampling temperature; at
+    temperature 0 (greedy) they are the model's plain softmax (temperature 1),
+    since a temperature-0 softmax would just say 100% / 0%.
+    ``runner_up`` is the most likely token other than the chosen one, so when
+    sampling picks an unlikely token the runner-up can be the more likely one.
+    """
+    token: str
+    token_id: int
+    probability: float
+    runner_up: str | None = None
+    runner_up_probability: float | None = None
+
+
 class GenerateResponse(BaseModel):
     preset_id: str = "gpt2-small"
     prompt: str = ""
     tokens: list[TokenInfo] = Field(default_factory=list)
     generation: str | None = None
+    # T26: per-step data for the continuation (empty when max_new_tokens == 0).
+    generation_steps: list[GenerationStep] = Field(default_factory=list)
+    temperature_used: float = 0.0
+    seed_used: int | None = None  # set when temperature > 0
     attention: list[AttentionLayer] = Field(default_factory=list)
     # H3: set to True when attention was truncated to the seq cap (64 tokens).
     # Frontend should show a notice rather than silently displaying partial data.

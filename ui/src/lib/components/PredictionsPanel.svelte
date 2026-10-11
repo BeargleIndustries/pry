@@ -2,6 +2,7 @@
   import type { GenerateResponse, TopPrediction } from '$lib/types';
   import { predictionsReadout } from '$lib/readouts';
   import Readout from './Readout.svelte';
+  import WatchItWrite from './WatchItWrite.svelte';
 
   interface Props {
     response: GenerateResponse | null;
@@ -98,4 +99,6 @@
       {/each}
     </div>
   {/if}
+
+  <WatchItWrite {response} />
 </section>
