@@ -173,9 +173,7 @@ pub fn list_crash_logs() -> Result<Vec<String>, String> {
 fn redacts_hf_token() {
     let token = "hf_AbCdEfGhIjKlMnOpQrStUvWxYz01234567";
     let input = format!(
-        "HF_TOKEN={token}
-Authorization: Bearer {token}
-401 for token '{token}' in url"
+        "HF_TOKEN={token}\nAuthorization: Bearer {token}\n401 for token '{token}' in url"
     );
     let out = sanitize(&input);
     assert!(!out.contains(token), "token leaked: {out}");

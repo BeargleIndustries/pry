@@ -133,7 +133,8 @@ pub fn evaluate_preset(
     // Note if VRAM figure is driver-reported (not live)
     if hw.vram_used_mb.is_none() {
         notes.push(format!(
-            "VRAM estimate uses driver-reported total ({} MB) without live usage data.              Actual headroom may be lower if other apps are using the GPU.",
+            "VRAM estimate uses driver-reported total ({} MB) without live usage data. \
+             Actual headroom may be lower if other apps are using the GPU.",
             hw.vram_total_mb
         ));
     }
@@ -440,6 +441,10 @@ mod tests {
         assert!(
             compat.notes.iter().any(|n| n.contains("driver-reported") || n.contains("live usage")),
             "expected driver-reported VRAM note, got: {:?}", compat.notes
+        );
+        assert!(
+            compat.notes.iter().all(|n| !n.contains("  ")),
+            "note has a run of spaces: {:?}", compat.notes
         );
     }
 

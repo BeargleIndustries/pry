@@ -267,7 +267,8 @@ fn cpu_only_report(now: String, os: String) -> HardwareReport {
         backend: "cpu".into(),
         driver_version: None,
         probe_warnings: vec![
-            "No graphics card detected. Small models still work on your computer,              just more slowly."
+            "No graphics card detected. Small models still work on your computer, \
+             just more slowly."
                 .into(),
         ],
         probed_at: now,
@@ -348,6 +349,10 @@ mod tests {
         let r = cpu_only_report("t".into(), "o".into());
         assert!(r.probe_warnings.iter().all(|w| !w.contains("not supported")));
         assert!(r.probe_warnings.iter().any(|w| w.contains("Small models still work")));
+        assert!(
+            r.probe_warnings.iter().all(|w| !w.contains("  ")),
+            "warning has a run of spaces: {:?}", r.probe_warnings
+        );
     }
 
     #[cfg(target_os = "windows")]

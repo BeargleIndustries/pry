@@ -24,6 +24,7 @@
 use anyhow::{anyhow, Context};
 use std::collections::VecDeque;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::{Child, Command};
@@ -52,6 +53,9 @@ pub struct SidecarHandle {
     #[cfg(target_os = "windows")]
     job: Option<HANDLE>,
     shutdown_tx: Option<oneshot::Sender<()>>,
+    /// Shared with the exit watcher and heartbeat: a deliberate shutdown
+    /// marks it first so neither reports a crash.
+    crash_latch: Arc<CrashLatch>,
     pub stderr_buffer: Arc<Mutex<VecDeque<String>>>,
 }
 
@@ -71,6 +75,9 @@ unsafe impl Sync for SidecarHandle {}
 
 impl SidecarHandle {
     pub async fn shutdown(&mut self) -> anyhow::Result<()> {
+        // Mark the shutdown as deliberate BEFORE killing the child, so the
+        // exit watcher sees it when the process goes away.
+        self.crash_latch.begin_shutdown();
         // Signal heartbeat loop to stop
         if let Some(tx) = self.shutdown_tx.take() {
             let _ = tx.send(());
@@ -150,6 +157,7 @@ impl SidecarHandle {
 
 impl Drop for SidecarHandle {
     fn drop(&mut self) {
+        self.crash_latch.begin_shutdown();
         // M2 fix: signal heartbeat shutdown before touching the child so the
         // heartbeat loop doesn't log spurious health misses after drop.
         if let Some(tx) = self.shutdown_tx.take() {
@@ -386,6 +394,84 @@ fn assign_to_job(job: HANDLE, child: &Child) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Decides whether a sidecar death is reported. Both the process-exit watcher
+/// and the heartbeat ask it before emitting `sidecar:crashed`, so the event
+/// fires at most once per launch, and never after a deliberate shutdown
+/// (stop, restart, update, app exit).
+#[derive(Debug, Default)]
+pub struct CrashLatch {
+    shutting_down: AtomicBool,
+    crash_reported: AtomicBool,
+}
+
+impl CrashLatch {
+    /// Called before a deliberate shutdown; suppresses any later crash report.
+    pub fn begin_shutdown(&self) {
+        self.shutting_down.store(true, Ordering::SeqCst);
+    }
+
+    /// True for exactly one caller, and only if no shutdown was requested.
+    pub fn try_claim_crash(&self) -> bool {
+        !self.shutting_down.load(Ordering::SeqCst)
+            && !self.crash_reported.swap(true, Ordering::SeqCst)
+    }
+
+    /// A crash was reported or a shutdown requested: detectors can stop.
+    pub fn is_settled(&self) -> bool {
+        self.shutting_down.load(Ordering::SeqCst) || self.crash_reported.load(Ordering::SeqCst)
+    }
+}
+
+/// Emit `sidecar:crashed { stderr_tail, reason }`. The caller must have
+/// claimed the latch first.
+fn report_crash(
+    app: Option<&tauri::AppHandle>,
+    stderr_buffer: &Arc<Mutex<VecDeque<String>>>,
+    reason: &str,
+) {
+    use tauri::Emitter;
+    let snapshot: Vec<String> = {
+        // M1: recover from poisoned mutex
+        let buf = stderr_buffer.lock().unwrap_or_else(|e| e.into_inner());
+        buf.iter().rev().take(20).cloned().collect()
+    };
+    tracing::error!(
+        "SIDECAR CRASHED ({reason}) — emitting sidecar:crashed event. Last stderr tail:\n{}",
+        snapshot.join("\n")
+    );
+    if let Some(app) = app {
+        let payload = serde_json::json!({ "stderr_tail": snapshot, "reason": reason });
+        if let Err(e) = app.emit("sidecar:crashed", payload) {
+            tracing::warn!("failed to emit sidecar:crashed: {e}");
+        }
+    }
+}
+
+/// Block until process `pid` exits and return its exit code (if readable).
+/// Runs on a blocking thread. Err if the process can't be opened.
+#[cfg(target_os = "windows")]
+fn wait_for_process_exit(pid: u32) -> anyhow::Result<Option<u32>> {
+    use windows::Win32::System::Threading::{
+        GetExitCodeProcess, OpenProcess, WaitForSingleObject, INFINITE,
+        PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_SYNCHRONIZE,
+    };
+    // SAFETY: the handle comes from OpenProcess, is used only here, and is
+    // closed before returning.
+    unsafe {
+        let proc = OpenProcess(
+            PROCESS_SYNCHRONIZE | PROCESS_QUERY_LIMITED_INFORMATION,
+            false,
+            pid,
+        )
+        .context("OpenProcess(SYNCHRONIZE) failed for sidecar pid")?;
+        WaitForSingleObject(proc, INFINITE);
+        let mut code = 0u32;
+        let code = GetExitCodeProcess(proc, &mut code).ok().map(|_| code);
+        let _ = windows::Win32::Foundation::CloseHandle(proc);
+        Ok(code)
+    }
+}
+
 /// Header the sidecar checks against `PRY_TOKEN`.
 pub const TOKEN_HEADER: &str = "X-Pry-Token";
 
@@ -595,16 +681,53 @@ pub async fn launch_with_app(app_handle: Option<tauri::AppHandle>) -> anyhow::Re
         }
     });
 
-    // Heartbeat loop
+    let crash_latch = Arc::new(CrashLatch::default());
+
+    // Exit watcher: report a crash as soon as the engine process dies (the
+    // heartbeat alone takes ~30 s). Windows only; elsewhere the heartbeat is
+    // the only detector.
+    #[cfg(target_os = "windows")]
+    if let Some(pid) = child.id() {
+        let latch = crash_latch.clone();
+        let stderr_for_watcher = stderr_buffer.clone();
+        let watcher_app = app_handle.clone();
+        tokio::spawn(async move {
+            let code = match tokio::task::spawn_blocking(move || wait_for_process_exit(pid)).await {
+                Ok(Ok(code)) => code,
+                Ok(Err(e)) => {
+                    tracing::warn!("sidecar exit watcher unavailable, heartbeat only: {e:#}");
+                    return;
+                }
+                Err(e) => {
+                    tracing::warn!("sidecar exit watcher join error: {e}");
+                    return;
+                }
+            };
+            // Give the stderr reader a moment to drain the dying process's
+            // last lines into the buffer so the payload's tail is useful.
+            tokio::time::sleep(Duration::from_millis(250)).await;
+            if latch.try_claim_crash() {
+                let reason = match code {
+                    Some(c) => format!("engine process exited (code {c})"),
+                    None => "engine process exited (code unknown)".to_string(),
+                };
+                report_crash(watcher_app.as_ref(), &stderr_for_watcher, &reason);
+            } else {
+                tracing::info!("sidecar process exited during a deliberate shutdown");
+            }
+        });
+    }
+
+    // Heartbeat loop: backstop for a hung-but-alive engine.
     let (shutdown_tx, mut shutdown_rx) = oneshot::channel::<()>();
     let base_url = format!("http://127.0.0.1:{port}");
     let health_url = format!("{base_url}/health");
     let stderr_for_heartbeat = stderr_buffer.clone();
     let heartbeat_app = app_handle.clone();
     let heartbeat_token = token.clone();
+    let heartbeat_latch = crash_latch.clone();
 
     tokio::spawn(async move {
-        use tauri::Emitter;
         let client = reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(10))
             .user_agent(concat!("pry/", env!("CARGO_PKG_VERSION")))
@@ -625,6 +748,10 @@ pub async fn launch_with_app(app_handle: Option<tauri::AppHandle>) -> anyhow::Re
                 // "Starting download…". 10s is still responsive enough to
                 // detect a truly dead sidecar within 30s (3 misses × 10s).
                 _ = tokio::time::sleep(Duration::from_secs(10)) => {
+                    // The exit watcher already reported, or we're stopping.
+                    if heartbeat_latch.is_settled() {
+                        return;
+                    }
                     match client
                         .get(&health_url)
                         .header(TOKEN_HEADER, &heartbeat_token)
@@ -640,28 +767,13 @@ pub async fn launch_with_app(app_handle: Option<tauri::AppHandle>) -> anyhow::Re
 
                             if misses >= 3 {
                                 // H2 fix: emit a crash event so the UI can react
-                                // instead of the task dying silently. Also capture
-                                // the stderr tail for the payload.
-                                let snapshot: Vec<String> = {
-                                    // M1: recover from poisoned mutex
-                                    let buf = stderr_for_heartbeat
-                                        .lock()
-                                        .unwrap_or_else(|e| e.into_inner());
-                                    buf.iter().rev().take(20).cloned().collect()
-                                };
-                                tracing::error!(
-                                    "SIDECAR CRASHED — emitting sidecar:crashed event. \
-                                    Last stderr tail:\n{}",
-                                    snapshot.join("\n")
-                                );
-                                if let Some(app) = &heartbeat_app {
-                                    let payload = serde_json::json!({
-                                        "stderr_tail": snapshot,
-                                        "reason": "3 consecutive health misses",
-                                    });
-                                    if let Err(e) = app.emit("sidecar:crashed", payload) {
-                                        tracing::warn!("failed to emit sidecar:crashed: {e}");
-                                    }
+                                // instead of the task dying silently.
+                                if heartbeat_latch.try_claim_crash() {
+                                    report_crash(
+                                        heartbeat_app.as_ref(),
+                                        &stderr_for_heartbeat,
+                                        "3 consecutive health misses",
+                                    );
                                 }
                                 return;
                             }
@@ -680,13 +792,52 @@ pub async fn launch_with_app(app_handle: Option<tauri::AppHandle>) -> anyhow::Re
         #[cfg(target_os = "windows")]
         job: job_guard.map(|g| g.take()),
         shutdown_tx: Some(shutdown_tx),
+        crash_latch,
         stderr_buffer,
     })
 }
 
 #[cfg(test)]
 mod tests {
-    use super::generate_token;
+    use super::{generate_token, CrashLatch};
+
+    #[test]
+    fn crash_latch_reports_at_most_once() {
+        let latch = CrashLatch::default();
+        assert!(!latch.is_settled());
+        assert!(latch.try_claim_crash(), "first detector reports");
+        assert!(!latch.try_claim_crash(), "second detector is suppressed");
+        assert!(latch.is_settled());
+    }
+
+    #[test]
+    fn crash_latch_suppressed_during_shutdown() {
+        let latch = CrashLatch::default();
+        latch.begin_shutdown();
+        assert!(latch.is_settled());
+        assert!(!latch.try_claim_crash());
+    }
+
+    #[test]
+    fn crash_latch_shutdown_after_crash_reports_nothing_more() {
+        let latch = CrashLatch::default();
+        assert!(latch.try_claim_crash());
+        latch.begin_shutdown();
+        assert!(!latch.try_claim_crash());
+    }
+
+    #[test]
+    fn crash_latch_one_winner_across_threads() {
+        let latch = std::sync::Arc::new(CrashLatch::default());
+        let handles: Vec<_> = (0..8)
+            .map(|_| {
+                let l = latch.clone();
+                std::thread::spawn(move || l.try_claim_crash())
+            })
+            .collect();
+        let winners = handles.into_iter().map(|h| h.join().unwrap()).filter(|w| *w).count();
+        assert_eq!(winners, 1);
+    }
 
     #[test]
     fn token_is_64_lowercase_hex_chars() {
