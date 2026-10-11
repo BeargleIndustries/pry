@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy, untrack } from 'svelte';
-  import { CircleHelp, Settings, Download, FlaskConical } from 'lucide-svelte';
+  import { CircleHelp, Settings, Download, FlaskConical, GitCompareArrows } from 'lucide-svelte';
   import PryLogo from '$lib/components/icons/PryLogo.svelte';
   import { health, loadPreset, unloadPreset, listModels } from '$lib/sidecar';
   import type { LoadProgress, PresetInfo } from '$lib/sidecar';
@@ -43,6 +43,8 @@
   import { loadExperiments, applyExperiment } from '$lib/experiments/experiments';
   import type { Experiment, ExperimentActions, PatchType } from '$lib/experiments/experiments';
   import { demoFromParams } from '$lib/head-scores';
+  import { createCompare } from '$lib/compare.svelte';
+  import ComparePanel from '$lib/components/ComparePanel.svelte';
 
   // ---------------------------------------------------------------------------
   // Hardware probe state
@@ -141,6 +143,14 @@
   const st = analysis.state;
   const friendly = $derived(st.error ? friendlyError(st.error) : null);
   const promptEdited = $derived(analysis.isPromptEdited(prompt));
+
+  // Compare mode (T25): two prompts side by side. Swaps the workspace for the compare view.
+  const compare = createCompare({
+    getSelectedPreset: () => selectedPreset,
+    getSaeLayer: () => st.saeLayer,
+    ensureLoaded,
+  });
+  let compareMode = $state(false);
 
   let loadAbortController: AbortController | null = null;
 
@@ -331,6 +341,7 @@
       loadState = 'loaded';
       // Clear ALL analysis state when switching models
       analysis.clearForModelSwitch();
+      compare.clear();
       try { localStorage.setItem('pry:active_preset', presetId); } catch { /* ignore */ }
       // Repopulate available layers for the new preset
       try {
@@ -691,7 +702,7 @@
     />
     <EngineStatusChip compatibilities={presets} refreshKey={healthKey} />
 
-    {#if isWide}
+    {#if isWide && !compareMode}
       <!-- Inline prompt input (Wireshark filter-bar style) -->
       <div class="flex flex-1 items-center gap-2 ml-3">
         <span class="text-xs text-zinc-500 mr-1">Prompt</span>
@@ -744,6 +755,17 @@
         <FlaskConical class="h-4 w-4" />
         Experiments
       </button>
+      <button
+        onclick={() => (compareMode = !compareMode)}
+        aria-pressed={compareMode}
+        title={compareMode ? 'Back to the single-prompt view' : 'Compare two prompts side by side'}
+        class="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs {compareMode
+          ? 'bg-indigo-950/60 text-indigo-300 hover:bg-indigo-900/60'
+          : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100'}"
+      >
+        <GitCompareArrows class="h-4 w-4" />
+        Compare
+      </button>
       <div class="relative">
         <button onclick={() => { tourMenuOpen = !tourMenuOpen; }} aria-label="Open tutorial" data-tour="header-help"
           class="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100">
@@ -777,7 +799,7 @@
   </header>
 
   <!-- Narrow-mode prompt (below header) -->
-  {#if !isWide}
+  {#if !isWide && !compareMode}
     <div class="flex-shrink-0 border-b border-zinc-800 bg-zinc-900/50 px-4 py-2">
       <div class="flex gap-2">
         <span class="text-xs text-zinc-500 mr-1 self-center">Prompt</span>
@@ -842,7 +864,7 @@
   {/if}
 
   <!-- Shared token strip — below error/banner, above panels -->
-  {#if st.response}
+  {#if st.response && !compareMode}
     <div class="flex-shrink-0 border-b border-zinc-800 bg-zinc-900/50 px-4">
       <SharedTokenStrip
         tokens={st.response.tokens}
@@ -854,7 +876,11 @@
 
   <!-- Main workspace -->
   <div class="flex-1 overflow-hidden">
-    {#if isWide}
+    {#if compareMode}
+      <div class="h-full overflow-y-auto p-4">
+        <ComparePanel {compare} runDisabled={isRunDisabled} runDisabledReason={runButtonTooltip} />
+      </div>
+    {:else if isWide}
       <!-- Split mode -->
       <ResizableSplit>
         {#snippet left()}
