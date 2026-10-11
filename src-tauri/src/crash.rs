@@ -68,11 +68,7 @@ pub fn record_crash(context: &str, detail: &str) -> anyhow::Result<PathBuf> {
     }
 
     let sanitized = sanitize(&content);
-    let capped = if sanitized.len() > MAX_LOG_BYTES {
-        format!("{}\n[... truncated at {} bytes ...]", &sanitized[..MAX_LOG_BYTES], MAX_LOG_BYTES)
-    } else {
-        sanitized
-    };
+    let capped = truncate_utf8(sanitized, MAX_LOG_BYTES);
 
     std::fs::write(&path, capped)?;
     rotate_old_logs(&dir)?;
@@ -80,6 +76,19 @@ pub fn record_crash(context: &str, detail: &str) -> anyhow::Result<PathBuf> {
 }
 
 /// Strip username from paths and other identifying tokens.
+/// Cap `s` at `max_bytes`, cutting on a char boundary so multi-byte UTF-8
+/// never panics (this runs inside the panic hook, where a panic aborts).
+fn truncate_utf8(s: String, max_bytes: usize) -> String {
+    if s.len() <= max_bytes {
+        return s;
+    }
+    let mut end = max_bytes;
+    while !s.is_char_boundary(end) {
+        end -= 1;
+    }
+    format!("{}\n[... truncated at {} bytes ...]", &s[..end], max_bytes)
+}
+
 fn sanitize(input: &str) -> String {
     let mut out = input.to_string();
 
@@ -156,4 +165,20 @@ pub fn list_crash_logs() -> Result<Vec<String>, String> {
     entries.sort();
     entries.reverse(); // newest first
     Ok(entries)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::truncate_utf8;
+
+    #[test]
+    fn truncate_utf8_never_panics() {
+        // "—" is 3 bytes; every cut point inside it must back off safely.
+        let s = "a—".repeat(10);
+        for max in 0..s.len() {
+            let out = truncate_utf8(s.clone(), max);
+            assert!(out.contains("truncated"));
+        }
+        assert_eq!(truncate_utf8("short".into(), 100), "short");
+    }
 }
