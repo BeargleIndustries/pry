@@ -22,6 +22,16 @@
   } from '$lib/attention-agg';
   import { attentionReadout } from '$lib/readouts';
   import Readout from './Readout.svelte';
+  import {
+    DEFAULT_GEOMETRY,
+    LINE_THRESHOLD,
+    buildArcs,
+    hiddenCount,
+    isFocusArc,
+    linesHeight,
+  } from '$lib/attention-lines';
+  import { tutorialState } from '$lib/tutorial/tutorial-store.svelte';
+  import { tick } from 'svelte';
 
   // ---------------------------------------------------------------------------
   // Props
@@ -227,6 +237,8 @@
   function onCellClick(l: number, h: number) {
     expandedLayer = l;
     expandedHead = h;
+    // Remember the pick so the lines view shows the same head if the user switches.
+    linesPick = { layer: l, head: h };
   }
 
   function closeExpanded() {
@@ -358,6 +370,110 @@
 
   function seqToken(text: string): string {
     return displayToken(text.replace(/\n/g, '↵'));
+  }
+
+  // ---------------------------------------------------------------------------
+  // Lines view (T28): the default. The layer x head grid is the "Expert view".
+  // ---------------------------------------------------------------------------
+
+  let view = $state<'lines' | 'expert'>('lines');
+  // Ablation picks heads on the grid, and the guided tour talks about the grid,
+  // so both show the Expert view while they are on.
+  const forcedExpert = $derived(ablationMode || tutorialState.open);
+  const showExpert = $derived(view === 'expert' || forcedExpert);
+
+  type HeadPick = { layer: number; head: number };
+  /** Head the user picked for the lines view; null = pick automatically. */
+  let linesPick = $state<HeadPick | null>(null);
+
+  const validPick = $derived(
+    linesPick && linesPick.layer < nLayers && linesPick.head < nHeads ? linesPick : null,
+  );
+
+  // Auto: the head the current aggregation scores highest for the focused word,
+  // i.e. the brightest cell in the Expert grid. Ties go to the earliest head.
+  const autoHead = $derived.by((): HeadPick | null => {
+    let best: HeadPick | null = null;
+    let bestV = -Infinity;
+    for (let l = 0; l < rawGrid.length; l++) {
+      for (let h = 0; h < rawGrid[l].length; h++) {
+        const v = rawGrid[l][h];
+        if (v !== null && v > bestV) {
+          bestV = v;
+          best = { layer: l, head: h };
+        }
+      }
+    }
+    return best;
+  });
+
+  const linesHead = $derived<HeadPick>(validPick ?? autoHead ?? { layer: 0, head: 0 });
+  const aggLabel = $derived(aggOptions.find((o) => o.id === aggregation)?.label ?? aggregation);
+
+  const LINES_GEOM = DEFAULT_GEOMETRY;
+  const linesMatrix = $derived(attention[linesHead.layer]?.heads?.[linesHead.head] ?? []);
+  const linesN = $derived(Math.min(tokens.length, linesMatrix.length));
+  const linesArcs = $derived(buildArcs(linesMatrix, linesN, LINES_GEOM));
+  const linesHidden = $derived(hiddenCount(linesMatrix, linesN));
+  const linesFocus = $derived(effectiveFocusArrayPos < linesN ? effectiveFocusArrayPos : -1);
+  const focusArcs = $derived(linesArcs.filter((a) => isFocusArc(a, linesFocus, focusMode)));
+  const otherArcs = $derived(linesArcs.filter((a) => !isFocusArc(a, linesFocus, focusMode)));
+  const linesSvgW = LINES_GEOM.rightX - LINES_GEOM.leftX;
+  const linesSvgH = $derived(linesHeight(linesN, LINES_GEOM));
+  const linesHeadDesc = $derived(`layer ${linesHead.layer}, head ${linesHead.head}`);
+
+  // Readout follows whatever head is on screen.
+  const readoutHead = $derived<HeadPick | null>(
+    showExpert
+      ? expandedLayer !== null && expandedHead !== null
+        ? { layer: expandedLayer, head: expandedHead }
+        : null
+      : linesHead,
+  );
+
+  function setPickLayer(value: string) {
+    if (value === 'auto') {
+      linesPick = null;
+      return;
+    }
+    linesPick = { layer: Number(value), head: validPick?.head ?? linesHead.head };
+  }
+
+  function setPickHead(value: string) {
+    if (value === 'auto') {
+      linesPick = null;
+      return;
+    }
+    linesPick = { layer: validPick?.layer ?? linesHead.layer, head: Number(value) };
+  }
+
+  function weightPct(w: number): string {
+    return `${Math.round(w * 100)}%`;
+  }
+
+  // Word lists: click or arrow keys move the focus. Left = the word doing the
+  // looking (FROM), right = the word being looked at (TO).
+  let leftBtns = $state<(HTMLButtonElement | null)[]>([]);
+  let rightBtns = $state<(HTMLButtonElement | null)[]>([]);
+
+  function pickLineWord(pos: number, side: 'from' | 'to') {
+    const tok = tokens[pos];
+    if (!tok) return;
+    focusMode = side;
+    handleTokenClick(tok.index);
+  }
+
+  async function onLineWordKey(e: KeyboardEvent, pos: number, side: 'from' | 'to') {
+    let next = pos;
+    if (e.key === 'ArrowDown') next = Math.min(linesN - 1, pos + 1);
+    else if (e.key === 'ArrowUp') next = Math.max(0, pos - 1);
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = linesN - 1;
+    else return;
+    e.preventDefault();
+    pickLineWord(next, side);
+    await tick();
+    (side === 'from' ? leftBtns : rightBtns)[next]?.focus();
   }
 </script>
 
@@ -592,7 +708,7 @@
         text={attentionReadout(
           response,
           effectiveFocusArrayPos,
-          expandedLayer !== null && expandedHead !== null ? { layer: expandedLayer, head: expandedHead } : null,
+          readoutHead,
           focusMode,
         )}
       />
@@ -631,6 +747,41 @@
          Controls row: focus mode + aggregation
          ----------------------------------------------------------------------- -->
     <div class="mb-4 flex flex-wrap items-center gap-4">
+      <!-- View toggle (T28): Lines (default) or the layer x head grid -->
+      <div
+        class="flex items-center gap-1 rounded-md border border-zinc-700 bg-zinc-800/60 p-0.5"
+        role="group"
+        aria-label="Attention view"
+      >
+        <button
+          onclick={() => { view = 'lines'; }}
+          disabled={forcedExpert}
+          aria-pressed={!showExpert}
+          title={forcedExpert
+            ? ablationMode
+              ? 'Turn ablation off to see the lines view. Ablation picks heads on the grid.'
+              : 'The tour uses the Expert view.'
+            : 'Lines from each word to the earlier words it looks at.'}
+          class={[
+            'rounded px-3 py-1 text-xs transition-all disabled:cursor-not-allowed disabled:opacity-50',
+            !showExpert ? 'bg-indigo-500 text-white' : 'text-zinc-400 hover:text-zinc-200',
+          ].join(' ')}
+        >
+          Lines
+        </button>
+        <button
+          onclick={() => { view = 'expert'; }}
+          aria-pressed={showExpert}
+          title="Every layer and head at once, one cell each."
+          class={[
+            'rounded px-3 py-1 text-xs transition-all',
+            showExpert ? 'bg-indigo-500 text-white' : 'text-zinc-400 hover:text-zinc-200',
+          ].join(' ')}
+        >
+          Expert view
+        </button>
+      </div>
+
       <!-- Focus mode toggle -->
       <div class="flex items-center gap-1 rounded-md border border-zinc-700 bg-zinc-800/60 p-0.5">
         <button
@@ -746,7 +897,178 @@
     <!-- -----------------------------------------------------------------------
          Overview grid (SVG) or Expanded view (Canvas2D)
          ----------------------------------------------------------------------- -->
-    {#if expandedLayer !== null && expandedHead !== null}
+    {#if !showExpert}
+      <!-- Lines view (T28), the default -->
+      {@const focusWord = linesFocus >= 0 ? `"${displayToken(tokens[linesFocus]?.text ?? '')}"` : 'this word'}
+      <div data-tip="panel-a-lines">
+        <!-- Head picker -->
+        <div class="mb-2 flex flex-wrap items-center gap-3 text-xs">
+          <label class="flex items-center gap-1.5 text-zinc-500">
+            <span class="text-[10px] uppercase tracking-widest text-zinc-600">Layer</span>
+            <select
+              value={validPick ? String(validPick.layer) : 'auto'}
+              onchange={(e) => setPickLayer(e.currentTarget.value)}
+              class="rounded border border-zinc-700 bg-zinc-800 px-2 py-1 text-xs text-zinc-300 focus:border-indigo-500 focus:outline-none"
+            >
+              <option value="auto">Auto</option>
+              {#each { length: nLayers } as _, l (l)}
+                <option value={String(l)}>{l}</option>
+              {/each}
+            </select>
+          </label>
+          <label class="flex items-center gap-1.5 text-zinc-500">
+            <span class="text-[10px] uppercase tracking-widest text-zinc-600">Head</span>
+            <select
+              value={validPick ? String(validPick.head) : 'auto'}
+              onchange={(e) => setPickHead(e.currentTarget.value)}
+              class="rounded border border-zinc-700 bg-zinc-800 px-2 py-1 text-xs text-zinc-300 focus:border-indigo-500 focus:outline-none"
+            >
+              <option value="auto">Auto</option>
+              {#each { length: nHeads } as _, h (h)}
+                <option value={String(h)}>{h}</option>
+              {/each}
+            </select>
+          </label>
+        </div>
+        <p class="mb-3 text-[11px] leading-relaxed text-zinc-500">
+          {#if validPick}
+            Showing layer {linesHead.layer}, head {linesHead.head}. Set Layer or Head to Auto to let Pry pick.
+          {:else if autoHead}
+            Showing layer {linesHead.layer}, head {linesHead.head}: the head with the highest "{aggLabel}"
+            score for {focusWord} (the brightest cell in the Expert view). Change the Agg question or pick a head.
+          {:else}
+            No head has a "{aggLabel}" score for {focusWord}, so this shows layer 0, head 0. Pick a head above.
+          {/if}
+        </p>
+
+        <div class="overflow-x-auto">
+          <div class="w-fit">
+            <!-- Column headings -->
+            <div class="mb-1 flex items-end gap-2 text-[10px] uppercase tracking-widest text-zinc-600">
+              <span class="w-28 text-right">This word…</span>
+              <span style="width: {linesSvgW}px"></span>
+              <span class="w-28">…looks at these</span>
+            </div>
+            <div class="flex items-start gap-2">
+              <!-- Left: the word doing the looking -->
+              <div class="flex w-28 flex-col items-end" role="group" aria-label="Words doing the looking. Use the up and down arrow keys to move.">
+                {#each { length: linesN } as _, i (i)}
+                  {@const word = displayToken(tokens[i]?.text ?? '')}
+                  {@const on = i === linesFocus && focusMode === 'from'}
+                  <button
+                    bind:this={leftBtns[i]}
+                    onclick={() => pickLineWord(i, 'from')}
+                    onkeydown={(e) => onLineWordKey(e, i, 'from')}
+                    tabindex={i === Math.max(0, linesFocus) ? 0 : -1}
+                    aria-pressed={on}
+                    aria-label={`"${word}", word ${i + 1}. Show the words it looks at.`}
+                    title={word}
+                    style="height: {LINES_GEOM.rowHeight}px"
+                    class={[
+                      'max-w-full truncate rounded px-1.5 font-mono text-[11px] leading-none transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400',
+                      on
+                        ? 'bg-indigo-500/25 text-indigo-200'
+                        : i === linesFocus
+                          ? 'text-zinc-200'
+                          : 'text-zinc-400 hover:text-zinc-100',
+                    ].join(' ')}
+                  >
+                    {word}
+                  </button>
+                {/each}
+              </div>
+
+              <svg
+                width={linesSvgW}
+                height={linesSvgH}
+                viewBox="0 0 {linesSvgW} {linesSvgH}"
+                class="block flex-shrink-0"
+                role="img"
+                aria-label={`Attention lines for ${linesHeadDesc}. Each word on the left is joined to the earlier words it looks at on the right; darker lines mean more attention. ${linesArcs.length} lines shown, ${linesHidden} under ${weightPct(LINE_THRESHOLD)} hidden.`}
+              >
+                {#each otherArcs as a (`${a.from}-${a.to}`)}
+                  <line
+                    x1={a.x1}
+                    y1={a.y1}
+                    x2={a.x2}
+                    y2={a.y2}
+                    stroke="#a1a1aa"
+                    stroke-opacity={a.opacity * 0.3}
+                    stroke-width="1.5"
+                    pointer-events="none"
+                  />
+                {/each}
+                {#each focusArcs as a (`${a.from}-${a.to}`)}
+                  <line
+                    x1={a.x1}
+                    y1={a.y1}
+                    x2={a.x2}
+                    y2={a.y2}
+                    stroke="#818cf8"
+                    stroke-opacity={a.opacity}
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                  >
+                    <title>"{displayToken(tokens[a.from]?.text ?? '')}" looks at "{displayToken(tokens[a.to]?.text ?? '')}": {weightPct(a.weight)}</title>
+                  </line>
+                {/each}
+              </svg>
+
+              <!-- Right: the word being looked at -->
+              <div class="flex w-28 flex-col items-start" role="group" aria-label="Words being looked at. Use the up and down arrow keys to move.">
+                {#each { length: linesN } as _, i (i)}
+                  {@const word = displayToken(tokens[i]?.text ?? '')}
+                  {@const on = i === linesFocus && focusMode === 'to'}
+                  <button
+                    bind:this={rightBtns[i]}
+                    onclick={() => pickLineWord(i, 'to')}
+                    onkeydown={(e) => onLineWordKey(e, i, 'to')}
+                    tabindex={i === Math.max(0, linesFocus) ? 0 : -1}
+                    aria-pressed={on}
+                    aria-label={`"${word}", word ${i + 1}. Show the words that look at it.`}
+                    title={word}
+                    style="height: {LINES_GEOM.rowHeight}px"
+                    class={[
+                      'max-w-full truncate rounded px-1.5 font-mono text-[11px] leading-none transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400',
+                      on
+                        ? 'bg-indigo-500/25 text-indigo-200'
+                        : i === linesFocus
+                          ? 'text-zinc-200'
+                          : 'text-zinc-400 hover:text-zinc-100',
+                    ].join(' ')}
+                  >
+                    {word}
+                  </button>
+                {/each}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="mt-3 space-y-1 text-[11px] leading-relaxed text-zinc-500">
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <span class="flex items-center gap-1.5">
+              <svg width="28" height="8" aria-hidden="true">
+                <line x1="0" y1="4" x2="28" y2="4" stroke="#818cf8" stroke-opacity="0.15" stroke-width="2.5" />
+              </svg>
+              little attention
+            </span>
+            <span class="flex items-center gap-1.5">
+              <svg width="28" height="8" aria-hidden="true">
+                <line x1="0" y1="4" x2="28" y2="4" stroke="#818cf8" stroke-opacity="0.9" stroke-width="2.5" />
+              </svg>
+              the most attention in this head
+            </span>
+          </div>
+          <p>
+            Highlighted: the lines {focusMode === 'from' ? `from ${focusWord} to the words it looks at` : `into ${focusWord} from the words that look at it`}.
+            Click a word, or use the arrow keys, to move. A word can only look at itself and words before it.
+            Lines under {weightPct(LINE_THRESHOLD)} of a word's attention are hidden ({linesHidden} hidden).
+          </p>
+        </div>
+      </div>
+    {:else if expandedLayer !== null && expandedHead !== null}
       <!-- Expanded Canvas view -->
       <div class="rounded-lg border border-zinc-700 bg-zinc-950 p-4" data-tip="panel-a-head-detail">
         <div class="mb-3 flex items-center justify-between">
