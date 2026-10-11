@@ -17,15 +17,14 @@ from typing import Optional
 
 import requests
 
-from .presets import PRESETS
-from .registry import REGISTRY, LoadedModel
+from .presets import PRESETS, PresetManifest
+from .registry import REGISTRY, LoadedModel, ModelRegistry
 from .schemas import (
     AblateFeatureRequest,
     AblateHeadRequest,
     AblateResponse,
     AblationPrediction,
     AttentionLayer,
-    CircuitEdge,
     CircuitNode,
     CircuitRequest,
     CircuitResponse,
@@ -51,6 +50,33 @@ from .schemas import (
 )
 
 NEURONPEDIA_API = "https://www.neuronpedia.org/api/feature"
+
+
+def sae_hook_name(manifest: PresetManifest, layer: int) -> str:
+    """TransformerLens hook the preset's SAE was trained on, at ``layer``.
+
+    GPT-2 (jb) SAEs read ``hook_resid_pre``; Pythia (sm) SAEs read
+    ``hook_resid_post``. Always go through the manifest, never hardcode.
+    """
+    return f"blocks.{layer}.{manifest.sae.hook}"
+
+
+def _layer_mismatch_msg(requested: int, loaded_layer: int) -> str:
+    return (
+        f"This feature belongs to layer {requested} but the loaded feature map "
+        f"is for layer {loaded_layer}. Re-run after switching layers."
+    )
+
+
+# Word-count bucket of an auto-interp label -> how detailed the label is.
+# The bucket is NOT a confidence measure; ``confidence`` is kept on the wire
+# as a deprecated alias for one release.
+LABEL_DETAIL: dict[str, str] = {
+    "high": "detailed",
+    "medium": "short",
+    "low": "short",
+    "none": "none",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -109,9 +135,10 @@ def fetch_feature_description(
     release_id: str,
     feature_id: int,
 ) -> tuple[Optional[str], str]:
-    """Fetch a feature's auto-interp label. Returns (description, confidence).
+    """Fetch a feature's auto-interp label. Returns (description, length_bucket).
 
-    Confidence heuristic:
+    ``length_bucket`` is a label word-count heuristic, not a confidence
+    measure (map it through ``LABEL_DETAIL`` for the ``label_detail`` field):
       - high:   >=3 words, non-trivial
       - medium: 2 words
       - low:    1 word
@@ -127,16 +154,19 @@ def fetch_feature_description(
             desc = explanations[0].get("description")
         if not desc:
             return None, "none"
-        words = desc.strip().split()
-        if len(words) >= 3 and not all(w.startswith('"') or len(w) <= 2 for w in words):
-            confidence = "high"
-        elif len(words) >= 2:
-            confidence = "medium"
-        else:
-            confidence = "low"
-        return desc, confidence
+        return desc, _label_length_bucket(desc)
     except Exception:
         return None, "none"
+
+
+def _label_length_bucket(desc: str) -> str:
+    """Bucket a label by word count. Says nothing about whether it is right."""
+    words = desc.strip().split()
+    if len(words) >= 3 and not all(w.startswith('"') or len(w) <= 2 for w in words):
+        return "high"
+    if len(words) >= 2:
+        return "medium"
+    return "low"
 
 
 def fetch_top_activating_snippets(
@@ -200,21 +230,29 @@ def run_generate(req: GenerateRequest, loaded: LoadedModel) -> GenerateResponse:
         raise RuntimeError(f"unknown preset: {req.preset_id!r}")
     manifest = PRESETS[req.preset_id]
 
-    model = loaded.model
-    sae = loaded.sae
-    sae_layer = req.sae_layer if req.sae_layer is not None else loaded.sae_layer
-
     # Acquire per-preset lock for the entire inference operation to prevent
     # a concurrent unload from nulling the model mid-inference.
     lock = REGISTRY._get_lock(req.preset_id)
     with lock:
+        model = loaded.model
+        sae = loaded.sae
+        sae_layer = req.sae_layer if req.sae_layer is not None else loaded.sae_layer
+        if model is None or sae is None:
+            raise RuntimeError(f"model '{req.preset_id}' was unloaded during inference")
+        if sae_layer != loaded.sae_layer:
+            # The loaded SAE is trained for loaded.sae_layer only.
+            raise ValueError(
+                f"Asked for layer {sae_layer} but the loaded feature map is for "
+                f"layer {loaded.sae_layer}. Switch layers first."
+            )
+
         # -- tokenize --------------------------------------------------------
         tokens_tensor = model.to_tokens(req.prompt)
         token_strs = model.to_str_tokens(req.prompt)
         tokens = [TokenInfo(index=i, text=str(s)) for i, s in enumerate(token_strs)]
 
         # -- forward pass with cache ----------------------------------------
-        resid_hook_name = f"blocks.{sae_layer}.hook_resid_pre"
+        resid_hook_name = sae_hook_name(manifest, sae_layer)
 
         def names_filter(name: str) -> bool:
             return name.endswith("hook_pattern") or name == resid_hook_name
@@ -317,7 +355,6 @@ def run_generate(req: GenerateRequest, loaded: LoadedModel) -> GenerateResponse:
                 except Exception:
                     # Fallback: to_string on a 2-D tensor needs squeeze
                     try:
-                        import torch as _torch
                         generation = model.to_string(gen_output.squeeze(0))
                     except Exception:
                         generation = str(gen_output)
@@ -347,9 +384,10 @@ def run_generate(req: GenerateRequest, loaded: LoadedModel) -> GenerateResponse:
 
     for token_features in sae_features:
         for hit in token_features.top_k:
-            desc, conf, snippets = feature_data.get(hit.id, (None, "none", tuple()))
+            desc, bucket, snippets = feature_data.get(hit.id, (None, "none", tuple()))
             hit.description = desc
-            hit.confidence = conf  # type: ignore[assignment]
+            hit.label_detail = LABEL_DETAIL.get(bucket, "none")  # type: ignore[assignment]
+            hit.confidence = bucket  # type: ignore[assignment]  # deprecated alias
             hit.top_activating_snippets = list(snippets)
 
     description_fetch_ms = (time.perf_counter() - desc_start) * 1000
@@ -390,8 +428,6 @@ def run_sae_features(
     """
     import torch  # heavy import -- kept lazy
 
-    from .presets import PresetManifest  # noqa: F811
-
     total_start = time.perf_counter()
 
     loaded = registry.get(req.preset_id)
@@ -422,7 +458,7 @@ def run_sae_features(
         tokens = [TokenInfo(index=i, text=str(s)) for i, s in enumerate(token_strs)]
 
         # Forward pass -- only cache the residual hook for the target layer
-        resid_hook_name = f"blocks.{req.sae_layer}.hook_resid_pre"
+        resid_hook_name = sae_hook_name(manifest, req.sae_layer)
 
         forward_start = time.perf_counter()
         with torch.no_grad():
@@ -483,9 +519,10 @@ def run_sae_features(
 
     for token_features in sae_features:
         for hit in token_features.top_k:
-            desc, conf, snippets = feature_data.get(hit.id, (None, "none", tuple()))
+            desc, bucket, snippets = feature_data.get(hit.id, (None, "none", tuple()))
             hit.description = desc
-            hit.confidence = conf  # type: ignore[assignment]
+            hit.label_detail = LABEL_DETAIL.get(bucket, "none")  # type: ignore[assignment]
+            hit.confidence = bucket  # type: ignore[assignment]  # deprecated alias
             hit.top_activating_snippets = list(snippets)
 
     description_fetch_ms = (time.perf_counter() - desc_start) * 1000
@@ -742,20 +779,24 @@ def run_steer(req: SteerRequest, loaded: LoadedModel) -> SteerResponse:
 
     total_start = time.perf_counter()
 
-    if loaded.model is None or loaded.sae is None:
-        raise RuntimeError(f"model '{req.preset_id}' was unloaded during steering")
-
-    model = loaded.model
-    sae = loaded.sae
-
-    # Get the feature direction from the SAE decoder
-    direction = sae.W_dec[req.feature_id].detach().clone()  # [d_model]
-    hook_name = f"blocks.{req.sae_layer}.hook_resid_pre"
+    hook_name = sae_hook_name(PRESETS[req.preset_id], req.sae_layer)
 
     # Acquire per-preset lock for the entire operation to prevent concurrent
-    # unload from nulling the model mid-inference.
+    # unload (or SAE swap) from changing the model/SAE mid-inference. The
+    # model and SAE are read inside the lock for the same reason.
     lock = REGISTRY._get_lock(req.preset_id)
     with lock:
+        if loaded.model is None or loaded.sae is None:
+            raise RuntimeError(f"model '{req.preset_id}' was unloaded during steering")
+        if req.sae_layer != loaded.sae_layer:
+            raise ValueError(_layer_mismatch_msg(req.sae_layer, loaded.sae_layer))
+
+        model = loaded.model
+        sae = loaded.sae
+
+        # Get the feature direction from the SAE decoder
+        direction = sae.W_dec[req.feature_id].detach().clone()  # [d_model]
+
         # -- Original generation (no hooks) --
         orig_start = time.perf_counter()
         with torch.no_grad():
@@ -842,7 +883,6 @@ def run_steer(req: SteerRequest, loaded: LoadedModel) -> SteerResponse:
 def run_ablate_heads(req: AblateHeadRequest, loaded: LoadedModel) -> AblateResponse:
     """Zero out specified attention heads and compare predictions."""
     import torch
-    from functools import partial
 
     total_start = time.perf_counter()
 
@@ -931,19 +971,25 @@ def run_ablate_heads(req: AblateHeadRequest, loaded: LoadedModel) -> AblateRespo
 def run_ablate_features(req: AblateFeatureRequest, loaded: LoadedModel) -> AblateResponse:
     """Zero out specified SAE features and compare predictions."""
     import torch
-    from functools import partial
 
     total_start = time.perf_counter()
 
-    if loaded.model is None or loaded.sae is None:
-        raise RuntimeError(f"model '{req.preset_id}' was unloaded during feature ablation")
-
-    model = loaded.model
-    sae = loaded.sae
+    manifest = PRESETS[req.preset_id]
 
     # Acquire per-preset lock for the entire operation (original + ablated passes).
+    # Model/SAE are read inside the lock so a concurrent SAE swap can't hand us
+    # a feature map for a different layer.
     lock = REGISTRY._get_lock(req.preset_id)
     with lock:
+        if loaded.model is None or loaded.sae is None:
+            raise RuntimeError(f"model '{req.preset_id}' was unloaded during feature ablation")
+        for abl in req.feature_ablations:
+            if abl.layer != loaded.sae_layer:
+                raise ValueError(_layer_mismatch_msg(abl.layer, loaded.sae_layer))
+
+        model = loaded.model
+        sae = loaded.sae
+
         tokens_tensor = model.to_tokens(req.prompt)
 
         # -- Original predictions --
@@ -963,7 +1009,7 @@ def run_ablate_features(req: AblateFeatureRequest, loaded: LoadedModel) -> Ablat
 
         ablate_start = time.perf_counter()
         for layer, feature_ids in layer_features.items():
-            hook_name = f"blocks.{layer}.hook_resid_pre"
+            hook_name = sae_hook_name(manifest, layer)
             captured_sae = sae
             captured_fids = list(feature_ids)
             def make_feature_hook(s=captured_sae, fids=captured_fids):
@@ -1227,11 +1273,11 @@ def run_patching(req: PatchRequest, loaded: LoadedModel) -> PatchResponse:
 
 
 def run_circuit(req: CircuitRequest, loaded: LoadedModel) -> CircuitResponse:
-    """Build a DAG of causally important components from DLA results.
+    """List the components (heads + MLPs) whose direct logit attribution to
+    the predicted token exceeds the threshold.
 
-    Nodes = components (heads + MLPs) whose contribution exceeds the threshold.
-    Edges inferred from attention patterns (head at layer L attends to outputs
-    of heads at layers < L).
+    Returns no edges (``edges_method="none"``): DLA does not tell us how
+    components connect.
     """
     import torch
 
@@ -1258,13 +1304,9 @@ def run_circuit(req: CircuitRequest, loaded: LoadedModel) -> CircuitResponse:
         token_strs = model.to_str_tokens(req.prompt)
         seq_len = len(token_strs)
 
-        # Run with cache to get attention patterns and component outputs
+        # Run with cache to get component outputs
         def names_filter(name: str) -> bool:
-            return (
-                name.endswith("hook_result")
-                or name.endswith("hook_mlp_out")
-                or name.endswith("hook_pattern")
-            )
+            return name.endswith("hook_result") or name.endswith("hook_mlp_out")
 
         forward_start = time.perf_counter()
         with torch.no_grad():
@@ -1333,37 +1375,8 @@ def run_circuit(req: CircuitRequest, loaded: LoadedModel) -> CircuitResponse:
                     ))
                 node_ids.add(cid)
 
-        # Build edges from attention patterns
-        # TODO: edge weights are approximate — currently uses the attention weight
-        # at the position of highest DLA contribution from the source node as a
-        # proxy. Ideally we'd compute per-edge causal importance via path patching.
-        edges: list[CircuitEdge] = []
-        for node in nodes:
-            if node.type != "attention" or node.head is None:
-                continue
-            pattern_key = f"blocks.{node.layer}.attn.hook_pattern"
-            if pattern_key not in cache:
-                continue
-            # pattern shape: [batch, n_heads, seq_q, seq_k]
-            pattern = cache[pattern_key][0, node.head, :, :]  # [seq_q, seq_k]
-            avg_attn = pattern.mean(dim=0)  # [seq_k]
-
-            # Connect to earlier-layer nodes
-            for source_node in nodes:
-                if source_node.layer >= node.layer:
-                    continue
-                # Use attention weight at the source's most-active position:
-                # approximate the source position as target_pos (where DLA was
-                # computed) for heads, or use avg_attn[target_pos] for a
-                # position-specific weight rather than the global max.
-                weight = float(avg_attn[target_pos].item())
-                if weight > 0.05:
-                    edges.append(CircuitEdge(
-                        source=source_node.id,
-                        target=node.id,
-                        weight=weight,
-                    ))
-
+        # No edges: DLA scores components independently and says nothing about
+        # how they connect. Real edges need path patching (roadmap T23).
         graph_ms = (time.perf_counter() - graph_start) * 1000
 
     # Lock released — build response outside lock
@@ -1375,7 +1388,8 @@ def run_circuit(req: CircuitRequest, loaded: LoadedModel) -> CircuitResponse:
         threshold=threshold,
         source=req.source,
         nodes=nodes,
-        edges=edges,
+        edges=[],
+        edges_method="none",
         timing_ms={
             "forward_ms": forward_ms,
             "graph_ms": graph_ms,

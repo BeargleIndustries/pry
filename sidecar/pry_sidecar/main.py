@@ -1,11 +1,6 @@
 """Pry sidecar — Starlette HTTP server.
 
-Endpoints:
-    GET  /health
-    GET  /models
-    POST /load          (SSE progress stream)
-    POST /generate
-    GET  /feature/{feature_id}
+Endpoints: see sidecar/README.md (full list in `routes` below).
 
 Startup: prints "READY {port}" to stdout so the Tauri launcher knows we're up.
 
@@ -25,7 +20,6 @@ from contextlib import asynccontextmanager
 
 import uvicorn
 from pydantic import ValidationError
-from sse_starlette.sse import EventSourceResponse
 from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response, StreamingResponse
@@ -74,6 +68,43 @@ def _error(msg: str, status: int = 400) -> JSONResponse:
     return JSONResponse(content={"error": msg}, status_code=status)
 
 
+def _hf_downloaded(hf_id: str) -> bool:
+    """True if the model's config.json is already in the local HF cache."""
+    try:
+        from huggingface_hub import try_to_load_from_cache
+
+        return isinstance(try_to_load_from_cache(hf_id, "config.json"), str)
+    except Exception:
+        return False
+
+
+def _check_layer(loaded, layer: int) -> str | None:
+    """Plain-language error if ``layer`` is outside the loaded model."""
+    n_layers = int(getattr(loaded.model.cfg, "n_layers", 0)) if loaded.model is not None else 0
+    if not 0 <= layer < n_layers:
+        return f"Layer {layer} is out of range; this model has layers 0-{n_layers - 1}."
+    return None
+
+
+def _check_sae_feature(loaded, layer: int, feature_id: int) -> str | None:
+    """Plain-language error if the feature can't be used with the loaded SAE.
+
+    The loaded SAE is trained for ``loaded.sae_layer`` only, so a feature
+    from any other layer would be decoded with the wrong dictionary.
+    """
+    err = _check_layer(loaded, layer)
+    if err:
+        return err
+    if layer != loaded.sae_layer:
+        from pry_sidecar.inference import _layer_mismatch_msg
+
+        return _layer_mismatch_msg(layer, loaded.sae_layer)
+    d_sae = int(loaded.sae.cfg.d_sae) if loaded.sae is not None else 0
+    if not 0 <= feature_id < d_sae:
+        return f"Feature {feature_id} is out of range; this feature map has features 0-{d_sae - 1}."
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Endpoint handlers
 # ---------------------------------------------------------------------------
@@ -92,7 +123,7 @@ async def models(request: Request) -> JSONResponse:
             "id": p.id,
             "tier": p.tier,
             "enabled": p.enabled,
-            "downloaded": False,  # TODO: check HF cache
+            "downloaded": _hf_downloaded(p.model.hf_id),
             "total_download_mb": p.total_download_mb,
             "vram_estimate_mb": p.vram_estimate_mb,
             "license_gate": p.license_gate,
@@ -136,8 +167,8 @@ async def load(request: Request) -> Response:
 
     manifest = PRESETS[req.preset_id]
 
-    # Raw SSE via Starlette's StreamingResponse — bypasses sse-starlette
-    # entirely. The earlier attempts to use EventSourceResponse (both the
+    # Raw SSE via Starlette's StreamingResponse, with no SSE helper library.
+    # The earlier attempts to use EventSourceResponse (both the
     # naive yield-before-await pattern AND a queue-based worker refactor)
     # both resulted in the frontend hanging on the first request even
     # though the load completed server-side. Cutting out the middleware
@@ -284,11 +315,19 @@ async def generate(request: Request) -> JSONResponse:
     if loaded is None:
         return _error(f"preset {req.preset_id!r} not loaded; POST /load first", status=409)
 
+    if req.sae_layer is not None:
+        err = _check_layer(loaded, req.sae_layer)
+        if err:
+            return _error(err, status=400)
+
     try:
         from pry_sidecar.inference import run_generate
 
         response = await asyncio.to_thread(run_generate, req, loaded)
         return _json(response.model_dump())
+    except ValueError as e:
+        # SAE layer differs from the loaded feature map
+        return _error(str(e), status=400)
     except Exception as e:
         return JSONResponse(
             {"error": "inference_error", "detail": str(e)},
@@ -439,11 +478,18 @@ async def steer(request: Request) -> JSONResponse:
     if loaded is None:
         return _error(f"preset {req.preset_id!r} not loaded; POST /load first", status=409)
 
+    err = _check_sae_feature(loaded, req.sae_layer, req.feature_id)
+    if err:
+        return _error(err, status=400)
+
     try:
         from pry_sidecar.inference import run_steer
 
         response = await asyncio.to_thread(run_steer, req, loaded)
         return _json(response.model_dump())
+    except ValueError as e:
+        # Layer changed between the check above and taking the lock
+        return _error(str(e), status=400)
     except Exception as e:
         logger.exception("steer failed for preset %r", req.preset_id)
         return JSONResponse(
@@ -474,6 +520,17 @@ async def ablate_head(request: Request) -> JSONResponse:
     loaded = REGISTRY.get(req.preset_id)
     if loaded is None:
         return _error(f"preset {req.preset_id!r} not loaded; POST /load first", status=409)
+
+    n_heads = int(getattr(loaded.model.cfg, "n_heads", 0)) if loaded.model is not None else 0
+    for abl in req.ablations:
+        err = _check_layer(loaded, abl.layer)
+        if err:
+            return _error(err, status=400)
+        if abl.head >= n_heads:
+            return _error(
+                f"Head {abl.head} is out of range; this model has heads 0-{n_heads - 1}.",
+                status=400,
+            )
 
     try:
         from pry_sidecar.inference import run_ablate_heads
@@ -511,11 +568,19 @@ async def ablate_feature(request: Request) -> JSONResponse:
     if loaded is None:
         return _error(f"preset {req.preset_id!r} not loaded; POST /load first", status=409)
 
+    for abl in req.feature_ablations:
+        err = _check_sae_feature(loaded, abl.layer, abl.feature_index)
+        if err:
+            return _error(err, status=400)
+
     try:
         from pry_sidecar.inference import run_ablate_features
 
         response = await asyncio.to_thread(run_ablate_features, req, loaded)
         return _json(response.model_dump())
+    except ValueError as e:
+        # Layer changed between the check above and taking the lock
+        return _error(str(e), status=400)
     except Exception as e:
         logger.exception("ablate_feature failed for preset %r", req.preset_id)
         return JSONResponse(
@@ -628,6 +693,7 @@ async def feature_info(request: Request) -> JSONResponse:
     sae_layer = loaded.sae_layer if loaded is not None else manifest.sae.layer
 
     from pry_sidecar.inference import (
+        LABEL_DETAIL,
         fetch_feature_description,
         fetch_top_activating_snippets,
     )
@@ -649,7 +715,7 @@ async def feature_info(request: Request) -> JSONResponse:
             ).model_dump()
         )
 
-    desc, conf = await asyncio.to_thread(
+    desc, bucket = await asyncio.to_thread(
         fetch_feature_description, neuronpedia_model_id, release_id, feature_id
     )
     snippets = await asyncio.to_thread(
@@ -659,7 +725,8 @@ async def feature_info(request: Request) -> JSONResponse:
     resp = FeatureResponse(
         feature_id=feature_id,
         description=desc,
-        confidence=conf,  # type: ignore[arg-type]
+        label_detail=LABEL_DETAIL.get(bucket, "none"),  # type: ignore[arg-type]
+        confidence=bucket,  # type: ignore[arg-type]  # deprecated alias
         top_activating_snippets=[
             ActivatingSnippet(snippet=s, activation=0.0) for s in snippets
         ],

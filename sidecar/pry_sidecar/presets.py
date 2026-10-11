@@ -45,7 +45,7 @@ class PresetManifest(BaseModel):
         # Hard-coded per known release. SAELens doesn't expose a catalog API.
         _LAYER_CATALOG: dict[str, list[int]] = {
             "gpt2-small-res-jb": list(range(12)),       # 0-11
-            "pythia-70m-deduped-res-sm": [3],            # only layer 3 known
+            "pythia-70m-deduped-res-sm": list(range(6)), # blocks.0-5.hook_resid_post
             "gemma-scope-2b-pt-res": [12],               # only configured layer
             "gemma-scope-9b-pt-res": [20],               # only configured layer
         }

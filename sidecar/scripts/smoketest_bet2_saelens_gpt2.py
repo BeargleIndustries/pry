@@ -1,6 +1,6 @@
 """Bet 2 — SAELens + Joseph Bloom GPT-2 residual SAE loading + Neuronpedia.
 
-Pass criteria (plan §7 Phase 1):
+Pass criteria:
 - SAE.from_pretrained("gpt2-small-res-jb", "blocks.8.hook_resid_pre") loads
 - Running same prompt, cache layer 8 residual, run SAE
 - Activations are sparse (<=20 features with activation > 1.0 on final token)
