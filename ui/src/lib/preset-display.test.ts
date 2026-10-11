@@ -3,6 +3,7 @@ import {
   CPU_OK_COPY,
   displayName,
   isPickable,
+  statusInfo,
   neuronpediaUrl,
   neuronpediaUrlBase,
   verdictInfo,
@@ -64,5 +65,18 @@ describe('verdictInfo', () => {
   it('isPickable respects enabled', () => {
     expect(isPickable({ verdict: 'CpuOk', enabled: true })).toBe(true);
     expect(isPickable({ verdict: 'Comfortable', enabled: false })).toBe(false);
+  });
+});
+
+describe('statusInfo', () => {
+  it('shows a disabled preset as Coming soon, not a memory verdict', () => {
+    const s = statusInfo({ verdict: 'Insufficient', enabled: false });
+    expect(s.short).toBe('Coming soon');
+    expect(s.pickable).toBe(false);
+  });
+
+  it('falls through to the verdict for enabled presets', () => {
+    expect(statusInfo({ verdict: 'CpuOk', enabled: true }).pickable).toBe(true);
+    expect(statusInfo({ verdict: 'Insufficient', enabled: true }).short).toBe('Insufficient');
   });
 });

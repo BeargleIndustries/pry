@@ -75,7 +75,7 @@ export function neuronpediaUrl(
 // Verdicts (T11). Exhaustive: adding a Verdict variant fails the type check.
 // ---------------------------------------------------------------------------
 
-export type VerdictTone = 'good' | 'warn' | 'cpu' | 'bad';
+export type VerdictTone = 'good' | 'warn' | 'cpu' | 'bad' | 'soon';
 
 export interface VerdictInfo {
   /** Long label (onboarding cards). */
@@ -106,6 +106,13 @@ export function verdictInfo(v: Verdict): VerdictInfo {
     default:
       return assertNever(v);
   }
+}
+
+const COMING_SOON: VerdictInfo = { label: 'Coming soon', short: 'Coming soon', tone: 'soon', pickable: false };
+
+/** Badge for a preset row: a disabled preset is 'Coming soon', not a memory verdict. */
+export function statusInfo(c: Pick<PresetCompatibility, 'verdict' | 'enabled'>): VerdictInfo {
+  return c.enabled === false ? COMING_SOON : verdictInfo(c.verdict);
 }
 
 /** Pickable in onboarding / switchable in the app (verdict OK and not disabled). */

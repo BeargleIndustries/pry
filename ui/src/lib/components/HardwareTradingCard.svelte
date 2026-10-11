@@ -1,6 +1,6 @@
 <script lang="ts">
   import { saveJsonFile, type HardwareReport, type PresetCompatibility } from '$lib/tauri';
-  import { displayName, verdictInfo, type VerdictTone } from '$lib/preset-display';
+  import { displayName, statusInfo, type VerdictTone } from '$lib/preset-display';
 
   interface Props {
     report: HardwareReport;
@@ -33,6 +33,7 @@
     warn: { color: '#EAB308', glyph: '⚠️' },
     cpu: { color: '#38BDF8', glyph: '🖥️' },
     bad: { color: '#EF4444', glyph: '❌' },
+    soon: { color: '#71717A', glyph: '⏳' },
   };
 
   function drawCard(
@@ -101,7 +102,7 @@
     compat.slice(0, 5).forEach((p, i) => {
       const x = 60 + i * 220;
       const y = 510;
-      const info = verdictInfo(p.verdict);
+      const info = statusInfo(p);
       const { color, glyph } = TONE_STYLE[info.tone];
 
       ctx.fillStyle = '#27272A';

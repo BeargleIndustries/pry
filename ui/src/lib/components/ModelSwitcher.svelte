@@ -61,6 +61,7 @@
     warn: 'bg-yellow-900/60 text-yellow-300 border-yellow-700',
     cpu: 'bg-sky-900/60 text-sky-300 border-sky-700',
     bad: 'bg-red-900/60 text-red-300 border-red-700',
+    soon: 'bg-zinc-800 text-zinc-400 border-zinc-700',
   };
 
   function verdictBadge(v: Verdict): { label: string; cls: string } {

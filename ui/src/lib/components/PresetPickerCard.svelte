@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Lock, Download, Check, X, Cpu } from 'lucide-svelte';
   import type { PresetCompatibility } from '$lib/tauri';
-  import { displayName, isPickable, verdictInfo, visibleNotes, type VerdictTone } from '$lib/preset-display';
+  import { displayName, isPickable, statusInfo, visibleNotes, type VerdictTone } from '$lib/preset-display';
 
   interface Props {
     compat: PresetCompatibility;
@@ -21,9 +21,10 @@
     warn: 'text-yellow-400',
     cpu: 'text-sky-400',
     bad: 'text-red-400',
+    soon: 'text-zinc-500',
   };
 
-  const verdict = $derived(verdictInfo(compat.verdict));
+  const verdict = $derived(statusInfo(compat));
   const disabled = $derived(!isPickable(compat));
 </script>
 

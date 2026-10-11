@@ -5,7 +5,7 @@
     displayName,
     isPickable,
     needsHfToken,
-    verdictInfo,
+    statusInfo,
     visibleNotes,
     type VerdictTone,
   } from '$lib/preset-display';
@@ -25,11 +25,12 @@
     warn: { glyph: '⚠️', cls: 'bg-yellow-900/60 text-yellow-300 border-yellow-700' },
     cpu:  { glyph: '🖥️', cls: 'bg-sky-900/60 text-sky-300 border-sky-700' },
     bad:  { glyph: '❌', cls: 'bg-red-900/60 text-red-300 border-red-700' },
+    soon: { glyph: '⏳', cls: 'bg-zinc-800 text-zinc-400 border-zinc-700' },
   };
 
   interface Badge { label: string; cls: string }
-  function badge(v: Verdict): Badge {
-    const info = verdictInfo(v);
+  function badge(c: PresetCompatibility): Badge {
+    const info = statusInfo(c);
     const t = TONE[info.tone];
     return { label: `${t.glyph} ${info.short}`, cls: t.cls };
   }
@@ -55,7 +56,7 @@
 <div class="mb-6 space-y-2">
   <p class="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">Preset Compatibility</p>
   {#each compatibilities as c (c.preset_id)}
-    {@const b = badge(c.verdict)}
+    {@const b = badge(c)}
     {@const locked = needsHfToken(c)}
     {@const sub = subtitle(c)}
     {@const comingSoon = isComingSoon(c)}
