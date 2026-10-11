@@ -153,9 +153,10 @@
     return signedIntensity(effect, maxAbsEffect) >= 0.2 ? signGlyph(effect) : '';
   }
 
-  // Dark glyph on bright cells, light glyph on dim ones.
+  // Dark glyph on bright cells, light glyph on dim ones. The switch sits at
+  // 0.75 so both keep >= 4.5:1 contrast on the dark panel.
   function glyphColor(effect: number): string {
-    return signedIntensity(effect, maxAbsEffect) >= 0.55 ? '#09090b' : '#f4f4f5';
+    return signedIntensity(effect, maxAbsEffect) >= 0.75 ? '#09090b' : '#f4f4f5';
   }
 </script>
 

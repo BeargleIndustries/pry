@@ -441,6 +441,16 @@
   // so both show the Expert view while they are on.
   const forcedExpert = $derived(ablationMode || tutorialState.open);
   const showExpert = $derived(view === 'expert' || forcedExpert);
+  // If forcing the Expert view removed the focused control (the Lines button or
+  // a lines-view word), keep keyboard users in place on the Expert view button.
+  let expertBtn: HTMLButtonElement | undefined = $state();
+  $effect(() => {
+    if (!forcedExpert) return;
+    queueMicrotask(() => {
+      const a = document.activeElement;
+      if (!a || a === document.body || (a as HTMLButtonElement).disabled) expertBtn?.focus();
+    });
+  });
 
   type HeadPick = { layer: number; head: number };
   /** Head the user picked for the lines view; null = pick automatically. */
@@ -837,6 +847,7 @@
           Lines
         </button>
         <button
+          bind:this={expertBtn}
           onclick={() => { view = 'expert'; }}
           aria-pressed={showExpert}
           title="Every layer and head at once, one cell each."
@@ -1191,6 +1202,7 @@
             class="block"
             role="grid"
             tabindex="-1"
+            aria-multiselectable={ablationMode}
             aria-label="Attention overview grid, layer by head"
             aria-describedby="{readoutId} {gridDescId}"
           >
