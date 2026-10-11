@@ -115,7 +115,7 @@
   const analysis = createAnalysis({
     getSelectedPreset: () => selectedPreset,
     getActivePresetId: () => activePresetId,
-    ensureLoaded: () => ensureLoaded(),
+    ensureLoaded,
   });
   const st = analysis.state;
   const promptEdited = $derived(analysis.isPromptEdited(prompt));

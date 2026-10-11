@@ -10,9 +10,6 @@ import {
   type AnalysisDeps,
 } from './analysis-core';
 
-export type { AnalysisState, AnalysisDeps } from './analysis-core';
-export { AnalysisController } from './analysis-core';
-
 export function createAnalysis(deps: AnalysisDeps): AnalysisController {
   const state = $state(createInitialAnalysisState());
   return new AnalysisController(state, deps);

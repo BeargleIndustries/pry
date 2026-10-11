@@ -91,8 +91,7 @@ pub fn write_constraints(venv_dir: &Path, variant: CudaVariant) -> std::io::Resu
 
 // ── Manifest ─────────────────────────────────────────────────────────────────
 
-/// `venvs\<id>\runtime.json`. T3 fills `cuda` / `torch_dist_info` from its
-/// post-install verify; the fields exist now so the schema is stable.
+/// `venvs\<id>\runtime.json`, written by the post-install verify.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RuntimeManifest {
     pub schema: u32,
@@ -103,7 +102,7 @@ pub struct RuntimeManifest {
     /// Dist-info folder name actually observed after install.
     #[serde(default)]
     pub torch_dist_info: Option<String>,
-    /// `torch.version.cuda` recorded by T3's verify step.
+    /// `torch.version.cuda` recorded by the verify step.
     #[serde(default)]
     pub cuda: Option<String>,
     /// `torch.cuda.is_available()` at build time (false on cu124 = driver issue).

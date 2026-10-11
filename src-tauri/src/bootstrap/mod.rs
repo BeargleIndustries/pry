@@ -362,10 +362,6 @@ async fn build_venv(
     Ok((format!("{}/{id}", layout::VENVS_DIR), guard))
 }
 
-fn commit(rt: &Path, rel: &str) -> Result<(), BootstrapError> {
-    layout::commit_active(rt, rel).map_err(|e| BootstrapError::Io(format!("activate venv: {e}")))
-}
-
 /// Plain-language message for the UI.
 fn user_message(e: &BootstrapError) -> String {
     match e {
@@ -417,7 +413,8 @@ async fn install_fresh(emit: &events::Emitter, rt: &Path) -> Result<(), Bootstra
 
     ensure_pbs(emit, rt).await?;
     let (rel, _build_guard) = build_venv(emit, rt, cuda_variant, layout::free_bytes).await?;
-    commit(rt, &rel)?;
+    layout::commit_active(rt, &rel)
+        .map_err(|e| BootstrapError::Io(format!("activate venv: {e}")))?;
 
     emit.stage(BootstrapStage::Ready, "runtime installed and ready");
     Ok(())

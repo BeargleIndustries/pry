@@ -166,7 +166,6 @@ export class AnalysisController {
       }
       const response = (await resp.json()) as GenerateResponse;
       s.response = response;
-      // Clear stale Phase B/C/D responses on new generate
       this.clearAnalyses();
       s.focusTokenIndex = response.tokens.length > 0
         ? response.tokens[response.tokens.length - 1].index

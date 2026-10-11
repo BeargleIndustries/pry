@@ -6,7 +6,6 @@ import type {
   RuntimeUpdateFailureKind,
   RuntimeUpdateStatus,
 } from './runtime-update';
-export type { RuntimeUpdateStatus } from './runtime-update';
 export type { TokenInfo, AttentionLayer, FeatureHit, TokenFeatures, GenerateResponse } from './types';
 
 // ---------------------------------------------------------------------------

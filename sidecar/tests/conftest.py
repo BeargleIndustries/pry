@@ -1,9 +1,8 @@
 """Shared fixtures for the sidecar test suite.
 
 Inference tests (marker ``inference``) load real weights from the local HF
-cache on CPU and skip cleanly when the cache is cold. Later tasks (SAE hook
-tests, circuit tests) build on ``gpt2_loaded``, ``gpt2_client`` and
-``no_neuronpedia``.
+cache on CPU and skip cleanly when the cache is cold. The SAE and circuit
+tests build on ``gpt2_loaded``, ``gpt2_client`` and ``no_neuronpedia``.
 """
 
 from __future__ import annotations

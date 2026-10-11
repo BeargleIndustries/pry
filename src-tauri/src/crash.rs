@@ -75,7 +75,6 @@ pub fn record_crash(context: &str, detail: &str) -> anyhow::Result<PathBuf> {
     Ok(path)
 }
 
-/// Strip username from paths and other identifying tokens.
 /// Cap `s` at `max_bytes`, cutting on a char boundary so multi-byte UTF-8
 /// never panics (this runs inside the panic hook, where a panic aborts).
 fn truncate_utf8(s: String, max_bytes: usize) -> String {
@@ -89,6 +88,7 @@ fn truncate_utf8(s: String, max_bytes: usize) -> String {
     format!("{}\n[... truncated at {} bytes ...]", &s[..end], max_bytes)
 }
 
+/// Strip username from paths and other identifying tokens.
 fn sanitize(input: &str) -> String {
     let mut out = input.to_string();
 
