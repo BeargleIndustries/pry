@@ -100,3 +100,16 @@ describe('bounds', () => {
     expect(clampTemperature(9)).toBe(2);
   });
 });
+
+describe('multi-token characters', () => {
+  const heart = (text: string, token: string): GenerationStep => ({
+    token, token_id: 1, text, probability: 0.5, runner_up: null, runner_up_probability: null,
+  });
+  it('joins step text, not raw byte pieces', () => {
+    const steps = [heart('', '�'), heart('❤', '�'), heart('️', '️')];
+    expect(writtenSoFar(steps, 3)).toBe('❤️');
+  });
+  it('says plainly when a step is only part of a character', () => {
+    expect(stepSentence(heart('', '�'))).toMatch(/part of a character/);
+  });
+});

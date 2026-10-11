@@ -10,7 +10,7 @@ export const MIN_QUERY_CHARS = 3;
 export const MAX_QUERY_CHARS = 200;
 
 export const NEURONPEDIA_NOTICE =
-  'Searching sends the words you type to Neuronpedia (neuronpedia.org), a public site that labels these features. Nothing else is sent.';
+  'Searching sends the words you type to Neuronpedia (neuronpedia.org), a public site that labels these features. Only your search words and which model and layer you are using are sent.';
 
 export interface ConceptHit {
   feature_id: number;

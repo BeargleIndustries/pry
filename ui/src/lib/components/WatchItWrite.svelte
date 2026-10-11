@@ -22,6 +22,7 @@
     stepSentence,
     temperatureExplanation,
     tick,
+    stepText,
     type ReplayState,
   } from '$lib/watch-it-write';
   import Readout from './Readout.svelte';
@@ -196,7 +197,7 @@
       <div class="whitespace-pre-wrap rounded-md bg-zinc-900 p-3 text-sm leading-relaxed text-zinc-300">
         <span class="text-zinc-500">{result.prompt}</span>{#each steps.slice(0, replay.shown) as st, i (i)}<span
             class={i === replay.shown - 1 ? 'rounded bg-indigo-900/60 text-indigo-200' : ''}
-            title="{pct(st.probability)} chance">{shown(st.token)}</span>{/each}{#if replay.playing}<span class="animate-pulse text-indigo-400">▍</span>{/if}
+            title="{pct(st.probability)} chance">{shown(stepText(st))}</span>{/each}{#if replay.playing}<span class="animate-pulse text-indigo-400">▍</span>{/if}
       </div>
 
       <Readout text={current ? stepSentence(current) : null} />
@@ -206,7 +207,7 @@
       {/if}
       {#if (result.temperature_used ?? 0) > 0}
         <p class="text-xs text-zinc-600">
-          Random draws used seed {result.seed_used}. The same seed and settings give the same text.
+          Random draws used seed {result.seed_used}. On this computer, the same seed and settings give the same text.
         </p>
       {/if}
     {/if}

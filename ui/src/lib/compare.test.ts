@@ -10,6 +10,7 @@ import {
   featureName,
   featuresAt,
   points,
+  changeLabel,
 } from './compare';
 import type { FeatureHit, GenerateResponse, TokenFeatures, TopPrediction } from './types';
 
@@ -289,5 +290,16 @@ describe('compareSummary', () => {
 
   it('falls back when nothing is known', () => {
     expect(compareSummary(diffPredictions([], []), null, null)).toBe('Run both prompts to compare them.');
+  });
+});
+
+describe('changeLabel', () => {
+  it('exact changes print as-is', () => {
+    expect(changeLabel({ change: 0.05, approximate: false })).toBe(points(0.05));
+  });
+  it('bounds point the right way: gains ≥, losses ≤', () => {
+    expect(changeLabel({ change: 0.04, approximate: true }).startsWith('≥')).toBe(true);
+    expect(changeLabel({ change: -0.04, approximate: true }).startsWith('≤')).toBe(true);
+    expect(changeLabel({ change: 0, approximate: true })).toBe('unclear');
   });
 });

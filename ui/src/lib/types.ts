@@ -62,6 +62,8 @@ export interface GenerateResponse {
 export interface GenerationStep {
   token: string;
   token_id: number;
+  /** What this step adds to the decoded text ("" mid-character, e.g. part of an emoji). */
+  text?: string;
   probability: number;
   runner_up: string | null;
   runner_up_probability: number | null;

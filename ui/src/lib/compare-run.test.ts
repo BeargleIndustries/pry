@@ -75,6 +75,21 @@ describe('CompareController', () => {
     expect(state.error).toMatch(/both boxes/);
   });
 
+  it('drops results that arrive after a model switch cleared the panel', async () => {
+    let release: () => void = () => {};
+    const gate = new Promise<void>((r) => { release = r; });
+    fetchMock.mockImplementation(async () => { await gate; return ok({ tokens: [], predictions: [] }); });
+    const { c, state } = make(8);
+    const running = c.run();
+    await Promise.resolve();
+    c.clear();
+    release();
+    await running;
+    expect(state.a).toBeNull();
+    expect(state.b).toBeNull();
+    expect(state.running).toBe(false);
+  });
+
   it('swap and clear', () => {
     const { c, state } = make(6);
     c.swap();

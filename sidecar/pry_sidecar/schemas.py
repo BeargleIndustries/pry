@@ -119,6 +119,10 @@ class GenerationStep(BaseModel):
     """
     token: str
     token_id: int
+    # What this step adds to the decoded text. Characters like emoji span
+    # several tokens: the steps before the last piece add "" and the last
+    # adds the whole character, so joining ``text`` never shows broken bytes.
+    text: str = ""
     probability: float
     runner_up: str | None = None
     runner_up_probability: float | None = None
