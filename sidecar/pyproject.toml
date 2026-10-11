@@ -20,12 +20,17 @@ dependencies = [
     "sse-starlette>=2.1,<3",
     "numpy>=1.26,<3",
     "requests>=2.32,<3",
+    # pyarrow 26 needs NumPy 2 at import, but TL/sae-lens keep NumPy 1.x.
+    # 23.0.1 + NumPy 1.26 is verified working (shipped 0.1.1 runtime). The
+    # runtime constraints files pin the exact version; this guards dev installs.
+    "pyarrow<24",
 ]
 
 [project.optional-dependencies]
 dev = [
     "ruff",
     "pytest",
+    "httpx",
     "ipykernel",
     "jupyter",
 ]
@@ -37,6 +42,9 @@ packages = ["pry_sidecar"]
 testpaths = ["tests"]
 python_files = "test_*.py"
 addopts = "-v"
+markers = [
+    "inference: loads real model weights from the local HF cache and runs on CPU (slow)",
+]
 
 [tool.ruff]
 line-length = 100
