@@ -491,6 +491,11 @@ pub async fn bootstrap_runtime_command(app: AppHandle) -> Result<(), String> {
     tracing::info!("post-bootstrap sidecar launched on {}", handle.base_url);
 
     *guard = Some(handle);
+    drop(guard);
+    // Upgrades from older installs always come through here (the sidecar
+    // package changed), so the GPU re-probe and GC must start here too, not
+    // only from the startup gate.
+    spawn_post_launch_tasks(app, true);
     Ok(())
 }
 
