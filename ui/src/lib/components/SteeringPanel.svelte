@@ -1,6 +1,16 @@
 <script lang="ts">
   import type { GenerateResponse, SteerResponse, FeatureHit } from '$lib/types';
   import { diffTokens } from '$lib/token-diff';
+  import { searchConcepts, SidecarError } from '$lib/sidecar';
+  import {
+    NEURONPEDIA_NOTICE,
+    isNeuronpediaUnavailable,
+    queryProblem,
+    showToken,
+    similarityLabel,
+    type ConceptHit,
+    type ConceptSearchResult,
+  } from '$lib/concept-search';
 
   interface Props {
     response: GenerateResponse | null;
@@ -43,10 +53,53 @@
   let selectedFeatureId = $state<number | null>(null);
   let alpha = $state(5.0);
 
+  // --- Concept search (T24): any feature of the loaded SAE, found by label ---
+  let conceptQuery = $state('');
+  let searching = $state(false);
+  let conceptResult = $state<ConceptSearchResult | null>(null);
+  let conceptError = $state<string | null>(null);
+  /** Neuronpedia unreachable or no labels for this model: search is switched off. */
+  let searchOff = $state<string | null>(null);
+  /** A searched feature picked for steering; overrides the dropdown while set. */
+  let concept = $state<ConceptHit | null>(null);
+
+  const queryIssue = $derived(queryProblem(conceptQuery));
+
+  async function runConceptSearch(e?: SubmitEvent) {
+    e?.preventDefault();
+    if (searching || searchOff || queryIssue) return;
+    searching = true;
+    conceptError = null;
+    try {
+      const res = await searchConcepts(conceptQuery, response?.preset_id);
+      if (res.status === 'no_coverage') {
+        searchOff = "This model's features have no Neuronpedia labels, so concept search isn't available for it.";
+        conceptResult = null;
+      } else {
+        conceptResult = res;
+      }
+    } catch (err) {
+      const se = err instanceof SidecarError ? err : null;
+      if (isNeuronpediaUnavailable(se)) {
+        searchOff = se!.message;
+      } else {
+        conceptError = err instanceof Error ? err.message : String(err);
+      }
+    } finally {
+      searching = false;
+    }
+  }
+
+  function pickConcept(hit: ConceptHit) {
+    concept = hit;
+  }
+
   // Clear the selection whenever the parent bumps resetKey.
   $effect(() => {
     void resetKey;
     selectedFeatureId = null;
+    concept = null;
+    conceptResult = null;
   });
 
   // Auto-select first feature when available features change; drop a
@@ -64,9 +117,15 @@
     availableFeatures.find((f) => f.id === selectedFeatureId) ?? null,
   );
 
+  /** Searched results belong to the layer they were searched on. */
+  const conceptUsable = $derived(
+    concept !== null && conceptResult !== null && conceptResult.sae_layer === currentSaeLayer,
+  );
+  const steerFeatureId = $derived(conceptUsable ? concept!.feature_id : selectedFeatureId);
+
   function handleRun() {
-    if (selectedFeatureId === null || currentSaeLayer === undefined) return;
-    onSteer?.(selectedFeatureId, currentSaeLayer, alpha);
+    if (steerFeatureId === null || currentSaeLayer === undefined) return;
+    onSteer?.(steerFeatureId, currentSaeLayer, alpha);
   }
 
   // Generations are continuation-only (the server strips the prompt); the
@@ -87,12 +146,98 @@
       <p class="text-sm">Run a prompt first to see available features for steering.</p>
     </div>
   {:else}
+    <!-- Concept search (T24) -->
+    <div class="flex flex-col gap-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
+      <label for="concept-query" class="text-xs font-medium text-zinc-400">Find a concept</label>
+      <p class="text-[11px] leading-snug text-amber-400/80">{NEURONPEDIA_NOTICE}</p>
+      {#if searchOff}
+        <div class="flex items-start gap-2 text-xs text-zinc-400">
+          <p class="flex-1">{searchOff}</p>
+          <button
+            type="button"
+            class="shrink-0 text-indigo-400 hover:text-indigo-300"
+            onclick={() => { searchOff = null; }}
+          >Try again</button>
+        </div>
+      {/if}
+      <form class="flex gap-2" onsubmit={runConceptSearch}>
+        <input
+          id="concept-query"
+          type="text"
+          bind:value={conceptQuery}
+          maxlength="200"
+          placeholder="e.g. the ocean, anger, French"
+          disabled={searchOff !== null}
+          class="min-w-0 flex-1 rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-indigo-500 focus:outline-none disabled:opacity-50"
+        />
+        <button
+          type="submit"
+          disabled={searching || searchOff !== null || queryIssue !== null}
+          title={queryIssue ?? undefined}
+          class="rounded border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+        >{searching ? 'Searching...' : 'Search Neuronpedia'}</button>
+      </form>
+      {#if conceptError}
+        <p class="text-xs text-red-400">{conceptError}</p>
+      {/if}
+      {#if conceptResult}
+        {#if conceptResult.results.length === 0}
+          <p class="text-xs text-zinc-500">No labelled features matched "{conceptResult.query}".</p>
+        {:else}
+          <p class="text-[11px] text-zinc-500">
+            Closest labels for "{conceptResult.query}". The search ranks by how similar the words of a
+            label are to yours, so there is always a top result, even when nothing really fits. Labels
+            were written by another AI and can be wrong.
+          </p>
+          <ul class="flex max-h-56 flex-col gap-1 overflow-y-auto">
+            {#each conceptResult.results as hit (hit.feature_id)}
+              <li>
+                <button
+                  type="button"
+                  onclick={() => pickConcept(hit)}
+                  class="w-full rounded border px-2 py-1.5 text-left text-xs {concept?.feature_id === hit.feature_id ? 'border-indigo-500 bg-indigo-950/40' : 'border-zinc-800 hover:border-zinc-600'}"
+                >
+                  <span class="font-mono text-zinc-500">#{hit.feature_id}</span>
+                  <span class="text-zinc-200">{hit.description}</span>
+                  {#if similarityLabel(hit.similarity)}
+                    <span class="text-zinc-500">· {similarityLabel(hit.similarity)}</span>
+                  {/if}
+                  {#if hit.top_boosted_tokens.length}
+                    <span class="block text-[10px] text-zinc-500">
+                      Pushes toward: {hit.top_boosted_tokens.map(showToken).join(', ')}
+                    </span>
+                  {/if}
+                </button>
+              </li>
+            {/each}
+          </ul>
+        {/if}
+      {/if}
+    </div>
+
     <!-- Feature picker -->
     <div class="flex flex-col gap-2">
       <label class="text-xs font-medium text-zinc-400">Feature</label>
+      {#if conceptUsable && concept}
+        <div class="flex items-start gap-2 rounded border border-indigo-500/60 bg-indigo-950/30 px-2 py-1.5 text-sm text-zinc-200">
+          <span class="flex-1">
+            #{concept.feature_id} - {concept.description}
+            <span class="block text-[10px] text-zinc-500">
+              From your search. This feature may not have fired on your prompt at all; steering adds it anyway.
+              Searched features often need a strength of 15-20 before the text changes.
+            </span>
+          </span>
+          <button
+            type="button"
+            class="shrink-0 text-xs text-zinc-400 hover:text-zinc-200"
+            onclick={() => { concept = null; }}
+          >Use a feature from my prompt instead</button>
+        </div>
+      {/if}
       <select
         bind:value={selectedFeatureId}
-        class="rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-sm text-zinc-200 focus:border-indigo-500 focus:outline-none"
+        onchange={() => { concept = null; }}
+        class="rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-sm text-zinc-200 focus:border-indigo-500 focus:outline-none {conceptUsable ? 'opacity-50' : ''}"
       >
         {#each availableFeatures as feat (feat.id)}
           <option value={feat.id}>
@@ -100,7 +245,7 @@
           </option>
         {/each}
       </select>
-      {#if selectedFeature?.description}
+      {#if !conceptUsable && selectedFeature?.description}
         <p class="text-xs text-zinc-500">{selectedFeature.description}</p>
       {/if}
     </div>
@@ -131,7 +276,7 @@
     <!-- Run button -->
     <button
       onclick={handleRun}
-      disabled={loading || selectedFeatureId === null}
+      disabled={loading || steerFeatureId === null}
       class="rounded bg-indigo-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-50"
     >
       {#if loading}

@@ -930,6 +930,56 @@ async def feature_info(request: Request) -> JSONResponse:
     return _json(resp.model_dump())
 
 
+async def concept_search(request: Request) -> JSONResponse:
+    """POST /concept-search -- find features whose Neuronpedia label matches a phrase (T24).
+
+    Sends the query text to neuronpedia.org (the UI says so before searching).
+    502 ``neuronpedia_unavailable`` when Neuronpedia can't be reached.
+    """
+    from pry_sidecar.concept_search import (
+        ConceptSearchRequest,
+        ConceptSearchResponse,
+        NeuronpediaUnavailable,
+        search_concepts,
+    )
+
+    try:
+        req = ConceptSearchRequest.model_validate_json(await request.body())
+    except ValidationError as e:
+        errs = e.errors()
+        msg = str(errs[0].get("msg", "Invalid search")) if errs else "Invalid search"
+        return _error(msg.removeprefix("Value error, "), status=400)
+
+    preset_id = req.preset_id or REGISTRY.last_loaded
+    if preset_id is None or preset_id not in PRESETS:
+        return _error("No model is loaded yet. Load a model, then search.", status=409)
+    loaded = REGISTRY.get(preset_id)
+    if loaded is None or loaded.sae is None:
+        return _error(f"preset {preset_id!r} not loaded; POST /load first", status=409)
+
+    manifest = PRESETS[preset_id]
+    sae_layer = loaded.sae_layer
+    model_id = manifest.neuronpedia_model_id
+    release_id = manifest.neuronpedia_release_id(sae_layer)
+    if model_id is None or release_id is None:
+        return _json(
+            ConceptSearchResponse(
+                preset_id=preset_id, sae_layer=sae_layer, query=req.query, status="no_coverage"
+            ).model_dump()
+        )
+
+    d_sae = int(loaded.sae.cfg.d_sae)
+    try:
+        hits = await asyncio.to_thread(search_concepts, model_id, release_id, req.query, d_sae)
+    except NeuronpediaUnavailable as e:
+        return _json({"error": "neuronpedia_unavailable", "detail": str(e)}, status=502)
+    return _json(
+        ConceptSearchResponse(
+            preset_id=preset_id, sae_layer=sae_layer, query=req.query, results=hits
+        ).model_dump()
+    )
+
+
 # ---------------------------------------------------------------------------
 # App + routing
 # ---------------------------------------------------------------------------
@@ -951,6 +1001,7 @@ routes = [
     Route("/circuit", circuit, methods=["POST"]),
     Route("/head-scores", head_scores, methods=["POST"]),
     Route("/feature/{feature_id:int}", feature_info, methods=["GET"]),
+    Route("/concept-search", concept_search, methods=["POST"]),
 ]
 
 @asynccontextmanager
