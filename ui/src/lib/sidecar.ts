@@ -419,3 +419,14 @@ export async function fetchCircuit(
     }),
   });
 }
+
+/** Induction + previous-token score for every head, on the sidecar's fixed repeated test sequence. */
+export async function fetchHeadScores(
+  presetId: string,
+): Promise<import('./types').HeadScoresResponse> {
+  return request('/head-scores', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ preset_id: presetId }),
+  });
+}

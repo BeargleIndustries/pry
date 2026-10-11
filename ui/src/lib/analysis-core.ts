@@ -15,6 +15,7 @@ import {
   ablateFeatures,
   runPatching,
   fetchCircuit,
+  fetchHeadScores,
 } from './sidecar';
 import { sidecarErrorMessage } from './sidecar-errors';
 import type {
@@ -25,6 +26,7 @@ import type {
   AblateResponse,
   PatchResponse,
   CircuitResponse,
+  HeadScoresResponse,
 } from './types';
 
 export interface AnalysisState {
@@ -55,6 +57,10 @@ export interface AnalysisState {
   patchLoading: boolean;
   circuitResponse: CircuitResponse | null;
   circuitLoading: boolean;
+  /** Attention panel shows the copying-heads view instead of the prompt's grid. */
+  headScoresMode: boolean;
+  headScoresResponse: HeadScoresResponse | null;
+  headScoresLoading: boolean;
 }
 
 export function createInitialAnalysisState(): AnalysisState {
@@ -85,6 +91,9 @@ export function createInitialAnalysisState(): AnalysisState {
     patchLoading: false,
     circuitResponse: null,
     circuitLoading: false,
+    headScoresMode: false,
+    headScoresResponse: null,
+    headScoresLoading: false,
   };
 }
 
@@ -165,6 +174,8 @@ export class AnalysisController {
   clearForModelSwitch() {
     this.state.saeLayer = undefined;
     this.clearAnalyses();
+    // Head scores belong to the model, not the prompt, so only a switch clears them.
+    this.state.headScoresResponse = null;
     this.state.response = null;
     this.state.steeringResetKey++;
   }
@@ -392,6 +403,38 @@ export class AnalysisController {
       s.error = errMsg(e);
     } finally {
       s.patchLoading = false;
+    }
+  }
+
+  /**
+   * Switch the attention panel to the copying-heads view, scoring the heads
+   * the first time. Head scores use the sidecar's own test sequence, not the
+   * prompt, so this works before the first Run.
+   */
+  async showHeadScores() {
+    this.state.headScoresMode = true;
+    if (!this.state.headScoresResponse) await this.headScores();
+  }
+
+  hideHeadScores() {
+    this.state.headScoresMode = false;
+  }
+
+  async headScores() {
+    const s = this.state;
+    if (s.headScoresLoading) return;
+    s.headScoresLoading = true;
+    try {
+      await this.deps.ensureLoaded();
+      const presetId = this.deps.getActivePresetId();
+      if (!presetId) return;
+      const result = await fetchHeadScores(presetId);
+      // Drop a result for a model that was switched away while it ran.
+      if (this.deps.getActivePresetId() === presetId) s.headScoresResponse = result;
+    } catch (e) {
+      s.error = errMsg(e);
+    } finally {
+      s.headScoresLoading = false;
     }
   }
 

@@ -207,6 +207,38 @@ export interface CircuitResponse {
 }
 
 // ---------------------------------------------------------------------------
+// Head scores: induction + previous-token heads (T20, POST /head-scores)
+// ---------------------------------------------------------------------------
+
+export interface HeadScore {
+  layer: number;
+  head: number;
+  /** Mean attention (0-1) from each second-copy token to the token that came next after its first copy. */
+  induction: number;
+  /** Mean attention (0-1) from each token to the token just before it. */
+  previous_token: number;
+}
+
+export interface HeadScoresResponse {
+  preset_id: string;
+  n_layers: number;
+  n_heads: number;
+  /** Length of each copy in the test sequence. */
+  repeat_len: number;
+  /** The test sequence (no BOS): repeat_len random tokens, then the same again. */
+  sequence_tokens: string[];
+  previous_token_source: 'repeated_sequence' | 'prompt';
+  /** Every head, layer-major. */
+  scores: HeadScore[];
+  /** Highest first. */
+  top_induction: HeadScore[];
+  /** Highest first. */
+  top_previous_token: HeadScore[];
+  timing_ms: Record<string, number>;
+  status?: string;
+}
+
+// ---------------------------------------------------------------------------
 // Preset display metadata (Phase 2 contract §1/§2): passthrough of the
 // presets.json `display` block via Rust `PresetCompatibility.display` and
 // sidecar `/models` `available[].display`.

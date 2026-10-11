@@ -1,6 +1,17 @@
 <script lang="ts">
   import { viridis } from '$lib/viridis';
-  import type { GenerateResponse, AblateResponse } from '$lib/types';
+  import type { GenerateResponse, AblateResponse, HeadScoresResponse } from '$lib/types';
+  import {
+    HEAD_KIND_LABEL,
+    RING_MIN_SCORE,
+    headKey,
+    ringedHeads,
+    ringedList,
+    scoreGrid,
+    scorePercent,
+    splitRepeat,
+    type HeadKind,
+  } from '$lib/head-scores';
   import {
     FROM_OPTIONS,
     TO_OPTIONS,
@@ -27,6 +38,14 @@
     onToggleAblation?: (layer: number, head: number) => void;
     onRunAblation?: () => void;
     onToggleAblationMode?: (active: boolean) => void;
+    /** Copying-heads (induction) view, T20. */
+    headScoresMode?: boolean;
+    headScoresResponse?: HeadScoresResponse | null;
+    headScoresLoading?: boolean;
+    /** The ?demo=induction-heads link is waiting for the model to load before scoring. */
+    headScoresWaiting?: boolean;
+    onShowHeadScores?: () => void;
+    onHideHeadScores?: () => void;
   }
 
   let {
@@ -42,6 +61,12 @@
     onToggleAblation,
     onRunAblation,
     onToggleAblationMode,
+    headScoresMode = false,
+    headScoresResponse = null,
+    headScoresLoading = false,
+    headScoresWaiting = false,
+    onShowHeadScores,
+    onHideHeadScores,
   }: Props = $props();
 
   function isAblated(l: number, h: number): boolean {
@@ -313,6 +338,25 @@
     // Replace leading space with middle dot for clarity
     return text.startsWith(' ') ? '·' + text.slice(1) : text;
   }
+
+  // ---------------------------------------------------------------------------
+  // Copying heads (induction) view
+  // ---------------------------------------------------------------------------
+
+  const RING_COLOR: Record<HeadKind, string> = { induction: '#f59e0b', previous: '#38bdf8' };
+
+  let headColorBy = $state<HeadKind>('induction');
+  const hsRings = $derived(ringedHeads(headScoresResponse));
+  const hsGrid = $derived(headScoresResponse ? scoreGrid(headScoresResponse, headColorBy) : []);
+  const hsSequence = $derived(headScoresResponse ? splitRepeat(headScoresResponse) : null);
+  const hsCopying = $derived(ringedList(headScoresResponse, 'induction'));
+  const hsPrevious = $derived(ringedList(headScoresResponse, 'previous'));
+  const hsWidth = $derived(LABEL_W + (headScoresResponse?.n_heads ?? 0) * (CELL + GAP));
+  const hsHeight = $derived(LABEL_H + (headScoresResponse?.n_layers ?? 0) * (CELL + GAP));
+
+  function seqToken(text: string): string {
+    return displayToken(text.replace(/\n/g, '↵'));
+  }
 </script>
 
 <!-- =========================================================================
@@ -324,15 +368,209 @@
     <h2 class="text-sm font-semibold uppercase tracking-widest text-zinc-400">
       Attention
     </h2>
-    {#if response}
-      <span class="rounded-full border border-zinc-700 px-2 py-0.5 text-[10px] text-zinc-500">
-        {nLayers}L · {nHeads}H · {tokens.length} tokens
-      </span>
-    {/if}
+    <div class="flex items-center gap-2">
+      {#if response && !headScoresMode}
+        <span class="rounded-full border border-zinc-700 px-2 py-0.5 text-[10px] text-zinc-500">
+          {nLayers}L · {nHeads}H · {tokens.length} tokens
+        </span>
+      {/if}
+      {#if headScoresMode}
+        <button
+          onclick={() => onHideHeadScores?.()}
+          class="rounded border border-zinc-700 px-3 py-1 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+        >
+          Back to your prompt
+        </button>
+      {:else}
+        <button
+          onclick={() => onShowHeadScores?.()}
+          data-tip="panel-a-copying-heads"
+          title="Find the heads that copy: when a word repeats, they look at what came after it last time."
+          class="rounded border border-amber-700/60 px-3 py-1 text-xs text-amber-300 hover:bg-amber-950/40"
+        >
+          Find copying heads
+        </button>
+      {/if}
+    </div>
   </div>
 
-  <!-- Empty states -->
-  {#if !response}
+  {#if headScoresMode}
+    <!-- -----------------------------------------------------------------------
+         Copying heads (induction heads), T20
+         ----------------------------------------------------------------------- -->
+    <div>
+      <h3 class="mb-2 text-sm font-semibold text-zinc-200">Copying heads</h3>
+      <p class="mb-3 text-xs leading-relaxed text-zinc-400">
+        A model can't guess random words. But if the same random words come round a second time, it
+        can guess each one, as long as it remembers what came next last time. Some attention heads do
+        exactly that. To find them, Pry gives the model a test: {headScoresResponse?.repeat_len ?? 25}
+        random word-pieces (the chunks the model reads text in), then the same ones again in the same
+        order. Then it checks where every head looks during the second time through.
+      </p>
+
+      {#if headScoresWaiting && !headScoresResponse}
+        <p class="py-8 text-center text-sm text-zinc-500">Waiting for the model to load…</p>
+      {:else if headScoresLoading}
+        <p class="py-8 text-center text-sm text-zinc-500">Scoring every head…</p>
+      {:else if !headScoresResponse}
+        <div class="flex flex-col items-center gap-3 py-8">
+          <p class="text-sm text-zinc-500">No scores yet.</p>
+          <button
+            onclick={() => onShowHeadScores?.()}
+            class="rounded bg-amber-600 px-3 py-1 text-xs font-medium text-white hover:bg-amber-500"
+          >
+            Score the heads
+          </button>
+        </div>
+      {:else}
+        <!-- The test sequence -->
+        {#if hsSequence}
+          <div class="mb-4 space-y-1.5" data-tip="panel-a-copying-sequence">
+            {#each [{ label: 'First time', toks: hsSequence.first }, { label: 'Second time', toks: hsSequence.second }] as row (row.label)}
+              <div class="flex items-start gap-2">
+                <span class="w-20 flex-shrink-0 pt-0.5 text-[10px] uppercase tracking-widest text-zinc-600">{row.label}</span>
+                <div class="flex flex-wrap gap-1">
+                  {#each row.toks as t, i (i)}
+                    <span class="rounded border border-zinc-700 bg-zinc-800 px-1.5 py-0.5 font-mono text-[11px] text-zinc-300">{seqToken(t)}</span>
+                  {/each}
+                </div>
+              </div>
+            {/each}
+          </div>
+        {/if}
+
+        <!-- Color-by toggle -->
+        <div class="mb-3 flex items-center gap-1 self-start rounded-md border border-zinc-700 bg-zinc-800/60 p-0.5 w-fit">
+          {#each [{ id: 'induction', label: 'Copying score' }, { id: 'previous', label: 'Previous-word score' }] as opt (opt.id)}
+            <button
+              onclick={() => { headColorBy = opt.id as HeadKind; }}
+              class={[
+                'rounded px-3 py-1 text-xs transition-all',
+                headColorBy === opt.id ? 'bg-indigo-500 text-white' : 'text-zinc-400 hover:text-zinc-200',
+              ].join(' ')}
+            >
+              {opt.label}
+            </button>
+          {/each}
+        </div>
+
+        <!-- Head grid with rings -->
+        <div class="overflow-x-auto">
+          <svg width={hsWidth} height={hsHeight} class="block" role="img" aria-label="Head scores grid">
+            {#each { length: headScoresResponse.n_heads } as _, h}
+              <text
+                x={LABEL_W + h * (CELL + GAP) + CELL / 2}
+                y={LABEL_H - 6}
+                text-anchor="middle"
+                fill="#71717a"
+                style="font-size: 9px; font-family: monospace;"
+              >{h}</text>
+            {/each}
+            {#each { length: headScoresResponse.n_layers } as _, l}
+              <text
+                x={LABEL_W - 6}
+                y={LABEL_H + l * (CELL + GAP) + CELL / 2}
+                text-anchor="end"
+                dominant-baseline="middle"
+                fill="#71717a"
+                style="font-size: 9px; font-family: monospace;"
+              >{l}</text>
+            {/each}
+            {#each hsGrid as row, l (l)}
+              {#each row as v, h (h)}
+                {@const ring = hsRings.get(headKey(l, h))}
+                {@const s = headScoresResponse.scores.find((x) => x.layer === l && x.head === h)}
+                {@const x = LABEL_W + h * (CELL + GAP)}
+                {@const y = LABEL_H + l * (CELL + GAP)}
+                <!-- Ringed cells are inset so a dark gap separates the ring from bright cells. -->
+                <rect
+                  x={x + (ring ? 5 : 0)}
+                  y={y + (ring ? 5 : 0)}
+                  width={ring ? CELL - 10 : CELL}
+                  height={ring ? CELL - 10 : CELL}
+                  fill={viridis(Math.max(0, Math.min(1, v)))}
+                  rx="2"
+                >
+                  <title>Layer {l} · Head {h}{ring ? ` (${HEAD_KIND_LABEL[ring]})` : ''}: copying {scorePercent(s?.induction ?? 0)}, previous word {scorePercent(s?.previous_token ?? 0)}</title>
+                </rect>
+                {#if ring}
+                  <rect
+                    x={x + 1.5}
+                    y={y + 1.5}
+                    width={CELL - 3}
+                    height={CELL - 3}
+                    fill="none"
+                    stroke={RING_COLOR[ring]}
+                    stroke-width="3"
+                    rx="4"
+                    pointer-events="none"
+                  />
+                {/if}
+              {/each}
+            {/each}
+          </svg>
+        </div>
+        <div class="mt-1 mb-4 flex flex-wrap items-center gap-x-4 gap-y-1">
+          <span class="text-[10px] text-zinc-600">← Layers (rows) · Heads (cols) →</span>
+          <span class="flex items-center gap-1.5 text-[11px] text-zinc-300">
+            <span class="inline-block h-3 w-3 rounded-sm border-[3px]" style="border-color: {RING_COLOR.induction}"></span>
+            {HEAD_KIND_LABEL.induction}
+          </span>
+          <span class="flex items-center gap-1.5 text-[11px] text-zinc-300">
+            <span class="inline-block h-3 w-3 rounded-sm border-[3px]" style="border-color: {RING_COLOR.previous}"></span>
+            {HEAD_KIND_LABEL.previous}
+          </span>
+          <div class="ml-auto flex items-center gap-1.5">
+            <span class="text-[10px] text-zinc-600">0%</span>
+            <div class="h-2 w-20 rounded-sm" style="background: linear-gradient(to right, rgb(68,1,84), rgb(49,104,142), rgb(53,183,121), rgb(253,231,37))"></div>
+            <span class="text-[10px] text-zinc-600">100%</span>
+          </div>
+        </div>
+
+        <!-- Ringed heads, in words -->
+        <div class="mb-4 grid gap-4 sm:grid-cols-2">
+          <div>
+            <p class="mb-1 text-xs font-semibold" style="color: {RING_COLOR.induction}">Copying heads</p>
+            <p class="mb-2 text-[11px] leading-snug text-zinc-500">
+              The second time through, how much of the head's attention went to the word that came right
+              after this word last time.
+            </p>
+            {#each hsCopying as s (headKey(s.layer, s.head))}
+              <div class="flex items-center gap-2 text-[11px]">
+                <span class="flex-1 text-zinc-300">Layer {s.layer} · Head {s.head}</span>
+                <span class="tabular-nums text-zinc-400">{scorePercent(s.induction)}</span>
+              </div>
+            {:else}
+              <p class="text-[11px] text-zinc-500">No head in this model scored {scorePercent(RING_MIN_SCORE)} or more.</p>
+            {/each}
+          </div>
+          <div>
+            <p class="mb-1 text-xs font-semibold" style="color: {RING_COLOR.previous}">Previous-word heads</p>
+            <p class="mb-2 text-[11px] leading-snug text-zinc-500">
+              How much of the head's attention went to the word just before the current one.
+            </p>
+            {#each hsPrevious as s (headKey(s.layer, s.head))}
+              <div class="flex items-center gap-2 text-[11px]">
+                <span class="flex-1 text-zinc-300">Layer {s.layer} · Head {s.head}</span>
+                <span class="tabular-nums text-zinc-400">{scorePercent(s.previous_token)}</span>
+              </div>
+            {:else}
+              <p class="text-[11px] text-zinc-500">No head in this model scored {scorePercent(RING_MIN_SCORE)} or more.</p>
+            {/each}
+          </div>
+        </div>
+
+        <p class="text-[11px] leading-relaxed text-zinc-500">
+          Heads are ringed when, on average, at least {scorePercent(RING_MIN_SCORE)} of their attention goes
+          to that word. Researchers call copying heads "induction heads". They often team up with a
+          previous-word head in an earlier layer: that head notes which word came before each word, and
+          the copying head uses the note to find where the current word showed up last time, then looks
+          one step past it. This is one made-up test, so treat the rings as strong hints, not proof of
+          what a head does on ordinary text.
+        </p>
+      {/if}
+    </div>
+  {:else if !response}
     <div class="flex flex-col items-center justify-center py-16 text-center">
       <div class="mb-3 h-10 w-10 rounded-full border border-zinc-700 bg-zinc-800 flex items-center justify-center">
         <svg class="h-5 w-5 text-zinc-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">

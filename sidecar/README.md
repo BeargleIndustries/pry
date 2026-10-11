@@ -102,6 +102,7 @@ If loading on CUDA runs out of memory (a GPU smaller than the preset needs), the
 - `POST /ablate-feature`: remove SAE features from the residual stream and compare the predictions. The features must come from the loaded SAE layer.
 - `POST /patch`: activation patching from a clean prompt into a corrupted one, per head, MLP, or residual layer.
 - `POST /circuit`: the components with the largest DLA scores. Returns no edges (`edges_method: "none"`).
+- `POST /head-scores`: `{preset_id, prompt?, top_k=8}` → every head's induction and previous-token score (0-1), plus the top `top_k` of each. The induction score runs a fixed test sequence: 25 seeded random tokens, then the same 25 again (`sequence_tokens`, no BOS). It is the mean attention from each second-copy token to the token that followed its first occurrence. The previous-token score is the mean attention to the token just before, over positions 2 onward of `prompt` or, if omitted, the test sequence. A prompt shorter than two tokens returns 400.
 - `GET /feature/{id}`: a feature's Neuronpedia label and top-activating snippets. Covers presets whose `display.neuronpedia_model_id` is set (GPT-2 small and Pythia-70M); the rest return `status: "no_coverage"`.
 
 Bad input returns 400 with a plain-language `error` message: a feature from a different layer than the loaded SAE; a feature, layer, or head outside the model; or a `target_token_index` past the end of the prompt (`/dla`, `/patch`). A preset that isn't loaded returns 409.
