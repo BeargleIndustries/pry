@@ -211,9 +211,9 @@ export const tipsRegistry: TipDef[] = [
     target: '[data-tip="circuit-graph"]',
     placement: 'left',
     blurb:
-      "These are the heads and layers that pushed the prediction most. It doesn't show how they connect.",
+      "These are the heads and layers that pushed the prediction most. Lines show one kind of connection between them: the direct value path.",
     why:
-      "Each dot is one attention head or one processing layer (MLP), placed on its layer. Bigger dots pushed the prediction harder. Blue heads pushed toward the predicted word, red ones pushed against it, and processing layers are amber. The scores come from the same estimate as the Why (DLA) tab, and only parts above the threshold are shown. Treat it as a shortlist of parts worth a closer look, not a map of how they pass information to each other. Working out those connections takes more experiments, like the ones in Swap & Compare.",
+      "Each dot is one attention head or one processing layer (MLP), placed on its layer. Bigger dots pushed the prediction harder. Blue heads pushed toward the predicted word, red ones pushed against it, and processing layers are amber. The scores come from the same estimate as the Why (DLA) tab, and only parts above the threshold are shown. A line from an earlier part to a later head shows how much the earlier part's output, copied straight through that head, pushes the predicted word: blue lines push toward it, orange lines push away, and thicker lines push harder. It leaves out other ways parts affect each other, such as changing where a head looks, so treat it as a partial map. Swap & Compare can test a connection directly.",
   },
   // Only registered when custom models are switched on (contract §7).
   ...(CUSTOM_MODELS_ENABLED ? [CUSTOM_MODEL_VERDICT_TIP] : []),

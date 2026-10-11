@@ -224,8 +224,14 @@ export interface CircuitResponse {
   source: string;
   nodes: CircuitNode[];
   edges: CircuitEdge[];
-  /** How edges were computed; "none" means no edges are reported. */
+  /**
+   * How edges were computed. "direct_value_path": signed weight (logits of the
+   * predicted word) of the source's output passed straight through the target
+   * head's value path; Q/K composition excluded. "none": no edges reported.
+   */
   edges_method?: string;
+  /** Edges with |weight| below this were dropped. */
+  edge_threshold?: number;
   timing_ms: Record<string, number>;
   status?: string;
 }
