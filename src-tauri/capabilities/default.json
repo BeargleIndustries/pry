@@ -30,7 +30,8 @@
       "identifier": "fs:allow-write-text-file",
       "allow": [
         { "path": "$LOCALDATA/Pry/**" },
-        { "path": "$DOWNLOAD/**" }
+        { "path": "$DOWNLOAD/**" },
+        { "path": "$APPDATA/notebook.json" }
       ]
     }
   ]

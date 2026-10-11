@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy, untrack } from 'svelte';
-  import { CircleHelp, Settings, Download, FlaskConical, GitCompareArrows } from 'lucide-svelte';
+  import { CircleHelp, Settings, Download, FlaskConical, GitCompareArrows, BookOpen, BookmarkPlus } from 'lucide-svelte';
   import PryLogo from '$lib/components/icons/PryLogo.svelte';
   import { health, loadPreset, unloadPreset, listModels } from '$lib/sidecar';
   import type { LoadProgress, PresetInfo } from '$lib/sidecar';
@@ -45,6 +45,8 @@
   import { demoFromParams } from '$lib/head-scores';
   import { createCompare } from '$lib/compare.svelte';
   import ComparePanel from '$lib/components/ComparePanel.svelte';
+  import NotebookPanel from '$lib/components/NotebookPanel.svelte';
+  import { createNotebookStore } from '$lib/notebook.svelte';
 
   // ---------------------------------------------------------------------------
   // Hardware probe state
@@ -384,8 +386,9 @@
     analysis.patching(cleanPrompt, corruptedPrompt, patchType);
   const handleCircuit = (threshold?: number) => analysis.circuit('dla', threshold);
 
-  async function handleExportJSON() {
-    const data = {
+  // What the JSON export and the lab notebook save for the current run.
+  function currentRunData() {
+    return {
       response: st.response,
       saeLayer: st.saeLayer,
       activePresetId,
@@ -396,8 +399,11 @@
       featureAblateResponse: st.featureAblateResponse,
       patchResponse: st.patchResponse,
       circuitResponse: st.circuitResponse,
-      exportedAt: new Date().toISOString(),
     };
+  }
+
+  async function handleExportJSON() {
+    const data = { ...currentRunData(), exportedAt: new Date().toISOString() };
     saveJsonFile(JSON.stringify(data, null, 2)).catch((e) => {
       st.error = `Export failed: ${e instanceof Error ? e.message : String(e)}`;
     });
@@ -637,6 +643,32 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Lab notebook (T27)
+  // ---------------------------------------------------------------------------
+  const notebook = createNotebookStore();
+  let notebookOpen = $state(false);
+  let notebookSaving = $state(false);
+
+  function openNotebook(saving: boolean) {
+    notebookSaving = saving;
+    notebookOpen = true;
+  }
+
+  function saveRunToNotebook(title: string, note: string) {
+    const { response, saeLayer, ...rest } = currentRunData();
+    if (!response) return Promise.resolve(null);
+    const exp = activeExperiment && activeExperiment.prompt === response.prompt ? activeExperiment : null;
+    return notebook.add({
+      title,
+      note,
+      modelName: displayName(response.preset_id, presets),
+      display: presetDisplay,
+      experiment: exp ? { id: exp.id, title: exp.title, citations: exp.found.citations } : null,
+      run: { ...rest, response, saeLayer: saeLayer ?? null },
+    });
+  }
+
+  // ---------------------------------------------------------------------------
   // Tabbed panels — used in both wide (split) and narrow modes
   // ---------------------------------------------------------------------------
   const leftTabs: TabDef[] = [
@@ -767,6 +799,23 @@
         class="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 disabled:opacity-30 disabled:cursor-not-allowed"
       >
         <Download class="h-4 w-4" />
+      </button>
+      <button
+        onclick={() => openNotebook(true)}
+        aria-label="Save to notebook"
+        title="Save this run to your lab notebook"
+        disabled={!st.response}
+        class="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 disabled:opacity-30 disabled:cursor-not-allowed"
+      >
+        <BookmarkPlus class="h-4 w-4" />
+      </button>
+      <button
+        onclick={() => openNotebook(false)}
+        title="Your saved runs and notes"
+        class="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+      >
+        <BookOpen class="h-4 w-4" />
+        Notebook
       </button>
       <button
         onclick={() => (experimentsOpen = true)}
@@ -1277,6 +1326,16 @@
     onPick={pickExperiment}
     onClose={() => (experimentsOpen = false)}
     onDismissGuide={() => (activeExperiment = null)}
+  />
+
+  <NotebookPanel
+    open={notebookOpen}
+    store={notebook}
+    saving={notebookSaving}
+    currentPrompt={st.response?.prompt ?? null}
+    onSaveCurrent={saveRunToNotebook}
+    onUsePrompt={(p) => { compareMode = false; prompt = p; }}
+    onClose={() => (notebookOpen = false)}
   />
 
   <!-- First-time contextual tips (registry-driven) -->
