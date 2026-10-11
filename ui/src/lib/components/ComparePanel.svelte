@@ -75,7 +75,7 @@
       </label>
       <button type="button" onclick={() => compare.run()} disabled={runDisabled || s.running} title={runDisabledReason}
         class="rounded bg-indigo-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-50">
-        {s.running ? 'Comparing…' : 'Compare'}
+        {s.running ? 'Comparing…' : 'Run both'}
       </button>
     </div>
     {#if compare.edited}
