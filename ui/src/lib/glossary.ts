@@ -18,13 +18,13 @@ export const glossary: Record<string, GlossaryEntry> = {
   token: {
     term: 'token',
     definition:
-      'A word-piece: the chunk of text the model reads at once. A common word is one token; a rare word may be split into several.',
+      'A word-piece: the smallest chunk of text the model works with. A common word is one token; a rare word may be split into several.',
     aliases: ['tokens', 'word-piece', 'word-pieces', 'word piece'],
   },
   attention: {
     term: 'attention',
     definition:
-      'How each word-piece pulls in information from earlier ones. The model can only look back at earlier text, never ahead.',
+      'How each word-piece pulls in information from itself and earlier ones. The model can only look back at earlier text, never ahead.',
     aliases: [],
   },
   'attention-head': {
