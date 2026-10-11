@@ -59,7 +59,7 @@ async fn open_devtools(window: tauri::WebviewWindow) -> Result<(), String> {
 
 // ── Phase 5a: hardware probe commands ────────────────────────────────────────
 
-/// Run the hardware probe, persist the result to %APPDATA%/Pry/hardware.json,
+/// Run the hardware probe, persist the result to %LOCALAPPDATA%/Pry/hardware.json,
 /// and return the report.
 #[tauri::command]
 fn probe_hardware() -> Result<hardware::HardwareReport, AppError> {
@@ -235,10 +235,10 @@ pub fn run() {
         .expect("error building tauri application")
         .run(|app_handle, event| {
             if let tauri::RunEvent::ExitRequested { .. } = event {
-                // H1 fix: block_on panics when called from within a Tokio
-                // worker thread ("cannot start a runtime from within a
-                // runtime"). Shutdown is best-effort fire-and-forget, so
-                // spawn is correct here.
+                // block_on panics on a Tokio worker thread, so this spawns a
+                // best-effort graceful shutdown. The process may exit before
+                // it runs; the Windows Job Object (KILL_ON_JOB_CLOSE, see
+                // sidecar.rs) is what actually guarantees the sidecar dies.
                 let app = app_handle.clone();
                 tauri::async_runtime::spawn(async move {
                     let state = app.state::<SidecarState>();

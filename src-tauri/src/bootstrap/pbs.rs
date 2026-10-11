@@ -5,7 +5,7 @@ use tokio::io::AsyncWriteExt;
 
 // Pinned python-build-standalone release.
 // https://github.com/astral-sh/python-build-standalone/releases
-// Decision: using 3.12.7+20250918 (install_only Windows MSVC build). If the
+// Decision: using 3.12.13+20260408 (install_only Windows MSVC build). If the
 // exact release no longer exists at build/ship time, update these three
 // constants to the newest `install_only-pc-windows-msvc` tarball.
 const PBS_VERSION: &str = "3.12.13";

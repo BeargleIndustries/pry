@@ -177,7 +177,7 @@ impl Drop for SidecarHandle {
 /// Indicates where the Python executable came from.
 #[derive(Debug)]
 pub enum PythonSource {
-    /// %APPDATA%/Pry/runtime/venv/Scripts/python.exe — managed installer runtime
+    /// %LOCALAPPDATA%/Pry/runtime/venv/Scripts/python.exe — managed installer runtime
     ManagedRuntime,
     /// PRY_PYTHON_OVERRIDE env var — advanced user escape hatch
     EnvOverride,
@@ -228,7 +228,7 @@ fn find_python() -> anyhow::Result<(PathBuf, PythonSource)> {
 ///
 /// Resolution order:
 ///   1. PRY_SIDECAR_DIR env var (dev/CI override)
-///   2. %APPDATA%/Pry/runtime/pry_sidecar/ (managed runtime — copied by bundler)
+///   2. %LOCALAPPDATA%/Pry/runtime/pry_sidecar/ (managed runtime — copied by bundler)
 ///   3. Walk up from exe looking for sidecar/pry_sidecar/main.py (dev layout)
 ///
 /// Note: in managed-runtime mode pry_sidecar may instead be installed as a pip
@@ -534,8 +534,7 @@ pub async fn launch_with_app(app_handle: Option<tauri::AppHandle>) -> anyhow::Re
             return Err(anyhow!(
                 "sidecar failed to start within 60s — see troubleshooting: \
                 Windows Defender may have quarantined python.exe; \
-                check %APPDATA%/Pry/runtime/ and add it as an AV exclusion. \
-                Also ensure Python 3.10+ is installed and on PATH."
+                check %LOCALAPPDATA%\\Pry\\runtime\\ and add it as an AV exclusion."
             ));
         }
         Ok(Err(join_err)) => {
