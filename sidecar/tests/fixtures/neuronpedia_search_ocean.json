@@ -1,0 +1,326 @@
+{
+  "request": {
+    "modelId": "gpt2-small",
+    "layers": [
+      "8-res-jb"
+    ],
+    "query": "the ocean"
+  },
+  "results": [
+    {
+      "modelId": "gpt2-small",
+      "layer": "8-res-jb",
+      "index": "8548",
+      "description": "references to the ocean",
+      "explanationModelName": "gpt-4o-mini",
+      "typeName": "oai_token-act-pair",
+      "cosine_similarity": 0.7028370137198527,
+      "neuron": {
+        "modelId": "gpt2-small",
+        "layer": "8-res-jb",
+        "index": "8548",
+        "maxActApprox": 55.40948104858398,
+        "pos_str": [
+          "ographer",
+          "front",
+          " basin",
+          "ographers",
+          " liner",
+          "ographic",
+          " Ocean",
+          " Basin",
+          "cean",
+          " ocean"
+        ],
+        "pos_values": [
+          1.132856845855713,
+          1.076521754264832,
+          1.030118107795715,
+          1.022366046905518,
+          0.9921818375587463,
+          0.9816421270370483,
+          0.9604390859603882,
+          0.8721105456352234,
+          0.8700515627861023,
+          0.847632110118866
+        ]
+      }
+    },
+    {
+      "modelId": "gpt2-small",
+      "layer": "8-res-jb",
+      "index": "8548",
+      "description": "words related to oceans",
+      "explanationModelName": "gpt-3.5-turbo",
+      "typeName": "oai_token-act-pair",
+      "cosine_similarity": 0.6133796332252055,
+      "neuron": {
+        "modelId": "gpt2-small",
+        "layer": "8-res-jb",
+        "index": "8548",
+        "maxActApprox": 55.40948104858398,
+        "pos_str": [
+          "ographer",
+          "front",
+          " basin",
+          "ographers",
+          " liner",
+          "ographic",
+          " Ocean",
+          " Basin",
+          "cean",
+          " ocean"
+        ],
+        "pos_values": [
+          1.132856845855713,
+          1.076521754264832,
+          1.030118107795715,
+          1.022366046905518,
+          0.9921818375587463,
+          0.9816421270370483,
+          0.9604390859603882,
+          0.8721105456352234,
+          0.8700515627861023,
+          0.847632110118866
+        ]
+      }
+    },
+    {
+      "modelId": "gpt2-small",
+      "layer": "8-res-jb",
+      "index": "11403",
+      "description": "references to underwater environments and activities",
+      "explanationModelName": "gpt-3.5-turbo",
+      "typeName": "oai_token-act-pair",
+      "cosine_similarity": 0.5391340093870612,
+      "neuron": {
+        "modelId": "gpt2-small",
+        "layer": "8-res-jb",
+        "index": "11403",
+        "maxActApprox": 37.75280380249023,
+        "pos_str": [
+          " landsl",
+          " mammals",
+          " mammal",
+          " waterways",
+          " caves",
+          " diving",
+          " lake",
+          " habitats",
+          " intruder",
+          " vegetation"
+        ],
+        "pos_values": [
+          0.9452337622642517,
+          0.9096952080726624,
+          0.9073606133460999,
+          0.8291019797325134,
+          0.8217474818229675,
+          0.8131929636001587,
+          0.8073707222938538,
+          0.8039435148239136,
+          0.8001796007156372,
+          0.7988766431808472
+        ]
+      }
+    },
+    {
+      "modelId": "gpt2-small",
+      "layer": "8-res-jb",
+      "index": "2628",
+      "description": "references to various bodies of water",
+      "explanationModelName": "gpt-4o-mini",
+      "typeName": "oai_token-act-pair",
+      "cosine_similarity": 0.5075452721787248,
+      "neuron": {
+        "modelId": "gpt2-small",
+        "layer": "8-res-jb",
+        "index": "2628",
+        "maxActApprox": 44.08134460449219,
+        "pos_str": [
+          "melon",
+          "front",
+          "colour",
+          "tight",
+          "ports",
+          " crossings",
+          "keeper",
+          "waters",
+          "boats",
+          "falls"
+        ],
+        "pos_values": [
+          1.068976879119873,
+          1.031677722930908,
+          1.004467368125916,
+          0.9348210692405701,
+          0.8971073627471924,
+          0.8905079364776611,
+          0.8728386759757996,
+          0.8454921841621399,
+          0.8298499584197998,
+          0.8294627070426941
+        ]
+      }
+    },
+    {
+      "modelId": "gpt2-small",
+      "layer": "8-res-jb",
+      "index": "20327",
+      "description": "phrases related to oceanography and atmospheric science",
+      "explanationModelName": "gpt-3.5-turbo",
+      "typeName": "oai_token-act-pair",
+      "cosine_similarity": 0.4760754608251945,
+      "neuron": {
+        "modelId": "gpt2-small",
+        "layer": "8-res-jb",
+        "index": "20327",
+        "maxActApprox": 37.70253372192383,
+        "pos_str": [
+          " Association",
+          " Sciences",
+          " Society",
+          " Laboratory",
+          " Survey",
+          " Observatory",
+          " Institute",
+          "onnaissance",
+          " Fisheries",
+          " Federation"
+        ],
+        "pos_values": [
+          1.003155589103699,
+          0.84605473279953,
+          0.8438918590545654,
+          0.8286632895469666,
+          0.8182650208473206,
+          0.8095511794090271,
+          0.805779755115509,
+          0.8022595047950745,
+          0.8002871870994568,
+          0.7966472506523132
+        ]
+      }
+    },
+    {
+      "modelId": "gpt2-small",
+      "layer": "8-res-jb",
+      "index": "2705",
+      "description": "references to aquariums or terms related to aquatic life",
+      "explanationModelName": "gpt-4o-mini",
+      "typeName": "oai_token-act-pair",
+      "cosine_similarity": 0.46963943329289126,
+      "neuron": {
+        "modelId": "gpt2-small",
+        "layer": "8-res-jb",
+        "index": "2705",
+        "maxActApprox": 69.22949981689453,
+        "pos_str": [
+          "arium",
+          "ittal",
+          "isition",
+          "apon",
+          "isitions",
+          "apor",
+          "idd",
+          "antic",
+          "atic",
+          "apolis"
+        ],
+        "pos_values": [
+          1.11214804649353,
+          1.074017524719238,
+          1.045232176780701,
+          1.037238001823425,
+          1.03689432144165,
+          0.985090434551239,
+          0.98164963722229,
+          0.9775091409683228,
+          0.9761935472488403,
+          0.9642292857170105
+        ]
+      }
+    },
+    {
+      "modelId": "gpt2-small",
+      "layer": "8-res-jb",
+      "index": "4670",
+      "description": "words related to locations or people named \"Seab\"",
+      "explanationModelName": "gpt-3.5-turbo",
+      "typeName": "oai_token-act-pair",
+      "cosine_similarity": 0.4627499444118588,
+      "neuron": {
+        "modelId": "gpt2-small",
+        "layer": "8-res-jb",
+        "index": "4670",
+        "maxActApprox": 44.58469009399414,
+        "pos_str": [
+          "aults",
+          "ember",
+          "ecast",
+          "uku",
+          "arth",
+          "eper",
+          "ault",
+          "irm",
+          "rets",
+          "ologne"
+        ],
+        "pos_values": [
+          0.8421787023544312,
+          0.7425691485404968,
+          0.7323103547096252,
+          0.711822509765625,
+          0.7098749279975891,
+          0.7089494466781616,
+          0.6921486258506775,
+          0.6788161396980286,
+          0.6758678555488586,
+          0.6696423888206482
+        ]
+      }
+    },
+    {
+      "modelId": "gpt2-small",
+      "layer": "8-res-jb",
+      "index": "8602",
+      "description": "references to water in various contexts, particularly in relation to planets and atmospheric conditions",
+      "explanationModelName": "gpt-4o-mini",
+      "typeName": "oai_token-act-pair",
+      "cosine_similarity": 0.45651313704880114,
+      "neuron": {
+        "modelId": "gpt2-small",
+        "layer": "8-res-jb",
+        "index": "8602",
+        "maxActApprox": 21.44381141662598,
+        "pos_str": [
+          " molecules",
+          " ejected",
+          " particles",
+          " deposits",
+          " fragments",
+          " formation",
+          " Formation",
+          " masses",
+          " absorbs",
+          " molecule"
+        ],
+        "pos_values": [
+          1.116219758987427,
+          1.009894490242004,
+          1.003577828407288,
+          1.001623153686523,
+          0.9644961357116699,
+          0.9181456565856934,
+          0.9060505628585815,
+          0.893955409526825,
+          0.8869109153747559,
+          0.8833317756652832
+        ]
+      }
+    }
+  ],
+  "resultsCount": 20,
+  "hasMore": true,
+  "nextOffset": 20
+}

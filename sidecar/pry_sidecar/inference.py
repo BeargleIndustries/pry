@@ -841,6 +841,16 @@ def run_steer(req: SteerRequest, loaded: LoadedModel) -> SteerResponse:
         model = loaded.model
         sae = loaded.sae
 
+        # Any feature of the loaded SAE can be steered (T24: concept search
+        # picks features that never fired on this prompt). Check the range
+        # here too, under the lock: a negative index would silently wrap.
+        d_sae = int(sae.cfg.d_sae)
+        if not 0 <= req.feature_id < d_sae:
+            raise ValueError(
+                f"Feature {req.feature_id} is out of range; this feature map "
+                f"has features 0-{d_sae - 1}."
+            )
+
         # Get the feature direction from the SAE decoder
         direction = sae.W_dec[req.feature_id].detach().clone()  # [d_model]
 
