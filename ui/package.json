@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
-    "lint": "prettier --check ."
+    "lint": "prettier --check .",
+    "test": "vitest run"
   },
   "dependencies": {
     "@tauri-apps/plugin-shell": "^2.3.5",
@@ -35,6 +36,7 @@
     "tailwindcss": "^3.4",
     "tslib": "^2.8",
     "typescript": "^5.6",
-    "vite": "^5.4"
+    "vite": "^5.4",
+    "vitest": "^2.1.9"
   }
 }
