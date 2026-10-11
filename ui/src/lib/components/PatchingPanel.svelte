@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Term from './Term.svelte';
   import type { PatchResponse, PatchComponent } from '$lib/types';
   import {
     patchLengthStatus,
@@ -109,7 +110,7 @@
   data-tip="patching-panel"
 >
   <div class="flex items-baseline gap-2">
-    <h2 class="text-sm font-semibold text-zinc-100">Activation Patching</h2>
+    <h2 class="text-sm font-semibold text-zinc-100"><Term key="activation-patching">Activation Patching</Term></h2>
     <span class="text-xs text-zinc-600">Causal importance</span>
     {#if loading}
       <span class="ml-auto inline-flex items-center gap-1.5 text-xs text-zinc-500">

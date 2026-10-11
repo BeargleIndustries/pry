@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Term from './Term.svelte';
   import type { CircuitResponse, CircuitNode } from '$lib/types';
 
   interface Props {
@@ -98,7 +99,7 @@
 >
   <div class="flex items-baseline gap-2">
     <h2 class="text-sm font-semibold text-zinc-100">Key parts</h2>
-    <span class="text-xs text-zinc-600">From DLA</span>
+    <span class="text-xs text-zinc-600">From <Term key="dla">DLA</Term></span>
     {#if loading}
       <span class="ml-auto inline-flex items-center gap-1.5 text-xs text-zinc-500">
         <span class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-zinc-500 border-t-transparent"></span>
@@ -108,7 +109,7 @@
   </div>
 
   <p class="text-xs text-zinc-400">
-    These are the heads and layers that pushed the prediction most. It doesn't show how they connect.
+    These are the <Term key="head">heads</Term> and <Term key="layer">layers</Term> that pushed the prediction most. It doesn't show how they connect.
   </p>
 
   <!-- Controls -->

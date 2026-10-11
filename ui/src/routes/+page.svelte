@@ -750,6 +750,7 @@
       <button
         onclick={() => (experimentsOpen = true)}
         title="Try a guided experiment"
+        data-tip="experiments-button"
         class="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
       >
         <FlaskConical class="h-4 w-4" />

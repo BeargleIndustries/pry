@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Term from './Term.svelte';
   import type { GenerateResponse, SteerResponse, FeatureHit } from '$lib/types';
   import { diffTokens } from '$lib/token-diff';
   import { searchConcepts, SidecarError } from '$lib/sidecar';
@@ -147,7 +148,7 @@
     </div>
   {:else}
     <!-- Concept search (T24) -->
-    <div class="flex flex-col gap-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
+    <div class="flex flex-col gap-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-3" data-tip="concept-search">
       <label for="concept-query" class="text-xs font-medium text-zinc-400">Find a concept</label>
       <p class="text-[11px] leading-snug text-amber-400/80">{NEURONPEDIA_NOTICE}</p>
       {#if searchOff}
@@ -223,7 +224,7 @@
           <span class="flex-1">
             #{concept.feature_id} - {concept.description}
             <span class="block text-[10px] text-zinc-500">
-              From your search. This feature may not have fired on your prompt at all; steering adds it anyway.
+              From your search. This feature may not have fired on your prompt at all; <Term key="steering">steering</Term> adds it anyway.
               Searched features often need a strength of 15-20 before the text changes.
             </span>
           </span>

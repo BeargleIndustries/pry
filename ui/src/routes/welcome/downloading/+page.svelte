@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Term from '$lib/components/Term.svelte';
   import { onMount, onDestroy } from 'svelte';
   import { goto } from '$app/navigation';
   import { Download, CheckCircle2 } from 'lucide-svelte';
@@ -103,7 +104,7 @@
   <div class="mb-1 font-mono text-xs uppercase tracking-widest text-indigo-400">step 05</div>
   <h2 class="mb-2 text-2xl font-semibold text-zinc-100">Downloading {presetId}</h2>
   <p class="mb-6 text-sm text-zinc-400">
-    Downloading the model and its feature detector (SAE) from HuggingFace. They're saved on
+    Downloading the model and its feature detector (<Term key="sae">SAE</Term>) from HuggingFace. They're saved on
     your computer, so you only download them once.
   </p>
 

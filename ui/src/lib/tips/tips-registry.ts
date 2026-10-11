@@ -226,4 +226,57 @@ export const tipsRegistry: TipDef[] = [
     why:
       "Neuronpedia is a community project that catalogs SAE features across multiple models. Each feature gets a page with its top activating examples, auto-generated descriptions, and sometimes human-written annotations from researchers who've studied it. When Pry shows you a feature labeled 'past-tense verb' or 'female professional,' that label originally came from Neuronpedia's labeling pipeline. Clicking through lets you see more context than Pry can fit in a card, including how the feature behaves on thousands of other inputs. It's the closest thing to a field guide for model internals.",
   },
+  // Tips for 0.3.x features (T20, T22, T24, T25, T26), registered in T30.
+  {
+    id: 'panel-a-copying-heads',
+    target: '[data-tip="panel-a-copying-heads"]',
+    placement: 'bottom',
+    blurb:
+      "Runs a short test to find the heads that copy: when a word repeats, they look at what came after it last time.",
+    why:
+      "Researchers call these induction heads. Pry feeds the model a run of random word-pieces, then the same run again, and scores every head on how much it looks at 'whatever came next last time' during the second pass. A high score is good evidence a head copies like this. It doesn't prove that's all the head does, and it only uses this one kind of test.",
+  },
+  {
+    id: 'panel-a-copying-sequence',
+    target: '[data-tip="panel-a-copying-sequence"]',
+    placement: 'bottom',
+    blurb:
+      "This is the test: random word-pieces, then the same ones again. The second time through, a copying head can guess each next one.",
+    why: null,
+  },
+  {
+    id: 'experiments-button',
+    target: '[data-tip="experiments-button"]',
+    placement: 'bottom',
+    blurb:
+      "Short guided experiments that researchers have studied. Pick one and Pry sets up the prompt and opens the right panel.",
+    why: null,
+  },
+  {
+    id: 'compare-panel',
+    target: '[data-tip="compare-panel"]',
+    placement: 'bottom',
+    blurb:
+      "Type two prompts that differ by a word or two, then press Compare to see how the predictions, features and attention change.",
+    why:
+      "Small, controlled changes are one of the clearest ways to learn what a model is reacting to. If swapping 'he' for 'she' changes which features light up, those features are likely tracking that difference. This view only shows what changed, not why. To test which parts cause a change, try Swap & Compare.",
+  },
+  {
+    id: 'watch-it-write',
+    target: '[data-tip="watch-it-write"]',
+    placement: 'top',
+    blurb:
+      "Let the model keep writing one word-piece at a time, and see which other guesses it nearly picked at each step.",
+    why:
+      "The model never writes a whole sentence at once. It scores every possible next word-piece, one is picked, it's added to the text, and the model goes again. Temperature controls how that pick is made: at 0 it always takes the top guess, and higher values let less likely guesses through more often.",
+  },
+  {
+    id: 'concept-search',
+    target: '[data-tip="concept-search"]',
+    placement: 'bottom',
+    blurb:
+      "Search for any concept by name, then steer with the matching feature, even if it didn't light up on your prompt.",
+    why:
+      "The search compares your words with the feature labels on Neuronpedia. Those labels were written by another AI and can be wrong, and the closest match isn't always a good match. Steering is the honest check: if pushing the feature changes the text in the way the label suggests, the label is probably about right.",
+  },
 ];

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Term from './Term.svelte';
   // T26 "Watch it write": ask the model to keep writing, then replay the new
   // text one token at a time with the chosen word, its chance and the
   // runner-up. Replay/state logic lives in $lib/watch-it-write.ts.
@@ -120,7 +121,7 @@
   {:else}
     <div class="flex flex-col gap-2 rounded-md border border-zinc-800 bg-zinc-900 p-3">
       <label class="flex items-center gap-3 text-xs text-zinc-300">
-        <span class="w-24 shrink-0">Temperature</span>
+        <span class="w-24 shrink-0"><Term key="temperature">Temperature</Term></span>
         <input
           type="range"
           min="0"

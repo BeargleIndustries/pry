@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Term from './Term.svelte';
   import type { DLAResponse, DLAComponent } from '$lib/types';
   import { dlaReadout } from '$lib/readouts';
   import Readout from './Readout.svelte';
@@ -34,7 +35,7 @@
   data-tip="dla-waterfall"
 >
   <div class="flex items-baseline gap-2">
-    <h2 class="text-sm font-semibold text-zinc-100">Direct Logit Attribution</h2>
+    <h2 class="text-sm font-semibold text-zinc-100"><Term key="dla">Direct Logit Attribution</Term></h2>
     <span class="text-xs text-zinc-600">Per-component credit</span>
     {#if loading}
       <span class="ml-auto inline-flex items-center gap-1.5 text-xs text-zinc-500">
