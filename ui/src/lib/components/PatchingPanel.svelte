@@ -6,6 +6,17 @@
     TOKENIZE_DEBOUNCE_MS,
     type TokenizeResponse,
   } from '$lib/analysis-core';
+  import { clampCell, handleGridKey, type GridCell } from '$lib/grid-nav';
+  import {
+    NEGATIVE_HEX,
+    POSITIVE_HEX,
+    signGlyph,
+    signOf,
+    signedColor,
+    signedHex,
+    signedIntensity,
+    signedNumber,
+  } from '$lib/signed-color';
 
   interface Props {
     response: PatchResponse | null;
@@ -95,13 +106,56 @@
     selectedComponent = null;
   }
 
+  // Blue = positive (brings back the original answer), orange = negative.
+  // Colorblind-safe pair from $lib/signed-color; the sign is also in every label.
   function cellColor(effect: number): string {
-    const norm = Math.abs(effect) / maxAbsEffect;
-    const alpha = Math.min(norm, 1);
-    if (effect >= 0) {
-      return `rgba(99, 102, 241, ${alpha})`; // indigo for positive (restores clean)
-    }
-    return `rgba(239, 68, 68, ${alpha})`; // red for negative
+    return signedColor(effect, maxAbsEffect);
+  }
+
+  function effectWords(effect: number): string {
+    const s = signOf(effect);
+    return s === 'positive'
+      ? 'brings back the original answer'
+      : s === 'negative'
+        ? 'pushes further from the original'
+        : 'no effect';
+  }
+
+  function cellLabel(where: string, effect: number): string {
+    return `${where}: effect ${signedNumber(effect, 3)}, ${effectWords(effect)}`;
+  }
+
+  // Keyboard model (T29): roving tabindex over whichever grid is showing.
+  // The cells are buttons, so Enter/Space click them natively.
+  const uid = $props.id();
+  const gridDescId = `patch-grid-desc-${uid}`;
+  const legendId = `patch-legend-${uid}`;
+  const patchTypeLabelId = `patch-type-${uid}`;
+  let gridEl: HTMLElement | undefined = $state();
+  let gridCurrent = $state<GridCell>({ row: 0, col: 0 });
+  const gridShape = $derived(
+    shownPatchType === 'head' && nHeads > 0
+      ? { rows: nLayers, cols: nHeads }
+      : residTokens.length > 0
+        ? { rows: nLayers, cols: residTokens.length }
+        : { rows: 0, cols: 0 },
+  );
+  const tabStop = $derived(clampCell(gridCurrent, gridShape));
+
+  function onGridKey(e: KeyboardEvent) {
+    if (!tabStop) return;
+    const next = handleGridKey(e, tabStop, gridShape, gridEl, { nativeActivate: true });
+    if (next) gridCurrent = next;
+  }
+
+  /** Small glyph drawn in strong cells so sign never depends on colour alone. */
+  function cellGlyph(effect: number): string {
+    return signedIntensity(effect, maxAbsEffect) >= 0.2 ? signGlyph(effect) : '';
+  }
+
+  // Dark glyph on bright cells, light glyph on dim ones.
+  function glyphColor(effect: number): string {
+    return signedIntensity(effect, maxAbsEffect) >= 0.55 ? '#09090b' : '#f4f4f5';
   }
 </script>
 
@@ -159,11 +213,12 @@
       </p>
     {/if}
     <div class="flex items-center gap-3">
-      <label class="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Patch type</label>
-      <div class="flex gap-1">
+      <span id={patchTypeLabelId} class="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Patch type</span>
+      <div class="flex gap-1" role="group" aria-labelledby={patchTypeLabelId}>
         {#each ['head', 'mlp', 'resid'] as pt (pt)}
           <button
             type="button"
+            aria-pressed={patchType === pt}
             onclick={() => { patchType = pt as 'head' | 'mlp' | 'resid'; }}
             class={[
               'rounded px-2 py-0.5 text-[10px] font-medium transition-colors',
@@ -205,56 +260,97 @@
     {#if shownPatchType === 'head' && nHeads > 0}
       <!-- Heatmap for head patching -->
       <div class="overflow-x-auto">
-        <div class="text-[10px] text-zinc-600 mb-1">Layer (rows) x Head (columns). Brightness = patching effect magnitude.</div>
-        <div class="inline-grid gap-px" style="grid-template-columns: auto repeat({nHeads}, 1fr);">
+        <div id={gridDescId} class="text-[10px] text-zinc-600 mb-1">
+          Layer (rows) x Head (columns). Brightness = patching effect magnitude. Arrow keys move between squares; Enter shows the details.
+        </div>
+        <div
+          bind:this={gridEl}
+          role="grid"
+          aria-label="Head patching effects, layer by head"
+          aria-describedby="{gridDescId} {legendId}"
+          tabindex="-1"
+          onkeydown={onGridKey}
+          class="inline-grid gap-px"
+          style="grid-template-columns: auto repeat({nHeads}, 1fr);"
+        >
           <!-- Header row -->
-          <div class="text-[9px] text-zinc-600 px-1"></div>
-          {#each Array(nHeads) as _, h}
-            <div class="text-center text-[9px] text-zinc-600 px-0.5">H{h}</div>
-          {/each}
+          <div role="row" class="contents">
+            <div role="columnheader" class="text-[9px] text-zinc-600 px-1"><span class="sr-only">Layer</span></div>
+            {#each Array(nHeads) as _, h}
+              <div role="columnheader" class="text-center text-[9px] text-zinc-600 px-0.5" aria-label="Head {h}">H{h}</div>
+            {/each}
+          </div>
 
           <!-- Data rows -->
           {#each Array(nLayers) as _, l}
-            <div class="text-[9px] text-zinc-500 px-1 flex items-center">L{l}</div>
-            {#each Array(nHeads) as _, h}
-              {@const comp = gridLookup.get(`${l}-${h}`)}
-              {@const effect = comp?.effect ?? 0}
-              <button
-                type="button"
-                onclick={() => { selectedComponent = comp ?? null; }}
-                class="h-5 w-5 rounded-sm border border-zinc-800 transition-colors hover:border-zinc-600"
-                style="background-color: {cellColor(effect)};"
-                title="L{l}.H{h}: {effect.toFixed(4)}"
-              ></button>
-            {/each}
+            <div role="row" class="contents">
+              <div role="rowheader" class="text-[9px] text-zinc-500 px-1 flex items-center" aria-label="Layer {l}">L{l}</div>
+              {#each Array(nHeads) as _, h}
+                {@const comp = gridLookup.get(`${l}-${h}`)}
+                {@const effect = comp?.effect ?? 0}
+                <button
+                  type="button"
+                  role="gridcell"
+                  data-row={l}
+                  data-col={h}
+                  tabindex={tabStop?.row === l && tabStop?.col === h ? 0 : -1}
+                  aria-selected={selectedComponent !== null && selectedComponent === comp}
+                  onfocus={() => { gridCurrent = { row: l, col: h }; }}
+                  onclick={() => { selectedComponent = comp ?? null; }}
+                  class="flex h-5 w-5 items-center justify-center rounded-sm border border-zinc-800 text-[10px] font-bold leading-none transition-colors hover:border-zinc-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  style="background-color: {cellColor(effect)}; color: {glyphColor(effect)};"
+                  title="L{l}.H{h}: {signedNumber(effect, 4)}"
+                  aria-label={cellLabel(`Layer ${l}, head ${h}`, effect)}
+                ><span aria-hidden="true">{cellGlyph(effect)}</span></button>
+              {/each}
+            </div>
           {/each}
         </div>
       </div>
     {:else if residTokens.length > 0}
       <!-- Heatmap for residual patching: one square per (layer, word) -->
       <div class="overflow-x-auto">
-        <div class="text-[10px] text-zinc-600 mb-1">
-          Layer (rows) x word (columns). Each square swaps in the original prompt's information at one word, going into one layer.
+        <div id={gridDescId} class="text-[10px] text-zinc-600 mb-1">
+          Layer (rows) x word (columns). Each square swaps in the original prompt's information at one word, going into one layer. Arrow keys move between squares; Enter shows the details.
         </div>
-        <div class="inline-grid gap-px" style="grid-template-columns: auto repeat({residTokens.length}, 1fr);">
-          <div class="text-[9px] text-zinc-600 px-1"></div>
-          {#each residTokens as tok, p (p)}
-            <div class="max-w-[3rem] truncate px-0.5 text-center font-mono text-[9px] text-zinc-500" title={tok}>{tok.replace(/^ /, '·')}</div>
-          {/each}
-          {#each Array(nLayers) as _, l}
-            <div class="text-[9px] text-zinc-500 px-1 flex items-center">L{l}</div>
+        <div
+          bind:this={gridEl}
+          role="grid"
+          aria-label="Residual patching effects, layer by word"
+          aria-describedby="{gridDescId} {legendId}"
+          tabindex="-1"
+          onkeydown={onGridKey}
+          class="inline-grid gap-px"
+          style="grid-template-columns: auto repeat({residTokens.length}, 1fr);"
+        >
+          <div role="row" class="contents">
+            <div role="columnheader" class="text-[9px] text-zinc-600 px-1"><span class="sr-only">Layer</span></div>
             {#each residTokens as tok, p (p)}
-              {@const comp = gridLookup.get(`${l}-p${p}`)}
-              {@const effect = comp?.effect ?? 0}
-              <button
-                type="button"
-                onclick={() => { selectedComponent = comp ?? null; }}
-                class="h-5 min-w-5 rounded-sm border border-zinc-800 transition-colors hover:border-zinc-600"
-                style="background-color: {cellColor(effect)};"
-                title="Layer {l}, {JSON.stringify(tok)}: {effect.toFixed(4)}"
-                aria-label="Layer {l}, word {p + 1}: effect {effect.toFixed(3)}"
-              ></button>
+              <div role="columnheader" class="max-w-[3rem] truncate px-0.5 text-center font-mono text-[9px] text-zinc-500" title={tok}>{tok.replace(/^ /, '·')}</div>
             {/each}
+          </div>
+          {#each Array(nLayers) as _, l}
+            <div role="row" class="contents">
+              <div role="rowheader" class="text-[9px] text-zinc-500 px-1 flex items-center" aria-label="Layer {l}">L{l}</div>
+              {#each residTokens as tok, p (p)}
+                {@const comp = gridLookup.get(`${l}-p${p}`)}
+                {@const effect = comp?.effect ?? 0}
+                <button
+                  type="button"
+                  role="gridcell"
+                  data-row={l}
+                  data-col={p}
+                  tabindex={tabStop?.row === l && tabStop?.col === p ? 0 : -1}
+                  aria-selected={selectedComponent !== null && selectedComponent === comp}
+                  onfocus={() => { gridCurrent = { row: l, col: p }; }}
+                  onclick={() => { selectedComponent = comp ?? null; }}
+                  class="flex h-5 min-w-5 items-center justify-center rounded-sm border border-zinc-800 text-[10px] font-bold leading-none transition-colors hover:border-zinc-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  style="background-color: {cellColor(effect)}; color: {glyphColor(effect)};"
+                  title="Layer {l}, {JSON.stringify(tok)}: {signedNumber(effect, 4)}"
+                  aria-label={cellLabel(`Layer ${l}, word ${p + 1} ${JSON.stringify(tok)}`, effect)}
+                ><span aria-hidden="true">{cellGlyph(effect)}</span></button>
+              {/each}
+            </div>
           {/each}
         </div>
       </div>
@@ -275,21 +371,20 @@
               {#if isPositive}
                 <div class="flex h-full w-1/2 justify-start"></div>
                 <div class="h-full w-1/2 flex items-center">
-                  <div class="h-full rounded-r bg-indigo-500/70 transition-all" style="width: {width / 2}%;"></div>
+                  <div class="h-full rounded-r transition-all" style="width: {width / 2}%; background-color: {POSITIVE_HEX}; opacity: 0.75;"></div>
                 </div>
               {:else}
                 <div class="h-full w-1/2 flex items-center justify-end">
-                  <div class="h-full rounded-l bg-red-500/70 transition-all" style="width: {width / 2}%;"></div>
+                  <div class="h-full rounded-l transition-all" style="width: {width / 2}%; background-color: {NEGATIVE_HEX}; opacity: 0.75;"></div>
                 </div>
                 <div class="flex h-full w-1/2 justify-start"></div>
               {/if}
             </div>
             <span
               class="w-16 shrink-0 text-right font-mono text-[10px]"
-              class:text-indigo-400={isPositive}
-              class:text-red-400={!isPositive}
+              style="color: {signedHex(comp.effect)};"
             >
-              {isPositive ? '+' : ''}{comp.effect.toFixed(4)}
+              {signedNumber(comp.effect, 4)}
             </span>
           </button>
         {/each}
@@ -298,11 +393,11 @@
 
     <!-- Selected component detail -->
     {#if selectedComponent}
-      <div class="rounded-md border border-zinc-700 bg-zinc-900/80 px-3 py-2 text-xs">
+      <div class="rounded-md border border-zinc-700 bg-zinc-900/80 px-3 py-2 text-xs" role="status">
         <div class="flex items-center gap-3 text-zinc-300">
           <span class="font-mono font-semibold">{selectedComponent.name}</span>
           <span class="text-zinc-600">|</span>
-          <span>Effect: <span class="font-mono" class:text-indigo-400={selectedComponent.effect >= 0} class:text-red-400={selectedComponent.effect < 0}>{selectedComponent.effect.toFixed(4)}</span></span>
+          <span>Effect: <span class="font-mono" style="color: {signedHex(selectedComponent.effect)};">{signedNumber(selectedComponent.effect, 4)}</span> <span class="text-zinc-500">({effectWords(selectedComponent.effect)})</span></span>
         </div>
         <div class="mt-1 flex gap-4 text-zinc-500">
           <span>Original score: <span class="text-zinc-300">{selectedComponent.clean_logit.toFixed(3)}</span></span>
@@ -313,14 +408,16 @@
     {/if}
 
     <!-- Legend -->
-    <div class="flex items-center gap-4 text-[10px] text-zinc-600">
+    <div id={legendId} class="flex flex-wrap items-center gap-4 text-[10px] text-zinc-500">
       <span class="flex items-center gap-1">
-        <span class="inline-block h-2 w-4 rounded-sm bg-indigo-500/70"></span>
-        Positive (brings back the original answer)
+        <span class="inline-block h-2 w-4 rounded-sm" style="background-color: {POSITIVE_HEX};" aria-hidden="true"></span>
+        <span aria-hidden="true" class="font-mono font-bold">+</span>
+        Positive (blue: brings back the original answer)
       </span>
       <span class="flex items-center gap-1">
-        <span class="inline-block h-2 w-4 rounded-sm bg-red-500/70"></span>
-        Negative (pushes further from the original)
+        <span class="inline-block h-2 w-4 rounded-sm" style="background-color: {NEGATIVE_HEX};" aria-hidden="true"></span>
+        <span aria-hidden="true" class="font-mono font-bold">−</span>
+        Negative (orange: pushes further from the original)
       </span>
       {#if response?.timing_ms}
         <span class="ml-auto text-zinc-700">
