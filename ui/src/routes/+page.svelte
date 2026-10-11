@@ -640,7 +640,7 @@
     {
       id: 'circuit',
       label: 'Key parts',
-      title: "The attention heads and layers that pushed this prediction the most. It doesn't show how they connect.",
+      title: 'The attention heads and layers that pushed this prediction the most, with direct value path lines between them.',
     },
   ];
   const rightTabs: TabDef[] = [
