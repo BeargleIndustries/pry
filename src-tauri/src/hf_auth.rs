@@ -49,7 +49,6 @@ mod windows_impl {
         unsafe {
             CredWriteW(&cred, 0).map_err(|e| anyhow!("CredWriteW: {e}"))?;
         }
-        drop(cred); // ensure raw pointer is not accessible past token_bytes lifetime
         Ok(())
     }
 

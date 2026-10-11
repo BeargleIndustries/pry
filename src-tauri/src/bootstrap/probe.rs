@@ -1,5 +1,4 @@
 use super::events::*;
-use std::os::windows::process::CommandExt;
 use std::path::PathBuf;
 use tokio::process::Command;
 

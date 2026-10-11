@@ -367,20 +367,6 @@ export async function removeCustomModel(hfId: string): Promise<void> {
 // KEEP IN SYNC: src-tauri/src/sidecar.rs + lib.rs
 // ---------------------------------------------------------------------------
 
-export interface SidecarConnection {
-  base_url: string;
-  token: string;
-}
-
-/** Base URL + per-launch auth token of the running sidecar, as one pair. */
-export async function sidecarConnection(): Promise<SidecarConnection> {
-  try {
-    return await invoke<SidecarConnection>('sidecar_connection');
-  } catch (e) {
-    throw new Error(formatTauriError(e));
-  }
-}
-
 /** Stop the current sidecar (if any) and launch a new one with a new token. */
 export async function restartSidecar(): Promise<void> {
   if (!isTauri()) return;

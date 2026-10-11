@@ -87,11 +87,6 @@ function getConnection(): Promise<Connection> {
   return connectionPromise;
 }
 
-/** Resolves the sidecar base URL. Prefer `sidecarFetch`, which also sends the token. */
-export async function getSidecarBase(): Promise<string> {
-  return (await getConnection()).base;
-}
-
 function isAbort(e: unknown): boolean {
   return typeof e === 'object' && e !== null && (e as { name?: string }).name === 'AbortError';
 }

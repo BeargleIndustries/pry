@@ -8,7 +8,7 @@ pub mod presets_compat;
 pub mod bootstrap;
 
 use std::sync::Arc;
-use tauri::{Manager, Runtime, State};
+use tauri::{Manager, State};
 use tokio::sync::Mutex;
 
 use error::AppError;

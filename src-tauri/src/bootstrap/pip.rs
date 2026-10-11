@@ -1,5 +1,4 @@
 use super::{errors::BootstrapError, events::*, probe::CudaVariant};
-use std::os::windows::process::CommandExt;
 use std::path::{Path, PathBuf};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;

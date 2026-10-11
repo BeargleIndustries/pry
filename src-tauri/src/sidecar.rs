@@ -40,7 +40,6 @@ use windows::Win32::{
         SetInformationJobObject, JOBOBJECT_EXTENDED_LIMIT_INFORMATION,
         JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
     },
-    System::Threading::GetCurrentProcess,
 };
 
 pub struct SidecarHandle {
@@ -240,7 +239,7 @@ fn find_python() -> anyhow::Result<(PathBuf, PythonSource)> {
 ///   3. Walk up from exe looking for sidecar/pry_sidecar/main.py (dev layout)
 ///
 /// Note: in managed-runtime mode pry_sidecar may instead be installed as a pip
-/// package into the venv (see TODO in module header). In that case this function
+/// package into the venv (see module header). In that case this function
 /// is not used for the cwd — only for dev-mode spawning.
 pub fn find_sidecar_dir() -> anyhow::Result<PathBuf> {
     // 1. Env var override (useful in dev and CI)
@@ -552,7 +551,6 @@ pub async fn launch_with_app(app_handle: Option<tauri::AppHandle>) -> anyhow::Re
     // Windows-specific: no console window
     #[cfg(target_os = "windows")]
     {
-        use std::os::windows::process::CommandExt;
         const CREATE_NO_WINDOW: u32 = 0x08000000;
         cmd.creation_flags(CREATE_NO_WINDOW);
     }
