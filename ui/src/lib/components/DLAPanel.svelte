@@ -3,6 +3,7 @@
   import type { DLAResponse, DLAComponent } from '$lib/types';
   import { dlaReadout } from '$lib/readouts';
   import Readout from './Readout.svelte';
+  import { NEGATIVE_HEX, POSITIVE_HEX, signedHex, signedNumber, signOf } from '$lib/signed-color';
 
   interface Props {
     response: DLAResponse | null;
@@ -25,6 +26,17 @@
     return (Math.abs(c.contribution) / maxAbsContribution) * 100;
   }
 
+  const uid = $props.id();
+  const readoutId = `dla-readout-${uid}`;
+  const legendId = `dla-legend-${uid}`;
+
+  function rowLabel(c: DLAComponent): string {
+    const what = c.type === 'attention' ? `Attention layer ${c.layer} head ${c.head}` : `MLP layer ${c.layer}`;
+    const s = signOf(c.contribution);
+    const dir = s === 'positive' ? 'pushed toward the prediction' : s === 'negative' ? 'pushed against it' : 'no push';
+    return `${what}: ${signedNumber(c.contribution, 3)}, ${dir}`;
+  }
+
   function displayToken(t: string): string {
     return t.startsWith(' ') ? '\u00b7' + t.slice(1) : t;
   }
@@ -45,7 +57,7 @@
     {/if}
   </div>
 
-  <Readout text={dlaReadout(response)} />
+  <Readout id={readoutId} text={dlaReadout(response)} />
 
   {#if !response && !loading}
     <div class="flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 py-12">
@@ -67,51 +79,59 @@
         <p class="text-sm text-zinc-600">No component attributions available.</p>
       </div>
     {:else}
-      <!-- Waterfall chart -->
-      <div class="flex flex-col gap-0.5">
+      <!-- Waterfall chart. A list, so screen readers can step through it; the
+           readout above is its summary. -->
+      <ul
+        class="flex flex-col gap-0.5"
+        aria-label="Direct logit attribution, largest first"
+        aria-describedby="{readoutId} {legendId}"
+      >
         {#each visibleComponents as comp, i (comp.name)}
           {@const isPositive = comp.contribution >= 0}
           {@const width = barWidth(comp)}
-          <div class="group flex items-center gap-2 rounded px-2 py-1 hover:bg-zinc-900/60">
+          <li class="group flex items-center gap-2 rounded px-2 py-1 hover:bg-zinc-900/60">
+            <span class="sr-only">{i + 1}. {rowLabel(comp)}</span>
             <!-- Rank -->
-            <span class="w-5 shrink-0 text-right font-mono text-[10px] text-zinc-700">
+            <span aria-hidden="true" class="w-5 shrink-0 text-right font-mono text-[10px] text-zinc-700">
               {i + 1}
             </span>
             <!-- Component label -->
             <span
+              aria-hidden="true"
               class="w-16 shrink-0 truncate font-mono text-xs"
               class:text-zinc-300={comp.type === 'attention'}
-              class:text-amber-400={comp.type === 'mlp'}
+              class:text-fuchsia-300={comp.type === 'mlp'}
               title="{comp.type === 'attention' ? `Attention Layer ${comp.layer} Head ${comp.head}` : `MLP Layer ${comp.layer}`}"
             >
               {comp.name}
             </span>
             <!-- Type badge -->
             <span
+              aria-hidden="true"
               class={[
                 'w-8 shrink-0 rounded text-center text-[9px] font-medium',
-                comp.type === 'attention' ? 'bg-indigo-900/40 text-indigo-400' : 'bg-amber-900/40 text-amber-400',
+                comp.type === 'attention' ? 'bg-indigo-900/40 text-indigo-400' : 'bg-fuchsia-900/40 text-fuchsia-300',
               ].join(' ')}
             >
               {comp.type === 'attention' ? 'Attn' : 'MLP'}
             </span>
             <!-- Bar -->
-            <div class="flex-1 flex items-center" style="height: 16px;">
+            <div aria-hidden="true" class="flex-1 flex items-center" style="height: 16px;">
               {#if isPositive}
                 <div class="flex h-full w-1/2 justify-start">
                   <!-- spacer for negative side -->
                 </div>
                 <div class="h-full w-1/2 flex items-center">
                   <div
-                    class="h-full rounded-r bg-blue-500/70 transition-all"
-                    style="width: {width / 2}%;"
+                    class="h-full rounded-r transition-all"
+                    style="width: {width / 2}%; background-color: {POSITIVE_HEX}; opacity: 0.75;"
                   ></div>
                 </div>
               {:else}
                 <div class="h-full w-1/2 flex items-center justify-end">
                   <div
-                    class="h-full rounded-l bg-red-500/70 transition-all"
-                    style="width: {width / 2}%;"
+                    class="h-full rounded-l transition-all"
+                    style="width: {width / 2}%; background-color: {NEGATIVE_HEX}; opacity: 0.75;"
                   ></div>
                 </div>
                 <div class="flex h-full w-1/2 justify-start">
@@ -121,32 +141,34 @@
             </div>
             <!-- Value -->
             <span
+              aria-hidden="true"
               class="w-16 shrink-0 text-right font-mono text-[10px]"
-              class:text-blue-400={isPositive}
-              class:text-red-400={!isPositive}
+              style="color: {signedHex(comp.contribution)};"
             >
-              {isPositive ? '+' : ''}{comp.contribution.toFixed(3)}
+              {signedNumber(comp.contribution, 3)}
             </span>
-          </div>
+          </li>
         {/each}
-      </div>
+      </ul>
 
       <!-- Legend -->
-      <div class="flex items-center gap-4 text-[10px] text-zinc-600">
+      <div id={legendId} class="flex flex-wrap items-center gap-4 text-[10px] text-zinc-500">
         <span class="flex items-center gap-1">
-          <span class="inline-block h-2 w-4 rounded-sm bg-blue-500/70"></span>
-          Positive (pushed toward prediction)
+          <span class="inline-block h-2 w-4 rounded-sm" style="background-color: {POSITIVE_HEX};" aria-hidden="true"></span>
+          <span aria-hidden="true" class="font-mono font-bold">+</span>
+          Positive (blue, bar to the right: pushed toward prediction)
         </span>
         <span class="flex items-center gap-1">
-          <span class="inline-block h-2 w-4 rounded-sm bg-red-500/70"></span>
-          Negative (pushed against)
+          <span class="inline-block h-2 w-4 rounded-sm" style="background-color: {NEGATIVE_HEX};" aria-hidden="true"></span>
+          <span aria-hidden="true" class="font-mono font-bold">−</span>
+          Negative (orange, bar to the left: pushed against)
         </span>
         <span class="flex items-center gap-1">
           <span class="inline-block h-2 w-2 rounded-sm bg-indigo-900/40"></span>
           Attn
         </span>
         <span class="flex items-center gap-1">
-          <span class="inline-block h-2 w-2 rounded-sm bg-amber-900/40"></span>
+          <span class="inline-block h-2 w-2 rounded-sm bg-fuchsia-900/40"></span>
           MLP
         </span>
         {#if components.length > 30}

@@ -34,6 +34,10 @@
     resetKey = 0,
   }: Props = $props();
 
+  const uid = $props.id();
+  const featureSelectId = `steer-feature-${uid}`;
+  const alphaId = `steer-alpha-${uid}`;
+
   // Collect unique features from current response for the picker
   const availableFeatures = $derived.by((): FeatureHit[] => {
     if (!response?.sae_features) return [];
@@ -218,7 +222,7 @@
 
     <!-- Feature picker -->
     <div class="flex flex-col gap-2">
-      <label class="text-xs font-medium text-zinc-400">Feature</label>
+      <label for={featureSelectId} class="text-xs font-medium text-zinc-400">Feature</label>
       {#if conceptUsable && concept}
         <div class="flex items-start gap-2 rounded border border-indigo-500/60 bg-indigo-950/30 px-2 py-1.5 text-sm text-zinc-200">
           <span class="flex-1">
@@ -236,6 +240,7 @@
         </div>
       {/if}
       <select
+        id={featureSelectId}
         bind:value={selectedFeatureId}
         onchange={() => { concept = null; }}
         class="rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-sm text-zinc-200 focus:border-indigo-500 focus:outline-none {conceptUsable ? 'opacity-50' : ''}"
@@ -254,13 +259,15 @@
     <!-- Alpha slider -->
     <div class="flex flex-col gap-1.5">
       <div class="flex items-center justify-between">
-        <label class="text-xs font-medium text-zinc-400">Steering strength</label>
+        <label for={alphaId} class="text-xs font-medium text-zinc-400">Steering strength</label>
         <span class="text-xs tabular-nums text-zinc-300">{alpha.toFixed(1)}</span>
       </div>
       <div class="flex items-center gap-2">
         <span class="text-[10px] text-zinc-600">Suppress</span>
         <input
+          id={alphaId}
           type="range"
+          aria-valuetext="{alpha.toFixed(1)}, {alpha < 0 ? 'suppress' : alpha > 0 ? 'amplify' : 'no change'}"
           min="-30"
           max="30"
           step="0.5"

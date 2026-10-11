@@ -39,9 +39,9 @@
 </script>
 
 {#if open}
-  <!-- Backdrop (z-30) -->
-  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+  <!-- Backdrop (z-30): click outside closes; Escape is handled on window above. -->
   <div
+    role="presentation"
     class="fixed inset-0 z-30 bg-black/50"
     transition:fade={{ duration: 150 }}
     onclick={onClose}

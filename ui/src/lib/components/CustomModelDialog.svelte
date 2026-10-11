@@ -54,15 +54,21 @@
   }
 
   function handleKeydown(e: KeyboardEvent) {
-    if (e.key === 'Escape') handleClose();
     if (e.key === 'Enter' && !validating) handleAdd();
+  }
+
+  // Escape closes from anywhere in the dialog, not just the input.
+  function onWindowKeydown(e: KeyboardEvent) {
+    if (open && e.key === 'Escape') handleClose();
   }
 </script>
 
+<svelte:window onkeydown={onWindowKeydown} />
+
 {#if open}
-  <!-- Backdrop -->
-  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+  <!-- Backdrop: click outside closes; Escape is handled on window. -->
   <div
+    role="presentation"
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
     onclick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
   >
@@ -81,6 +87,8 @@
       <label for="hf-model-id" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-zinc-500">
         HuggingFace model ID
       </label>
+      <!-- Moving focus into a dialog when it opens is the expected dialog
+           behaviour (WAI-ARIA dialog pattern), so a11y_autofocus is a false positive here. -->
       <!-- svelte-ignore a11y_autofocus -->
       <input
         id="hf-model-id"

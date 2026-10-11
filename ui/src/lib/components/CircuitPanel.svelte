@@ -1,6 +1,8 @@
 <script lang="ts">
   import Term from './Term.svelte';
   import type { CircuitResponse, CircuitNode } from '$lib/types';
+  import { clampCell, handleGridKey, type GridCell } from '$lib/grid-nav';
+  import { NEGATIVE_HEX, POSITIVE_HEX, signedColor, signedHex, signedNumber, signGlyph, signOf } from '$lib/signed-color';
 
   interface Props {
     response: CircuitResponse | null;
@@ -78,18 +80,46 @@
     selectedNode = null;
   }
 
+  // Fill = sign (blue +, orange −, colorblind-safe), opacity and size = |importance|.
+  // Shape = type: circles are attention heads, squares are MLPs.
   function nodeColor(n: CircuitNode): string {
-    if (n.type === 'mlp') return '#d97706'; // amber
-    const norm = Math.abs(n.importance) / maxAbsImportance;
-    const lightness = 40 + norm * 30;
-    return n.importance >= 0
-      ? `hsl(234, 89%, ${lightness}%)`  // indigo
-      : `hsl(0, 72%, ${lightness}%)`;    // red
+    return signedColor(n.importance, maxAbsImportance, 0.35);
   }
 
   function nodeSize(n: CircuitNode): number {
     const norm = Math.abs(n.importance) / maxAbsImportance;
     return nodeR * 0.5 + nodeR * 0.5 * norm;
+  }
+
+  function nodeLabel(n: CircuitNode): string {
+    const what = n.type === 'mlp' ? `MLP, layer ${n.layer}` : `Attention head, layer ${n.layer} head ${n.head}`;
+    const s = signOf(n.importance);
+    const dir = s === 'positive' ? 'pushed toward the prediction' : s === 'negative' ? 'pushed against it' : 'no push';
+    return `${what}: importance ${signedNumber(n.importance, 4)}, ${dir}`;
+  }
+
+  // Keyboard model (T29): a roving grid. Rows run top to bottom as drawn
+  // (highest layer first); columns are the nodes in that layer, left to right.
+  const uid = $props.id();
+  const thresholdId = `circuit-threshold-${uid}`;
+  const descId = `circuit-desc-${uid}`;
+  const legendId = `circuit-legend-${uid}`;
+  let svgEl: SVGSVGElement | undefined = $state();
+  const gridRows = $derived(
+    Array.from({ length: maxLayer + 1 }, (_, r) => layerGroups.get(maxLayer - r) ?? []),
+  );
+  const gridShape = $derived(gridRows.map((g) => g.length));
+  let gridCurrent = $state<GridCell>({ row: 0, col: 0 });
+  const tabStop = $derived(clampCell(gridCurrent, gridShape));
+
+  function onNodeKey(e: KeyboardEvent) {
+    if (!tabStop) return;
+    const next = handleGridKey(e, tabStop, gridShape, svgEl, {
+      activate: (c) => {
+        selectedNode = gridRows[c.row]?.[c.col] ?? null;
+      },
+    });
+    if (next) gridCurrent = next;
   }
 </script>
 
@@ -114,8 +144,9 @@
 
   <!-- Controls -->
   <div class="flex items-center gap-3 flex-wrap">
-    <label class="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Threshold</label>
+    <label for={thresholdId} class="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Threshold</label>
     <input
+      id={thresholdId}
       type="text"
       bind:value={thresholdInput}
       placeholder="auto"
@@ -151,53 +182,99 @@
       </div>
     {:else}
       <!-- Key parts, one row per layer -->
+      <p id={descId} class="text-[10px] text-zinc-500">
+        Highest layer at the top. Arrow keys move between parts; Enter shows the details.
+      </p>
       <div class="overflow-auto rounded-md border border-zinc-800 bg-zinc-900/40 p-2">
         <svg
+          bind:this={svgEl}
           width={svgWidth}
           height={svgHeight}
           viewBox="0 0 {svgWidth} {svgHeight}"
           class="mx-auto"
+          role="grid"
+          tabindex="-1"
+          aria-label="Key parts by layer"
+          aria-describedby="{descId} {legendId}"
         >
-          <!-- Layer labels -->
+          <!-- Layer labels (each cell's label already names its layer) -->
           {#each Array(maxLayer + 1) as _, layer}
             <text
               x={8}
               y={svgHeight - padding - layer * layerHeight - nodeR + 4}
-              class="fill-zinc-600 text-[9px]"
+              class="fill-zinc-500 text-[9px]"
+              aria-hidden="true"
             >
               L{layer}
             </text>
           {/each}
 
-          <!-- Nodes -->
-          {#each nodes as node (node.id)}
-            {@const pos = nodePositions.get(node.id)}
-            {#if pos}
-              <!-- svelte-ignore a11y_click_events_have_key_events -->
-              <g
-                class="cursor-pointer"
-                onclick={() => { selectedNode = node; }}
-                role="button"
-                tabindex={0}
-              >
-                <circle
-                  cx={pos.x}
-                  cy={pos.y}
-                  r={nodeSize(node)}
-                  fill={nodeColor(node)}
-                  stroke={selectedNode?.id === node.id ? '#fff' : 'rgba(63,63,70,0.5)'}
-                  stroke-width={selectedNode?.id === node.id ? 2 : 1}
-                />
-                <text
-                  x={pos.x}
-                  y={pos.y + 3}
-                  text-anchor="middle"
-                  class="pointer-events-none fill-white text-[7px] font-mono"
-                >
-                  {node.type === 'mlp' ? 'M' : `${node.head}`}
-                </text>
-              </g>
-            {/if}
+          <!-- Nodes, one grid row per layer -->
+          {#each gridRows as group, r (r)}
+            <g role="row" aria-label="Layer {maxLayer - r}">
+              {#each group as node, c (node.id)}
+                {@const pos = nodePositions.get(node.id)}
+                {#if pos}
+                  {@const size = nodeSize(node)}
+                  {@const isSel = selectedNode?.id === node.id}
+                  <g
+                    class="group cursor-pointer outline-none"
+                    role="gridcell"
+                    data-row={r}
+                    data-col={c}
+                    tabindex={tabStop?.row === r && tabStop?.col === c ? 0 : -1}
+                    aria-label={nodeLabel(node)}
+                    aria-selected={isSel}
+                    onfocus={() => { gridCurrent = { row: r, col: c }; }}
+                    onclick={() => { gridCurrent = { row: r, col: c }; selectedNode = node; }}
+                    onkeydown={onNodeKey}
+                  >
+                    {#if node.type === 'mlp'}
+                      <rect
+                        class="hidden group-focus-visible:inline"
+                        x={pos.x - size - 4}
+                        y={pos.y - size - 4}
+                        width={(size + 4) * 2}
+                        height={(size + 4) * 2}
+                        rx="3"
+                        fill="none"
+                        stroke="#fff"
+                        stroke-width="2"
+                      />
+                      <rect
+                        x={pos.x - size}
+                        y={pos.y - size}
+                        width={size * 2}
+                        height={size * 2}
+                        rx="2"
+                        fill={nodeColor(node)}
+                        stroke={isSel ? '#fff' : signedHex(node.importance)}
+                        stroke-width={isSel ? 2 : 1}
+                      />
+                    {:else}
+                      <circle class="hidden group-focus-visible:inline" cx={pos.x} cy={pos.y} r={size + 4} fill="none" stroke="#fff" stroke-width="2" />
+                      <circle
+                        cx={pos.x}
+                        cy={pos.y}
+                        r={size}
+                        fill={nodeColor(node)}
+                        stroke={isSel ? '#fff' : signedHex(node.importance)}
+                        stroke-width={isSel ? 2 : 1}
+                      />
+                    {/if}
+                    <text
+                      x={pos.x}
+                      y={pos.y + 3}
+                      text-anchor="middle"
+                      class="pointer-events-none fill-white text-[7px] font-mono"
+                      aria-hidden="true"
+                    >
+                      {node.type === 'mlp' ? 'M' : `${node.head}`}{signGlyph(node.importance)}
+                    </text>
+                  </g>
+                {/if}
+              {/each}
+            </g>
           {/each}
         </svg>
       </div>
@@ -217,20 +294,30 @@
             <span>Layer {selectedNode.layer}{selectedNode.head !== null ? `, Head ${selectedNode.head}` : ''}</span>
           </div>
           <div class="mt-1 text-zinc-500">
-            Importance: <span class="font-mono" class:text-indigo-400={selectedNode.importance >= 0} class:text-red-400={selectedNode.importance < 0}>{selectedNode.importance.toFixed(4)}</span>
+            Importance: <span class="font-mono" style="color: {signedHex(selectedNode.importance)};">{signedNumber(selectedNode.importance, 4)}</span>
           </div>
         </div>
       {/if}
 
       <!-- Legend -->
-      <div class="flex items-center gap-4 text-[10px] text-zinc-600">
+      <div id={legendId} class="flex flex-wrap items-center gap-4 text-[10px] text-zinc-500">
         <span class="flex items-center gap-1">
-          <span class="inline-block h-2 w-2 rounded-full bg-indigo-500"></span>
-          Attn head
+          <span class="inline-block h-2 w-2 rounded-full border border-zinc-400" aria-hidden="true"></span>
+          Circle = attention head
         </span>
         <span class="flex items-center gap-1">
-          <span class="inline-block h-2 w-2 rounded-full bg-amber-500"></span>
-          MLP
+          <span class="inline-block h-2 w-2 rounded-sm border border-zinc-400" aria-hidden="true"></span>
+          Square = MLP
+        </span>
+        <span class="flex items-center gap-1">
+          <span class="inline-block h-2 w-4 rounded-sm" style="background-color: {POSITIVE_HEX};" aria-hidden="true"></span>
+          <span aria-hidden="true" class="font-mono font-bold">+</span>
+          Blue: pushed toward the prediction
+        </span>
+        <span class="flex items-center gap-1">
+          <span class="inline-block h-2 w-4 rounded-sm" style="background-color: {NEGATIVE_HEX};" aria-hidden="true"></span>
+          <span aria-hidden="true" class="font-mono font-bold">−</span>
+          Orange: pushed against it
         </span>
         <span>Node size = importance magnitude</span>
         {#if response?.timing_ms}
