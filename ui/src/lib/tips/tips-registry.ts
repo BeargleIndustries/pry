@@ -167,7 +167,7 @@ export const tipsRegistry: TipDef[] = [
     target: '[data-tip="export-button"]',
     placement: 'bottom',
     blurb:
-      "Saves a JSON file of this run.",
+      "Saves a JSON file of this run (raw numbers). For something to share, save the run to your Notebook and save it as a web page: a readable report that works offline.",
     why: null,
   },
   {
