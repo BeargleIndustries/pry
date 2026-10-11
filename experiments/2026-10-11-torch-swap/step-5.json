@@ -1,0 +1,46 @@
+{
+  "pip_version": "25.0.1",
+  "environment": {
+    "python_full_version": "3.12.13"
+  },
+  "install_count": 4,
+  "install": [
+    {
+      "name": "pry-sidecar",
+      "version": "0.1.0",
+      "requested": true,
+      "url": "file:///C:/Users/Brad/AppData/Local/Temp/pry-replay/cu124/sidecar",
+      "requires_torch_or_tl": [
+        "sae-lens<6,>=5.0",
+        "torch==2.5.*",
+        "transformer-lens<3,>=2.11"
+      ]
+    },
+    {
+      "name": "torch",
+      "version": "2.5.1",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/5f/ba/607d013b55b9fd805db2a5c2662ec7551f1910b4eef39653eeaba182c5b2/torch-2.5.1-cp312-cp312-win_amd64.whl",
+      "requires_torch_or_tl": [
+        "sympy==1.12.1; python_version == \"3.8\"",
+        "sympy==1.13.1; python_version >= \"3.9\""
+      ]
+    },
+    {
+      "name": "sympy",
+      "version": "1.13.1",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/b2/fe/81695a1aa331a842b582453b605175f419fe8540355886031328089d840a/sympy-1.13.1-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "transformer-lens",
+      "version": "2.15.4",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/46/68/ff1fee1043060b70c307e70389dff64b3259e0a6e3197ace5df0477d2983/transformer_lens-2.15.4-py3-none-any.whl",
+      "requires_torch_or_tl": [
+        "torch (>=2.2)"
+      ]
+    }
+  ]
+}
