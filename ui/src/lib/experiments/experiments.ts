@@ -36,6 +36,10 @@ export interface Experiment {
   patching?: { clean: string; corrupted: string; patchType: PatchType };
   /** Heads to pre-select for knockout in the Attention tab. */
   ablateHeads?: { layer: number; head: number }[];
+  /** GPT-2 small's top next word for `prompt` that the copy relies on (pytest checks it). */
+  expect?: string;
+  /** Top next word for the corrupted patching prompt, when the copy names it (pytest checks it). */
+  expectCorrupted?: string;
   /** Optional in-app guided mode, as a query string (e.g. `?demo=induction-heads`). */
   demoLink?: string;
   /** "What to look for", plain language, one tip per entry. */

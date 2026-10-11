@@ -66,7 +66,7 @@
     <p class="mt-6 text-xs text-zinc-500">
       <span class="text-zinc-400">Find the copying heads</span> gives the model you just set up a short
       test: 25 random word-pieces, then the same ones again. Pry then rings the attention heads that,
-      the second time through, look at whatever came next last time. That is how a model copies.
+      the second time through, look at whatever came next last time. That is one way models copy.
     </p>
     <p class="mt-2 text-xs text-zinc-500">
       <span class="text-zinc-400">The guided tour</span> walks you through two guided demos on GPT-2

@@ -1093,6 +1093,10 @@ def run_ablate_features(req: AblateFeatureRequest, loaded: LoadedModel) -> Ablat
 # ---------------------------------------------------------------------------
 
 
+# Residual patching runs one forward pass per (layer, position); ~12 x 50.
+MAX_RESID_PATCH_RUNS = 600
+
+
 def run_patching(req: PatchRequest, loaded: LoadedModel) -> PatchResponse:
     """Run activation patching: run clean and corrupted prompts, then for each
     component patch clean activations into the corrupted run and measure
@@ -1127,6 +1131,19 @@ def run_patching(req: PatchRequest, loaded: LoadedModel) -> PatchResponse:
     corrupted_strs = model.to_str_tokens(req.corrupted_prompt)
     seq_len = min(len(clean_strs), len(corrupted_strs))
     target_pos = _target_position(req.target_token_index, seq_len)
+
+    # Residual patching costs one forward pass per (layer, position) that can
+    # matter: from the first differing token up to the target.
+    diffs = (clean_tokens[0] != corrupted_tokens[0]).nonzero()
+    first_diff = int(diffs[0].item()) if diffs.numel() else seq_len
+    if req.patch_type == "resid":
+        runs = n_layers * max(0, target_pos - first_diff + 1)
+        if runs > MAX_RESID_PATCH_RUNS:
+            raise ValueError(
+                f"Residual patching on these prompts needs {runs} model runs "
+                f"(limit {MAX_RESID_PATCH_RUNS}). Use shorter prompts, or make "
+                f"them differ closer to the end."
+            )
 
     # Determine names_filter based on patch_type for efficient caching
     if req.patch_type == "head":
@@ -1239,6 +1256,9 @@ def run_patching(req: PatchRequest, loaded: LoadedModel) -> PatchResponse:
             # stream at every position would restore the clean run outright
             # (100% at every layer), which says nothing. Per position, it shows
             # where in the sentence the deciding information sits at each depth.
+            # The model is causal, so positions before the first differing token
+            # (identical in both runs) and after the target can't change the
+            # target's logit: they get effect 0 without a forward pass.
             for layer_idx in range(n_layers):
                 cache_key = f"blocks.{layer_idx}.hook_resid_pre"
                 if cache_key not in clean_cache:
@@ -1246,6 +1266,19 @@ def run_patching(req: PatchRequest, loaded: LoadedModel) -> PatchResponse:
                 clean_resid = clean_cache[cache_key]
 
                 for pos in range(seq_len):
+                    if pos < first_diff or pos > target_pos:
+                        components.append(PatchComponent(
+                            name=f"L{layer_idx}@{pos}",
+                            layer=layer_idx,
+                            head=None,
+                            position=pos,
+                            effect=0.0,
+                            clean_logit=clean_logit_val,
+                            corrupted_logit=corrupted_logit_val,
+                            patched_logit=corrupted_logit_val,
+                        ))
+                        continue
+
                     def patch_resid_hook(value, hook, _clean=clean_resid, _p=pos):
                         value[:, _p, :] = _clean[:, _p, :]
                         return value

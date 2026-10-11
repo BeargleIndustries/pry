@@ -215,6 +215,27 @@ describe('copying heads (head scores)', () => {
     expect(state.headScoresResponse).toBeNull();
   });
 
+  it('a model switch releases a running request so the new model can score at once', async () => {
+    const { ctl, state } = makeController();
+    let finishOld: (v: unknown) => void = () => {};
+    vi.mocked(sidecar.fetchHeadScores).mockImplementationOnce(
+      () => new Promise((resolve) => { finishOld = resolve as (v: unknown) => void; }) as never,
+    );
+    const old = ctl.headScores();
+    await Promise.resolve();
+    ctl.clearForModelSwitch();
+    expect(state.headScoresLoading).toBe(false);
+
+    vi.mocked(sidecar.fetchHeadScores).mockResolvedValueOnce({ kind: 'head-scores', fresh: true } as never);
+    await ctl.headScores();
+    expect(state.headScoresResponse).toMatchObject({ fresh: true });
+
+    finishOld({ kind: 'head-scores', stale: true });
+    await old;
+    expect(state.headScoresResponse).toMatchObject({ fresh: true });
+    expect(state.headScoresLoading).toBe(false);
+  });
+
   it('reports errors in the shared error slot', async () => {
     const { ctl, state } = makeController();
     vi.mocked(sidecar.fetchHeadScores).mockRejectedValueOnce(new Error('boom'));

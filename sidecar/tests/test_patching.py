@@ -43,3 +43,20 @@ def test_resid_patching_is_per_position(gpt2_client):
     last = len(tokens) - 1
     assert effect[(11, last)] > 0.5 * total
     assert abs(effect[(11, diff_pos)]) < 0.2 * total
+
+
+@pytest.mark.inference
+def test_resid_patching_is_capped(gpt2_client):
+    # Differ at the start of a long prompt: 12 layers x ~80 positions > the cap.
+    tail = " and then they walked home" * 12
+    r = gpt2_client.post(
+        "/patch",
+        json={
+            "preset_id": "gpt2-small",
+            "clean_prompt": "Mary" + tail,
+            "corrupted_prompt": "John" + tail,
+            "patch_type": "resid",
+        },
+    )
+    assert r.status_code == 400
+    assert "model runs" in r.json()["error"]

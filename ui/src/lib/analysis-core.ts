@@ -175,7 +175,10 @@ export class AnalysisController {
     this.state.saeLayer = undefined;
     this.clearAnalyses();
     // Head scores belong to the model, not the prompt, so only a switch clears them.
+    // Bumping the sequence also releases a request still running for the old model.
+    this.headScoresSeq++;
     this.state.headScoresResponse = null;
+    this.state.headScoresLoading = false;
     this.state.response = null;
     this.state.steeringResetKey++;
   }
@@ -420,21 +423,26 @@ export class AnalysisController {
     this.state.headScoresMode = false;
   }
 
+  private headScoresSeq = 0;
+
   async headScores() {
     const s = this.state;
     if (s.headScoresLoading) return;
     s.headScoresLoading = true;
+    const seq = ++this.headScoresSeq;
     try {
       await this.deps.ensureLoaded();
       const presetId = this.deps.getActivePresetId();
       if (!presetId) return;
       const result = await fetchHeadScores(presetId);
       // Drop a result for a model that was switched away while it ran.
-      if (this.deps.getActivePresetId() === presetId) s.headScoresResponse = result;
+      if (seq === this.headScoresSeq && this.deps.getActivePresetId() === presetId) {
+        s.headScoresResponse = result;
+      }
     } catch (e) {
-      s.error = errMsg(e);
+      if (seq === this.headScoresSeq) s.error = errMsg(e);
     } finally {
-      s.headScoresLoading = false;
+      if (seq === this.headScoresSeq) s.headScoresLoading = false;
     }
   }
 

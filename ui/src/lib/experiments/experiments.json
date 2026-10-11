@@ -7,7 +7,10 @@
       "hook": "Swap one name and find the few parts of the model that track who's who.",
       "preset": "gpt2-small",
       "prompt": "When Mary and John went to the store, John gave a drink to",
-      "open": { "left": "patching", "right": "predictions" },
+      "open": {
+        "left": "patching",
+        "right": "predictions"
+      },
       "patching": {
         "clean": "When Mary and John went to the store, John gave a drink to",
         "corrupted": "When Mary and John went to the store, Mary gave a drink to",
@@ -26,7 +29,8 @@
             "url": "https://arxiv.org/abs/2211.00593"
           }
         ]
-      }
+      },
+      "expect": " Mary"
     },
     {
       "id": "ioi-knockout",
@@ -34,11 +38,23 @@
       "hook": "Switch off three heads the research points at and see if the model notices.",
       "preset": "gpt2-small",
       "prompt": "When Mary and John went to the store, John gave a drink to",
-      "open": { "left": "attention", "right": "predictions" },
+      "open": {
+        "left": "attention",
+        "right": "predictions"
+      },
       "ablateHeads": [
-        { "layer": 9, "head": 9 },
-        { "layer": 9, "head": 6 },
-        { "layer": 10, "head": 0 }
+        {
+          "layer": 9,
+          "head": 9
+        },
+        {
+          "layer": 9,
+          "head": 6
+        },
+        {
+          "layer": 10,
+          "head": 0
+        }
       ],
       "lookFor": [
         "Pry has already picked heads 9.9, 9.6 and 10.0 for you in the Attention tab. Press \"Run Ablated (3)\" there.",
@@ -53,7 +69,8 @@
             "url": "https://arxiv.org/abs/2211.00593"
           }
         ]
-      }
+      },
+      "expect": " Mary"
     },
     {
       "id": "induction",
@@ -61,13 +78,15 @@
       "hook": "Repeat a made-up phrase and watch the model look back to copy what came next.",
       "preset": "gpt2-small",
       "prompt": "Pip ordered zebra lamps from Quorn. Pip ordered zebra lamps from",
-      "open": { "left": "attention", "right": "predictions" },
-      "aggregation": "looks-back",
+      "open": {
+        "left": "attention",
+        "right": "predictions"
+      },
       "demoLink": "?demo=induction-heads",
       "lookFor": [
         "The model has never seen this phrase, so the only way to guess the last word is to look back at the first copy. Check Predictions for \" Qu\" (the start of Quorn).",
-        "The Attention grid is set to \"Looks back (how far)\". Bright squares are heads that reach far back in the sentence, not just to the previous word.",
-        "Click a bright head in the middle layers. On the second copy, its attention should point at the word just after the earlier match."
+        "Press \"Find copying heads\" in the Attention panel (or the button below). Pry tests every head on a repeated random sequence and rings the ones that copy, such as layer 5 head 1 and layer 5 head 5.",
+        "Come back to this prompt and click layer 5 head 1 or head 5 in the grid. On the second copy, the last word's attention points at \" Qu\", the word that came after \"from\" the first time."
       ],
       "found": {
         "summary": "Olsson et al. named these \"induction heads\": heads that find an earlier copy of the current word and attend to the word that came after it, so it can be copied forward. They found them in many models, and argue (with strongest evidence in small models) that they are an important part of how models learn from their context.",
@@ -77,19 +96,23 @@
             "url": "https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html"
           }
         ]
-      }
+      },
+      "expect": " Qu"
     },
     {
       "id": "logit-lens",
       "title": "Watch it make up its mind",
       "hook": "Peek at the model's best guess after every layer, not just the last one.",
       "preset": "gpt2-small",
-      "prompt": "The Eiffel Tower is located in the city of",
-      "open": { "left": "logit-lens", "right": "predictions" },
+      "prompt": "Michael Jordan played the sport of",
+      "open": {
+        "left": "logit-lens",
+        "right": "predictions"
+      },
       "lookFor": [
         "Each row is a layer. It shows what the model would say if it had to answer right there.",
-        "Early rows usually show vague or odd guesses. Find the first row where \" Paris\" shows up near the top.",
-        "Notice that the answer tends to settle in the later layers, not all at once at the end."
+        "The early rows guess filler words like \" the\". Around layer 7 a sport shows up, but it's \" baseball\". From layer 8 on, \" basketball\" takes the top spot.",
+        "Notice that the model is most sure around layer 9 and a little less sure at the very end. The last layers often soften a confident guess."
       ],
       "found": {
         "summary": "nostalgebraist introduced this \"logit lens\" on GPT-2 and found its guesses often sharpen gradually toward the final answer across layers. Later work showed the plain logit lens can be misleading, especially in early layers and other models, and proposed a trained variant (the tuned lens). So read the early rows as a rough hint.",
@@ -103,24 +126,28 @@
             "url": "https://arxiv.org/abs/2303.08112"
           }
         ]
-      }
+      },
+      "expect": " basketball"
     },
     {
       "id": "fact-recall",
       "title": "Where does it keep facts?",
-      "hook": "Swap the Eiffel Tower for the Colosseum and see which layers carry the city.",
+      "hook": "Swap Michael Jordan for Tom Brady and see which layers carry the sport.",
       "preset": "gpt2-small",
-      "prompt": "The Eiffel Tower is located in the city of",
-      "open": { "left": "patching", "right": "predictions" },
+      "prompt": "Michael Jordan played the sport of",
+      "open": {
+        "left": "patching",
+        "right": "predictions"
+      },
       "patching": {
-        "clean": "The Eiffel Tower is located in the city of",
-        "corrupted": "The Colosseum is located in the city of",
+        "clean": "Michael Jordan played the sport of",
+        "corrupted": "Tom Brady played the sport of",
         "patchType": "mlp"
       },
       "lookFor": [
         "This one patches MLP layers (the model's \"feed-forward\" blocks) instead of attention heads. Press Run Patching in Swap & Compare.",
-        "Each bar shows how much of the Paris answer comes back when that one layer is copied from the Eiffel Tower sentence.",
-        "Look for which layers matter most. In GPT-2 small, the very first MLP often stands out. It's often described as acting like an extension of the word lookup."
+        "The original sentence makes the model say \" basketball\", the swapped one \" football\". Each bar shows how much of the \" basketball\" answer comes back when that one layer is copied from the Michael Jordan sentence.",
+        "The first MLP (layer 0) brings back most of it. It's often described as acting like an extension of the word lookup. Layer 2 also brings back a good chunk, and the last layer pushes the other way."
       ],
       "found": {
         "summary": "Meng et al. used a similar \"restore one piece\" trick (they called it causal tracing) on larger GPT models and found that MLP layers in the middle of the network, at the last word of the subject, played a decisive role in recalling facts. Pry patches each layer at every position at once and uses a much smaller model, so expect a blurrier picture than theirs.",
@@ -130,7 +157,9 @@
             "url": "https://arxiv.org/abs/2202.05262"
           }
         ]
-      }
+      },
+      "expect": " basketball",
+      "expectCorrupted": " football"
     },
     {
       "id": "greater-than",
@@ -138,7 +167,10 @@
       "hook": "\"From 1732 to 17..\": find the layers that know the end year must be bigger.",
       "preset": "gpt2-small",
       "prompt": "The war lasted from the year 1732 to the year 17",
-      "open": { "left": "patching", "right": "predictions" },
+      "open": {
+        "left": "patching",
+        "right": "predictions"
+      },
       "patching": {
         "clean": "The war lasted from the year 1732 to the year 17",
         "corrupted": "The war lasted from the year 1701 to the year 17",
@@ -165,7 +197,10 @@
       "hook": "See which parts of the model push a pronoun one way or the other.",
       "preset": "gpt2-small",
       "prompt": "The nurse said that",
-      "open": { "left": "dla", "right": "predictions" },
+      "open": {
+        "left": "dla",
+        "right": "predictions"
+      },
       "lookFor": [
         "In Predictions, compare how likely \" she\" and \" he\" are. Then change \"nurse\" to \"doctor\" in the prompt box and press Run again.",
         "Why (DLA) shows which layers and heads pushed directly toward the top guess. Big bars are the strongest direct pushers.",
@@ -183,7 +218,8 @@
             "url": "https://transformer-circuits.pub/2021/framework/index.html"
           }
         ]
-      }
+      },
+      "expect": " she"
     },
     {
       "id": "features-steering",
@@ -191,7 +227,10 @@
       "hook": "Find a learned concept inside the model, then dial it up and see what it writes.",
       "preset": "gpt2-small",
       "prompt": "On our trip we walked along the beach and watched the ocean",
-      "open": { "left": "attention", "right": "features" },
+      "open": {
+        "left": "attention",
+        "right": "features"
+      },
       "lookFor": [
         "The Features tab lists concepts that were active on each word. Click \" ocean\" or \" beach\" in the token strip and read the labels.",
         "Labels are best guesses written from examples. Some fit nicely, some are puzzling.",
