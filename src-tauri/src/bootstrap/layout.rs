@@ -250,10 +250,15 @@ fn atomic_replace(src: &Path, dst: &Path) -> std::io::Result<()> {
 /// Commit a fully built venv: pointer flip, then the back-compat ready marker.
 pub fn commit_active(runtime_dir: &Path, rel: &str) -> std::io::Result<()> {
     write_pointer(runtime_dir, rel)?;
-    write_synced(
+    // The pointer is the commit point. ready.marker is back-compat only, so a
+    // failure here must not make a successful flip look uncommitted.
+    if let Err(e) = write_synced(
         &runtime_dir.join(READY_MARKER),
         chrono::Utc::now().to_rfc3339().as_bytes(),
-    )
+    ) {
+        tracing::warn!("active.json committed but ready.marker write failed: {e}");
+    }
+    Ok(())
 }
 
 /// Result of `commit_with_rollback`.
