@@ -45,6 +45,9 @@ use windows::Win32::{
 pub struct SidecarHandle {
     pub port: u16,
     pub base_url: String,
+    /// Per-launch auth token (T14). Passed to the child as `PRY_TOKEN`; every
+    /// request to the sidecar must carry it in the `X-Pry-Token` header.
+    pub token: String,
     child: Option<Child>,
     #[cfg(target_os = "windows")]
     job: Option<HANDLE>,
@@ -383,6 +386,16 @@ fn assign_to_job(job: HANDLE, child: &Child) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Header the sidecar checks against `PRY_TOKEN`.
+pub const TOKEN_HEADER: &str = "X-Pry-Token";
+
+/// A fresh random auth token: 32 bytes from the OS RNG, hex-encoded (64 chars).
+pub fn generate_token() -> anyhow::Result<String> {
+    let mut bytes = [0u8; 32];
+    getrandom::getrandom(&mut bytes).map_err(|e| anyhow!("OS random source failed: {e}"))?;
+    Ok(bytes.iter().map(|b| format!("{b:02x}")).collect())
+}
+
 /// Backwards-compatible wrapper — launches without crash event emission.
 pub async fn launch() -> anyhow::Result<SidecarHandle> {
     launch_with_app(None).await
@@ -425,11 +438,26 @@ pub async fn launch_with_app(app_handle: Option<tauri::AppHandle>) -> anyhow::Re
     cmd.env("PRY_PORT", port.to_string());
     cmd.env("PYTHONUNBUFFERED", "1");
 
+    // T14: fresh auth token per launch, child env only.
+    let token = generate_token()?;
+    cmd.env("PRY_TOKEN", &token);
+
     // Pass through optional HuggingFace env vars
     for var in &["HF_HOME", "HF_HUB_ENABLE_HF_TRANSFER"] {
         if let Ok(val) = std::env::var(var) {
             cmd.env(var, val);
         }
+    }
+
+    // T17: the saved HF token (Credential Manager) goes into the CHILD env
+    // only. Never std::env::set_var it in this process.
+    match crate::hf_auth::load_token() {
+        Ok(Some(hf_token)) => {
+            tracing::info!("sidecar: passing saved HuggingFace token to the engine");
+            cmd.env("HF_TOKEN", hf_token);
+        }
+        Ok(None) => {}
+        Err(e) => tracing::warn!("sidecar: could not read saved HuggingFace token: {e:#}"),
     }
 
     cmd.stdout(std::process::Stdio::piped());
@@ -573,6 +601,7 @@ pub async fn launch_with_app(app_handle: Option<tauri::AppHandle>) -> anyhow::Re
     let health_url = format!("{base_url}/health");
     let stderr_for_heartbeat = stderr_buffer.clone();
     let heartbeat_app = app_handle.clone();
+    let heartbeat_token = token.clone();
 
     tokio::spawn(async move {
         use tauri::Emitter;
@@ -596,7 +625,12 @@ pub async fn launch_with_app(app_handle: Option<tauri::AppHandle>) -> anyhow::Re
                 // "Starting download…". 10s is still responsive enough to
                 // detect a truly dead sidecar within 30s (3 misses × 10s).
                 _ = tokio::time::sleep(Duration::from_secs(10)) => {
-                    match client.get(&health_url).timeout(Duration::from_secs(5)).send().await {
+                    match client
+                        .get(&health_url)
+                        .header(TOKEN_HEADER, &heartbeat_token)
+                        .timeout(Duration::from_secs(5))
+                        .send()
+                        .await {
                         Ok(resp) if resp.status().is_success() => {
                             misses = 0;
                         }
@@ -641,10 +675,30 @@ pub async fn launch_with_app(app_handle: Option<tauri::AppHandle>) -> anyhow::Re
     Ok(SidecarHandle {
         port,
         base_url,
+        token,
         child: Some(child),
         #[cfg(target_os = "windows")]
         job: job_guard.map(|g| g.take()),
         shutdown_tx: Some(shutdown_tx),
         stderr_buffer,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::generate_token;
+
+    #[test]
+    fn token_is_64_lowercase_hex_chars() {
+        let t = generate_token().unwrap();
+        assert_eq!(t.len(), 64);
+        assert!(t.chars().all(|c| c.is_ascii_hexdigit() && !c.is_ascii_uppercase()));
+    }
+
+    #[test]
+    fn tokens_are_unique() {
+        let tokens: std::collections::HashSet<String> =
+            (0..100).map(|_| generate_token().unwrap()).collect();
+        assert_eq!(tokens.len(), 100);
+    }
 }

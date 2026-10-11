@@ -504,6 +504,29 @@ pub fn runtime_status() -> Result<bool, String> {
     Ok(is_runtime_current())
 }
 
+/// What the UI needs to pick between onboarding and the short "Updating
+/// Pry…" path (P2-10). Filesystem reads only, no process spawns.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct RuntimeReadiness {
+    /// The active runtime can run the sidecar (health Ok / UpdateAvailable).
+    pub usable: bool,
+    /// The bundled sidecar package differs from the installed one; running
+    /// `bootstrap_runtime_command` will resync it.
+    pub needs_sidecar_sync: bool,
+    /// "missing" | "broken" | "update_available" | "ok"
+    pub health: layout::RuntimeHealth,
+}
+
+#[tauri::command]
+pub fn runtime_readiness() -> Result<RuntimeReadiness, String> {
+    let health = runtime_health().health;
+    Ok(RuntimeReadiness {
+        usable: health.is_usable(),
+        needs_sidecar_sync: sidecar_needs_reinstall(),
+        health,
+    })
+}
+
 // ── Updates ──────────────────────────────────────────────────────────────────
 
 fn current_update_status() -> layout::RuntimeUpdateStatus {
