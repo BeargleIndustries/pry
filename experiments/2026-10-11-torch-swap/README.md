@@ -125,3 +125,16 @@ pwsh -File replay.ps1 -Fixed -Variant cu124 -DownloadPbs -SkipDryRun   # T3 regr
 - Scratch lives in `%TEMP%\pry-replay\<tag>` and is wiped on each run.
 - A cu124 run needs about 8 GB free: a 5.3 GiB venv plus the pip cache.
 - Reproduction depends on PyPI state: it needs the newest TL to require torch>2.5. That has been true since TL 2.16.
+
+## T19b decision: hash-pinned installs (not needed)
+
+T19b's condition was "only if the replay shows index confusion", meaning a package resolved from an index it wasn't meant to come from.
+
+- **What the replay showed:** the swap was a *version* re-resolution. Step 2 pulled TL 2.18, which needs torch>=2.6. Step 5 then asked for `torch==2.5.*`. pip satisfied both from PyPI because nothing pinned the build. That's a missing constraint, not pip choosing the wrong index for a pinned requirement.
+- **Why the current fix already prevents it:**
+  - Every step now passes `-c constraints-runtime-<variant>.txt`, which pins `torch==2.5.1+cu124` / `+cpu`.
+  - Those local-version tags exist only on download.pytorch.org.
+  - A PyPI wheel can never satisfy the pin, so pip can't fall back to it. Every other package is pinned to an exact version.
+- **What `replay.ps1 -Fixed` confirms:** the torch dist-info is unchanged after all 5 steps.
+- **Residual risk:** a same-named, same-version package served by the other index with different contents. The constraints already narrow this to exact versions, and both indexes are first-party (PyPI and pytorch.org).
+- **Decision:** not needed for 0.2.0. Revisit if Pry ever adds a third-party index.
