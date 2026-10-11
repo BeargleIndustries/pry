@@ -80,7 +80,7 @@ export const drivenSteps: DrivenStep[] = [
       "GPT-2 small has twelve layers, each with twelve attention heads. That's the rows and columns in the grid (144 specialists, basically, all of them doing slightly different things). For whichever token you've focused, Pry takes that token's attention numbers at each head and has to squish them down into one number so it can color a cell. How it squishes depends on the Agg dropdown. **Max** asks 'did this head lock hard onto one specific earlier word?' **Mean** asks 'was attention peaky or spread thin?' **Entropy** asks 'how spread out was the focus, was this head basically refusing to choose?' Three different questions, same underlying numbers. Researchers flip through these constantly. Max is good for spotting heads that just copy. Mean shows general engagement. Entropy flags heads that are basically phoning it in, which, it turns out, a lot of heads do most of the time.",
     target: 'panel-a-agg-selector',
     action: (ctx) => {
-      ctx.setPanelAAggregation('mean');
+      ctx.setPanelAAggregation('previous');
     },
   },
   {
