@@ -256,6 +256,54 @@ pub fn commit_active(runtime_dir: &Path, rel: &str) -> std::io::Result<()> {
     )
 }
 
+/// Result of `commit_with_rollback`.
+#[derive(Debug)]
+pub enum CommitOutcome<T, E> {
+    /// Pointer flipped and `launch` succeeded.
+    Committed(T),
+    /// The pointer could not be written; it still names the previous venv.
+    NotCommitted { error: String },
+    /// `launch` failed; the pointer was atomically restored to `previous`.
+    RolledBack { error: E, previous: Option<String> },
+    /// `launch` failed AND the old pointer could not be restored.
+    RollbackFailed { error: E, rollback_error: String },
+}
+
+/// Flip the pointer to `rel`, then run `launch` (start the sidecar from the new
+/// venv). If the launch fails, restore the previous pointer with the same
+/// atomic replace, so the next start (and the caller's relaunch) uses the old,
+/// known-good venv and the new one becomes GC garbage. With no previous
+/// pointer, `active.json` is removed instead.
+pub async fn commit_with_rollback<T, E, Fut>(
+    runtime_dir: &Path,
+    rel: &str,
+    launch: impl FnOnce() -> Fut,
+) -> CommitOutcome<T, E>
+where
+    Fut: std::future::Future<Output = Result<T, E>>,
+{
+    let previous = read_pointer(runtime_dir);
+    if let Err(e) = commit_active(runtime_dir, rel) {
+        return CommitOutcome::NotCommitted { error: e.to_string() };
+    }
+    match launch().await {
+        Ok(v) => CommitOutcome::Committed(v),
+        Err(error) => {
+            let restored = match &previous {
+                Some(prev) => write_pointer(runtime_dir, prev),
+                None => match std::fs::remove_file(runtime_dir.join(ACTIVE_FILE)) {
+                    Err(e) if e.kind() != std::io::ErrorKind::NotFound => Err(e),
+                    _ => Ok(()),
+                },
+            };
+            match restored {
+                Ok(()) => CommitOutcome::RolledBack { error, previous },
+                Err(e) => CommitOutcome::RollbackFailed { error, rollback_error: e.to_string() },
+            }
+        }
+    }
+}
+
 /// Legacy (<= 0.1.1) migration: a completed flat `venv\` (ready.marker present)
 /// with no pointer becomes `{"venv":"venv"}`. Returns true if it wrote one.
 pub fn migrate_legacy(runtime_dir: &Path) -> std::io::Result<bool> {
@@ -741,6 +789,53 @@ mod tests {
         assert_eq!(dir, rt.path().join(LEGACY_VENV));
         assert_eq!(runtime_health(rt.path()).health, RuntimeHealth::UpdateAvailable);
         assert_eq!(gc_candidates(rt.path()), vec![new_dir]);
+    }
+
+    #[tokio::test]
+    async fn launch_failure_after_commit_rolls_pointer_back() {
+        let rt = TempRuntime::new("rollback");
+        legacy_install(rt.path(), "torch-2.5.1.dist-info");
+        migrate_legacy(rt.path()).unwrap();
+        let new_dir = venvs_root(rt.path()).join("20261012T1530Z-cu124");
+        make_venv(&new_dir, Some(CU_DIST));
+        write_manifest(&new_dir, &manifest(CudaVariant::Cu124, CU_DIST)).unwrap();
+
+        let root = rt.path().to_path_buf();
+        let out = commit_with_rollback(rt.path(), "venvs/20261012T1530Z-cu124", || async move {
+            // The new venv really was active while the launch ran.
+            assert_eq!(read_pointer(&root).as_deref(), Some("venvs/20261012T1530Z-cu124"));
+            Err::<(), _>("sidecar did not start")
+        })
+        .await;
+        match out {
+            CommitOutcome::RolledBack { error, previous } => {
+                assert_eq!(error, "sidecar did not start");
+                assert_eq!(previous.as_deref(), Some("venv"));
+            }
+            other => panic!("expected RolledBack, got {other:?}"),
+        }
+        // Old venv active again; the failed new one is GC garbage.
+        assert_eq!(read_pointer(rt.path()).as_deref(), Some("venv"));
+        assert_eq!(runtime_health(rt.path()).current_variant.as_deref(), Some("unknown-cpu"));
+        assert_eq!(gc_candidates(rt.path()), vec![new_dir.clone()]);
+        assert!(!rt.path().join(ACTIVE_TMP_FILE).exists());
+
+        // Success path keeps the new pointer.
+        let out = commit_with_rollback(rt.path(), "venvs/20261012T1530Z-cu124", || async {
+            Ok::<_, ()>(42)
+        })
+        .await;
+        assert!(matches!(out, CommitOutcome::Committed(42)));
+        assert_eq!(read_pointer(rt.path()).as_deref(), Some("venvs/20261012T1530Z-cu124"));
+        assert_eq!(runtime_health(rt.path()).health, RuntimeHealth::Ok);
+    }
+
+    #[tokio::test]
+    async fn rollback_without_previous_pointer_removes_it() {
+        let rt = TempRuntime::new("rollback-none");
+        let out = commit_with_rollback(rt.path(), "venvs/a-cpu", || async { Err::<(), _>(()) }).await;
+        assert!(matches!(out, CommitOutcome::RolledBack { previous: None, .. }));
+        assert!(!rt.path().join(ACTIVE_FILE).exists());
     }
 
     #[test]

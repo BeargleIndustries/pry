@@ -172,7 +172,25 @@ static BUILDING: once_cell::sync::Lazy<StdMutex<HashSet<PathBuf>>> =
     once_cell::sync::Lazy::new(|| StdMutex::new(HashSet::new()));
 /// Result of the background GPU re-probe (None until it finishes).
 static PROBED: StdMutex<Option<CudaVariant>> = StdMutex::new(None);
+/// Set while a fresh install or an engine update is running (shared guard).
 static UPDATING: AtomicBool = AtomicBool::new(false);
+
+/// Exclusive token for runtime-building work: a fresh install
+/// (`bootstrap_runtime`) and an engine update (`runtime_update`) can never
+/// run concurrently. Released on drop.
+struct RuntimeJob;
+impl RuntimeJob {
+    fn acquire() -> Option<Self> {
+        (!UPDATING.swap(true, Ordering::SeqCst)).then_some(Self)
+    }
+}
+impl Drop for RuntimeJob {
+    fn drop(&mut self) {
+        UPDATING.store(false, Ordering::SeqCst);
+    }
+}
+
+const BUSY_MESSAGE: &str = "Pry is already installing or updating its engine.";
 
 fn is_building(p: &Path) -> bool {
     BUILDING
@@ -303,20 +321,21 @@ fn with_log_path(emit: &events::Emitter, e: BootstrapError) -> BootstrapError {
 
 /// Build a complete venv in `venvs\<id>\` from `runtime\python.exe`: disk
 /// check, venv, deps, verify, `runtime.json`, sidecar hash. Does NOT flip the
-/// pointer; the caller commits with `layout::commit_active`. Returns the
-/// pointer value (`venvs/<id>`). On failure the folder is removed best-effort
-/// (and is unreferenced garbage for GC otherwise).
+/// pointer; the caller commits. Returns the pointer value (`venvs/<id>`) and
+/// the `BuildGuard` that keeps GC away from the folder: hold it until the
+/// commit is done, so GC can't race the build->commit window. On failure the
+/// folder is removed best-effort (and is unreferenced garbage for GC otherwise).
 async fn build_venv(
     emit: &events::Emitter,
     rt: &Path,
     variant: CudaVariant,
     free_bytes: impl Fn(&Path) -> std::io::Result<u64>,
-) -> Result<String, BootstrapError> {
+) -> Result<(String, BuildGuard), BootstrapError> {
     layout::ensure_free_space(rt, variant, free_bytes)?;
 
     let id = layout::new_venv_id(rt, variant, chrono::Utc::now());
     let dir = layout::venvs_root(rt).join(&id);
-    let _guard = BuildGuard::new(dir.clone());
+    let guard = BuildGuard::new(dir.clone());
 
     let result: Result<(), BootstrapError> = async {
         tokio::fs::create_dir_all(layout::venvs_root(rt))
@@ -340,7 +359,7 @@ async fn build_venv(
         }
         return Err(e);
     }
-    Ok(format!("{}/{id}", layout::VENVS_DIR))
+    Ok((format!("{}/{id}", layout::VENVS_DIR), guard))
 }
 
 fn commit(rt: &Path, rel: &str) -> Result<(), BootstrapError> {
@@ -376,6 +395,11 @@ pub async fn bootstrap_runtime(app: AppHandle) -> Result<(), BootstrapError> {
         return Ok(());
     }
 
+    // Same exclusive guard as runtime_update: never build two venvs at once.
+    let Some(_job) = RuntimeJob::acquire() else {
+        return Err(BootstrapError::Internal(BUSY_MESSAGE.into()));
+    };
+
     // An install is actually happening: persist everything to a log file.
     let emit = events::Emitter::with_log(app.clone());
     install_fresh(&emit, &rt).await.map_err(|e| with_log_path(&emit, e))
@@ -392,7 +416,7 @@ async fn install_fresh(emit: &events::Emitter, rt: &Path) -> Result<(), Bootstra
         .map_err(|e| BootstrapError::Io(format!("mkdir: {e}")))?;
 
     ensure_pbs(emit, rt).await?;
-    let rel = build_venv(emit, rt, cuda_variant, layout::free_bytes).await?;
+    let (rel, _build_guard) = build_venv(emit, rt, cuda_variant, layout::free_bytes).await?;
     commit(rt, &rel)?;
 
     emit.stage(BootstrapStage::Ready, "runtime installed and ready");
@@ -525,25 +549,44 @@ pub fn spawn_post_launch_tasks(app: AppHandle, sidecar_running: bool) {
     });
 }
 
+/// Why an engine update did not complete. `kind` tells the UI what is running:
+/// - `busy`: another install/update holds the guard; nothing changed.
+/// - `not_started`: the new venv failed to build/verify; the current engine
+///   was never stopped and the pointer never moved.
+/// - `rolled_back`: the new engine failed to start; the pointer was restored
+///   and the previous engine was relaunched successfully.
+/// - `restart_required`: the new engine failed to start and the previous one
+///   could not be relaunched (or the pointer could not be restored).
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct RuntimeUpdateError {
+    pub kind: &'static str,
+    pub message: String,
+    pub log_path: Option<String>,
+}
+
 /// Build a new venv for the target variant beside the active one, flip the
-/// pointer, then restart the sidecar from it. The active venv is untouched
-/// unless every step succeeds.
+/// pointer, then restart the sidecar from it. If the new engine fails to
+/// start, the pointer is rolled back and the old engine relaunched.
 #[tauri::command]
-pub async fn runtime_update(app: AppHandle) -> Result<(), String> {
+pub async fn runtime_update(app: AppHandle) -> Result<(), RuntimeUpdateError> {
     use std::sync::Arc;
     use tauri::Manager;
     use tokio::sync::Mutex;
 
-    if UPDATING.swap(true, Ordering::SeqCst) {
-        return Err("An engine update is already running.".into());
-    }
-    struct ResetUpdating;
-    impl Drop for ResetUpdating {
-        fn drop(&mut self) {
-            UPDATING.store(false, Ordering::SeqCst);
+    let fail = |kind, message: String, emit: Option<&events::Emitter>| {
+        if let Some(e) = emit {
+            e.log(format!("ERROR ({kind}): {message}"));
         }
-    }
-    let _reset = ResetUpdating;
+        RuntimeUpdateError {
+            kind,
+            message,
+            log_path: emit.and_then(|e| e.log_path()).map(|p| p.display().to_string()),
+        }
+    };
+
+    let Some(_job) = RuntimeJob::acquire() else {
+        return Err(fail("busy", BUSY_MESSAGE.into(), None));
+    };
 
     let state_arc: Arc<Mutex<Option<crate::sidecar::SidecarHandle>>> = {
         let state =
@@ -552,9 +595,14 @@ pub async fn runtime_update(app: AppHandle) -> Result<(), String> {
     };
 
     let emit = events::Emitter::with_log(app.clone());
-    let rt = runtime_dir().map_err(|e| format!("runtime_dir: {e}"))?;
+    let rt = runtime_dir()
+        .map_err(|e| fail("not_started", format!("runtime_dir: {e}"), Some(&emit)))?;
     if !layout::pbs_complete(&rt) {
-        return Err("Pry's Python runtime is missing. Restart Pry to reinstall it.".into());
+        return Err(fail(
+            "not_started",
+            "Pry's Python runtime is missing. Restart Pry to reinstall it.".into(),
+            Some(&emit),
+        ));
     }
 
     emit.stage(BootstrapStage::Probing, "checking your graphics card...");
@@ -565,28 +613,71 @@ pub async fn runtime_update(app: AppHandle) -> Result<(), String> {
     let current = layout::runtime_health(&rt).current_variant;
     let variant = layout::target_variant(current.as_deref(), probed);
 
-    let rel = build_venv(&emit, &rt, variant, layout::free_bytes)
+    // Keep the build guard until the commit/rollback is settled so GC can't
+    // touch the new folder in between.
+    let (rel, _build_guard) = build_venv(&emit, &rt, variant, layout::free_bytes)
         .await
-        .map_err(|e| user_message(&with_log_path(&emit, e)))?;
+        .map_err(|e| fail("not_started", user_message(&e), Some(&emit)))?;
 
     // Same launch lock as bootstrap_runtime_command: nobody can launch a
-    // sidecar between the pointer flip and the relaunch.
+    // sidecar between the pointer flip and the (re)launch.
     let mut guard = state_arc.lock().await;
-    commit(&rt, &rel).map_err(|e| user_message(&e))?;
     if let Some(mut old) = guard.take() {
         tracing::info!("stopping sidecar before relaunch from updated venv");
         if let Err(e) = old.shutdown().await {
             tracing::warn!("shutdown of previous sidecar failed: {e}");
         }
     }
-    let handle = crate::sidecar::launch_with_app(Some(app.clone()))
-        .await
-        .map_err(|e| format!("The engine was updated but failed to start: {e:#}"))?;
-    tracing::info!("sidecar relaunched from {rel} on {}", handle.base_url);
-    *guard = Some(handle);
 
-    emit.stage(BootstrapStage::Ready, "engine updated");
-    Ok(())
+    let outcome = layout::commit_with_rollback(&rt, &rel, || {
+        crate::sidecar::launch_with_app(Some(app.clone()))
+    })
+    .await;
+
+    let start_error = match outcome {
+        layout::CommitOutcome::Committed(handle) => {
+            tracing::info!("sidecar relaunched from {rel} on {}", handle.base_url);
+            *guard = Some(handle);
+            emit.stage(BootstrapStage::Ready, "engine updated");
+            return Ok(());
+        }
+        layout::CommitOutcome::RollbackFailed { error, rollback_error } => {
+            return Err(fail(
+                "restart_required",
+                format!(
+                    "The new engine failed to start ({error:#}) and the previous one could not \
+                     be restored ({rollback_error}). Please restart Pry."
+                ),
+                Some(&emit),
+            ));
+        }
+        layout::CommitOutcome::NotCommitted { error } => format!("could not switch engines: {error}"),
+        layout::CommitOutcome::RolledBack { error, previous } => {
+            emit.log(format!("rolled back active.json to {previous:?}"));
+            format!("the new engine failed to start: {error:#}")
+        }
+    };
+
+    // Pointer names the previous venv again: relaunch it.
+    match crate::sidecar::launch_with_app(Some(app.clone())).await {
+        Ok(handle) => {
+            tracing::info!("previous engine relaunched on {}", handle.base_url);
+            *guard = Some(handle);
+            Err(fail(
+                "rolled_back",
+                format!("The engine update didn't finish ({start_error})."),
+                Some(&emit),
+            ))
+        }
+        Err(e) => Err(fail(
+            "restart_required",
+            format!(
+                "The engine update didn't finish ({start_error}), and the previous engine \
+                 failed to restart ({e:#}). Please restart Pry."
+            ),
+            Some(&emit),
+        )),
+    }
 }
 
 #[cfg(test)]

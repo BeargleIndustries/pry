@@ -6,7 +6,12 @@
   import { onMount, onDestroy } from 'svelte';
   import { Zap, Loader2, CheckCircle2, X } from 'lucide-svelte';
   import type { UnlistenFn } from '@tauri-apps/api/event';
-  import { runtimeUpdateStatus, runtimeUpdate, onRuntimeUpdateAvailable } from '$lib/tauri';
+  import {
+    runtimeUpdateStatus,
+    runtimeUpdate,
+    onRuntimeUpdateAvailable,
+    RuntimeUpdateFailure,
+  } from '$lib/tauri';
   import {
     onBootstrapProgress,
     onBootstrapLog,
@@ -15,9 +20,11 @@
     type BootstrapProgressEvent,
   } from '$lib/bootstrap-events';
   import {
+    failureHeadline,
     laterKey,
     promptCopy,
     shouldPrompt,
+    type RuntimeUpdateFailureKind,
     type RuntimeUpdateStatus,
   } from '$lib/runtime-update';
 
@@ -29,6 +36,8 @@
   let progress = $state<BootstrapProgressEvent | null>(null);
   let lastLog = $state('');
   let errorMessage = $state<string | null>(null);
+  let errorKind = $state<RuntimeUpdateFailureKind | 'unknown'>('unknown');
+  let errorLogPath = $state<string | null>(null);
   let unlisten: UnlistenFn[] = [];
   let destroyed = false;
   let progressAttached = false;
@@ -83,6 +92,8 @@
       phase = 'done';
     } catch (e) {
       errorMessage = e instanceof Error ? e.message : String(e);
+      errorKind = e instanceof RuntimeUpdateFailure ? e.kind : 'unknown';
+      errorLogPath = e instanceof RuntimeUpdateFailure ? e.logPath : null;
       phase = 'error';
     }
   }
@@ -128,9 +139,11 @@
 
       <div class="min-w-0 flex-1">
         {#if phase === 'prompt' && status?.target_variant}
-          <div class="font-medium">{promptCopy(status.target_variant)}</div>
+          <div class="font-medium">{promptCopy(status.current_variant, status.target_variant)}</div>
         {:else if phase === 'updating'}
-          <div class="truncate font-medium">Updating the engine. You can keep using Pry meanwhile.</div>
+          <div class="truncate font-medium">
+            Updating the engine. You can keep using Pry meanwhile; the model will reload at the end.
+          </div>
           <div class="truncate text-xs text-indigo-300/80" title={lastLog}>{stepText}</div>
           {#if progress && progress.progress >= 0}
             <div class="mt-1 h-1 w-full overflow-hidden rounded-full bg-zinc-800/60">
@@ -141,10 +154,13 @@
             </div>
           {/if}
         {:else if phase === 'done'}
-          <div class="font-medium">Engine updated. Reload Pry to start using it.</div>
+          <div class="font-medium">Engine updated. Reload to reconnect.</div>
         {:else if phase === 'error'}
-          <div class="font-medium">The engine update didn't finish. Your current engine still works.</div>
+          <div class="font-medium">{failureHeadline(errorKind)}</div>
           <div class="text-xs text-red-200/80">{errorMessage}</div>
+          {#if errorLogPath}
+            <div class="break-all font-mono text-[11px] text-red-200/70">Log: {errorLogPath}</div>
+          {/if}
         {/if}
       </div>
 
@@ -172,6 +188,7 @@
           Reload
         </button>
       {:else if phase === 'error'}
+        {#if errorKind !== 'restart_required' && errorKind !== 'unknown'}
         <button
           type="button"
           onclick={updateNow}
@@ -179,6 +196,7 @@
         >
           Retry
         </button>
+        {/if}
         <button
           type="button"
           onclick={() => (hidden = true)}

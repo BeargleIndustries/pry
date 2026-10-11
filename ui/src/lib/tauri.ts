@@ -1,7 +1,11 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { isTauri } from './is-tauri';
-import type { RuntimeUpdateStatus } from './runtime-update';
+import type {
+  RuntimeUpdateError,
+  RuntimeUpdateFailureKind,
+  RuntimeUpdateStatus,
+} from './runtime-update';
 export type { RuntimeUpdateStatus } from './runtime-update';
 export type { TokenInfo, AttentionLayer, FeatureHit, TokenFeatures, GenerateResponse } from './types';
 
@@ -181,13 +185,32 @@ export async function runtimeUpdateStatus(): Promise<RuntimeUpdateStatus | null>
   }
 }
 
-/** Build a new engine venv beside the current one, switch to it, restart the sidecar. */
+/** Thrown by `runtimeUpdate`; `kind` says whether an engine is still running. */
+export class RuntimeUpdateFailure extends Error {
+  constructor(
+    message: string,
+    public readonly kind: RuntimeUpdateFailureKind | 'unknown',
+    public readonly logPath: string | null,
+  ) {
+    super(message);
+    this.name = 'RuntimeUpdateFailure';
+  }
+}
+
+/**
+ * Build a new engine venv beside the current one, switch to it, restart the
+ * sidecar. On a failed start the backend rolls back to the previous engine.
+ */
 export async function runtimeUpdate(): Promise<void> {
   if (!isTauri()) return;
   try {
     await invoke('runtime_update');
   } catch (e) {
-    throw new Error(formatTauriError(e));
+    if (typeof e === 'object' && e !== null && 'kind' in e && 'message' in e) {
+      const err = e as RuntimeUpdateError;
+      throw new RuntimeUpdateFailure(err.message, err.kind, err.log_path ?? null);
+    }
+    throw new RuntimeUpdateFailure(formatTauriError(e), 'unknown', null);
   }
 }
 
