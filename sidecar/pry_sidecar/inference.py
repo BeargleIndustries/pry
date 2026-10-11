@@ -1134,7 +1134,7 @@ def run_patching(req: PatchRequest, loaded: LoadedModel) -> PatchResponse:
             return name.endswith("hook_mlp_out")
     else:  # resid
         def _patching_names_filter(name: str) -> bool:
-            return name.endswith("hook_resid_post")
+            return name.endswith("hook_resid_pre")
 
     # Acquire per-preset lock — patching runs up to 144 forward passes for
     # head patching, so we must prevent concurrent unload.
@@ -1232,35 +1232,40 @@ def run_patching(req: PatchRequest, loaded: LoadedModel) -> PatchResponse:
                 ))
 
         elif req.patch_type == "resid":
+            # One (layer, position) at a time. Swapping the whole residual
+            # stream at every position would restore the clean run outright
+            # (100% at every layer), which says nothing. Per position, it shows
+            # where in the sentence the deciding information sits at each depth.
             for layer_idx in range(n_layers):
-                cache_key = f"blocks.{layer_idx}.hook_resid_post"
+                cache_key = f"blocks.{layer_idx}.hook_resid_pre"
                 if cache_key not in clean_cache:
                     continue
                 clean_resid = clean_cache[cache_key]
 
-                def patch_resid_hook(value, hook, _clean=clean_resid):
-                    value[:, :, :] = _clean[:, :value.shape[1], :]
-                    return value
+                for pos in range(seq_len):
+                    def patch_resid_hook(value, hook, _clean=clean_resid, _p=pos):
+                        value[:, _p, :] = _clean[:, _p, :]
+                        return value
 
-                hook_name = f"blocks.{layer_idx}.hook_resid_post"
-                model.add_hook(hook_name, patch_resid_hook)
-                try:
-                    with torch.no_grad():
-                        patched_logits = model(corrupted_tokens)
-                finally:
-                    model.reset_hooks()
-                patched_logit_val = float(patched_logits[0, target_pos, clean_pred_id].item())
-                effect = patched_logit_val - corrupted_logit_val
+                    model.add_hook(cache_key, patch_resid_hook)
+                    try:
+                        with torch.no_grad():
+                            patched_logits = model(corrupted_tokens)
+                    finally:
+                        model.reset_hooks()
+                    patched_logit_val = float(patched_logits[0, target_pos, clean_pred_id].item())
+                    effect = patched_logit_val - corrupted_logit_val
 
-                components.append(PatchComponent(
-                    name=f"Resid.{layer_idx}",
-                    layer=layer_idx,
-                    head=None,
-                    effect=effect,
-                    clean_logit=clean_logit_val,
-                    corrupted_logit=corrupted_logit_val,
-                    patched_logit=patched_logit_val,
-                ))
+                    components.append(PatchComponent(
+                        name=f"L{layer_idx}@{pos}",
+                        layer=layer_idx,
+                        head=None,
+                        position=pos,
+                        effect=effect,
+                        clean_logit=clean_logit_val,
+                        corrupted_logit=corrupted_logit_val,
+                        patched_logit=patched_logit_val,
+                    ))
 
         patch_ms = (time.perf_counter() - patch_start) * 1000
 
@@ -1277,6 +1282,7 @@ def run_patching(req: PatchRequest, loaded: LoadedModel) -> PatchResponse:
         target_token_index=target_pos,
         clean_predicted_token=clean_predicted_token,
         corrupted_predicted_token=corrupted_predicted_token,
+        tokens=list(clean_strs),
         components=components,
         timing_ms={
             "cache_ms": cache_ms,

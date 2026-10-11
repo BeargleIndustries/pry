@@ -329,6 +329,8 @@ class PatchComponent(BaseModel):
     name: str
     layer: int
     head: int | None = None
+    # Token position patched (residual patching only; heads/MLPs patch all positions).
+    position: int | None = None
     effect: float
     clean_logit: float
     corrupted_logit: float
@@ -343,6 +345,8 @@ class PatchResponse(BaseModel):
     target_token_index: int = 0
     clean_predicted_token: str = ""
     corrupted_predicted_token: str = ""
+    # Clean prompt's tokens, to label the residual layer x position grid.
+    tokens: list[str] = Field(default_factory=list)
     components: list[PatchComponent] = Field(default_factory=list)
     timing_ms: dict[str, float] = Field(default_factory=dict)
     status: str = "ok"

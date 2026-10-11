@@ -156,6 +156,8 @@ export interface PatchComponent {
   name: string;
   layer: number;
   head: number | null;
+  /** Token position patched (residual patching only). */
+  position?: number | null;
   effect: number;
   clean_logit: number;
   corrupted_logit: number;
@@ -170,6 +172,8 @@ export interface PatchResponse {
   target_token_index: number;
   clean_predicted_token: string;
   corrupted_predicted_token: string;
+  /** Clean prompt's tokens; labels the residual layer x position grid. */
+  tokens?: string[];
   components: PatchComponent[];
   timing_ms: Record<string, number>;
   status?: string;
