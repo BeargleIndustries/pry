@@ -34,6 +34,9 @@ from .schemas import (
     FeatureHit,
     GenerateRequest,
     GenerateResponse,
+    HeadScore,
+    HeadScoresRequest,
+    HeadScoresResponse,
     LogitLensCell,
     LogitLensRequest,
     LogitLensResponse,
@@ -1415,5 +1418,144 @@ def run_circuit(req: CircuitRequest, loaded: LoadedModel) -> CircuitResponse:
             "graph_ms": graph_ms,
             "total_ms": total_ms,
         },
+        status="ok",
+    )
+
+
+# ---------------------------------------------------------------------------
+# Head scores: induction + previous-token heads (T20)
+# ---------------------------------------------------------------------------
+
+# The induction test: REPEAT_LEN random tokens, then the same tokens again.
+# Seeded so every run (and every test) sees the same sequence.
+REPEAT_LEN = 25
+REPEAT_SEED = 0
+# Sample from ordinary word pieces: skips the low ids (single bytes and
+# punctuation) and the rare tail at the end of the vocab.
+REPEAT_VOCAB_LO = 1000
+REPEAT_VOCAB_HI = 20000
+
+
+def _repeated_sequence(model):
+    """BOS + REPEAT_LEN seeded random tokens + the same tokens again: [1, 1 + 2*REPEAT_LEN]."""
+    import torch
+
+    hi = min(REPEAT_VOCAB_HI, int(model.cfg.d_vocab))
+    gen = torch.Generator().manual_seed(REPEAT_SEED)
+    half = torch.randint(REPEAT_VOCAB_LO, hi, (REPEAT_LEN,), generator=gen)
+    tok = model.tokenizer
+    bos = tok.bos_token_id if tok.bos_token_id is not None else tok.eos_token_id
+    seq = torch.cat([torch.tensor([bos]), half, half]).unsqueeze(0)
+    return seq.to(model.cfg.device)
+
+
+def _attention_patterns(model, tokens_tensor) -> list:
+    """Run ``tokens_tensor`` and return each layer's attention pattern, [head, q, k]."""
+    import torch
+
+    with torch.no_grad():
+        _, cache = model.run_with_cache(
+            tokens_tensor,
+            names_filter=lambda name: name.endswith("attn.hook_pattern"),
+        )
+    n_layers = int(model.cfg.n_layers)
+    return [cache[f"blocks.{layer}.attn.hook_pattern"][0] for layer in range(n_layers)]
+
+
+def _previous_token_scores(patterns: list) -> list[list[float]]:
+    """Mean ``pattern[i, i-1]`` per head, over positions 2..end.
+
+    Position 1 is skipped: its previous token is BOS, where many heads park
+    their attention when they have nothing better to do.
+    """
+    import torch
+
+    out = []
+    for pat in patterns:
+        q = torch.arange(2, pat.shape[-1], device=pat.device)
+        out.append(pat[:, q, q - 1].mean(dim=-1).tolist())
+    return out
+
+
+def _induction_scores(patterns: list, repeat_len: int) -> list[list[float]]:
+    """Mean attention from each second-repeat token to the token right after
+    its first occurrence, per head.
+
+    With BOS at 0, the first copy sits at 1..R and the second at R+1..2R.
+    Token ``i`` in the second copy first appeared at ``i - R``, so the token
+    that came next last time is at ``i - R + 1``.
+    """
+    import torch
+
+    out = []
+    for pat in patterns:
+        q = torch.arange(repeat_len + 1, 2 * repeat_len + 1, device=pat.device)
+        out.append(pat[:, q, q - repeat_len + 1].mean(dim=-1).tolist())
+    return out
+
+
+def run_head_scores(req: HeadScoresRequest, loaded: LoadedModel) -> HeadScoresResponse:
+    """Score every attention head as an induction ("copying") head and as a
+    previous-token head.
+
+    Raises ValueError (a 400 at the endpoint) when ``req.prompt`` is too short
+    to have a word pair after the first word.
+    """
+    total_start = time.perf_counter()
+
+    if loaded.model is None:
+        raise RuntimeError(f"model '{req.preset_id}' was unloaded during head scoring")
+
+    model = loaded.model
+    n_layers = int(model.cfg.n_layers)
+    n_heads = int(model.cfg.n_heads)
+
+    # Acquire per-preset lock for the entire operation.
+    lock = REGISTRY._get_lock(req.preset_id)
+    with lock:
+        rep_tokens = _repeated_sequence(model)
+        forward_start = time.perf_counter()
+        rep_patterns = _attention_patterns(model, rep_tokens)
+        induction = _induction_scores(rep_patterns, REPEAT_LEN)
+
+        if req.prompt is not None:
+            prompt_tokens = model.to_tokens(req.prompt)
+            if prompt_tokens.shape[-1] < 3:
+                raise ValueError(
+                    "This prompt is too short to score previous-word heads; use at least two words."
+                )
+            prev = _previous_token_scores(_attention_patterns(model, prompt_tokens))
+        else:
+            prev = _previous_token_scores(rep_patterns)
+        forward_ms = (time.perf_counter() - forward_start) * 1000
+
+        sequence_tokens = [str(model.to_single_str_token(int(t))) for t in rep_tokens[0, 1:]]
+
+    # Lock released — rank and build response outside lock
+    scores = [
+        HeadScore(
+            layer=layer,
+            head=head,
+            induction=induction[layer][head],
+            previous_token=prev[layer][head],
+        )
+        for layer in range(n_layers)
+        for head in range(n_heads)
+    ]
+    top_induction = sorted(scores, key=lambda s: (-s.induction, s.layer, s.head))[: req.top_k]
+    top_previous = sorted(scores, key=lambda s: (-s.previous_token, s.layer, s.head))[: req.top_k]
+    total_ms = (time.perf_counter() - total_start) * 1000
+
+    return HeadScoresResponse(
+        preset_id=req.preset_id,
+        n_layers=n_layers,
+        n_heads=n_heads,
+        repeat_len=REPEAT_LEN,
+        sequence_tokens=sequence_tokens,
+        previous_token_source="prompt" if req.prompt is not None else "repeated_sequence",
+        scores=scores,
+        top_induction=top_induction,
+        top_previous_token=top_previous,
+        timing_ms={"forward_ms": forward_ms, "total_ms": total_ms},
         status="ok",
     )
