@@ -205,3 +205,39 @@ export interface CircuitResponse {
   timing_ms: Record<string, number>;
   status?: string;
 }
+
+// ---------------------------------------------------------------------------
+// Preset display metadata (Phase 2 contract §1/§2): passthrough of the
+// presets.json `display` block via Rust `PresetCompatibility.display` and
+// sidecar `/models` `available[].display`.
+// ---------------------------------------------------------------------------
+
+export interface PresetDisplay {
+  name: string;
+  blurb: string;
+  params: string;
+  size_label: string;
+  n_layers: number;
+  n_heads: number;
+  /** Neuronpedia model slug; null when Neuronpedia has no coverage. */
+  neuronpedia_model_id: string | null;
+  /** Neuronpedia SAE set suffix (e.g. "res-jb"); null when none. */
+  neuronpedia_release_suffix: string | null;
+  recommended: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Sidecar /health (Phase 2 contract §4)
+// ---------------------------------------------------------------------------
+
+export interface SidecarHealth {
+  status: string;
+  version: string;
+  device?: 'cuda' | 'cpu' | null;
+  gpu_name?: string | null;
+  torch?: string;
+  cuda?: string | null;
+  loaded_preset?: string | null;
+  sae_layer?: number | null;
+  hf_token_present?: boolean;
+}

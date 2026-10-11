@@ -1,6 +1,7 @@
 <script lang="ts">
   import { ChevronDown, Check, Loader2 } from 'lucide-svelte';
   import type { PresetCompatibility, Verdict } from '$lib/tauri';
+  import { displayName, isPickable, verdictInfo, type VerdictTone } from '$lib/preset-display';
 
   interface Props {
     compatibilities: PresetCompatibility[] | null;
@@ -11,23 +12,8 @@
 
   let { compatibilities, activePresetId, disabled, onSwitch }: Props = $props();
 
-  const DISPLAY_NAMES: Record<string, string> = {
-    'gpt2-small': 'GPT-2 small',
-    'pythia-410m': 'Pythia-410M',
-    'pythia-1.4b': 'Pythia-1.4B',
-    'gemma-2-2b': 'Gemma-2-2B',
-    'gemma-2-9b': 'Gemma-2-9B',
-  };
-
-  function displayName(id: string | null): string {
-    if (!id) return 'No model';
-    return DISPLAY_NAMES[id] ?? id;
-  }
-
   const loadable = $derived(
-    (compatibilities ?? []).filter(
-      (c) => c.verdict === 'Comfortable' || c.verdict === 'Tight',
-    ),
+    (compatibilities ?? []).filter(isPickable),
   );
 
   let open = $state(false);
@@ -70,10 +56,16 @@
     onSwitch(presetId);
   }
 
+  const TONE_CLS: Record<VerdictTone, string> = {
+    good: 'bg-green-900/60 text-green-300 border-green-700',
+    warn: 'bg-yellow-900/60 text-yellow-300 border-yellow-700',
+    cpu: 'bg-sky-900/60 text-sky-300 border-sky-700',
+    bad: 'bg-red-900/60 text-red-300 border-red-700',
+  };
+
   function verdictBadge(v: Verdict): { label: string; cls: string } {
-    if (v === 'Comfortable')
-      return { label: 'Comfortable', cls: 'bg-green-900/60 text-green-300 border-green-700' };
-    return { label: 'Tight', cls: 'bg-yellow-900/60 text-yellow-300 border-yellow-700' };
+    const info = verdictInfo(v);
+    return { label: info.short, cls: TONE_CLS[info.tone] };
   }
 </script>
 
@@ -90,13 +82,13 @@
     {#if disabled}
       <Loader2 class="h-3.5 w-3.5 animate-spin text-indigo-300" />
     {/if}
-    <span class="font-medium">{displayName(activePresetId)}</span>
+    <span class="font-medium">{displayName(activePresetId, compatibilities)}</span>
     <ChevronDown class="h-3.5 w-3.5 text-zinc-400" />
   </button>
 
   {#if open}
     <div
-      class="absolute right-0 top-full z-20 mt-1 w-64 overflow-hidden rounded-md border border-zinc-800 bg-zinc-950 shadow-lg"
+      class="absolute right-0 top-full z-20 mt-1 w-80 overflow-hidden rounded-md border border-zinc-800 bg-zinc-950 shadow-lg"
       role="listbox"
     >
       {#each loadable as c (c.preset_id)}
@@ -116,7 +108,7 @@
             {/if}
           </span>
           <span class="flex-1 truncate text-zinc-200">
-            {DISPLAY_NAMES[c.preset_id] ?? c.preset_id}
+            {displayName(c)}
           </span>
           <span class="flex-none rounded border px-1.5 py-0.5 text-[10px] {b.cls}">{b.label}</span>
         </button>

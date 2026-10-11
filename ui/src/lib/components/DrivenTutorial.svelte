@@ -2,6 +2,7 @@
   import { tutorialState } from '$lib/tutorial/tutorial-store.svelte';
   import type { TutorialActions } from '$lib/tutorial/actions';
   import type { GenerateResponse } from '$lib/types';
+  import { asyncStepSucceeded, needsModelOffer, TOUR_PRESET_ID } from '$lib/tutorial/step-machine';
 
   interface Props {
     generating: boolean;
@@ -10,6 +11,8 @@
     actions: TutorialActions;
     bannerVisible?: boolean;
     saeLayerSwitching?: boolean;
+    /** Analysis error (st.error), shown when a tutorial Run fails. */
+    error?: string | null;
   }
 
   let {
@@ -19,6 +22,7 @@
     actions,
     bannerVisible = false,
     saeLayerSwitching = false,
+    error = null,
   }: Props = $props();
 
   let completing = $state(false);
@@ -27,22 +31,71 @@
   const stepNumber = $derived(tutorialState.stepIndex + 1);
   const totalSteps = $derived(tutorialState.totalSteps);
   const isFinal = $derived(tutorialState.stepIndex >= totalSteps - 1);
+  const failed = $derived(tutorialState.machine.status === 'failed');
 
-  // Advance after async generate completes
-  $effect(() => {
-    if (tutorialState.awaitingAsync && !generating && response !== null && !step?.awaitLayerSwitch) {
-      tutorialState.awaitingAsync = false;
-      tutorialState.next();
-    }
-  });
+  // ---- GPT-2 small pin: the tour copy is written for GPT-2 small ----
+  let switchingModel = $state(false);
+  let modelSwitchError = $state<string | null>(null);
+  const activeModel = $derived(actions.activePresetId?.() ?? null);
+  const showModelOffer = $derived(
+    tutorialState.open && needsModelOffer(activeModel, tutorialState.modelOfferDismissed),
+  );
 
-  // Advance after layer switch completes
-  $effect(() => {
-    if (tutorialState.awaitingAsync && step?.awaitLayerSwitch && !saeLayerSwitching) {
-      tutorialState.awaitingAsync = false;
-      tutorialState.next();
+  async function switchToTourModel() {
+    if (!actions.switchModel || switchingModel) return;
+    switchingModel = true;
+    modelSwitchError = null;
+    try {
+      await actions.switchModel(TOUR_PRESET_ID);
+    } catch (e) {
+      console.warn('tutorial model switch error', e);
     }
-  });
+    switchingModel = false;
+    if (actions.activePresetId?.() !== TOUR_PRESET_ID) {
+      modelSwitchError = "Couldn't load GPT-2 small. You can retry, or continue on the current model.";
+    }
+  }
+
+  function dismissModelOffer() {
+    tutorialState.modelOfferDismissed = true;
+    modelSwitchError = null;
+  }
+
+  // ---- Async steps (Run / layer switch) ----
+  // The action is awaited to completion (generate and layer switch both
+  // resolve after the request settles and never throw), then success is read
+  // off the response: a new response means it worked; anything else is a
+  // failure that clears `running` and offers Try again / Skip.
+  async function runAsyncStep() {
+    const current = step;
+    if (!current) return;
+    const indexAtStart = tutorialState.stepIndex;
+    const before = response;
+    try {
+      await current.action(actions);
+    } catch (e) {
+      console.warn('tutorial async action error', e);
+    }
+    // The user closed the tour, skipped, or moved on while it ran.
+    if (!tutorialState.open || tutorialState.stepIndex !== indexAtStart || !tutorialState.awaitingAsync) return;
+    if (asyncStepSucceeded(before, response)) {
+      tutorialState.dispatch({ type: 'succeeded' });
+      tutorialState.next();
+    } else {
+      tutorialState.dispatch({ type: 'failed', error });
+    }
+  }
+
+  async function handleRetry() {
+    if (!failed) return;
+    tutorialState.dispatch({ type: 'retry' });
+    await runAsyncStep();
+  }
+
+  function handleSkipStep() {
+    tutorialState.dispatch({ type: 'skip' });
+    tutorialState.next();
+  }
 
   // Highlight effect — data-tour-active attribute toggle, survives Svelte
   // reconciliation because data-* attrs aren't part of component class tracking.
@@ -83,7 +136,7 @@
   });
 
   async function handleNext() {
-    if (!step || tutorialState.awaitingAsync || completing) return;
+    if (!step || tutorialState.awaitingAsync || failed || switchingModel || completing) return;
     if (isFinal) {
       // Run final action (which calls exit()) then show toast briefly
       completing = true;
@@ -99,14 +152,8 @@
       return;
     }
     if (step.awaitGenerate || step.awaitLayerSwitch) {
-      tutorialState.awaitingAsync = true;
-      try {
-        await step.action(actions);
-      } catch (e) {
-        console.warn('tutorial async action error', e);
-        tutorialState.awaitingAsync = false;
-      }
-      // advancement happens in the $effect once generate/layer-switch settles
+      tutorialState.dispatch({ type: 'run' });
+      await runAsyncStep();
       return;
     }
     try {
@@ -118,7 +165,7 @@
   }
 
   function handleBack() {
-    if (tutorialState.awaitingAsync) return;
+    if (tutorialState.awaitingAsync || switchingModel) return;
     tutorialState.back();
   }
 
@@ -172,6 +219,37 @@
           Tutorial complete — click ? to relaunch
         </p>
       {:else}
+        {#if showModelOffer || switchingModel || modelSwitchError}
+          <div class="mb-3 rounded border border-amber-900/60 bg-amber-950/30 px-2.5 py-2">
+            {#if switchingModel}
+              <p class="text-[11px] text-amber-200">Loading GPT-2 small…</p>
+            {:else}
+              <p class="text-[11px] leading-relaxed text-amber-200">
+                {modelSwitchError ??
+                  `This tour is written for GPT-2 small, and you have ${activeModel} loaded. The steps will still run, but the numbers and examples won't match.`}
+              </p>
+              <div class="mt-2 flex gap-2">
+                {#if actions.switchModel}
+                  <button
+                    type="button"
+                    onclick={switchToTourModel}
+                    class="rounded bg-amber-500 px-2.5 py-1 text-xs font-medium text-zinc-950 hover:bg-amber-400"
+                  >
+                    {modelSwitchError ? 'Retry' : 'Switch to GPT-2 small'}
+                  </button>
+                {/if}
+                <button
+                  type="button"
+                  onclick={dismissModelOffer}
+                  class="rounded border border-zinc-700 bg-zinc-800 px-2.5 py-1 text-xs text-zinc-300 hover:bg-zinc-700"
+                >
+                  Continue anyway
+                </button>
+              </div>
+            {/if}
+          </div>
+        {/if}
+
         <p class="text-sm leading-relaxed text-zinc-200">{step.blurb}</p>
 
         {#if step.why}
@@ -188,6 +266,28 @@
               {step.why}
             </div>
           {/if}
+        {/if}
+
+        {#if failed}
+          <div class="mt-3 rounded border border-red-900/60 bg-red-950/30 px-2.5 py-2" role="alert">
+            <p class="text-[11px] leading-relaxed text-red-300">{tutorialState.machine.error}</p>
+            <div class="mt-2 flex gap-2">
+              <button
+                type="button"
+                onclick={handleRetry}
+                class="rounded bg-indigo-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-indigo-400"
+              >
+                Try again
+              </button>
+              <button
+                type="button"
+                onclick={handleSkipStep}
+                class="rounded border border-zinc-700 bg-zinc-800 px-2.5 py-1 text-xs text-zinc-300 hover:bg-zinc-700"
+              >
+                Skip
+              </button>
+            </div>
+          </div>
         {/if}
 
         {#if asyncHint}
@@ -213,7 +313,7 @@
           <button
             type="button"
             onclick={handleBack}
-            disabled={tutorialState.stepIndex === 0 || tutorialState.awaitingAsync}
+            disabled={tutorialState.stepIndex === 0 || tutorialState.awaitingAsync || switchingModel}
             class="rounded border border-zinc-700 bg-zinc-800 px-2.5 py-1 text-xs text-zinc-300 hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Back
@@ -221,7 +321,7 @@
           <button
             type="button"
             onclick={handleNext}
-            disabled={tutorialState.awaitingAsync}
+            disabled={tutorialState.awaitingAsync || failed || switchingModel}
             class="rounded bg-indigo-500 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isFinal ? 'Done' : 'Next'}

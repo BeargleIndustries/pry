@@ -1,50 +1,16 @@
+import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 import { isTauri } from './is-tauri';
 import { sidecarErrorMessage } from './sidecar-errors';
+import type { SidecarHealth } from './types';
 
-const FALLBACK_BASE =
+// Browser dev only (`npm run dev` against a manually started sidecar). Under
+// Tauri we never fall back to this: the port and token come from Rust.
+const DEV_BASE =
   (import.meta.env.VITE_PRY_SIDECAR as string | undefined) ?? 'http://127.0.0.1:8765';
 
-// Resolved lazily on first request — uses Tauri sidecar_url() if available.
-let _resolvedBase: string | null = null;
-
-async function getBase(): Promise<string> {
-  if (_resolvedBase) return _resolvedBase;
-  if (isTauri()) {
-    const { invoke } = await import('@tauri-apps/api/core');
-    // Retry loop — the Tauri setup hook spawns sidecar::launch() as an
-    // async task and returns immediately, so the frontend can race the
-    // sidecar startup. `sidecar_url` returns `Sidecar("not running")` until
-    // the handle lands in managed state. Poll for up to ~30s before giving
-    // up — cold starts are slower with the full inference stack loaded.
-    const maxAttempts = 40;
-    const delayMs = 750;
-    let lastErr: unknown = null;
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      try {
-        const base = await invoke<string>('sidecar_url');
-        console.log(`[sidecar] getBase: resolved on attempt ${attempt + 1} →`, base);
-        _resolvedBase = base;
-        return _resolvedBase;
-      } catch (e) {
-        lastErr = e;
-        if (attempt < maxAttempts - 1) {
-          await new Promise((r) => setTimeout(r, delayMs));
-        }
-      }
-    }
-    // Don't cache the fallback — a later call may still succeed.
-    console.warn(
-      `[sidecar] getBase: sidecar_url failed after ${maxAttempts} attempts, using fallback:`,
-      lastErr,
-    );
-    return FALLBACK_BASE;
-  }
-  _resolvedBase = FALLBACK_BASE;
-  return _resolvedBase;
-}
-
-/** Resolves the sidecar base URL, using the Tauri sidecar_url command when available. */
-export const getSidecarBase = getBase;
+export const ENGINE_NOT_RUNNING =
+  "Pry's engine isn't running. Use Restart engine at the top of the window to start it again.";
 
 // ---------------------------------------------------------------------------
 // Error type
@@ -61,27 +27,133 @@ export class SidecarError extends Error {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const base = await getBase();
+// ---------------------------------------------------------------------------
+// Connection: {base_url, token} cached as one pair (contract §3)
+// ---------------------------------------------------------------------------
+
+interface Connection {
+  base: string;
+  token: string | null;
+}
+
+let connectionPromise: Promise<Connection> | null = null;
+let listenersAttached = false;
+// The Tauri setup hook launches the sidecar asynchronously, so the first
+// `sidecar_connection` call can race it. Poll for up to ~30 s on cold start.
+let retryAttempts = 40;
+let retryDelayMs = 750;
+
+/** Drop the cached {base_url, token}; the next request re-fetches it. */
+export function invalidateSidecarConnection(): void {
+  connectionPromise = null;
+}
+
+function attachLifecycleListeners(): void {
+  if (listenersAttached) return;
+  listenersAttached = true;
+  // The token changes on every engine launch.
+  void listen('sidecar:crashed', invalidateSidecarConnection).catch(() => {});
+  void listen('sidecar:restarted', invalidateSidecarConnection).catch(() => {});
+}
+
+async function resolveConnection(): Promise<Connection> {
+  if (!isTauri()) return { base: DEV_BASE, token: null };
+  attachLifecycleListeners();
+  let lastErr: unknown = null;
+  for (let attempt = 0; attempt < retryAttempts; attempt++) {
+    try {
+      const c = await invoke<{ base_url: string; token: string }>('sidecar_connection');
+      return { base: c.base_url, token: c.token };
+    } catch (e) {
+      lastErr = e;
+      if (attempt < retryAttempts - 1) {
+        await new Promise((r) => setTimeout(r, retryDelayMs));
+      }
+    }
+  }
+  console.warn('[sidecar] sidecar_connection failed:', lastErr);
+  throw new SidecarError(ENGINE_NOT_RUNNING, undefined, String(lastErr ?? ''));
+}
+
+function getConnection(): Promise<Connection> {
+  if (!connectionPromise) {
+    const p = resolveConnection();
+    connectionPromise = p;
+    // Never cache a failure: a later call may find the engine up.
+    p.catch(() => {
+      if (connectionPromise === p) connectionPromise = null;
+    });
+  }
+  return connectionPromise;
+}
+
+/** Resolves the sidecar base URL. Prefer `sidecarFetch`, which also sends the token. */
+export async function getSidecarBase(): Promise<string> {
+  return (await getConnection()).base;
+}
+
+function isAbort(e: unknown): boolean {
+  return typeof e === 'object' && e !== null && (e as { name?: string }).name === 'AbortError';
+}
+
+function send(conn: Connection, path: string, init: RequestInit): Promise<Response> {
+  const headers = new Headers(init.headers);
+  if (conn.token) headers.set('X-Pry-Token', conn.token);
+  return fetch(`${conn.base}${path}`, { ...init, headers });
+}
+
+/**
+ * `fetch` against the sidecar with the auth token attached. On a 403 (stale
+ * token) or a network failure under Tauri (engine restarted on a new port),
+ * re-fetches the {base_url, token} pair once and retries once.
+ */
+export async function sidecarFetch(path: string, init: RequestInit = {}): Promise<Response> {
+  let conn = await getConnection();
   let res: Response;
   try {
-    res = await fetch(`${base}${path}`, init);
-  } catch (err) {
-    throw new SidecarError(
-      `Sidecar unreachable at ${base}${path} — is the Python sidecar running?`,
-    );
+    res = await send(conn, path, init);
+  } catch (e) {
+    if (isAbort(e)) throw e;
+    if (!isTauri()) {
+      throw new SidecarError(`Pry's engine is unreachable at ${conn.base}. Is the Python sidecar running?`);
+    }
+    invalidateSidecarConnection();
+    conn = await getConnection();
+    try {
+      return await send(conn, path, init);
+    } catch (e2) {
+      if (isAbort(e2)) throw e2;
+      throw new SidecarError(ENGINE_NOT_RUNNING);
+    }
   }
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    throw new SidecarError(
-      sidecarErrorMessage(body) ?? `Sidecar responded with HTTP ${res.status} on ${path}`,
-      res.status,
-      body,
-    );
+  if (res.status === 403 && isTauri()) {
+    invalidateSidecarConnection();
+    conn = await getConnection();
+    res = await send(conn, path, init);
   }
+  return res;
+}
 
+async function errorFromResponse(res: Response, path: string): Promise<SidecarError> {
+  const body = await res.text().catch(() => '');
+  return new SidecarError(
+    sidecarErrorMessage(body) ?? `Pry's engine responded with HTTP ${res.status} on ${path}`,
+    res.status,
+    body,
+  );
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await sidecarFetch(path, init);
+  if (!res.ok) throw await errorFromResponse(res, path);
   return res.json() as Promise<T>;
+}
+
+/** Test hook: shrink the cold-start retry loop. */
+export function _setConnectionRetryForTests(attempts: number, delayMs: number): void {
+  retryAttempts = attempts;
+  retryDelayMs = delayMs;
+  connectionPromise = null;
 }
 
 // ---------------------------------------------------------------------------
@@ -100,6 +172,8 @@ export interface PresetInfo {
   downloaded: boolean;
   available_sae_layers?: number[];
   default_sae_layer?: number;
+  display?: import('./types').PresetDisplay | null;
+  cpu_ok?: boolean;
 }
 
 export interface ModelList {
@@ -130,7 +204,7 @@ export interface LoadProgress {
 // API functions
 // ---------------------------------------------------------------------------
 
-export async function health(): Promise<{ status: string; version: string }> {
+export async function health(): Promise<SidecarHealth> {
   return request('/health');
 }
 
@@ -158,19 +232,14 @@ export async function loadPreset(
   onProgress: (ev: LoadProgress) => void,
   signal?: AbortSignal,
 ): Promise<void> {
-  const base = await getBase();
-  const res = await fetch(`${base}/load`, {
+  const res = await sidecarFetch('/load', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ preset_id: presetId }),
     signal,
   });
-  if (!res.ok || !res.body) {
-    throw new SidecarError(
-      `sidecar /load returned ${res.status}`,
-      res.status,
-    );
-  }
+  if (!res.ok) throw await errorFromResponse(res, '/load');
+  if (!res.body) throw new SidecarError("Pry's engine sent an empty response to /load");
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buf = '';

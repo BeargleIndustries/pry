@@ -1,6 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import { ArrowLeft, ExternalLink, Key } from 'lucide-svelte';
+  import { ArrowLeft, ExternalLink, Key, Loader2 } from 'lucide-svelte';
   import { saveHfToken } from '$lib/tauri';
 
   let token = $state('');
@@ -115,9 +115,13 @@
     <button
       onclick={save}
       disabled={saving || !token.trim()}
-      class="rounded-lg bg-indigo-600 px-6 py-3 font-medium text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+      class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 font-medium text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
     >
-      {saving ? 'Saving…' : 'Save & continue'}
+      {#if saving}
+        <Loader2 class="h-4 w-4 animate-spin" /> Saving and restarting Pry's engine…
+      {:else}
+        Save & continue
+      {/if}
     </button>
   </div>
 </div>

@@ -4,6 +4,7 @@
 //
 // All dispatch logic lives in `analysis-core.ts` (plain TS, unit-tested);
 // this file just makes its state object deeply reactive.
+import { untrack } from 'svelte';
 import {
   AnalysisController,
   createInitialAnalysisState,
@@ -12,5 +13,15 @@ import {
 
 export function createAnalysis(deps: AnalysisDeps): AnalysisController {
   const state = $state(createInitialAnalysisState());
-  return new AnalysisController(state, deps);
+  const controller = new AnalysisController(state, deps);
+  // Refresh DLA (debounced) whenever the focused token changes. Root effect so
+  // it works regardless of where createAnalysis is called; it lives as long as
+  // the page does.
+  $effect.root(() => {
+    $effect(() => {
+      void state.focusTokenIndex;
+      untrack(() => controller.focusChanged());
+    });
+  });
+  return controller;
 }

@@ -1,17 +1,23 @@
+<script module lang="ts">
+  let hatchSeq = 0;
+</script>
+
 <script lang="ts">
-  import type { FeatureHit, TokenFeatures } from '$lib/types';
+  import type { FeatureHit, TokenFeatures, PresetDisplay } from '$lib/types';
+  import { neuronpediaUrl as buildNeuronpediaUrl } from '$lib/preset-display';
   import { isNamedFeature, labelDetailOf } from '$lib/feature-label';
 
   interface Props {
     hit: FeatureHit;
     maxActivation: number;
     layer: number;
-    neuronpediaUrlBase?: string;
+    /** Loaded preset's display block; no Neuronpedia coverage hides the links. */
+    presetDisplay?: PresetDisplay | null;
     /** All token features from the response, used to compute the sparkline. */
     allTokenFeatures?: TokenFeatures[];
   }
 
-  let { hit, maxActivation, layer, neuronpediaUrlBase = 'gpt2-small/8-res-jb', allTokenFeatures = [] }: Props = $props();
+  let { hit, maxActivation, layer, presetDisplay = null, allTokenFeatures = [] }: Props = $props();
 
   let expanded = $state(false);
 
@@ -28,22 +34,27 @@
   const previewSnippets = $derived(snippets.slice(0, 5));
   // M4 fix: removed dead `snippets = $derived(snippets)` — use snippets directly.
 
-  const neuronpediaUrl = $derived(
-    `https://www.neuronpedia.org/${neuronpediaUrlBase}/${hit.id}`
-  );
+  const neuronpediaUrl = $derived(buildNeuronpediaUrl(presetDisplay, layer, hit.id));
 
-  // A2: sparkline data — activation of this feature across all token positions
-  const sparklineData = $derived.by((): number[] => {
+  // A2: sparkline data — activation of this feature across all token positions.
+  // The response only carries each token's top-5 features, so a position
+  // where this feature isn't in the top 5 is unknown (null), not zero. Those
+  // render hatched.
+  const sparklineData = $derived.by((): (number | null)[] => {
     if (allTokenFeatures.length === 0) return [];
     return allTokenFeatures.map((tf) => {
       const match = tf.top_k.find((f) => f.id === hit.id);
-      return match ? match.activation : 0;
+      return match ? match.activation : null;
     });
   });
 
   const sparklineMax = $derived(
-    sparklineData.length > 0 ? Math.max(...sparklineData, 0.01) : 1
+    Math.max(...sparklineData.map((v) => v ?? 0), 0.01)
   );
+  const hasNotInTopK = $derived(sparklineData.some((v) => v === null));
+  const hatchId = `fc-hatch-${hatchSeq++}`;
+  // Percent coordinates (no viewBox) keep the hatch pattern undistorted.
+  const colPct = $derived(sparklineData.length > 0 ? 100 / sparklineData.length : 0);
 
   // A3: open external links via Tauri shell plugin, fallback to window.open
   async function openExternal(url: string) {
@@ -76,14 +87,17 @@
       ></div>
     </div>
     <span class="text-xs font-mono text-zinc-500">feat #{hit.id}</span>
-    <button
-      type="button"
-      class="text-xs text-indigo-400 hover:text-indigo-300 hover:underline transition-colors"
-      data-tip="neuronpedia-link"
-      onclick={(e) => { e.stopPropagation(); openExternal(neuronpediaUrl); }}
-    >
-      Neuronpedia
-    </button>
+    {#if neuronpediaUrl}
+      {@const url = neuronpediaUrl}
+      <button
+        type="button"
+        class="text-xs text-indigo-400 hover:text-indigo-300 hover:underline transition-colors"
+        data-tip="neuronpedia-link"
+        onclick={(e) => { e.stopPropagation(); openExternal(url); }}
+      >
+        Neuronpedia
+      </button>
+    {/if}
     <span class="ml-auto text-xs font-mono text-zinc-400">act: {hit.activation.toFixed(1)}</span>
   </div>
 
@@ -92,22 +106,36 @@
     <div class="mb-2" data-tip="feature-histogram">
       <svg
         class="h-4 w-full"
-        viewBox="0 0 {sparklineData.length} 1"
-        preserveAspectRatio="none"
         role="img"
         aria-label="Activation sparkline for feature {hit.id}"
       >
+        <defs>
+          <pattern id={hatchId} width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <rect width="4" height="4" class="fill-zinc-900" />
+            <line x1="0" y1="0" x2="0" y2="4" class="stroke-zinc-600" stroke-width="1.5" />
+          </pattern>
+        </defs>
         {#each sparklineData as val, i}
-          {@const h = sparklineMax > 0 ? val / sparklineMax : 0}
-          <rect
-            x={i}
-            y={1 - h}
-            width={0.8}
-            height={h}
-            class={h > 0 ? 'fill-indigo-500/70' : 'fill-zinc-800/30'}
-          />
+          {#if val === null}
+            <rect x="{i * colPct}%" y="0" width="{colPct * 0.8}%" height="100%" fill="url(#{hatchId})">
+              <title>token {i}: not in top 5</title>
+            </rect>
+          {:else}
+            {@const h = val / sparklineMax}
+            <rect x="{i * colPct}%" y="{(1 - h) * 100}%" width="{colPct * 0.8}%" height="{h * 100}%" class="fill-indigo-500/70">
+              <title>token {i}: {val.toFixed(2)}</title>
+            </rect>
+          {/if}
         {/each}
       </svg>
+      {#if hasNotInTopK}
+        <p class="mt-0.5 flex items-center gap-1 text-[10px] text-zinc-600">
+          <svg class="h-2 w-3" aria-hidden="true">
+            <rect width="100%" height="100%" fill="url(#{hatchId})" />
+          </svg>
+          not in top 5 for that token
+        </p>
+      {/if}
     </div>
   {/if}
 
@@ -155,14 +183,17 @@
 
       <div class="flex items-center gap-4 text-xs text-zinc-600">
         <span>layer {layer}</span>
-        <span>·</span>
-        <button
-          type="button"
-          class="text-indigo-400 hover:text-indigo-300 hover:underline transition-colors"
-          onclick={(e) => { e.stopPropagation(); openExternal(neuronpediaUrl); }}
-        >
-          Neuronpedia →
-        </button>
+        {#if neuronpediaUrl}
+          {@const url = neuronpediaUrl}
+          <span>·</span>
+          <button
+            type="button"
+            class="text-indigo-400 hover:text-indigo-300 hover:underline transition-colors"
+            onclick={(e) => { e.stopPropagation(); openExternal(url); }}
+          >
+            Neuronpedia →
+          </button>
+        {/if}
       </div>
     </div>
   {:else if snippets.length > 5}

@@ -162,8 +162,9 @@ export const drivenSteps: DrivenStep[] = [
       "GPT-2 small has 12 layers, and each one builds on the last. Early layers (0-3 or so) tend to catch surface stuff, grammar, word shapes, the kind of patterns you'd spot in a sentence diagram. Later layers (8-11) catch meaning, roles, relationships between concepts. Layer 8 is where we started because it's deep enough to see semantic features but not so deep that everything becomes abstract mush. Switching to layer 2 on the same 'she' token is going to show you a completely different set of features, more about the word itself and less about what it means in context. This is why layer selection matters: the question isn't just 'what features fired' but 'what features fired at what depth,' and the answer changes a lot.",
     target: 'panel-b-layer-selector',
     awaitLayerSwitch: true,
-    action: (ctx) => {
-      ctx.switchSaeLayer?.(2);
+    // Awaited so DrivenTutorial can tell success (new response) from failure.
+    action: async (ctx) => {
+      await ctx.switchSaeLayer?.(2);
     },
   },
   {

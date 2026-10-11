@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { GenerateResponse, TokenFeatures, AblateResponse } from '$lib/types';
+  import type { GenerateResponse, TokenFeatures, AblateResponse, PresetDisplay } from '$lib/types';
   import FeatureCard from './FeatureCard.svelte';
 
   interface Props {
@@ -18,6 +18,8 @@
     onToggleFeatureAblation?: (featureIndex: number, layer: number) => void;
     onRunFeatureAblation?: () => void;
     onToggleAblationMode?: (active: boolean) => void;
+    /** presets.json `display` block of the loaded preset; drives the Neuronpedia links. */
+    presetDisplay?: PresetDisplay | null;
   }
 
   let {
@@ -28,6 +30,7 @@
     availableSaeLayers = [],
     currentSaeLayer,
     onLayerChange,
+    presetDisplay = null,
     layerSwitching = false,
     ablationMode = false,
     featureAblations = [],
@@ -80,20 +83,6 @@
     return response.tokens.find((t) => t.index === resolvedFocusIndex) ?? null;
   });
 
-  // Per-preset SAE release suffix on Neuronpedia. `-res-jb` is GPT-2-small specific.
-  const NEURONPEDIA_SUFFIX: Record<string, string> = {
-    'gpt2-small': 'res-jb',
-    'pythia-410m': 'res-sm',
-    'pythia-1.4b': 'res-sm',
-    'gemma-2-2b': 'res-gemma',
-    'gemma-2-9b': 'res-gemma',
-  };
-
-  const neuronpediaUrlBase = $derived.by(() => {
-    if (!response) return 'gpt2-small/8-res-jb';
-    const suffix = NEURONPEDIA_SUFFIX[response.preset_id] ?? 'res';
-    return `${response.preset_id}/${response.sae_layer_used}-${suffix}`;
-  });
 
   function handleTokenClick(index: number) {
     internalFocusIndex = index;
@@ -282,7 +271,7 @@
                   {hit}
                   maxActivation={maxActivation}
                   layer={response.sae_layer_used}
-                  {neuronpediaUrlBase}
+                  {presetDisplay}
                   allTokenFeatures={response.sae_features}
                 />
               </div>

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { GenerateResponse, SteerResponse, FeatureHit } from '$lib/types';
+  import { diffTokens } from '$lib/token-diff';
 
   interface Props {
     response: GenerateResponse | null;
@@ -68,29 +69,12 @@
     onSteer?.(selectedFeatureId, currentSaeLayer, alpha);
   }
 
-  // Diff highlighting helper: find tokens that differ between two strings
-  function tokenizeDiff(
-    orig: string,
-    steered: string,
-  ): { origTokens: { text: string; changed: boolean }[]; steeredTokens: { text: string; changed: boolean }[] } {
-    const oWords = orig.split(/(\s+)/);
-    const sWords = steered.split(/(\s+)/);
-    const maxLen = Math.max(oWords.length, sWords.length);
-    const origTokens: { text: string; changed: boolean }[] = [];
-    const steeredTokens: { text: string; changed: boolean }[] = [];
-    for (let i = 0; i < maxLen; i++) {
-      const oW = oWords[i] ?? '';
-      const sW = sWords[i] ?? '';
-      const changed = oW !== sW;
-      if (i < oWords.length) origTokens.push({ text: oW, changed });
-      if (i < sWords.length) steeredTokens.push({ text: sW, changed });
-    }
-    return { origTokens, steeredTokens };
-  }
-
+  // Generations are continuation-only (the server strips the prompt); the
+  // prompt is echoed dimmed in front of each and the diff covers only the
+  // continuations.
   const diff = $derived(
     steerResponse
-      ? tokenizeDiff(steerResponse.original_generation, steerResponse.steered_generation)
+      ? diffTokens(steerResponse.original_generation, steerResponse.steered_generation)
       : null,
   );
 
@@ -166,15 +150,7 @@
         <!-- Original -->
         <div class="flex flex-col gap-1.5">
           <h4 class="text-xs font-semibold text-zinc-400">Original</h4>
-          <div class="rounded bg-zinc-950 p-2 text-sm text-zinc-300 leading-relaxed">
-            {#if diff}
-              {#each diff.origTokens as tok}
-                <span class={tok.changed ? 'bg-red-900/40 text-red-300' : ''}>{tok.text}</span>
-              {/each}
-            {:else}
-              {steerResponse.original_generation}
-            {/if}
-          </div>
+          <div class="whitespace-pre-wrap rounded bg-zinc-950 p-2 text-sm text-zinc-300 leading-relaxed"><span class="text-zinc-600">{steerResponse.prompt}</span>{#if diff}{#each diff.left as tok}<span class={tok.changed ? 'bg-red-900/40 text-red-300' : ''}>{tok.text}</span>{/each}{:else}{steerResponse.original_generation}{/if}</div>
           <!-- Original top predictions -->
           <div class="mt-1">
             <p class="mb-1 text-[10px] font-medium text-zinc-500">Top predictions</p>
@@ -193,15 +169,7 @@
           <h4 class="text-xs font-semibold text-indigo-400">
             Steered (alpha={steerResponse.alpha})
           </h4>
-          <div class="rounded bg-zinc-950 p-2 text-sm text-zinc-300 leading-relaxed">
-            {#if diff}
-              {#each diff.steeredTokens as tok}
-                <span class={tok.changed ? 'bg-indigo-900/40 text-indigo-300' : ''}>{tok.text}</span>
-              {/each}
-            {:else}
-              {steerResponse.steered_generation}
-            {/if}
-          </div>
+          <div class="whitespace-pre-wrap rounded bg-zinc-950 p-2 text-sm text-zinc-300 leading-relaxed"><span class="text-zinc-600">{steerResponse.prompt}</span>{#if diff}{#each diff.right as tok}<span class={tok.changed ? 'bg-indigo-900/40 text-indigo-300' : ''}>{tok.text}</span>{/each}{:else}{steerResponse.steered_generation}{/if}</div>
           <!-- Steered top predictions -->
           <div class="mt-1">
             <p class="mb-1 text-[10px] font-medium text-zinc-500">Top predictions</p>

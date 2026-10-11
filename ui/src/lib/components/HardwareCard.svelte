@@ -70,6 +70,12 @@
         <span class="text-zinc-400">{report.cuda_driver}</span>
       </div>
     {/if}
+    {#if report.system_ram_mb}
+      <div class="flex gap-1.5">
+        <span class="text-zinc-600">RAM</span>
+        <span class="text-zinc-400">{fmtMb(report.system_ram_mb)}</span>
+      </div>
+    {/if}
     <div class="flex gap-1.5">
       <span class="text-zinc-600">Backend</span>
       <span class="text-zinc-400">{report.backend}</span>

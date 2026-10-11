@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount, onDestroy, untrack } from 'svelte';
   import { CircleHelp, Settings, Download } from 'lucide-svelte';
   import PryLogo from '$lib/components/icons/PryLogo.svelte';
   import { health, loadPreset, unloadPreset, listModels } from '$lib/sidecar';
-  import type { LoadProgress } from '$lib/sidecar';
+  import type { LoadProgress, PresetInfo } from '$lib/sidecar';
   import { createAnalysis } from '$lib/analysis.svelte';
-  import { cachedHardwareReport, probeHardware, evaluatePresets } from '$lib/tauri';
+  import { cachedHardwareReport, probeHardware, evaluatePresets, saveJsonFile } from '$lib/tauri';
   import type { HardwareReport, PresetCompatibility, CustomPreset } from '$lib/tauri';
   import HardwareCard from '$lib/components/HardwareCard.svelte';
   import PresetList from '$lib/components/PresetList.svelte';
@@ -34,6 +34,11 @@
   import { tutorialState } from '$lib/tutorial/tutorial-store.svelte';
   import type { TutorialActions } from '$lib/tutorial/actions';
   import { page } from '$app/stores';
+  import EngineStatusChip from '$lib/components/EngineStatusChip.svelte';
+  import EngineCrashBanner from '$lib/components/EngineCrashBanner.svelte';
+  import { CUSTOM_MODELS_ENABLED } from '$lib/flags';
+  import { friendlyError } from '$lib/errors';
+  import { displayName, findPreset } from '$lib/preset-display';
 
   // ---------------------------------------------------------------------------
   // Hardware probe state
@@ -109,6 +114,18 @@
   let loadState = $state<"idle" | "loading" | "loaded" | "error">("idle");
   let loadProgress = $state<LoadProgress | null>(null);
   let pendingLoad = $state<Promise<void> | null>(null);
+  // Bumped whenever the engine state changes, so the status chip re-reads /health.
+  let healthKey = $state(0);
+  $effect(() => {
+    if (loadState === 'loaded') untrack(() => healthKey++);
+  });
+  // /models presets, as a fallback source of the display block.
+  let sidecarPresets = $state<PresetInfo[]>([]);
+  const presetDisplay = $derived(
+    findPreset(activePresetId, presets)?.display ??
+      findPreset(activePresetId, sidecarPresets)?.display ??
+      null,
+  );
 
   // Generate response + all analysis state/dispatchers live in the analysis
   // module. Analyses always use the prompt that was run (response.prompt).
@@ -118,6 +135,7 @@
     ensureLoaded,
   });
   const st = analysis.state;
+  const friendly = $derived(st.error ? friendlyError(st.error) : null);
   const promptEdited = $derived(analysis.isPromptEdited(prompt));
 
   let loadAbortController: AbortController | null = null;
@@ -203,7 +221,7 @@
   // Auto-load persisted active preset
   // ---------------------------------------------------------------------------
 
-  onMount(() => {
+  function autoLoadActivePreset() {
     (async () => {
       try {
         let stored: string | null = null;
@@ -218,6 +236,7 @@
           const models = await listModels();
           sidecarActive = models.active ?? null;
           sidecarLoaded = models.loaded ?? [];
+          sidecarPresets = models.available ?? [];
           // Populate available SAE layers from the active or stored preset
           const targetId = sidecarActive ?? stored ?? null;
           if (targetId) {
@@ -237,7 +256,8 @@
 
         // Fire-and-forget auto-load with banner updates
         bannerPhase = 'loading';
-        bannerMessage = `Loading ${target}…`;
+        bannerTargetPreset = target;
+        bannerMessage = `Loading ${displayName(target, presets)}…`;
         bannerError = null;
         loadProgress = null;
         loadState = "loading";
@@ -250,6 +270,7 @@
             bannerPhase = 'idle';
             bannerMessage = null;
             bannerError = null;
+            bannerTargetPreset = null;
             try { localStorage.setItem('pry:active_preset', target); } catch { /* ignore */ }
           })
           .catch((err) => {
@@ -261,7 +282,20 @@
         // swallow — auto-load is best-effort
       }
     })().catch(() => { /* unhandled-rejection guard */ });
-  });
+  }
+
+  onMount(autoLoadActivePreset);
+
+  // The engine came back (crash restart, manual restart): its memory is empty,
+  // so reload whatever was active.
+  function handleEngineRestarted() {
+    loadAbortController?.abort();
+    loadAbortController = null;
+    pendingLoad = null;
+    loadState = 'idle';
+    healthKey++;
+    autoLoadActivePreset();
+  }
 
   // ---------------------------------------------------------------------------
   // Model switch flow
@@ -277,12 +311,12 @@
     try {
       if (previousActive && previousActive !== presetId) {
         bannerPhase = 'unloading';
-        bannerMessage = `Unloading ${previousActive}…`;
+        bannerMessage = `Unloading ${displayName(previousActive, presets)}…`;
         loadProgress = null;
         await unloadPreset(previousActive);
       }
       bannerPhase = 'loading';
-      bannerMessage = `Loading ${presetId}…`;
+      bannerMessage = `Loading ${displayName(presetId, presets)}…`;
       loadProgress = null;
       loadState = 'loading';
       await loadPreset(presetId, (ev) => {
@@ -297,6 +331,7 @@
       // Repopulate available layers for the new preset
       try {
         const models = await listModels();
+        sidecarPresets = models.available ?? [];
         const presetInfo = models.available?.find((p: any) => p.id === presetId);
         st.availableSaeLayers = presetInfo?.available_sae_layers ?? [];
       } catch { /* best-effort */ }
@@ -334,7 +369,7 @@
     analysis.patching(cleanPrompt, corruptedPrompt, patchType);
   const handleCircuit = (threshold?: number) => analysis.circuit('dla', threshold);
 
-  function handleExportJSON() {
+  async function handleExportJSON() {
     const data = {
       response: st.response,
       saeLayer: st.saeLayer,
@@ -348,14 +383,9 @@
       circuitResponse: st.circuitResponse,
       exportedAt: new Date().toISOString(),
     };
-    const json = JSON.stringify(data, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `pry-export-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    saveJsonFile(JSON.stringify(data, null, 2)).catch((e) => {
+      st.error = `Export failed: ${e instanceof Error ? e.message : String(e)}`;
+    });
   }
 
   const isRunDisabled = $derived(
@@ -424,7 +454,8 @@
   onMount(() => {
     if (typeof localStorage === 'undefined') return;
     const seen = localStorage.getItem('pry:tutorial_seen') === 'true';
-    const forced = $page.url.searchParams.get('tutorial') === '1';
+    const params = $page.url.searchParams;
+    const forced = params.get('tutorial') === '1' || params.get('demo') === 'tour';
     if (!seen || forced) tutorialState.start();
   });
 
@@ -485,6 +516,8 @@
     },
     setLeftTab: (tab) => { leftActiveTab = tab; },
     setRightTab: (tab) => { rightActiveTab = tab; },
+    activePresetId: () => activePresetId,
+    switchModel: (id: string) => handleSwitch(id),
     exit: () => {
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem('pry:tutorial_seen', 'true');
@@ -588,6 +621,7 @@
       disabled={switchInFlight}
       onSwitch={handleSwitch}
     />
+    <EngineStatusChip compatibilities={presets} refreshKey={healthKey} />
 
     {#if isWide}
       <!-- Inline prompt input (Wireshark filter-bar style) -->
@@ -709,12 +743,21 @@
     onRetry={() => handleSwitch(bannerTargetPreset ?? activePresetId ?? 'gpt2-small')}
     onDismiss={() => { bannerPhase = 'idle'; bannerError = null; bannerMessage = null; }}
   />
+  <EngineCrashBanner onRestarted={handleEngineRestarted} />
   <RuntimeUpdatePrompt />
 
   <!-- Error card — full width, compact -->
   {#if st.error}
     <div class="flex-shrink-0 border-b border-red-800 bg-red-950/40 px-4 py-2 flex items-center justify-between gap-3">
-      <p class="text-sm text-red-400">{st.error}</p>
+      <div class="min-w-0 text-sm text-red-400">
+        <p>{friendly?.message}</p>
+        {#if friendly?.details && friendly.details !== friendly.message}
+          <details class="mt-0.5 text-xs text-red-400/70">
+            <summary class="cursor-pointer select-none">Details</summary>
+            <pre class="mt-1 whitespace-pre-wrap break-words font-mono">{friendly.details}</pre>
+          </details>
+        {/if}
+      </div>
       <button onclick={handleRetry} disabled={st.generating || retrying}
         class="shrink-0 rounded bg-red-900 px-3 py-1 text-xs text-red-300 hover:bg-red-800 disabled:opacity-50">
         Retry
@@ -769,6 +812,7 @@
                   />
                 {:else if tab === 'patching'}
                   <PatchingPanel
+                    tokenize={(t) => analysis.tokenize(t)}
                     response={st.patchResponse}
                     loading={st.patchLoading}
                     onRun={handlePatching}
@@ -790,6 +834,7 @@
               <div class="h-full overflow-y-auto p-4">
                 {#if tab === 'features'}
                   <PanelB
+                    {presetDisplay}
                     response={st.response}
                     focusTokenIndex={st.focusTokenIndex}
                     onTokenFocus={(i) => (st.focusTokenIndex = i)}
@@ -888,6 +933,7 @@
                   />
                 {:else if tab === 'patching'}
                   <PatchingPanel
+                    tokenize={(t) => analysis.tokenize(t)}
                     response={st.patchResponse}
                     loading={st.patchLoading}
                     onRun={handlePatching}
@@ -907,6 +953,7 @@
               {#snippet children(tab)}
                 {#if tab === 'features'}
                   <PanelB
+                    {presetDisplay}
                     response={st.response}
                     focusTokenIndex={st.focusTokenIndex}
                     onTokenFocus={(i) => (st.focusTokenIndex = i)}
@@ -1013,6 +1060,7 @@
       </div>
     {/if}
 
+    {#if CUSTOM_MODELS_ENABLED}
     <!-- Custom model button -->
     <div class="mb-6 flex justify-end">
       <button
@@ -1033,6 +1081,7 @@
           </div>
         {/each}
       </div>
+    {/if}
     {/if}
 
     <!-- Developer section -->
@@ -1078,17 +1127,19 @@
   </SettingsDrawer>
 
   <!-- Driven tutorial -->
-  <DrivenTutorial generating={st.generating} response={st.response} {loadState} {bannerVisible} saeLayerSwitching={st.layerSwitching} actions={tutorialActions} />
+  <DrivenTutorial generating={st.generating} response={st.response} {loadState} {bannerVisible} saeLayerSwitching={st.layerSwitching} error={st.error} actions={tutorialActions} />
 
   <!-- First-time contextual tips (registry-driven) -->
   <FirstTimeTip />
 
-  <!-- Custom model dialog -->
-  <CustomModelDialog
-    open={customModelDialogOpen}
-    onClose={() => (customModelDialogOpen = false)}
-    onAdded={handleCustomModelAdded}
-  />
+  <!-- Custom model dialog (hidden for 0.2.0, contract §7) -->
+  {#if CUSTOM_MODELS_ENABLED}
+    <CustomModelDialog
+      open={customModelDialogOpen}
+      onClose={() => (customModelDialogOpen = false)}
+      onAdded={handleCustomModelAdded}
+    />
+  {/if}
 
   <!-- Hardware trading card modal -->
   {#if tradingCardOpen && hardware}

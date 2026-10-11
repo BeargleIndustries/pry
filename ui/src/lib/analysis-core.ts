@@ -6,7 +6,7 @@
 // run and is shown in the token strip), never the live text box. Only `generate`
 // reads the text box, because it is the call that creates a response.
 import {
-  getSidecarBase,
+  sidecarFetch,
   switchSaeLayer,
   fetchLogitLens,
   fetchDLA,
@@ -88,6 +88,28 @@ export function createInitialAnalysisState(): AnalysisState {
   };
 }
 
+/** DLA re-fetch delay after the focused token changes. */
+export const DLA_FOCUS_DEBOUNCE_MS = 250;
+/** Patching panel token-count delay after typing. */
+export const TOKENIZE_DEBOUNCE_MS = 300;
+
+/** `POST /tokenize` response (contract §5). `count` includes BOS, matching `/patch`. */
+export interface TokenizeResponse {
+  tokens: string[];
+  count: number;
+}
+
+/** Same-length check for the two patching prompts (null while either count is unknown). */
+export function patchLengthStatus(
+  cleanCount: number | null,
+  corruptedCount: number | null,
+): { same: boolean; label: string } | null {
+  if (cleanCount === null || corruptedCount === null) return null;
+  return cleanCount === corruptedCount
+    ? { same: true, label: 'same length ✓' }
+    : { same: false, label: `lengths differ: ${cleanCount} vs ${corruptedCount}` };
+}
+
 export interface AnalysisDeps {
   /** Preset the user has picked (used by generate). */
   getSelectedPreset: () => string;
@@ -102,6 +124,10 @@ function errMsg(e: unknown): string {
 }
 
 export class AnalysisController {
+  private dlaTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Focus index the current/in-flight DLA result was requested for. */
+  private dlaFocus: number | undefined = undefined;
+
   constructor(
     readonly state: AnalysisState,
     private readonly deps: AnalysisDeps,
@@ -121,6 +147,7 @@ export class AnalysisController {
   /** Clear every derived analysis result (not the generate response itself). */
   private clearAnalyses() {
     const s = this.state;
+    this.cancelDlaRefresh();
     s.logitLensResponse = null;
     s.dlaResponse = null;
     s.steerResponse = null;
@@ -149,8 +176,7 @@ export class AnalysisController {
     s.generating = true;
     try {
       await this.deps.ensureLoaded();
-      const base = await getSidecarBase();
-      const resp = await fetch(`${base}/generate`, {
+      const resp = await sidecarFetch('/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -227,13 +253,65 @@ export class AnalysisController {
     const prompt = this.analysisPrompt;
     if (s.dlaLoading || !presetId || prompt === null) return;
     s.dlaLoading = true;
+    const focus = s.focusTokenIndex;
+    this.dlaFocus = focus;
     try {
       await this.deps.ensureLoaded();
-      s.dlaResponse = await fetchDLA(presetId, prompt, s.focusTokenIndex);
+      const result = await fetchDLA(presetId, prompt, focus);
+      // Drop a result whose prompt was replaced while it was in flight.
+      if (this.analysisPrompt === prompt) s.dlaResponse = result;
     } catch (e) {
       s.error = errMsg(e);
     } finally {
       s.dlaLoading = false;
+    }
+    // Focus moved while this request ran: refresh for the new token.
+    if (s.dlaResponse && s.focusTokenIndex !== this.dlaFocus) this.focusChanged();
+  }
+
+  /**
+   * Call when the focused token changes. Once DLA has been shown for this
+   * response, re-fetch it for the new token, debounced so arrowing through the
+   * token strip sends one request. `analysis.svelte.ts` wires this to
+   * `state.focusTokenIndex`.
+   */
+  focusChanged() {
+    const s = this.state;
+    this.cancelDlaRefresh();
+    if (!s.dlaResponse && !s.dlaLoading) return;
+    if (s.focusTokenIndex === this.dlaFocus) return;
+    if (s.dlaLoading) return; // dla() re-checks the focus when it finishes
+    this.dlaTimer = setTimeout(() => {
+      this.dlaTimer = null;
+      void this.dla();
+    }, DLA_FOCUS_DEBOUNCE_MS);
+  }
+
+  private cancelDlaRefresh() {
+    if (this.dlaTimer !== null) {
+      clearTimeout(this.dlaTimer);
+      this.dlaTimer = null;
+    }
+  }
+
+  /**
+   * Token count for a patching prompt on the loaded model (`POST /tokenize`).
+   * Doesn't touch state or `ensureLoaded`: it's a background counter, so it
+   * just returns null when no model is loaded or the call fails.
+   */
+  async tokenize(text: string): Promise<TokenizeResponse | null> {
+    const presetId = this.deps.getActivePresetId();
+    if (!presetId) return null;
+    try {
+      const resp = await sidecarFetch('/tokenize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ preset_id: presetId, text }),
+      });
+      if (!resp.ok) return null;
+      return (await resp.json()) as TokenizeResponse;
+    } catch {
+      return null;
     }
   }
 

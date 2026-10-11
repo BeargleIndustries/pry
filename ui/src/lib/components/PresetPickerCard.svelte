@@ -1,36 +1,30 @@
 <script lang="ts">
-  import { Lock, Download, Check, X } from 'lucide-svelte';
+  import { Lock, Download, Check, X, Cpu } from 'lucide-svelte';
   import type { PresetCompatibility } from '$lib/tauri';
+  import { displayName, isPickable, verdictInfo, visibleNotes, type VerdictTone } from '$lib/preset-display';
 
   interface Props {
     compat: PresetCompatibility;
-    displayName: string;
-    subtitle: string;
-    sizeLabel: string;
-    flagship?: boolean;
     locked?: boolean;
     onpick: (id: string) => void;
   }
 
-  let {
-    compat,
-    displayName,
-    subtitle,
-    sizeLabel,
-    flagship = false,
-    locked = false,
-    onpick,
-  }: Props = $props();
+  let { compat, locked = false, onpick }: Props = $props();
 
-  const verdictMeta = $derived.by(() => {
-    if (compat.verdict === 'Comfortable')
-      return { label: 'Fits comfortably', cls: 'text-emerald-400', icon: Check };
-    if (compat.verdict === 'Tight')
-      return { label: 'Tight fit', cls: 'text-yellow-400', icon: Check };
-    return { label: 'Not enough VRAM', cls: 'text-red-400', icon: X };
-  });
+  const name = $derived(displayName(compat));
+  const subtitle = $derived(compat.display?.blurb ?? '');
+  const sizeLabel = $derived(compat.display?.size_label ?? '');
+  const flagship = $derived(compat.display?.recommended ?? false);
 
-  const disabled = $derived(compat.verdict === 'Insufficient');
+  const TONE_CLS: Record<VerdictTone, string> = {
+    good: 'text-emerald-400',
+    warn: 'text-yellow-400',
+    cpu: 'text-sky-400',
+    bad: 'text-red-400',
+  };
+
+  const verdict = $derived(verdictInfo(compat.verdict));
+  const disabled = $derived(!isPickable(compat));
 </script>
 
 <button
@@ -52,22 +46,27 @@
     {#if locked}
       <Lock class="h-4 w-4 text-zinc-500" />
     {/if}
-    <h3 class="text-lg font-semibold text-zinc-100">{displayName}</h3>
-    <span class="font-mono text-xs text-zinc-500">· {sizeLabel}</span>
+    <h3 class="text-lg font-semibold text-zinc-100">{name}</h3>
+    {#if sizeLabel}
+      <span class="font-mono text-xs text-zinc-500">· {sizeLabel}</span>
+    {/if}
   </div>
 
-  <p class="mb-3 text-sm text-zinc-400">{subtitle}</p>
+  {#if subtitle}
+    <p class="mb-3 text-sm text-zinc-400">{subtitle}</p>
+  {/if}
 
   <div class="flex items-center gap-4 text-xs">
-    {#if verdictMeta.icon === Check}
-      <span class="inline-flex items-center gap-1 {verdictMeta.cls}">
-        <Check class="h-3.5 w-3.5" /> {verdictMeta.label}
-      </span>
-    {:else}
-      <span class="inline-flex items-center gap-1 {verdictMeta.cls}">
-        <X class="h-3.5 w-3.5" /> {verdictMeta.label}
-      </span>
-    {/if}
+    <span class="inline-flex items-center gap-1 {TONE_CLS[verdict.tone]}">
+      {#if verdict.tone === 'cpu'}
+        <Cpu class="h-3.5 w-3.5" />
+      {:else if verdict.pickable}
+        <Check class="h-3.5 w-3.5" />
+      {:else}
+        <X class="h-3.5 w-3.5" />
+      {/if}
+      {verdict.label}
+    </span>
     {#if !disabled}
       <span class="inline-flex items-center gap-1 font-medium text-indigo-400 opacity-0 transition-opacity group-hover:opacity-100">
         <Download class="h-3.5 w-3.5" /> click to download
@@ -75,9 +74,9 @@
     {/if}
   </div>
 
-  {#if compat.notes.length > 0}
+  {#if visibleNotes(compat).length > 0}
     <div class="mt-2 space-y-0.5 text-[11px] text-zinc-500">
-      {#each compat.notes as note}
+      {#each visibleNotes(compat) as note}
         <div>· {note}</div>
       {/each}
     </div>

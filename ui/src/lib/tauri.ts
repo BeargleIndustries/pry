@@ -1,12 +1,14 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { isTauri } from './is-tauri';
+import { invalidateSidecarConnection } from './sidecar';
 import type {
   RuntimeUpdateError,
   RuntimeUpdateFailureKind,
   RuntimeUpdateStatus,
 } from './runtime-update';
-export type { TokenInfo, AttentionLayer, FeatureHit, TokenFeatures, GenerateResponse } from './types';
+import type { PresetDisplay } from './types';
+export type { TokenInfo, AttentionLayer, FeatureHit, TokenFeatures, GenerateResponse, PresetDisplay } from './types';
 
 // ---------------------------------------------------------------------------
 // AppError — KEEP IN SYNC: src-tauri/src/error.rs::AppError
@@ -45,10 +47,11 @@ export interface HardwareReport {
   probe_warnings: string[];
   probed_at: string;
   os: string;
+  system_ram_mb: number | null;
 }
 
 // KEEP IN SYNC: src-tauri/src/presets_compat.rs::Compatibility
-export type Verdict = 'Comfortable' | 'Tight' | 'Insufficient';
+export type Verdict = 'Comfortable' | 'Tight' | 'CpuOk' | 'Insufficient';
 
 // KEEP IN SYNC: src-tauri/src/presets_compat.rs::PresetCompatibility
 export interface PresetCompatibility {
@@ -56,6 +59,9 @@ export interface PresetCompatibility {
   verdict: Verdict;
   headroom_mb: number;
   notes: string[];
+  /** Passthrough of the presets.json `display` block (contract §1/§2). */
+  display: PresetDisplay | null;
+  enabled: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -74,14 +80,44 @@ const MOCK_REPORT: HardwareReport = {
   probe_warnings: ['Running outside Tauri — hardware data is mocked'],
   probed_at: new Date().toISOString(),
   os: 'mock',
+  system_ram_mb: 16384,
 };
 
+function mockDisplay(
+  name: string,
+  params: string,
+  size_label: string,
+  n_layers: number,
+  n_heads: number,
+  np: [string, string] | null,
+  recommended = false,
+): PresetDisplay {
+  return {
+    name,
+    blurb: `${params} params (dev mock)`,
+    params,
+    size_label,
+    n_layers,
+    n_heads,
+    neuronpedia_model_id: np ? np[0] : null,
+    neuronpedia_release_suffix: np ? np[1] : null,
+    recommended,
+  };
+}
+
 const MOCK_PRESETS: PresetCompatibility[] = [
-  { preset_id: 'gpt2-small', verdict: 'Comfortable', headroom_mb: 7000, notes: [] },
-  { preset_id: 'pythia-410m', verdict: 'Comfortable', headroom_mb: 6000, notes: [] },
-  { preset_id: 'pythia-1.4b', verdict: 'Tight', headroom_mb: 500, notes: ['Tight fit'] },
-  { preset_id: 'gemma-2-2b', verdict: 'Insufficient', headroom_mb: -500, notes: ['Disabled pending Bet 3 validation'] },
-  { preset_id: 'gemma-2-9b', verdict: 'Insufficient', headroom_mb: -4000, notes: ['Requires HuggingFace token'] },
+  {
+    preset_id: 'gpt2-small', verdict: 'Comfortable', headroom_mb: 7000, notes: [], enabled: true,
+    display: mockDisplay('GPT-2 small', '124M', '600 MB', 12, 12, ['gpt2-small', 'res-jb'], true),
+  },
+  {
+    preset_id: 'pythia-70m', verdict: 'CpuOk', headroom_mb: 6000, notes: ['Works on your computer (slower).'], enabled: true,
+    display: mockDisplay('Pythia-70M', '70M', '350 MB', 6, 8, ['pythia-70m-deduped', 'res-sm']),
+  },
+  {
+    preset_id: 'gemma-2-2b', verdict: 'Insufficient', headroom_mb: -500, notes: ['Disabled pending Bet 3 validation'], enabled: false,
+    display: mockDisplay('Gemma-2-2B', '2B', '6.4 GB', 26, 8, null),
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -172,6 +208,9 @@ export async function bootstrapRuntime(): Promise<void> {
     await invoke('bootstrap_runtime_command');
   } catch (e) {
     throw new Error(formatTauriError(e));
+  } finally {
+    // Relaunches the sidecar with a new token without emitting sidecar:restarted.
+    invalidateSidecarConnection();
   }
 }
 
@@ -204,7 +243,10 @@ export async function runtimeUpdate(): Promise<void> {
   if (!isTauri()) return;
   try {
     await invoke('runtime_update');
+    // Relaunches the sidecar with a new token without emitting sidecar:restarted.
+    invalidateSidecarConnection();
   } catch (e) {
+    invalidateSidecarConnection();
     if (typeof e === 'object' && e !== null && 'kind' in e && 'message' in e) {
       const err = e as RuntimeUpdateError;
       throw new RuntimeUpdateFailure(err.message, err.kind, err.log_path ?? null);
@@ -244,6 +286,9 @@ export async function saveHfToken(token: string): Promise<void> {
     await invoke('save_hf_token', { token });
   } catch (e) {
     throw new Error(formatTauriError(e));
+  } finally {
+    // Saving/clearing the token restarts a running engine (new token).
+    invalidateSidecarConnection();
   }
 }
 
@@ -262,6 +307,9 @@ export async function clearHfToken(): Promise<void> {
     await invoke('clear_hf_token');
   } catch (e) {
     throw new Error(formatTauriError(e));
+  } finally {
+    // Saving/clearing the token restarts a running engine (new token).
+    invalidateSidecarConnection();
   }
 }
 
@@ -312,4 +360,111 @@ export async function removeCustomModel(hfId: string): Promise<void> {
   } catch (e) {
     throw new Error(formatTauriError(e));
   }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 2 — sidecar connection + engine lifecycle (contract §3/§4)
+// KEEP IN SYNC: src-tauri/src/sidecar.rs + lib.rs
+// ---------------------------------------------------------------------------
+
+export interface SidecarConnection {
+  base_url: string;
+  token: string;
+}
+
+/** Base URL + per-launch auth token of the running sidecar, as one pair. */
+export async function sidecarConnection(): Promise<SidecarConnection> {
+  try {
+    return await invoke<SidecarConnection>('sidecar_connection');
+  } catch (e) {
+    throw new Error(formatTauriError(e));
+  }
+}
+
+/** Stop the current sidecar (if any) and launch a new one with a new token. */
+export async function restartSidecar(): Promise<void> {
+  if (!isTauri()) return;
+  try {
+    await invoke('restart_sidecar');
+  } catch (e) {
+    throw new Error(formatTauriError(e));
+  } finally {
+    invalidateSidecarConnection();
+  }
+}
+
+export interface SidecarCrashedPayload {
+  stderr_tail: string[] | string;
+  reason: string;
+}
+
+export async function onSidecarCrashed(
+  handler: (p: SidecarCrashedPayload) => void,
+): Promise<UnlistenFn> {
+  if (!isTauri()) return () => {};
+  return listen<SidecarCrashedPayload>('sidecar:crashed', (e) => handler(e.payload));
+}
+
+export async function onSidecarRestarted(
+  handler: (p: { base_url: string }) => void,
+): Promise<UnlistenFn> {
+  if (!isTauri()) return () => {};
+  return listen<{ base_url: string }>('sidecar:restarted', (e) => handler(e.payload));
+}
+
+// KEEP IN SYNC: src-tauri runtime_readiness (P2-10)
+export type RuntimeHealth = 'missing' | 'broken' | 'update_available' | 'ok';
+
+export interface RuntimeReadiness {
+  usable: boolean;
+  needs_sidecar_sync: boolean;
+  health: RuntimeHealth;
+}
+
+export async function runtimeReadiness(): Promise<RuntimeReadiness> {
+  if (!isTauri()) return { usable: true, needs_sidecar_sync: false, health: 'ok' };
+  try {
+    return await invoke<RuntimeReadiness>('runtime_readiness');
+  } catch (e) {
+    throw new Error(formatTauriError(e));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 2 — JSON export (T19). WebView2 ignores `<a download>` on blob URLs,
+// so under Tauri we use the native save dialog + plugin-fs.
+// ---------------------------------------------------------------------------
+
+export function exportFileName(now: Date = new Date()): string {
+  const ts = now.toISOString().replace(/[:.]/g, '-');
+  return `pry-export-${ts}.json`;
+}
+
+/**
+ * Save `json` to a user-chosen file. Returns false when the user cancels the
+ * dialog. Outside Tauri, falls back to a blob download.
+ */
+export async function saveJsonFile(json: string, defaultName = exportFileName()): Promise<boolean> {
+  if (isTauri()) {
+    const { save } = await import('@tauri-apps/plugin-dialog');
+    const { writeTextFile } = await import('@tauri-apps/plugin-fs');
+    const path = await save({
+      defaultPath: defaultName,
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+    });
+    if (!path) return false;
+    await writeTextFile(path, json);
+    return true;
+  }
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = defaultName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  // Revoking immediately can cancel the download in some browsers.
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  return true;
 }
