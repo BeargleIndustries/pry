@@ -179,8 +179,16 @@ export function attentionReadout(
   const name = (k: number) => (k === focusPos ? 'itself' : quoteToken(tokens[k]?.text ?? ''));
   const [top, next] = ranked;
   let text = `${where} looks mostly at ${name(top.k)} (${pct(top.weight)} of its attention).`;
+  if (top.k === 0 && isStartMarker(tokens[0]?.text ?? '')) {
+    text += ' That is the start-of-text marker, where many heads park their attention when nothing else stands out.';
+  }
   if (next && next.weight >= 0.1) text += ` Next: ${name(next.k)} (${pct(next.weight)}).`;
   return text;
+}
+
+/** Special tokens like `<|endoftext|>` that models use as a start marker. */
+function isStartMarker(text: string): boolean {
+  return /^<\|.*\|>$/.test(text);
 }
 
 /** "To" view: which later word looks at the focus word the most. */

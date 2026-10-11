@@ -160,6 +160,14 @@ describe('attentionReadout', () => {
     expect(text).toContain(`"${generate.tokens[later.k].text.replace(/^ /, '·')}"`);
   });
 
+  it('explains the start-of-text marker when a word looks mostly at it', () => {
+    const r = clone(generate);
+    r.tokens[0].text = '<|endoftext|>';
+    for (const layer of r.attention) for (const m of layer.heads) m[2] = m[2].map((_, k) => (k === 0 ? 0.9 : k <= 2 ? 0.05 : 0));
+    expect(attentionReadout(r, 2)).toContain('start-of-text marker');
+    expect(attentionReadout(generate, 3)).not.toContain('start-of-text marker');
+  });
+
   it('"to" view: nothing comes after the last word', () => {
     expect(attentionReadout(generate, 3, null, 'to')).toBe('No later word looks back at "·on".');
   });
