@@ -1,0 +1,15 @@
+configfile: pyproject.toml
+testpaths: tests
+plugins: anyio-4.15.1, jaxtyping-0.3.11, platformdirs-4.13.0, profiling-1.8.1, typeguard-4.6.0
+collected 87 items
+
+tests\test_circuit_and_labels.py .......                                 [  8%]
+tests\test_constraints.py .............                                  [ 22%]
+tests\test_inference_smoke.py ..                                         [ 25%]
+tests\test_parity.py ..                                                  [ 27%]
+tests\test_presets_display.py ......                                     [ 34%]
+tests\test_sae_correctness.py ...........                                [ 47%]
+tests\test_schemas.py .........................                          [ 75%]
+tests\test_server.py .....................                               [100%]
+
+============================= 87 passed in 36.40s =============================
