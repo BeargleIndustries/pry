@@ -9,6 +9,8 @@
     aggregateHead,
     type Aggregation,
   } from '$lib/attention-agg';
+  import { attentionReadout } from '$lib/readouts';
+  import Readout from './Readout.svelte';
 
   // ---------------------------------------------------------------------------
   // Props
@@ -346,6 +348,16 @@
       <p class="text-sm text-zinc-500">Attention visualization requires at least 2 tokens.</p>
     </div>
   {:else}
+    <!-- Plain-language readout (T21) -->
+    <div class="mb-3">
+      <Readout
+        text={attentionReadout(
+          response,
+          effectiveFocusArrayPos,
+          expandedLayer !== null && expandedHead !== null ? { layer: expandedLayer, head: expandedHead } : null,
+        )}
+      />
+    </div>
     {#if truncated}
       <p class="mb-3 rounded border border-amber-800/60 bg-amber-950/30 px-3 py-1.5 text-xs text-amber-300">
         Showing the first {ATTENTION_LIMIT} words. Pry only keeps attention for the start of long prompts{focusPastLimit ? ', so the word you picked is past the cutoff' : ''}.
