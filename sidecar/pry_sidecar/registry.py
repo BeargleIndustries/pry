@@ -7,12 +7,16 @@ to avoid starving the event loop.
 
 from __future__ import annotations
 
+import gc
+import logging
 import os
 import threading
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Callable, Optional
 
 if TYPE_CHECKING:
     from .presets import PresetManifest
+
+logger = logging.getLogger("pry_sidecar")
 
 
 class LoadedModel:
@@ -73,8 +77,17 @@ class ModelRegistry:
                 self._load_locks[preset_id] = threading.Lock()
             return self._load_locks[preset_id]
 
-    def load(self, preset_id: str, manifest: "PresetManifest") -> LoadedModel:
+    def load(
+        self,
+        preset_id: str,
+        manifest: "PresetManifest",
+        on_stage: Optional[Callable[[str, str], None]] = None,
+    ) -> LoadedModel:
         """Load a model + SAE synchronously. Raises RuntimeError on failure.
+
+        ``on_stage(event, device)`` is called with ``"cpu_fallback"`` when a
+        CUDA out-of-memory error moves the load to the CPU, and with
+        ``"model_loaded"`` after the model is resident, before the SAE loads.
 
         Heavy imports are deferred so that merely importing this module
         (e.g. during tests) does not pull in torch / transformer_lens.
@@ -116,42 +129,72 @@ class ModelRegistry:
                         "the model license on huggingface.co."
                     )
 
-            try:
-                model = HookedTransformer.from_pretrained(
+            def notify(event: str) -> None:
+                if on_stage is not None:
+                    on_stage(event, device)
+
+            def fall_back_to_cpu(what: str, err: Exception) -> None:
+                # A GPU smaller than the preset's estimate can still get a
+                # CpuOk verdict, so an OOM on CUDA retries on the CPU.
+                nonlocal device
+                logger.warning(
+                    "CUDA out of memory loading %s for %r (%s); retrying on CPU",
+                    what, preset_id, err,
+                )
+                gc.collect()
+                torch.cuda.empty_cache()
+                device = "cpu"
+                notify("cpu_fallback")
+
+            def load_model(on: str):
+                m = HookedTransformer.from_pretrained(
                     manifest.model.tl_name,
-                    device=device,
+                    device=on,
                     **({"token": hf_token} if hf_token else {}),
                 )
-                model.cfg.use_attn_result = True
-            except torch.cuda.OutOfMemoryError as e:
-                raise RuntimeError(f"CUDA OOM loading model {manifest.model.tl_name}: {e}") from e
+                m.cfg.use_attn_result = True
+                return m
+
+            try:
+                try:
+                    model = load_model(device)
+                except torch.cuda.OutOfMemoryError as e:
+                    if device != "cuda":
+                        raise
+                    fall_back_to_cpu("model", e)
+                    model = load_model(device)
             except Exception as e:
                 raise RuntimeError(f"failed to load model {manifest.model.tl_name}: {e}") from e
+            notify("model_loaded")
 
             hook = manifest.sae.hook
             sae_id = f"blocks.{sae_layer}.{hook}"
-            try:
+
+            def load_sae(on: str):
                 sae_kwargs: dict = dict(
                     release=manifest.sae.release,
                     sae_id=sae_id,
-                    device=device,
+                    device=on,
                 )
                 if hf_token:
                     sae_kwargs["hf_token"] = hf_token
                 sae_result = SAE.from_pretrained(**sae_kwargs)
                 # sae_lens.SAE.from_pretrained returns a tuple in some versions
                 # (sae, cfg_dict, sparsity). Normalize to the SAE object.
-                if isinstance(sae_result, tuple):
-                    sae = sae_result[0]
-                else:
-                    sae = sae_result
-            except torch.cuda.OutOfMemoryError as e:
-                # Free the model before bubbling up
-                del model
-                torch.cuda.empty_cache()
-                raise RuntimeError(f"CUDA OOM loading SAE {manifest.sae.release}: {e}") from e
+                return sae_result[0] if isinstance(sae_result, tuple) else sae_result
+
+            try:
+                try:
+                    sae = load_sae(device)
+                except torch.cuda.OutOfMemoryError as e:
+                    if device != "cuda":
+                        raise
+                    model = model.to("cpu")  # keep model and SAE on one device
+                    fall_back_to_cpu("SAE", e)
+                    sae = load_sae(device)
             except Exception as e:
                 del model
+                gc.collect()
                 if device == "cuda":
                     torch.cuda.empty_cache()
                 raise RuntimeError(f"failed to load SAE {manifest.sae.release}@{sae_id}: {e}") from e

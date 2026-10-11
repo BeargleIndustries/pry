@@ -14,8 +14,10 @@ Or directly:
 from __future__ import annotations
 
 import asyncio
+import hmac
 import logging
 import os
+import sys
 from contextlib import asynccontextmanager
 
 import uvicorn
@@ -52,6 +54,7 @@ from pry_sidecar.schemas import (
     PatchRequest,
     SAEFeaturesRequest,
     SteerRequest,
+    TokenizeRequest,
     UnloadRequest,
 )
 
@@ -76,6 +79,64 @@ def _hf_downloaded(hf_id: str) -> bool:
         return isinstance(try_to_load_from_cache(hf_id, "config.json"), str)
     except Exception:
         return False
+
+
+CPU_FALLBACK_MESSAGE = (
+    "Your graphics card is too small for this model; running it on the CPU instead (slower)."
+)
+
+
+def _device_label(device: str) -> str:
+    return "GPU" if device == "cuda" else "CPU"
+
+
+def _prefetch_preset(manifest, push) -> None:
+    """Download the preset's model + SAE files with byte progress (T15).
+
+    If the file listing fails (offline, Hub down) the pre-fetch is skipped and
+    the load proceeds from whatever is cached; a failure mid-download raises.
+    """
+    from pry_sidecar import prefetch
+
+    token = os.environ.get("HF_TOKEN") if manifest.license_gate else None
+
+    def fetch(stage: str, lo: float, hi: float, label: str, repo_id: str, files: dict) -> None:
+        missing = prefetch.missing_files(repo_id, files)
+        if not missing:
+            push(stage, hi, f"{label} already downloaded.")
+            return
+
+        def on_bytes(done: int, total: int) -> None:
+            frac = done / total if total else 1.0
+            push(
+                stage,
+                lo + (hi - lo) * frac,
+                f"Downloading {label.lower()}… {done / 1e6:.0f} of {total / 1e6:.0f} MB",
+                done,
+                total,
+            )
+
+        prefetch.download_files(repo_id, missing, on_bytes, token=token)
+
+    push("download_model", 0.02, f"Checking model files for {manifest.display.name}…")
+    try:
+        model_files = prefetch.select_model_files(
+            prefetch.list_repo_files(manifest.model.hf_id, token=token)
+        )
+    except Exception as exc:
+        logger.warning("model pre-fetch skipped for %s: %s", manifest.model.hf_id, exc)
+    else:
+        fetch("download_model", 0.02, 0.40, "Model", manifest.model.hf_id, model_files)
+
+    sae_id = f"blocks.{manifest.sae.layer}.{manifest.sae.hook}"
+    push("download_sae", 0.40, "Checking feature map files…")
+    try:
+        repo_id, folder = prefetch.sae_repo_and_folder(manifest.sae.release, sae_id)
+        sae_files = prefetch.list_repo_files(repo_id, token=token, folder=folder)
+    except Exception as exc:
+        logger.warning("SAE pre-fetch skipped for %s@%s: %s", manifest.sae.release, sae_id, exc)
+    else:
+        fetch("download_sae", 0.40, 0.55, "Feature map", repo_id, sae_files)
 
 
 def _check_layer(loaded, layer: int) -> str | None:
@@ -110,9 +171,46 @@ def _check_sae_feature(loaded, layer: int, feature_id: int) -> str | None:
 # ---------------------------------------------------------------------------
 
 
+def _torch_version() -> str | None:
+    """Installed torch version, read from package metadata (no import)."""
+    try:
+        from importlib.metadata import version
+
+        return version("torch")
+    except Exception:
+        return None
+
+
 async def health(request: Request) -> JSONResponse:
-    """GET /health — liveness probe."""
-    return _json({"status": "ok", "version": __version__})
+    """GET /health — liveness probe plus engine status (contract §4).
+
+    Stays instant at startup: torch is only consulted if something already
+    imported it (i.e. a model has been loaded), never imported here.
+    """
+    preset_id = REGISTRY.last_loaded
+    loaded = REGISTRY.get(preset_id) if preset_id is not None else None
+    torch = sys.modules.get("torch")
+
+    device = loaded.device if loaded is not None else None
+    gpu_name = None
+    if device == "cuda" and torch is not None:
+        try:
+            gpu_name = torch.cuda.get_device_name(0)
+        except Exception:
+            gpu_name = None
+    cuda = getattr(getattr(torch, "version", None), "cuda", None) if torch is not None else None
+
+    return _json({
+        "status": "ok",
+        "version": __version__,
+        "device": device,
+        "gpu_name": gpu_name,
+        "torch": torch.__version__ if torch is not None else _torch_version(),
+        "cuda": cuda,
+        "loaded_preset": preset_id if loaded is not None else None,
+        "sae_layer": loaded.sae_layer if loaded is not None else None,
+        "hf_token_present": bool(os.environ.get("HF_TOKEN")),
+    })
 
 
 async def models(request: Request) -> JSONResponse:
@@ -129,6 +227,8 @@ async def models(request: Request) -> JSONResponse:
             "license_gate": p.license_gate,
             "available_sae_layers": p.available_sae_layers,
             "default_sae_layer": p.sae.layer,
+            "display": p.display.model_dump(),
+            "cpu_ok": p.cpu_ok,
         }
         for p in PRESETS.values()
     ]
@@ -174,12 +274,20 @@ async def load(request: Request) -> Response:
     # though the load completed server-side. Cutting out the middleware
     # gives us deterministic byte-level control over the response stream.
 
-    def sse_line(stage: str, progress: float, message: str) -> bytes:
+    def sse_line(
+        stage: str,
+        progress: float,
+        message: str,
+        bytes_downloaded: int | None = None,
+        bytes_total: int | None = None,
+    ) -> bytes:
         data = LoadProgressEvent(
             stage=stage,  # type: ignore[arg-type]
             progress=progress,
             message=message,
-        ).model_dump_json()
+            bytes_downloaded=bytes_downloaded,
+            bytes_total=bytes_total,
+        ).model_dump_json(exclude_none=True)
         return f"data: {data}\n\n".encode("utf-8")
 
     async def byte_stream():
@@ -191,17 +299,30 @@ async def load(request: Request) -> Response:
         loop = asyncio.get_running_loop()
         queue: asyncio.Queue = asyncio.Queue()
 
-        def push(stage: str, progress: float, message: str) -> None:
-            loop.call_soon_threadsafe(queue.put_nowait, (stage, progress, message))
+        def push(
+            stage: str,
+            progress: float,
+            message: str,
+            bytes_downloaded: int | None = None,
+            bytes_total: int | None = None,
+        ) -> None:
+            loop.call_soon_threadsafe(
+                queue.put_nowait, (stage, progress, message, bytes_downloaded, bytes_total)
+            )
+
+        def on_stage(event: str, device: str) -> None:
+            if event == "cpu_fallback":
+                push("load_model", 0.6, CPU_FALLBACK_MESSAGE)
+            elif event == "model_loaded":
+                push("load_model", 0.8, f"Model loaded ({_device_label(device)}).")
+                push("load_sae", 0.82, "Preparing features…")
 
         def worker() -> None:
             try:
-                push("download_model", 0.05, f"Preparing model {manifest.model.tl_name}...")
-                push("load_model", 0.25, "Loading model weights (this may take a while)...")
-                loaded = REGISTRY.load(req.preset_id, manifest)
-                push("load_model", 0.55, f"Model on device: {loaded.device}")
-                push("download_sae", 0.65, f"Preparing SAE {manifest.sae.release}...")
-                push("load_sae", 0.85, f"SAE loaded at layer {loaded.sae_layer}.")
+                _prefetch_preset(manifest, push)
+                push("load_model", 0.58, "Loading model weights…")
+                loaded = REGISTRY.load(req.preset_id, manifest, on_stage=on_stage)
+                push("load_sae", 0.97, f"Features ready (layer {loaded.sae_layer}).")
                 push("ready", 1.0, f"Preset '{req.preset_id}' ready.")
             except Exception as exc:
                 logger.exception("load failed for preset %r", req.preset_id)
@@ -221,8 +342,8 @@ async def load(request: Request) -> Response:
                 item = await queue.get()
                 if item is None:
                     break
-                stage, progress, message = item
-                yield sse_line(stage, progress, message)
+                stage = item[0]
+                yield sse_line(*item)
                 if stage in ("ready", "error"):
                     break
         finally:
@@ -447,6 +568,9 @@ async def dla(request: Request) -> JSONResponse:
 
         response = await asyncio.to_thread(run_dla, req, loaded)
         return _json(response.model_dump())
+    except ValueError as e:
+        # Token position past the end of the prompt
+        return _error(str(e), status=400)
     except Exception as e:
         logger.exception("dla failed for preset %r", req.preset_id)
         return JSONResponse(
@@ -628,6 +752,36 @@ async def patch(request: Request) -> JSONResponse:
         )
 
 
+async def tokenize(request: Request) -> JSONResponse:
+    """POST /tokenize -- token strings + count (incl. BOS) for live counters."""
+    try:
+        req = TokenizeRequest.model_validate_json(await request.body())
+    except ValidationError as e:
+        return JSONResponse(
+            {"error": "validation_error", "detail": e.errors()},
+            status_code=400,
+        )
+
+    if req.preset_id not in PRESETS:
+        return _error(f"Unknown preset: {req.preset_id!r}", status=400)
+
+    loaded = REGISTRY.get(req.preset_id)
+    if loaded is None:
+        return _error(f"preset {req.preset_id!r} not loaded; POST /load first", status=409)
+
+    try:
+        from pry_sidecar.inference import run_tokenize
+
+        response = await asyncio.to_thread(run_tokenize, req, loaded)
+        return _json(response.model_dump())
+    except Exception as e:
+        logger.exception("tokenize failed for preset %r", req.preset_id)
+        return JSONResponse(
+            {"error": "inference_error", "detail": str(e)},
+            status_code=500,
+        )
+
+
 async def circuit(request: Request) -> JSONResponse:
     """POST /circuit -- build circuit subgraph from DLA or patching results."""
     try:
@@ -752,6 +906,7 @@ routes = [
     Route("/ablate-head", ablate_head, methods=["POST"]),
     Route("/ablate-feature", ablate_feature, methods=["POST"]),
     Route("/patch", patch, methods=["POST"]),
+    Route("/tokenize", tokenize, methods=["POST"]),
     Route("/circuit", circuit, methods=["POST"]),
     Route("/feature/{feature_id:int}", feature_info, methods=["GET"]),
 ]
@@ -772,6 +927,60 @@ async def lifespan(app):
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 
+BAD_TOKEN_MESSAGE = "Pry's engine rejected the request (bad token)."
+
+
+class TokenAuthMiddleware:
+    """Local auth token + content-type gate (contract §3), as pure ASGI.
+
+    Registered after CORSMiddleware, so it runs *inside* it and CORS headers
+    are still added to its 403/415 responses.
+
+    - OPTIONS (CORS preflight) is always let through.
+    - With ``PRY_TOKEN`` set, every other request needs a matching
+      ``X-Pry-Token`` header, else 403. ``PRY_DISABLE_AUTH`` is ignored.
+    - Without ``PRY_TOKEN`` (tests, ``npm run dev``) requests are allowed;
+      a warning is logged once unless ``PRY_DISABLE_AUTH=1`` says it's intended.
+    - A POST whose content type isn't ``application/json`` gets 415.
+
+    The env is read per request so tests can monkeypatch it.
+    """
+
+    def __init__(self, app) -> None:
+        self.app = app
+        self._warned = False
+
+    async def __call__(self, scope, receive, send) -> None:
+        if scope["type"] != "http" or scope["method"] == "OPTIONS":
+            await self.app(scope, receive, send)
+            return
+
+        headers = {k.lower(): v for k, v in scope.get("headers", [])}
+        expected = os.environ.get("PRY_TOKEN")
+        if expected:
+            given = headers.get(b"x-pry-token", b"").decode("latin-1")
+            if not hmac.compare_digest(given.encode(), expected.encode()):
+                await JSONResponse({"error": BAD_TOKEN_MESSAGE}, status_code=403)(scope, receive, send)
+                return
+        elif os.environ.get("PRY_DISABLE_AUTH") != "1" and not self._warned:
+            self._warned = True
+            logger.warning(
+                "PRY_TOKEN is not set: the sidecar is accepting requests without a token. "
+                "Set PRY_DISABLE_AUTH=1 to acknowledge this for local development."
+            )
+
+        if scope["method"] == "POST":
+            content_type = headers.get(b"content-type", b"").decode("latin-1")
+            if content_type.split(";")[0].strip().lower() != "application/json":
+                await JSONResponse(
+                    {"error": "Pry's engine only accepts JSON requests (Content-Type: application/json)."},
+                    status_code=415,
+                )(scope, receive, send)
+                return
+
+        await self.app(scope, receive, send)
+
+
 middleware = [
     Middleware(
         CORSMiddleware,
@@ -785,6 +994,8 @@ middleware = [
         allow_methods=["*"],
         allow_headers=["*"],
     ),
+    # Listed after CORS, so it sits inside it (403s keep their CORS headers).
+    Middleware(TokenAuthMiddleware),
 ]
 
 app = Starlette(routes=routes, lifespan=lifespan, middleware=middleware)
