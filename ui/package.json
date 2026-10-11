@@ -7,9 +7,10 @@
     "dev": "vite dev --port 5173",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "lint": "prettier --check .",
-    "test": "vitest run"
+    "test": "svelte-kit sync && vitest run",
+    "prepare": "svelte-kit sync || echo \"\""
   },
   "dependencies": {
     "@tauri-apps/plugin-shell": "^2.3.5",
