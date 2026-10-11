@@ -24,11 +24,6 @@
     }
   }
 
-  function continueAnyway() {
-    updating = false;
-    updateError = null;
-  }
-
   onMount(async () => {
     if (!isTauri()) {
       // Dev mode (`npm run dev` outside Tauri) — skip onboarding gate entirely.
@@ -80,18 +75,15 @@
       <div class="w-full max-w-sm rounded-xl border border-zinc-800 bg-zinc-900/70 p-6 text-center">
         {#if updateError}
           <p class="mb-2 text-sm font-medium text-zinc-100">Pry couldn't finish updating.</p>
-          <p class="mb-4 text-xs text-red-400">{updateError}</p>
-          <div class="flex justify-center gap-2">
+          <p class="mb-2 text-xs text-red-400">{updateError}</p>
+          <!-- No "continue anyway": the engine isn't running until this succeeds. -->
+          <p class="mb-4 text-xs text-zinc-500">The update needs an internet connection. Check it, then try again.</p>
+          <div class="flex justify-center">
             <button
               type="button"
               onclick={syncRuntime}
               class="rounded-md bg-indigo-600 px-4 py-1.5 text-sm text-white hover:bg-indigo-500"
             >Try again</button>
-            <button
-              type="button"
-              onclick={continueAnyway}
-              class="rounded-md bg-zinc-800 px-4 py-1.5 text-sm text-zinc-300 hover:bg-zinc-700"
-            >Continue anyway</button>
           </div>
         {:else}
           <div class="mb-3 flex items-center justify-center gap-3 text-zinc-300">
