@@ -1,4 +1,7 @@
 use serde::Serialize;
+use std::io::Write as _;
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter as _};
 
 #[derive(Debug, Clone, Copy, Serialize)]
@@ -25,25 +28,55 @@ pub struct BootstrapEvent {
     pub bytes_total: Option<u64>,
 }
 
+/// Emits bootstrap events to the webview and, when built `with_log`, tees
+/// every stage/progress/log line to the persisted bootstrap log file.
+#[derive(Clone)]
 pub struct Emitter {
     handle: AppHandle,
+    log_file: Option<Arc<Mutex<std::fs::File>>>,
+    log_path: Option<PathBuf>,
 }
 
 impl Emitter {
     pub fn new(handle: AppHandle) -> Self {
-        Self { handle }
+        Self { handle, log_file: None, log_path: None }
     }
 
-    pub fn handle_clone(&self) -> AppHandle {
-        self.handle.clone()
+    /// Emitter that also writes to a new `logs\bootstrap-<UTC>.log` (keeping
+    /// the newest few). Falls back to events-only if the log can't be opened.
+    pub fn with_log(handle: AppHandle) -> Self {
+        match super::logs::open_bootstrap_log() {
+            Ok((path, file)) => Self {
+                handle,
+                log_file: Some(Arc::new(Mutex::new(file))),
+                log_path: Some(path),
+            },
+            Err(e) => {
+                tracing::warn!("could not open bootstrap log: {e}");
+                Self::new(handle)
+            }
+        }
+    }
+
+    pub fn log_path(&self) -> Option<&Path> {
+        self.log_path.as_deref()
+    }
+
+    fn tee(&self, line: &str) {
+        if let Some(f) = &self.log_file {
+            let mut f = f.lock().unwrap_or_else(|e| e.into_inner());
+            let _ = writeln!(f, "{} {line}", chrono::Utc::now().format("%H:%M:%S"));
+        }
     }
 
     pub fn stage(&self, stage: BootstrapStage, msg: impl Into<String>) {
+        let message = msg.into();
+        self.tee(&format!("[{stage:?}] {message}"));
         let _ = self.handle.emit(
             "bootstrap:progress",
             BootstrapEvent {
                 stage,
-                message: msg.into(),
+                message,
                 progress: -1.0,
                 bytes_downloaded: None,
                 bytes_total: None,
@@ -52,11 +85,13 @@ impl Emitter {
     }
 
     pub fn progress(&self, stage: BootstrapStage, msg: impl Into<String>, pct: f32) {
+        let message = msg.into();
+        self.tee(&format!("[{stage:?}] {message} ({:.0}%)", pct * 100.0));
         let _ = self.handle.emit(
             "bootstrap:progress",
             BootstrapEvent {
                 stage,
-                message: msg.into(),
+                message,
                 progress: pct,
                 bytes_downloaded: None,
                 bytes_total: None,
@@ -64,6 +99,7 @@ impl Emitter {
         );
     }
 
+    /// Byte-level download ticks go to the UI only (too chatty for the log).
     pub fn bytes(
         &self,
         stage: BootstrapStage,
@@ -89,6 +125,8 @@ impl Emitter {
     }
 
     pub fn log(&self, line: impl Into<String>) {
-        let _ = self.handle.emit("bootstrap:log", line.into());
+        let line = line.into();
+        self.tee(&line);
+        let _ = self.handle.emit("bootstrap:log", line);
     }
 }

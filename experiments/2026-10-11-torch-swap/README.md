@@ -91,15 +91,27 @@ Dist-info sequence for the cu124 reproduction (`summary-cu124.txt`):
 5. **Constraints-file drift.** Transitive pins in today's freeze are 6 months newer than Brad's (for example wandb 0.30, which pulls opentelemetry). The candidate imports and passes the CUDA check, but T1/T3 should still run the sidecar inference test against it.
 6. **Step-1 spec.** Using `torch==2.5.1+cu124` / `+cpu` as the spec (plan T3.1) is consistent with this result.
 
-## `-Fixed` (stub)
+## `-Fixed` (T3 regression check)
 
-`replay.ps1 -Fixed` currently throws. T3 should wire it to:
+`replay.ps1 -Fixed` replays the T3 bootstrapper exactly as `pip.rs::pip_command_for_step` builds it:
 
-- `-c src-tauri\resources\constraints-runtime-<variant>.txt` plus `--extra-index-url <torch index>` on every step;
-- `torch==2.5.1+<variant>` as the step-1 spec, run with `venv\Scripts\python.exe -m pip`;
-- an assertion that the torch dist-info is `torch-2.5.1+<variant>.dist-info` after every step.
+- `venv\Scripts\python.exe -m pip install -c src-tauri\resources\constraints-runtime-<variant>.txt --extra-index-url <torch index> ...` on every step (the constraints path contains a space and is passed as one argv element);
+- step 1 is `--no-cache-dir torch==2.5.1+<variant>`; steps 4–5 use the current `requirements-runtime.txt` (no `sse-starlette`) and `sidecar/` (`torch>=2.5,<3`);
+- it throws unless the torch dist-info is `torch-2.5.1+<variant>.dist-info` after every step.
 
-`-ConstraintFile` already shows the mechanism with the candidate file.
+**Result, 2026-10-11, cu124, pip 25.0.1, fresh PBS download (`-Fixed -Variant cu124 -DownloadPbs -SkipDryRun`, `summary-fixed-cu124.txt`):**
+
+| after step | torch | transformer_lens | sae_lens |
+|---|---|---|---|
+| 1 | `torch-2.5.1+cu124` | — | — |
+| 2 | `torch-2.5.1+cu124` | 2.15.4 | — |
+| 3 | `torch-2.5.1+cu124` | 2.15.4 | 5.11.0 |
+| 4 | `torch-2.5.1+cu124` | 2.15.4 | 5.11.0 |
+| 5 | `torch-2.5.1+cu124` | 2.15.4 | 5.11.0 (+ `pry_sidecar-0.1.0`) |
+
+- The T3 `verify_build` probe in that venv returned `{"version": "2.5.1+cu124", "cuda": "12.4", "available": true}` on the RTX 4070 SUPER.
+- Venv size: 5.34 GiB (5,733,604,810 B).
+- A cpu venv built the same way (`-c constraints-runtime-cpu.txt`) kept `torch-2.5.1+cpu` through all steps, and the full sidecar test suite (58 tests, including inference smoke and `test_constraints.py`) passed in it.
 
 ## Re-running
 
@@ -107,6 +119,7 @@ Dist-info sequence for the cu124 reproduction (`summary-cu124.txt`):
 pwsh -File replay.ps1 -Variant cu124            # reproduces the swap (summary-cu124.txt)
 pwsh -File replay.ps1 -Variant cpu
 pwsh -File replay.ps1 -Variant cu124 -ConstraintFile constraints-candidate-cu124.txt
+pwsh -File replay.ps1 -Fixed -Variant cu124 -DownloadPbs -SkipDryRun   # T3 regression check (summary-fixed-cu124.txt)
 ```
 
 - Scratch lives in `%TEMP%\pry-replay\<tag>` and is wiped on each run.

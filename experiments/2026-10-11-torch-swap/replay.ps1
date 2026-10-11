@@ -21,19 +21,20 @@
   cu124 (default) or cpu. Selects the torch index exactly like probe.rs.
 
 .PARAMETER Fixed
-  STUB for T3. When T3 lands, this switch must:
-    - pass `-c src-tauri\resources\constraints-runtime-<variant>.txt` to every step
-      (the plan said PIP_CONSTRAINT; that env var is whitespace-split and breaks on
-      paths with spaces; see README "Implications for T3"),
-    - add --extra-index-url <torch index> to every step,
-    - use torch==2.5.1+<variant> as the step-1 spec,
-    - invoke pip as `venv\Scripts\python.exe -m pip`,
-  and then assert that the torch dist-info name after every step is
-  torch-2.5.1+<variant>.dist-info. Until T3 wires it, -Fixed throws.
+  Replays the T3 bootstrapper exactly as pip.rs `pip_command_for_step` builds it:
+    - pip invoked as `venv\Scripts\python.exe -m pip`,
+    - `-c src-tauri\resources\constraints-runtime-<variant>.txt` on every step
+      (NOT PIP_CONSTRAINT: whitespace-split, breaks on paths with spaces),
+    - `--extra-index-url <torch index>` on every step,
+    - step 1 = `--no-cache-dir torch==2.5.1+<variant>`,
+    - step 4 = the current requirements-runtime.txt, step 5 = the current sidecar\.
+  Throws unless the torch dist-info is torch-2.5.1+<variant>.dist-info after
+  every step. Outputs go to .\fixed-<variant>\ and summary-fixed-<variant>.txt.
 
 .EXAMPLE
   pwsh -File replay.ps1 -Variant cu124
   pwsh -File replay.ps1 -Variant cpu -SkipDryRun
+  pwsh -File replay.ps1 -Fixed -Variant cu124 -DownloadPbs -SkipDryRun
 #>
 [CmdletBinding()]
 param(
@@ -51,19 +52,21 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-if ($Fixed) {
-    throw "-Fixed is a stub until T3 lands (constraints-runtime-$Variant.txt + PIP_CONSTRAINT). See the .DESCRIPTION block."
-}
+if ($Fixed -and $ConstraintFile) { throw '-Fixed uses the repo constraints file; do not combine with -ConstraintFile.' }
 
 # --- constants mirrored from the repo -------------------------------------------------
 $ExpDir   = $PSScriptRoot
 $RepoRoot = (Resolve-Path (Join-Path $ExpDir '..\..')).Path
-$Tag      = if ($ConstraintFile) { "constrained-$Variant" } else { $Variant }
+$Tag      = if ($Fixed) { "fixed-$Variant" } elseif ($ConstraintFile) { "constrained-$Variant" } else { $Variant }
 $OutDir   = if ($Tag -eq 'cu124') { $ExpDir } else { Join-Path $ExpDir $Tag }
 if ($ConstraintFile) {
     # NOT $env:PIP_CONSTRAINT: pip splits that env var on whitespace, so a path with a space
     # (this repo, or a user profile like C:\Users\John Smith) fails with Errno 13. See README.
     $ConstraintFile = (Resolve-Path $ConstraintFile).Path
+    if ($PSBoundParameters.Keys -notcontains 'Scratch') { $Scratch = Join-Path $env:TEMP "pry-replay\$Tag" }
+}
+if ($Fixed) {
+    $ConstraintFile = (Resolve-Path (Join-Path $RepoRoot "src-tauri\resources\constraints-runtime-$Variant.txt")).Path
     if ($PSBoundParameters.Keys -notcontains 'Scratch') { $Scratch = Join-Path $env:TEMP "pry-replay\$Tag" }
 }
 New-Item -ItemType Directory -Force $OutDir | Out-Null
@@ -73,7 +76,8 @@ $PbsUrl    = 'https://github.com/astral-sh/python-build-standalone/releases/down
 $PbsSha256 = '99bbc3828c25409e747de9a491616685d17b855ae359d0fbf6ab51d2b4cd7e61'
 # probe.rs
 $TorchIndex = @{ cu124 = 'https://download.pytorch.org/whl/cu124'; cpu = 'https://download.pytorch.org/whl/cpu' }[$Variant]
-$TorchSpec  = 'torch==2.5.1'
+$TorchSpec  = if ($Fixed) { "torch==2.5.1+$Variant" } else { 'torch==2.5.1' }   # T3: tagged spec
+$ExpectedTorch = "torch-2.5.1+$Variant.dist-info"
 
 $PryRuntime = Join-Path $env:LOCALAPPDATA 'Pry\runtime'
 
@@ -93,7 +97,7 @@ if ($DownloadPbs -or -not (Test-Path (Join-Path $PryRuntime 'python.exe'))) {
 } else {
     Write-Host "copying PBS interpreter from $PryRuntime (read-only; venv and markers excluded)"
     New-Item -ItemType Directory -Force $PyRoot | Out-Null
-    $exclude = 'venv', 'ready.marker', 'requirements-extras.txt', 'sidecar.hash'
+    $exclude = 'venv', 'venvs', 'active.json', 'active.json.tmp', 'pbs-staging', 'ready.marker', 'requirements-extras.txt', 'sidecar.hash'
     Get-ChildItem $PryRuntime | Where-Object { $exclude -notcontains $_.Name } |
         ForEach-Object { Copy-Item -Recurse -Force $_.FullName $PyRoot }
 }
@@ -104,10 +108,12 @@ $BasePy = Join-Path $PyRoot 'python.exe'
 $Venv = Join-Path $Scratch 'venv'
 & $BasePy -m venv $Venv
 if ($LASTEXITCODE) { throw 'venv failed' }
-$Pip   = Join-Path $Venv 'Scripts\pip.exe'      # pip.rs uses venv::venv_pip -> Scripts\pip.exe
 $VenvPy = Join-Path $Venv 'Scripts\python.exe'
+# Pre-T3 pip.rs ran Scripts\pip.exe; T3/T4 run `<venv python> -m pip`.
+$Pip   = if ($Fixed) { $VenvPy } else { Join-Path $Venv 'Scripts\pip.exe' }
+$PipPrefix = if ($Fixed) { @('-m', 'pip') } else { @() }
 $Site  = Join-Path $Venv 'Lib\site-packages'
-$pipVer = (& $Pip --version) -join ' '
+$pipVer = (& $Pip @PipPrefix --version) -join ' '
 Write-Host "pip: $pipVer"
 
 # step 4 input: the embedded requirements file, written next to the venv like pip.rs does
@@ -127,7 +133,15 @@ $Steps = [ordered]@{
     '4' = @('install', '-r', $ReqPath)
     '5' = @('install', $SidecarCopy)
 }
-if ($ConstraintFile) {
+if ($Fixed) {
+    # Exactly pip.rs pip_command_for_step: install -c <file> --extra-index-url <torch index> <step args>
+    $common = @('install', '-c', $ConstraintFile, '--extra-index-url', $TorchIndex)
+    $Steps['1'] = $common + @('--no-cache-dir', $TorchSpec)
+    $Steps['2'] = $common + @('transformer-lens>=2.11,<3')
+    $Steps['3'] = $common + @('sae-lens>=5.0,<6')
+    $Steps['4'] = $common + @('-r', $ReqPath)
+    $Steps['5'] = $common + @($SidecarCopy)
+} elseif ($ConstraintFile) {
     foreach ($k in '1', '2', '3', '4', '5') { $Steps[$k] = $Steps[$k] + @('-c', $ConstraintFile) }
     foreach ($k in '2', '3', '4', '5') { $Steps[$k] = $Steps[$k] + @('--extra-index-url', $TorchIndex) }
 }
@@ -172,7 +186,7 @@ foreach ($n in $Steps.Keys) {
     if (-not $SkipDryRun) {
         $full = Join-Path $Scratch "step-$n.full.json"
         $dry = @($a[0], '--dry-run', '--report', $full) + $a[1..($a.Count - 1)]
-        & $Pip @dry 2>&1 | ForEach-Object { "$_" } | Set-Content -Encoding utf8 (Join-Path $Scratch "step-$n.dryrun.log")
+        & $Pip @PipPrefix @dry 2>&1 | ForEach-Object { "$_" } | Set-Content -Encoding utf8 (Join-Path $Scratch "step-$n.dryrun.log")
         if ($LASTEXITCODE) { throw "dry-run step $n failed (see step-$n.dryrun.log)" }
         Save-TrimmedReport $full (Join-Path $OutDir "step-$n.json")
         $r = Get-Content -Raw $full | ConvertFrom-Json
@@ -181,12 +195,20 @@ foreach ($n in $Steps.Keys) {
         $summary.Add("step $n dry-run would install: " + ($(if ($hits) { $hits -join ' | ' } else { '(no watched pkgs)' })))
     }
     $log = Join-Path $Scratch "step-$n.log"
-    & $Pip @a 2>&1 | ForEach-Object { "$_" } | Set-Content -Encoding utf8 $log
+    & $Pip @PipPrefix @a 2>&1 | ForEach-Object { "$_" } | Set-Content -Encoding utf8 $log
     if ($LASTEXITCODE) { throw "step $n failed (see $log)" }
     $snap = Get-Snapshot
     $snap | Set-Content (Join-Path $Scratch "after-step-$n.distinfo.txt")
-    & $Pip freeze --all 2>$null | Set-Content (Join-Path $Scratch "after-step-$n.freeze.txt")
+    & $Pip @PipPrefix freeze --all 2>$null | Set-Content (Join-Path $Scratch "after-step-$n.freeze.txt")
     $summary.Add("step $n after: " + ($snap -join ', '))
+    if ($Fixed) {
+        $torch = @($snap | Where-Object { $_ -like 'torch-*' })
+        if ($torch.Count -ne 1 -or $torch[0] -ne $ExpectedTorch) {
+            $summary | Set-Content -Encoding utf8 (Join-Path $ExpDir "summary-$Tag.txt")
+            throw "FIXED REPLAY FAILED: after step $n torch dist-info is '$($torch -join ', ')', expected $ExpectedTorch"
+        }
+        $summary.Add("step $n check: $ExpectedTorch OK")
+    }
     $uninst = Select-String -Path $log -Pattern '^\s*(Attempting uninstall|Successfully uninstalled)' | ForEach-Object { $_.Line.Trim() }
     if ($uninst) { $summary.Add("step $n uninstalls: " + ($uninst -join ' | ')) }
 }

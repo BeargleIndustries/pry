@@ -22,8 +22,8 @@ export function laterKey(schema: number, variant: string): string {
 /** Prompt copy for the target variant. */
 export function promptCopy(targetVariant: string): string {
   return targetVariant === 'cu124'
-    ? 'A faster engine is available for your graphics card (one-time ~2.5 GB download).'
-    : 'Engine update (~300 MB).';
+    ? 'A faster engine is available for your graphics card (one-time ~2.7 GB download).'
+    : 'Engine update (~400 MB).';
 }
 
 /** Whether to show the prompt for this status, given what "Later" has hidden. */

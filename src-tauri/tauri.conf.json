@@ -43,12 +43,7 @@
     "resources": [
       "../sidecar/pyproject.toml",
       "../sidecar/presets.json",
-      "../sidecar/pry_sidecar/__init__.py",
-      "../sidecar/pry_sidecar/main.py",
-      "../sidecar/pry_sidecar/schemas.py",
-      "../sidecar/pry_sidecar/registry.py",
-      "../sidecar/pry_sidecar/presets.py",
-      "../sidecar/pry_sidecar/inference.py"
+      "../sidecar/pry_sidecar/*.py"
     ],
     "windows": {
       "certificateThumbprint": null,

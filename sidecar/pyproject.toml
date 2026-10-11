@@ -8,7 +8,11 @@ version = "0.1.0"
 description = "Python sidecar for Pry — local-first interpretability app"
 requires-python = ">=3.11,<3.13"
 dependencies = [
-    "torch==2.5.*",
+    # Loose on purpose: the runtime constraints files
+    # (src-tauri/resources/constraints-runtime-*.txt, passed as `-c` to every
+    # pip step) are authoritative and pin the exact tagged torch build. A tight
+    # pin here made step 5 re-resolve torch from PyPI (T3a replay).
+    "torch>=2.5,<3",
     "transformer-lens>=2.11,<3",
     "sae-lens>=5.0,<6",
     "starlette>=0.40,<1",
@@ -17,7 +21,6 @@ dependencies = [
     "safetensors>=0.4,<1",
     "huggingface_hub>=0.26,<1",
     "hf_transfer>=0.1,<1",
-    "sse-starlette>=2.1,<3",
     "numpy>=1.26,<3",
     "requests>=2.32,<3",
     # pyarrow 26 needs NumPy 2 at import, but TL/sae-lens keep NumPy 1.x.

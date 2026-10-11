@@ -13,6 +13,7 @@ build/
 
 # ── Python / sidecar ──────────────────────────────────────────────────────────
 .venv/
+.venv-*/
 venv/
 __pycache__/
 *.pyc

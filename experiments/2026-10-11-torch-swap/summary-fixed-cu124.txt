@@ -1,0 +1,13 @@
+variant=cu124  pip 25.0.1 from C:\Users\Brad\AppData\Local\Temp\pry-replay\fixed-cu124\venv\Lib\site-packages\pip (python 3.12)   python=3.12.13
+before: 
+step 1 after: sympy-1.13.1.dist-info, torch-2.5.1+cu124.dist-info
+step 1 check: torch-2.5.1+cu124.dist-info OK
+step 2 after: numpy-1.26.4.dist-info, sympy-1.13.1.dist-info, torch-2.5.1+cu124.dist-info, transformer_lens-2.15.4.dist-info
+step 2 check: torch-2.5.1+cu124.dist-info OK
+step 3 after: numpy-1.26.4.dist-info, sae_lens-5.11.0.dist-info, sympy-1.13.1.dist-info, torch-2.5.1+cu124.dist-info, transformer_lens-2.15.4.dist-info
+step 3 check: torch-2.5.1+cu124.dist-info OK
+step 4 after: numpy-1.26.4.dist-info, sae_lens-5.11.0.dist-info, sympy-1.13.1.dist-info, torch-2.5.1+cu124.dist-info, transformer_lens-2.15.4.dist-info
+step 4 check: torch-2.5.1+cu124.dist-info OK
+step 5 after: numpy-1.26.4.dist-info, pry_sidecar-0.1.0.dist-info, sae_lens-5.11.0.dist-info, sympy-1.13.1.dist-info, torch-2.5.1+cu124.dist-info, transformer_lens-2.15.4.dist-info
+step 5 check: torch-2.5.1+cu124.dist-info OK
+size: venv=5.34 GiB  pbs-interpreter=0.14 GiB  (5733604810 / 148898343 bytes)

@@ -16,6 +16,7 @@ use tauri::AppHandle;
 mod errors;
 mod events;
 pub mod layout;
+mod logs;
 mod pbs;
 pub mod pip;
 mod probe;
@@ -211,13 +212,16 @@ async fn ensure_pbs(emit: &events::Emitter, rt: &Path) -> Result<(), BootstrapEr
 
 /// Post-install verification of a freshly built venv; returns its manifest.
 ///
-/// T3 HOOK: run `<venv python> -c "import torch, json; ..."` here to fill
-/// `cuda` (and warn when `cuda.is_available()` is false on a cu124 wheel).
-fn verify_build(
+/// 1. The `torch-*.dist-info` folder must be the tagged build for `variant`
+///    (hard fail otherwise: that is the T3a CPU-torch swap).
+/// 2. One `python -c` records `torch.version.cuda` / `cuda.is_available()`.
+///    On cu124, CUDA being unavailable is a warning only (driver issue).
+async fn verify_build(
     emit: &events::Emitter,
     venv_dir: &Path,
     variant: CudaVariant,
 ) -> Result<layout::RuntimeManifest, BootstrapError> {
+    emit.stage(BootstrapStage::InstallingExtras, "verifying the PyTorch install...");
     let expected = variant.expected_torch_dist_info();
     let actual = layout::torch_dist_info(venv_dir);
     emit.log(format!(
@@ -230,15 +234,71 @@ fn verify_build(
             actual.as_deref().unwrap_or("none")
         )));
     }
+
+    const PROBE: &str = "import json, torch; print(json.dumps({'version': torch.__version__, \
+                         'cuda': torch.version.cuda, 'available': torch.cuda.is_available()}))";
+    let out = tokio::process::Command::new(layout::venv_python(venv_dir))
+        .args(["-c", PROBE])
+        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+        .output()
+        .await
+        .map_err(|e| BootstrapError::PipInstall(format!("could not run the PyTorch check: {e}")))?;
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    if !out.status.success() {
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        emit.log(format!("verify: import torch failed: {stderr}"));
+        return Err(BootstrapError::PipInstall(format!(
+            "PyTorch was installed but fails to import: {}",
+            stderr.lines().last().unwrap_or("unknown error")
+        )));
+    }
+    let info: serde_json::Value = stdout
+        .lines()
+        .rev()
+        .find_map(|l| serde_json::from_str(l.trim()).ok())
+        .ok_or_else(|| BootstrapError::PipInstall(format!("unexpected PyTorch check output: {stdout}")))?;
+    let cuda = info["cuda"].as_str().map(str::to_string);
+    let available = info["available"].as_bool();
+    emit.log(format!(
+        "verify: torch {} cuda={} available={}",
+        info["version"].as_str().unwrap_or("?"),
+        cuda.as_deref().unwrap_or("none"),
+        available.map_or("?".into(), |b| b.to_string())
+    ));
+    if variant == CudaVariant::Cu124 && available != Some(true) {
+        emit.log(
+            "warning: the CUDA build of PyTorch is installed but no usable GPU was found. \
+             Pry will run on the CPU until the NVIDIA driver is fixed.",
+        );
+    }
+
     Ok(layout::RuntimeManifest {
         schema: layout::RUNTIME_SCHEMA_VERSION,
         variant: variant.id().to_string(),
         expected_torch_dist_info: expected,
         torch_dist_info: actual,
-        cuda: None,
+        cuda,
+        cuda_available: available,
         constraints_sha256: layout::bundled_constraints_sha256(variant),
         built_at: chrono::Utc::now().to_rfc3339(),
     })
+}
+
+/// Record the error in the persisted log and point the user at it.
+fn with_log_path(emit: &events::Emitter, e: BootstrapError) -> BootstrapError {
+    emit.log(format!("ERROR: {e}"));
+    let Some(p) = emit.log_path() else { return e };
+    let note = |s: String| format!("{s}\nFull install log: {}", p.display());
+    match e {
+        BootstrapError::Download(s) => BootstrapError::Download(note(s)),
+        BootstrapError::Extract(s) => BootstrapError::Extract(note(s)),
+        BootstrapError::Venv(s) => BootstrapError::Venv(note(s)),
+        BootstrapError::PipInstall(s) => BootstrapError::PipInstall(note(s)),
+        BootstrapError::Antivirus(s) => BootstrapError::Antivirus(note(s)),
+        BootstrapError::Io(s) => BootstrapError::Io(note(s)),
+        BootstrapError::Internal(s) => BootstrapError::Internal(note(s)),
+        other => other,
+    }
 }
 
 /// Build a complete venv in `venvs\<id>\` from `runtime\python.exe`: disk
@@ -264,8 +324,8 @@ async fn build_venv(
             .map_err(|e| BootstrapError::Io(format!("mkdir venvs: {e}")))?;
         venv::create(emit, &layout::base_python(rt), &dir).await?;
         let py = layout::venv_python(&dir);
-        pip::install_runtime_deps(emit, rt, &dir, &py, variant).await?;
-        let manifest = verify_build(emit, &dir, variant)?;
+        pip::install_runtime_deps(emit, &dir, &py, variant).await?;
+        let manifest = verify_build(emit, &dir, variant).await?;
         layout::write_manifest(&dir, &manifest)
             .map_err(|e| BootstrapError::Io(format!("write runtime.json: {e}")))?;
         write_sidecar_hash(&dir);
@@ -316,18 +376,24 @@ pub async fn bootstrap_runtime(app: AppHandle) -> Result<(), BootstrapError> {
         return Ok(());
     }
 
+    // An install is actually happening: persist everything to a log file.
+    let emit = events::Emitter::with_log(app.clone());
+    install_fresh(&emit, &rt).await.map_err(|e| with_log_path(&emit, e))
+}
+
+async fn install_fresh(emit: &events::Emitter, rt: &Path) -> Result<(), BootstrapError> {
     // Probe CUDA to decide wheel variant.
-    let cuda_variant = probe::cuda_variant(&emit).await;
+    let cuda_variant = probe::cuda_variant(emit).await;
 
     // No up-front wipe: a Missing/Broken runtime gets a new venv beside
     // whatever is there; the pointer only moves once the new one is verified.
-    tokio::fs::create_dir_all(&rt)
+    tokio::fs::create_dir_all(rt)
         .await
         .map_err(|e| BootstrapError::Io(format!("mkdir: {e}")))?;
 
-    ensure_pbs(&emit, &rt).await?;
-    let rel = build_venv(&emit, &rt, cuda_variant, layout::free_bytes).await?;
-    commit(&rt, &rel)?;
+    ensure_pbs(emit, rt).await?;
+    let rel = build_venv(emit, rt, cuda_variant, layout::free_bytes).await?;
+    commit(rt, &rel)?;
 
     emit.stage(BootstrapStage::Ready, "runtime installed and ready");
     Ok(())
@@ -361,7 +427,7 @@ pub async fn bootstrap_runtime_command(app: AppHandle) -> Result<(), String> {
         tracing::info!(
             "bundled sidecar source differs from installed — reinstalling package"
         );
-        let emit = events::Emitter::new(app.clone());
+        let emit = events::Emitter::with_log(app.clone());
         let rt = runtime_dir().map_err(|e| format!("runtime_dir: {e}"))?;
         let report = layout::runtime_health(&rt);
         let venv_dir = report
@@ -372,9 +438,9 @@ pub async fn bootstrap_runtime_command(app: AppHandle) -> Result<(), String> {
             .as_deref()
             .and_then(CudaVariant::from_id)
             .unwrap_or(CudaVariant::Cpu);
-        pip::reinstall_sidecar_package(&emit, &rt, &layout::venv_python(&venv_dir), variant)
+        pip::reinstall_sidecar_package(&emit, &venv_dir, &layout::venv_python(&venv_dir), variant)
             .await
-            .map_err(|e| format!("sidecar reinstall: {e:#}"))?;
+            .map_err(|e| format!("sidecar reinstall: {:#}", with_log_path(&emit, e)))?;
         write_sidecar_hash(&venv_dir);
     }
 
@@ -485,7 +551,7 @@ pub async fn runtime_update(app: AppHandle) -> Result<(), String> {
         state.inner().clone()
     };
 
-    let emit = events::Emitter::new(app.clone());
+    let emit = events::Emitter::with_log(app.clone());
     let rt = runtime_dir().map_err(|e| format!("runtime_dir: {e}"))?;
     if !layout::pbs_complete(&rt) {
         return Err("Pry's Python runtime is missing. Restart Pry to reinstall it.".into());
@@ -501,7 +567,7 @@ pub async fn runtime_update(app: AppHandle) -> Result<(), String> {
 
     let rel = build_venv(&emit, &rt, variant, layout::free_bytes)
         .await
-        .map_err(|e| user_message(&e))?;
+        .map_err(|e| user_message(&with_log_path(&emit, e)))?;
 
     // Same launch lock as bootstrap_runtime_command: nobody can launch a
     // sidecar between the pointer flip and the relaunch.
@@ -521,4 +587,46 @@ pub async fn runtime_update(app: AppHandle) -> Result<(), String> {
 
     emit.stage(BootstrapStage::Ready, "engine updated");
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    /// T10: every `sidecar/pry_sidecar/*.py` must be bundled by a
+    /// `tauri.conf.json` resource entry (explicit path or a `*.py` glob), or
+    /// installed builds ship an incomplete sidecar package.
+    #[test]
+    fn tauri_resources_cover_every_sidecar_module() {
+        let manifest = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let conf: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(manifest.join("tauri.conf.json")).unwrap(),
+        )
+        .unwrap();
+        let resources: Vec<&str> = conf["bundle"]["resources"]
+            .as_array()
+            .expect("bundle.resources must be an array")
+            .iter()
+            .filter_map(|v| v.as_str())
+            .collect();
+
+        let pkg = manifest.join("../sidecar/pry_sidecar");
+        let mut modules: Vec<String> = std::fs::read_dir(&pkg)
+            .unwrap()
+            .flatten()
+            .filter_map(|e| e.file_name().into_string().ok())
+            .filter(|n| n.ends_with(".py"))
+            .collect();
+        modules.sort();
+        assert!(modules.iter().any(|m| m == "main.py"), "sidecar package not found");
+
+        for m in &modules {
+            let explicit = format!("../sidecar/pry_sidecar/{m}");
+            let covered = resources.iter().any(|r| {
+                *r == explicit
+                    || *r == "../sidecar/pry_sidecar/*.py"
+                    || *r == "../sidecar/pry_sidecar/*"
+                    || *r == "../sidecar/pry_sidecar/**/*"
+            });
+            assert!(covered, "{m} is not bundled by tauri.conf.json resources");
+        }
+    }
 }

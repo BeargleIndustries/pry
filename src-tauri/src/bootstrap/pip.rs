@@ -26,33 +26,38 @@ pub enum PipStep {
 pub struct PipInvocation {
     pub program: PathBuf,
     pub args: Vec<String>,
-    pub env: Vec<(String, String)>,
 }
 
 /// The single builder for every pip command (pure; unit-testable).
 ///
-/// T3 HOOK: add `PIP_CONSTRAINT=<runtime_dir>\constraints.txt` to `env` and
-/// `--extra-index-url <variant torch index>` to `args` here, for every step.
+/// Every step carries `-c <constraints>` and `--extra-index-url <torch index>`
+/// (T3a replay: without them, step 2 pulls TL 2.18 -> PyPI torch 2.14 and step
+/// 5 downgrades to the untagged CPU torch 2.5.1). Constraints go on the command
+/// line, NOT via `PIP_CONSTRAINT`: pip splits that env var on whitespace, so a
+/// `%LOCALAPPDATA%` path with a space in the user name would break every step.
+/// The path is one argv element (no shell), so spaces are fine here.
 pub fn pip_command_for_step(
     step: &PipStep,
     variant: CudaVariant,
     venv_python: &Path,
-    _runtime_dir: &Path,
+    constraints: &Path,
 ) -> PipInvocation {
-    let mut args: Vec<String> = vec!["-m".into(), "pip".into(), "install".into()];
     let s = |p: &Path| p.to_string_lossy().into_owned();
+    let mut args: Vec<String> = vec![
+        "-m".into(),
+        "pip".into(),
+        "install".into(),
+        "-c".into(),
+        s(constraints),
+        "--extra-index-url".into(),
+        variant.pip_index_url().into(),
+    ];
     match step {
         PipStep::Torch => {
             // --no-cache-dir: keep the ~2.5 GB wheel out of the pip cache so an
-            // update doesn't need room for a second copy.
-            args.extend([
-                "--no-cache-dir".into(),
-                "--index-url".into(),
-                variant.pip_index_url().into(),
-                "--extra-index-url".into(),
-                "https://pypi.org/simple".into(),
-                variant.torch_spec().into(),
-            ]);
+            // update doesn't need room for a second copy. The spec carries the
+            // local tag (+cu124/+cpu), which only the torch index serves.
+            args.extend(["--no-cache-dir".into(), variant.torch_spec().into()]);
         }
         PipStep::TransformerLens => args.push("transformer-lens>=2.11,<3".into()),
         PipStep::SaeLens => args.push("sae-lens>=5.0,<6".into()),
@@ -65,7 +70,6 @@ pub fn pip_command_for_step(
     PipInvocation {
         program: venv_python.to_path_buf(),
         args,
-        env: Vec::new(),
     }
 }
 
@@ -74,17 +78,23 @@ async fn run_step(
     step: PipStep,
     variant: CudaVariant,
     venv_python: &Path,
-    runtime_dir: &Path,
+    constraints: &Path,
 ) -> Result<(), BootstrapError> {
-    let inv = pip_command_for_step(&step, variant, venv_python, runtime_dir);
+    let inv = pip_command_for_step(&step, variant, venv_python, constraints);
     stream_pip_install(emit, &inv).await
 }
 
+/// Copy the variant's constraints into the venv; returns the `-c` path.
+fn venv_constraints(venv_dir: &Path, variant: CudaVariant) -> Result<PathBuf, BootstrapError> {
+    super::layout::write_constraints(venv_dir, variant)
+        .map_err(|e| BootstrapError::Io(format!("write constraints: {e}")))
+}
+
 /// Install the full dependency set into the venv whose interpreter is
-/// `venv_python`. `venv_dir` holds per-build scratch files.
+/// `venv_python`. `venv_dir` holds per-build scratch files and the
+/// constraints copy used by every step.
 pub async fn install_runtime_deps(
     emit: &Emitter,
-    runtime_dir: &Path,
     venv_dir: &Path,
     venv_python: &Path,
     cuda_variant: CudaVariant,
@@ -95,24 +105,25 @@ pub async fn install_runtime_deps(
             venv_python.display()
         )));
     }
+    let constraints = venv_constraints(venv_dir, cuda_variant)?;
 
     // 1. Install torch from the right index.
     emit.stage(
         BootstrapStage::InstallingTorch,
         format!("installing torch ({})", cuda_variant.wheel_tag()),
     );
-    run_step(emit, PipStep::Torch, cuda_variant, venv_python, runtime_dir).await?;
+    run_step(emit, PipStep::Torch, cuda_variant, venv_python, &constraints).await?;
 
     // 2. transformer-lens
     emit.stage(
         BootstrapStage::InstallingTransformerLens,
         "installing transformer-lens...",
     );
-    run_step(emit, PipStep::TransformerLens, cuda_variant, venv_python, runtime_dir).await?;
+    run_step(emit, PipStep::TransformerLens, cuda_variant, venv_python, &constraints).await?;
 
     // 3. sae-lens
     emit.stage(BootstrapStage::InstallingSaeLens, "installing sae-lens...");
-    run_step(emit, PipStep::SaeLens, cuda_variant, venv_python, runtime_dir).await?;
+    run_step(emit, PipStep::SaeLens, cuda_variant, venv_python, &constraints).await?;
 
     // 4. extras from embedded requirements-runtime.txt
     emit.stage(BootstrapStage::InstallingExtras, "installing extras...");
@@ -120,12 +131,12 @@ pub async fn install_runtime_deps(
     tokio::fs::write(&req_path, REQUIREMENTS_BASE)
         .await
         .map_err(|e| BootstrapError::Io(e.to_string()))?;
-    run_step(emit, PipStep::Extras(req_path), cuda_variant, venv_python, runtime_dir).await?;
+    run_step(emit, PipStep::Extras(req_path), cuda_variant, venv_python, &constraints).await?;
 
     // 5. Install the local pry_sidecar package so `python -m pry_sidecar.main` works.
     emit.stage(BootstrapStage::InstallingExtras, "installing pry_sidecar package...");
     let sidecar_source = locate_sidecar_source()?;
-    run_step(emit, PipStep::Sidecar(sidecar_source), cuda_variant, venv_python, runtime_dir)
+    run_step(emit, PipStep::Sidecar(sidecar_source), cuda_variant, venv_python, &constraints)
         .await?;
 
     emit.progress(
@@ -143,7 +154,7 @@ pub async fn install_runtime_deps(
 /// The caller writes the new hash marker.
 pub async fn reinstall_sidecar_package(
     emit: &Emitter,
-    runtime_dir: &Path,
+    venv_dir: &Path,
     venv_python: &Path,
     variant: CudaVariant,
 ) -> Result<(), BootstrapError> {
@@ -155,6 +166,7 @@ pub async fn reinstall_sidecar_package(
             venv_python.display()
         )));
     }
+    let constraints = venv_constraints(venv_dir, variant)?;
 
     let sidecar_source = locate_sidecar_source()?;
     run_step(
@@ -162,7 +174,7 @@ pub async fn reinstall_sidecar_package(
         PipStep::ReinstallSidecar(sidecar_source),
         variant,
         venv_python,
-        runtime_dir,
+        &constraints,
     )
     .await?;
 
@@ -215,11 +227,13 @@ async fn stream_pip_install(emit: &Emitter, inv: &PipInvocation) -> Result<(), B
     use std::sync::{Arc, Mutex};
     use std::collections::VecDeque;
 
-    // T3 HOOK (log persistence): tee every line emitted below to the
-    // bootstrap log file as well as the `bootstrap:log` event.
+    // Every line goes through `Emitter::log`, which also tees to the
+    // persisted bootstrap log when the emitter has one.
+    emit.log(format!("$ {} {}", inv.program.display(), inv.args.join(" ")));
     let mut cmd = Command::new(&inv.program);
     cmd.args(&inv.args);
-    cmd.envs(inv.env.iter().map(|(k, v)| (k.as_str(), v.as_str())));
+    // Never inherit a user-level PIP_CONSTRAINT: the `-c` file is authoritative.
+    cmd.env_remove("PIP_CONSTRAINT");
     cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
     cmd.stdout(std::process::Stdio::piped());
     cmd.stderr(std::process::Stdio::piped());
@@ -239,14 +253,14 @@ async fn stream_pip_install(emit: &Emitter, inv: &PipInvocation) -> Result<(), B
     const STDERR_TAIL: usize = 100;
     let stderr_tail: Arc<Mutex<VecDeque<String>>> = Arc::new(Mutex::new(VecDeque::new()));
 
-    let emit_out = Emitter::new(emit.handle_clone());
+    let emit_out = emit.clone();
     let stdout_task = tokio::spawn(async move {
         let mut reader = BufReader::new(stdout).lines();
         while let Ok(Some(line)) = reader.next_line().await {
             emit_out.log(line);
         }
     });
-    let emit_err = Emitter::new(emit.handle_clone());
+    let emit_err = emit.clone();
     let stderr_tail_clone = stderr_tail.clone();
     let stderr_task = tokio::spawn(async move {
         let mut reader = BufReader::new(stderr).lines();
@@ -304,9 +318,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn every_step_runs_python_dash_m_pip() {
+    fn every_step_runs_python_dash_m_pip_with_constraints_and_torch_index() {
         let py = Path::new(r"C:\rt\venvs\x-cu124\Scripts\python.exe");
-        let rt = Path::new(r"C:\rt");
+        // A user name with a space: must stay a single argv element.
+        let cpath = Path::new(r"C:\Users\Jane Doe\AppData\Local\Pry\runtime\venvs\x\constraints.txt");
         let steps = [
             PipStep::Torch,
             PipStep::TransformerLens,
@@ -317,13 +332,24 @@ mod tests {
         ];
         for v in [CudaVariant::Cu124, CudaVariant::Cpu] {
             for step in &steps {
-                let inv = pip_command_for_step(step, v, py, rt);
+                let inv = pip_command_for_step(step, v, py, cpath);
                 assert_eq!(inv.program, py, "{step:?}");
                 assert_eq!(&inv.args[..3], ["-m", "pip", "install"], "{step:?}");
+                let c = inv.args.iter().position(|a| a == "-c").expect("-c missing");
+                assert_eq!(inv.args[c + 1], cpath.to_string_lossy(), "{step:?}");
+                let x = inv
+                    .args
+                    .iter()
+                    .position(|a| a == "--extra-index-url")
+                    .expect("--extra-index-url missing");
+                assert_eq!(inv.args[x + 1], v.pip_index_url(), "{step:?}");
+                assert!(!inv.args.iter().any(|a| a.contains("PIP_CONSTRAINT")));
             }
         }
-        let torch = pip_command_for_step(&PipStep::Torch, CudaVariant::Cu124, py, rt);
+        let torch = pip_command_for_step(&PipStep::Torch, CudaVariant::Cu124, py, cpath);
         assert!(torch.args.iter().any(|a| a == "--no-cache-dir"));
-        assert!(torch.args.iter().any(|a| a == CudaVariant::Cu124.pip_index_url()));
+        assert_eq!(torch.args.last().unwrap(), "torch==2.5.1+cu124");
+        let cpu = pip_command_for_step(&PipStep::Torch, CudaVariant::Cpu, py, cpath);
+        assert_eq!(cpu.args.last().unwrap(), "torch==2.5.1+cpu");
     }
 }

@@ -14,8 +14,8 @@ const base: RuntimeUpdateStatus = {
 describe('runtime update prompt', () => {
   it('uses GPU copy for cu124 and short copy for cpu', () => {
     expect(promptCopy('cu124')).toContain('graphics card');
-    expect(promptCopy('cu124')).toContain('2.5 GB');
-    expect(promptCopy('cpu')).toBe('Engine update (~300 MB).');
+    expect(promptCopy('cu124')).toContain('2.7 GB');
+    expect(promptCopy('cpu')).toBe('Engine update (~400 MB).');
   });
 
   it('scopes Later per schema and variant', () => {

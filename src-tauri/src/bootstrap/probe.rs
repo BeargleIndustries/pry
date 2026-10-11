@@ -50,12 +50,13 @@ impl CudaVariant {
     }
 
     pub fn torch_spec(&self) -> &'static str {
-        // The pytorch.org wheel index encodes the CUDA variant in the wheel URL,
-        // not in the package version string. pip_index_url() already points to
-        // the correct index, so the plain version works for both variants.
+        // Pin the local version tag explicitly. A plain `torch==2.5.1` also
+        // matches the untagged PyPI wheel, which is a CPU build on Windows
+        // (T3a replay: experiments/2026-10-11-torch-swap). Keep in sync with
+        // TORCH_VERSION and the constraints files.
         match self {
-            Self::Cu124 => "torch==2.5.1",
-            Self::Cpu => "torch==2.5.1",
+            Self::Cu124 => "torch==2.5.1+cu124",
+            Self::Cpu => "torch==2.5.1+cpu",
         }
     }
 }
