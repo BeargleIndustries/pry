@@ -56,7 +56,7 @@ pub fn pip_command_for_step(
         PipStep::Torch => {
             // --no-cache-dir: keep the ~2.5 GB wheel out of the pip cache so an
             // update doesn't need room for a second copy. The spec carries the
-            // local tag (+cu124/+cpu), which only the torch index serves.
+            // local tag (+cu128/+cu124/+cpu), which only the torch index serves.
             args.extend(["--no-cache-dir".into(), variant.torch_spec().into()]);
         }
         PipStep::TransformerLens => args.push("transformer-lens>=2.11,<3".into()),
@@ -330,7 +330,7 @@ mod tests {
             PipStep::Sidecar(PathBuf::from(r"C:\src\sidecar")),
             PipStep::ReinstallSidecar(PathBuf::from(r"C:\src\sidecar")),
         ];
-        for v in [CudaVariant::Cu124, CudaVariant::Cpu] {
+        for v in [CudaVariant::Cu128, CudaVariant::Cu124, CudaVariant::Cpu] {
             for step in &steps {
                 let inv = pip_command_for_step(step, v, py, cpath);
                 assert_eq!(inv.program, py, "{step:?}");
@@ -349,7 +349,9 @@ mod tests {
         let torch = pip_command_for_step(&PipStep::Torch, CudaVariant::Cu124, py, cpath);
         assert!(torch.args.iter().any(|a| a == "--no-cache-dir"));
         assert_eq!(torch.args.last().unwrap(), "torch==2.5.1+cu124");
+        let cu128 = pip_command_for_step(&PipStep::Torch, CudaVariant::Cu128, py, cpath);
+        assert_eq!(cu128.args.last().unwrap(), "torch==2.7.1+cu128");
         let cpu = pip_command_for_step(&PipStep::Torch, CudaVariant::Cpu, py, cpath);
-        assert_eq!(cpu.args.last().unwrap(), "torch==2.5.1+cpu");
+        assert_eq!(cpu.args.last().unwrap(), "torch==2.7.1+cpu");
     }
 }

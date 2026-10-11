@@ -10,6 +10,7 @@
 - **Swap & Compare starts with a working example** (the "Mary and John" sentence pair) and shows live word counts for both prompts, so it's clear when they don't match.
 - Steering now shows only the words the model added, with the changes highlighted word by word.
 - Pythia-70M is now offered during setup, and every model's Neuronpedia links point to the right place.
+- **Newer GPU engine (PyTorch 2.7, CUDA 12.8).** New installs on NVIDIA drivers 572.30 or newer get it; this is the engine RTX 50-series cards need. Results are identical to the old engine (checked number for number on CPU and on an RTX 4070 SUPER). RTX 50-series support hasn't been tested on one yet. Existing GPU installs keep their current engine and aren't asked to re-download, except on RTX 50-series cards, which can't run it.
 
 ### Fixed
 - The guided tour could get stuck after a failed run. It now offers Try again or Skip, and always uses GPT-2 small.

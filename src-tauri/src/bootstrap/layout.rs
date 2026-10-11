@@ -18,7 +18,7 @@
 //! a process: `runtime_health()` runs on the startup gate.
 
 use super::errors::BootstrapError;
-use super::probe::CudaVariant;
+use super::probe::{CudaVariant, GpuProbe};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::io::Write;
@@ -37,20 +37,23 @@ pub const VENVS_DIR: &str = "venvs";
 pub const LEGACY_VENV: &str = "venv";
 
 /// Free space required on the runtime volume before building a new venv.
-/// Measured in the T3a replay (experiments/2026-10-11-torch-swap): cu124 venv
-/// 5.34 GiB, cpu venv ~2.12 GiB. cu124: 5.4 GB venv + 0.5 GB temp + 1 GB
-/// margin ~ 7 GB. cpu: ~2.3 GB venv + 0.2 GB temp + 1 GB margin ~ 3.5 GB.
+/// Measured venv sizes: cu124 5.34 GiB (experiments/2026-10-11-torch-swap),
+/// cu128 6.44 GiB and cpu 2.18 GiB (experiments/2026-10-11-torch27); peak disk
+/// during a cu128 build ~10.2 GB. Budget = venv + temp + ~1 GB margin.
+pub const REQUIRED_FREE_BYTES_CU128: u64 = 11_000_000_000;
 pub const REQUIRED_FREE_BYTES_CU124: u64 = 7_000_000_000;
 pub const REQUIRED_FREE_BYTES_CPU: u64 = 3_500_000_000;
 
 /// Approximate download size shown in the update prompt. The torch wheel
-/// dominates: torch-2.5.1+cu124 win_amd64 is 2,510,680,879 B, +cpu is
-/// 205,405,035 B; the rest of the stack adds roughly 0.2 GB.
+/// dominates: torch-2.7.1+cu128 win_amd64 ~3,273 MB, 2.5.1+cu124
+/// 2,510,680,879 B, 2.7.1+cpu ~216 MB; the rest of the stack adds ~0.2 GB.
+pub const DOWNLOAD_MB_CU128: u64 = 3_500;
 pub const DOWNLOAD_MB_CU124: u64 = 2_700;
-pub const DOWNLOAD_MB_CPU: u64 = 400;
+pub const DOWNLOAD_MB_CPU: u64 = 420;
 
 pub fn required_free_bytes(variant: CudaVariant) -> u64 {
     match variant {
+        CudaVariant::Cu128 => REQUIRED_FREE_BYTES_CU128,
         CudaVariant::Cu124 => REQUIRED_FREE_BYTES_CU124,
         CudaVariant::Cpu => REQUIRED_FREE_BYTES_CPU,
     }
@@ -58,6 +61,7 @@ pub fn required_free_bytes(variant: CudaVariant) -> u64 {
 
 pub fn download_mb(variant: CudaVariant) -> u64 {
     match variant {
+        CudaVariant::Cu128 => DOWNLOAD_MB_CU128,
         CudaVariant::Cu124 => DOWNLOAD_MB_CU124,
         CudaVariant::Cpu => DOWNLOAD_MB_CPU,
     }
@@ -72,6 +76,7 @@ pub const CONSTRAINTS_FILE: &str = "constraints.txt";
 /// `scripts/freeze_to_constraints.py`; torch carries its local tag).
 pub fn bundled_constraints(variant: CudaVariant) -> &'static str {
     match variant {
+        CudaVariant::Cu128 => include_str!("../../resources/constraints-runtime-cu128.txt"),
         CudaVariant::Cu124 => include_str!("../../resources/constraints-runtime-cu124.txt"),
         CudaVariant::Cpu => include_str!("../../resources/constraints-runtime-cpu.txt"),
     }
@@ -450,20 +455,23 @@ pub struct RuntimeUpdateStatus {
     pub reason: String,
 }
 
-/// The variant an update should build. Never downgrades a cu124 venv to CPU
-/// just because nvidia-smi failed this launch.
-pub fn target_variant(current: Option<&str>, probed: CudaVariant) -> CudaVariant {
-    if probed == CudaVariant::Cu124 || current == Some("cu124") {
-        CudaVariant::Cu124
-    } else {
-        CudaVariant::Cpu
+/// The variant an update should build: what the probe picked for this GPU.
+/// Never downgrades a GPU venv to CPU just because nvidia-smi failed this
+/// launch; the GPU venv is rebuilt as the same variant instead.
+pub fn target_variant(current: Option<&str>, probed: GpuProbe) -> CudaVariant {
+    if probed.variant.is_gpu() {
+        return probed.variant;
+    }
+    match current.and_then(CudaVariant::from_id) {
+        Some(v) if v.is_gpu() => v,
+        _ => CudaVariant::Cpu,
     }
 }
 
 /// Combine filesystem health with the (possibly pending) GPU probe.
 pub fn compute_update_status(
     report: &HealthReport,
-    probed: Option<CudaVariant>,
+    probed: Option<GpuProbe>,
     updating: bool,
 ) -> RuntimeUpdateStatus {
     let current = report.current_variant.as_deref();
@@ -473,9 +481,15 @@ pub fn compute_update_status(
         RuntimeHealth::Missing => ("missing", report.reason.to_string()),
         RuntimeHealth::Broken => ("broken", report.reason.to_string()),
         RuntimeHealth::UpdateAvailable => ("update_available", report.reason.to_string()),
-        RuntimeHealth::Ok if cpu_now && probed == Some(CudaVariant::Cu124) => (
+        RuntimeHealth::Ok if cpu_now && probed.is_some_and(|p| p.variant.is_gpu()) => (
             "update_available",
             "an NVIDIA GPU was detected but the engine is CPU-only".to_string(),
+        ),
+        // A working cu124 engine stays put on older GPUs (no 3.5 GB re-download);
+        // Blackwell cards have no cu124 kernels, so it has to move to cu128.
+        RuntimeHealth::Ok if current == Some("cu124") && probed.is_some_and(|p| p.needs_cu128) => (
+            "update_available",
+            "this graphics card needs the newer GPU engine".to_string(),
         ),
         RuntimeHealth::Ok => ("ok", report.reason.to_string()),
     };
@@ -997,39 +1011,68 @@ mod tests {
         let s = compute_update_status(&legacy, None, false);
         assert_eq!(s.state, "update_available");
         assert_eq!(s.target_variant, None);
-        // CPU-only laptop: cpu target, ~300 MB, 2 GB free.
-        let s = compute_update_status(&legacy, Some(CudaVariant::Cpu), false);
+        // CPU-only laptop: cpu target.
+        let s = compute_update_status(&legacy, Some(GpuProbe::CPU), false);
         assert_eq!(s.target_variant.as_deref(), Some("cpu"));
-        assert_eq!(s.download_mb, 400);
+        assert_eq!(s.download_mb, DOWNLOAD_MB_CPU);
         assert_eq!(s.required_free_gb, 3.5);
-        // GPU machine (Brad's): cu124 target.
-        let s = compute_update_status(&legacy, Some(CudaVariant::Cu124), false);
+        // GPU with a current driver: cu128 target.
+        let s = compute_update_status(&legacy, Some(gpu(CudaVariant::Cu128, false)), false);
+        assert_eq!(s.target_variant.as_deref(), Some("cu128"));
+        assert_eq!(s.download_mb, DOWNLOAD_MB_CU128);
+        assert_eq!(s.required_free_gb, 11.0);
+        // GPU with a driver older than 572.30: cu124 target.
+        let s = compute_update_status(&legacy, Some(gpu(CudaVariant::Cu124, false)), false);
         assert_eq!(s.target_variant.as_deref(), Some("cu124"));
         assert_eq!(s.download_mb, DOWNLOAD_MB_CU124);
-        assert_eq!(s.required_free_gb, 7.0);
 
         // Ok cpu venv + GPU found -> update available.
         let ok_cpu = HealthReport { health: RuntimeHealth::Ok, current_variant: Some("cpu".into()), schema: 2, ..legacy.clone() };
-        assert_eq!(compute_update_status(&ok_cpu, Some(CudaVariant::Cu124), false).state, "update_available");
-        assert_eq!(compute_update_status(&ok_cpu, Some(CudaVariant::Cpu), false).state, "ok");
+        assert_eq!(compute_update_status(&ok_cpu, Some(gpu(CudaVariant::Cu128, false)), false).state, "update_available");
+        assert_eq!(compute_update_status(&ok_cpu, Some(GpuProbe::CPU), false).state, "ok");
         // Ok cu124 venv + nvidia-smi failing: no downgrade prompt.
         let ok_cu = HealthReport { current_variant: Some("cu124".into()), ..ok_cpu.clone() };
-        let s = compute_update_status(&ok_cu, Some(CudaVariant::Cpu), false);
+        let s = compute_update_status(&ok_cu, Some(GpuProbe::CPU), false);
         assert_eq!(s.state, "ok");
         assert_eq!(s.target_variant.as_deref(), Some("cu124"));
         assert_eq!(compute_update_status(&ok_cu, None, true).state, "updating");
     }
 
     #[test]
+    fn working_cu124_engine_is_only_replaced_for_blackwell() {
+        let ok_cu124 = HealthReport {
+            health: RuntimeHealth::Ok,
+            reason: "ok",
+            venv_dir: None,
+            current_variant: Some("cu124".into()),
+            schema: RUNTIME_SCHEMA_VERSION,
+        };
+        // Ada/Ampere with a new driver: the probe picks cu128 for new installs,
+        // but the working cu124 engine is not re-downloaded.
+        let s = compute_update_status(&ok_cu124, Some(gpu(CudaVariant::Cu128, false)), false);
+        assert_eq!(s.state, "ok");
+        // Blackwell: cu124 has no kernels for it, so offer cu128.
+        let s = compute_update_status(&ok_cu124, Some(gpu(CudaVariant::Cu128, true)), false);
+        assert_eq!(s.state, "update_available");
+        assert_eq!(s.target_variant.as_deref(), Some("cu128"));
+        // A cu128 engine never gets a prompt from the probe.
+        let ok_cu128 = HealthReport { current_variant: Some("cu128".into()), ..ok_cu124 };
+        assert_eq!(compute_update_status(&ok_cu128, Some(gpu(CudaVariant::Cu128, true)), false).state, "ok");
+    }
+
+    fn gpu(variant: CudaVariant, needs_cu128: bool) -> GpuProbe {
+        GpuProbe { variant, needs_cu128 }
+    }
+
+    #[test]
     fn bundled_constraints_pin_tagged_torch_and_are_written_per_venv() {
-        for v in [CudaVariant::Cu124, CudaVariant::Cpu] {
+        for v in [CudaVariant::Cu128, CudaVariant::Cu124, CudaVariant::Cpu] {
             let text = bundled_constraints(v);
-            let torch_line = format!("torch=={}+{}", super::super::probe::TORCH_VERSION, v.id());
+            let torch_line = v.torch_spec();
             assert!(text.lines().any(|l| l.trim() == torch_line), "{torch_line} missing");
-            assert_eq!(v.torch_spec(), torch_line);
         }
         assert_ne!(
-            bundled_constraints_sha256(CudaVariant::Cu124),
+            bundled_constraints_sha256(CudaVariant::Cu128),
             bundled_constraints_sha256(CudaVariant::Cpu)
         );
         let rt = TempRuntime::new("constraints");

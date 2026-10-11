@@ -28,6 +28,12 @@ pub use events::{BootstrapEvent, BootstrapStage};
 pub use probe::CudaVariant;
 
 pub fn runtime_dir() -> anyhow::Result<PathBuf> {
+    // Debug builds only: install/test into a scratch runtime instead of the
+    // real one (e.g. an end-to-end engine build without touching the user's).
+    #[cfg(debug_assertions)]
+    if let Ok(dir) = std::env::var("PRY_RUNTIME_DIR") {
+        return Ok(PathBuf::from(dir));
+    }
     // Use data_local_dir (%LOCALAPPDATA%) rather than config_dir (%APPDATA%/Roaming)
     // so multi-GB torch wheels don't get OneDrive/enterprise-synced for users with
     // roaming profiles.
@@ -171,7 +177,7 @@ pub fn is_runtime_current() -> bool {
 static BUILDING: once_cell::sync::Lazy<StdMutex<HashSet<PathBuf>>> =
     once_cell::sync::Lazy::new(|| StdMutex::new(HashSet::new()));
 /// Result of the background GPU re-probe (None until it finishes).
-static PROBED: StdMutex<Option<CudaVariant>> = StdMutex::new(None);
+static PROBED: StdMutex<Option<probe::GpuProbe>> = StdMutex::new(None);
 /// Set while a fresh install or an engine update is running (shared guard).
 static UPDATING: AtomicBool = AtomicBool::new(false);
 
@@ -233,7 +239,7 @@ async fn ensure_pbs(emit: &events::Emitter, rt: &Path) -> Result<(), BootstrapEr
 /// 1. The `torch-*.dist-info` folder must be the tagged build for `variant`
 ///    (hard fail otherwise: that is the T3a CPU-torch swap).
 /// 2. One `python -c` records `torch.version.cuda` / `cuda.is_available()`.
-///    On cu124, CUDA being unavailable is a warning only (driver issue).
+///    On a GPU build, CUDA being unavailable is a warning only (driver issue).
 async fn verify_build(
     emit: &events::Emitter,
     venv_dir: &Path,
@@ -283,7 +289,7 @@ async fn verify_build(
         cuda.as_deref().unwrap_or("none"),
         available.map_or("?".into(), |b| b.to_string())
     ));
-    if variant == CudaVariant::Cu124 && available != Some(true) {
+    if variant.is_gpu() && available != Some(true) {
         emit.log(
             "warning: the CUDA build of PyTorch is installed but no usable GPU was found. \
              Pry will run on the CPU until the NVIDIA driver is fixed.",
@@ -403,7 +409,7 @@ pub async fn bootstrap_runtime(app: AppHandle) -> Result<(), BootstrapError> {
 
 async fn install_fresh(emit: &events::Emitter, rt: &Path) -> Result<(), BootstrapError> {
     // Probe CUDA to decide wheel variant.
-    let cuda_variant = probe::cuda_variant(emit).await;
+    let cuda_variant = probe::cuda_variant(emit).await.variant;
 
     // No up-front wipe: a Missing/Broken runtime gets a new venv beside
     // whatever is there; the pointer only moves once the new one is verified.
@@ -547,10 +553,10 @@ pub fn runtime_update_status() -> Result<layout::RuntimeUpdateStatus, String> {
 pub fn spawn_post_launch_tasks(app: AppHandle, sidecar_running: bool) {
     tauri::async_runtime::spawn(async move {
         use tauri::Emitter as _;
-        let (variant, msg) = probe::detect_cuda_variant().await;
+        let (probed, msg) = probe::detect_cuda_variant().await;
         tracing::info!("background GPU re-probe: {msg}");
         if let Ok(mut g) = PROBED.lock() {
-            *g = Some(variant);
+            *g = Some(probed);
         }
         let status = current_update_status();
         if status.state == "update_available" && status.target_variant.is_some() {
