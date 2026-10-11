@@ -444,17 +444,26 @@ export function exportFileName(now: Date = new Date()): string {
  * Save `json` to a user-chosen file. Returns false when the user cancels the
  * dialog. Outside Tauri, falls back to a blob download.
  */
+let saveDialogOpen = false;
+
 export async function saveJsonFile(json: string, defaultName = exportFileName()): Promise<boolean> {
   if (isTauri()) {
-    const { save } = await import('@tauri-apps/plugin-dialog');
-    const { writeTextFile } = await import('@tauri-apps/plugin-fs');
-    const path = await save({
-      defaultPath: defaultName,
-      filters: [{ name: 'JSON', extensions: ['json'] }],
-    });
-    if (!path) return false;
-    await writeTextFile(path, json);
-    return true;
+    // A second click while the dialog is up would stack another dialog.
+    if (saveDialogOpen) return false;
+    saveDialogOpen = true;
+    try {
+      const { save } = await import('@tauri-apps/plugin-dialog');
+      const { writeTextFile } = await import('@tauri-apps/plugin-fs');
+      const path = await save({
+        defaultPath: defaultName,
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      });
+      if (!path) return false;
+      await writeTextFile(path, json);
+      return true;
+    } finally {
+      saveDialogOpen = false;
+    }
   }
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
