@@ -13,7 +13,7 @@ DISPLAY_KEYS = set(PresetDisplay.model_fields)
 EXPECTED_NEURONPEDIA = {
     "gpt2-small": ("gpt2-small", "8-res-jb"),
     "pythia-70m": ("pythia-70m-deduped", "3-res-sm"),
-    "gemma-2-2b": (None, None),
+    "gemma-2-2b": ("gemma-2-2b", "12-gemmascope-res-16k"),
     "gemma-2-9b": (None, None),
 }
 
@@ -74,7 +74,7 @@ def test_neuronpedia_ids_match_saelens_directory():
             continue
         entry = directory[m.sae.release]
         for layer in m.available_sae_layers:
-            sae_id = f"blocks.{layer}.{m.sae.hook}"
+            sae_id = m.sae_id(layer)
             expected = f"{m.neuronpedia_model_id}/{m.neuronpedia_release_id(layer)}"
             assert entry.neuronpedia_id[sae_id] == expected
 

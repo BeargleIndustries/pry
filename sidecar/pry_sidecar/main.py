@@ -129,7 +129,7 @@ def _prefetch_preset(manifest, push) -> None:
     else:
         fetch("download_model", 0.02, 0.40, "Model", manifest.model.hf_id, model_files)
 
-    sae_id = f"blocks.{manifest.sae.layer}.{manifest.sae.hook}"
+    sae_id = manifest.sae_id(manifest.sae.layer)
     push("download_sae", 0.40, "Checking feature map files…")
     try:
         repo_id, folder = prefetch.sae_repo_and_folder(manifest.sae.release, sae_id)
@@ -319,7 +319,11 @@ async def load(request: Request) -> Response:
                 push("load_sae", 0.82, "Preparing features…")
 
         def worker() -> None:
+            from pry_sidecar.registry import hf_token_for, license_gate_error
+
             try:
+                # Gated preset without a token: say so before any download.
+                hf_token_for(manifest)
                 _prefetch_preset(manifest, push)
                 push("load_model", 0.58, "Loading model weights…")
                 loaded = REGISTRY.load(req.preset_id, manifest, on_stage=on_stage)
@@ -327,7 +331,8 @@ async def load(request: Request) -> Response:
                 push("ready", 1.0, f"Preset '{req.preset_id}' ready.")
             except Exception as exc:
                 logger.exception("load failed for preset %r", req.preset_id)
-                push("error", 0.0, f"Load failed: {exc}")
+                gate = license_gate_error(manifest, exc)
+                push("error", 0.0, str(gate) if gate else f"Load failed: {exc}")
             finally:
                 loop.call_soon_threadsafe(queue.put_nowait, None)  # sentinel
 
@@ -894,7 +899,7 @@ async def feature_info(request: Request) -> JSONResponse:
     )
 
     # H2 fix: derive Neuronpedia ids from preset manifest instead of hardcoding.
-    # Returns None for non-GPT-2 presets (pythia, gemma) that have no coverage.
+    # Returns None for presets without Neuronpedia coverage.
     neuronpedia_model_id = manifest.neuronpedia_model_id
     release_id = manifest.neuronpedia_release_id(sae_layer)
 

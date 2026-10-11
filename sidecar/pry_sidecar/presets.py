@@ -18,6 +18,9 @@ class ModelSpec(BaseModel):
     hf_id: str
     size_mb: int
     tl_name: str
+    # TransformerLens load dtype; None keeps TL's default (float32). Gemma 2 2B
+    # needs "bfloat16" to fit a 12 GB card (float32 is ~13 GB with TL's unembed).
+    dtype: Optional[str] = None
 
 
 class SAESpec(BaseModel):
@@ -26,6 +29,10 @@ class SAESpec(BaseModel):
     hook: str = "hook_resid_pre"
     layer: int
     size_mb: int
+    # SAELens sae_id pattern with {layer} / {hook} placeholders. None means
+    # the "blocks.{layer}.{hook}" ids used by the res-jb and res-sm releases;
+    # Gemma Scope ids look like "layer_12/width_16k/canonical".
+    id_template: Optional[str] = None
 
 
 class PresetDisplay(BaseModel):
@@ -64,10 +71,15 @@ class PresetManifest(BaseModel):
         _LAYER_CATALOG: dict[str, list[int]] = {
             "gpt2-small-res-jb": list(range(12)),       # 0-11
             "pythia-70m-deduped-res-sm": list(range(6)), # blocks.0-5.hook_resid_post
-            "gemma-scope-2b-pt-res": [12],               # only configured layer
+            "gemma-scope-2b-pt-res-canonical": list(range(26)),  # layer_0-25/width_16k/canonical
             "gemma-scope-9b-pt-res": [20],               # only configured layer
         }
         return _LAYER_CATALOG.get(self.sae.release, [self.sae.layer])
+
+    def sae_id(self, layer: int) -> str:
+        """SAELens ``sae_id`` of this preset's SAE at ``layer``."""
+        template = self.sae.id_template or "blocks.{layer}.{hook}"
+        return template.format(layer=layer, hook=self.sae.hook)
 
     @property
     def neuronpedia_model_id(self) -> Optional[str]:
