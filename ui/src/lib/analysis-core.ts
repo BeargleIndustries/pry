@@ -210,7 +210,7 @@ export class AnalysisController {
       s.focusTokenIndex = response.tokens.length > 0
         ? response.tokens[response.tokens.length - 1].index
         : undefined;
-      s.saeLayer = response.sae_layer_used;
+      s.saeLayer = response.sae_layer_used ?? undefined;
     } catch (e) {
       s.error = errMsg(e);
       s.response = null;

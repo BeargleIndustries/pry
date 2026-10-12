@@ -17,6 +17,7 @@ from typing import Optional
 
 import requests
 
+from .custom_models import is_custom_id
 from .presets import PRESETS, PresetManifest
 from .registry import REGISTRY, LoadedModel, ModelRegistry
 from .schemas import (
@@ -332,14 +333,17 @@ def run_generate(req: GenerateRequest, loaded: LoadedModel) -> GenerateResponse:
     # M3 fix: guard for concurrent unload — unload() nulls model/sae while
     # holding the per-preset lock, so these can be None even on a non-None
     # LoadedModel that was fetched moments ago.
-    if loaded.model is None or loaded.sae is None:
+    # T32: a custom model (custom:<hf_id>) has no manifest and no SAE; it
+    # returns attention + predictions with empty sae_features.
+    manifest = PRESETS.get(req.preset_id)
+    if manifest is None and not is_custom_id(req.preset_id):
+        raise RuntimeError(f"unknown preset: {req.preset_id!r}")
+    has_sae = manifest is not None
+
+    if loaded.model is None or (has_sae and loaded.sae is None):
         raise RuntimeError(
             f"model '{req.preset_id}' was unloaded during inference"
         )
-
-    if req.preset_id not in PRESETS:
-        raise RuntimeError(f"unknown preset: {req.preset_id!r}")
-    manifest = PRESETS[req.preset_id]
 
     # Acquire per-preset lock for the entire inference operation to prevent
     # a concurrent unload from nulling the model mid-inference.
@@ -347,10 +351,13 @@ def run_generate(req: GenerateRequest, loaded: LoadedModel) -> GenerateResponse:
     with lock:
         model = loaded.model
         sae = loaded.sae
-        sae_layer = req.sae_layer if req.sae_layer is not None else loaded.sae_layer
-        if model is None or sae is None:
+        sae_layer = (
+            None if not has_sae
+            else req.sae_layer if req.sae_layer is not None else loaded.sae_layer
+        )
+        if model is None or (has_sae and sae is None):
             raise RuntimeError(f"model '{req.preset_id}' was unloaded during inference")
-        if sae_layer != loaded.sae_layer:
+        if has_sae and sae_layer != loaded.sae_layer:
             # The loaded SAE is trained for loaded.sae_layer only.
             raise ValueError(
                 f"Asked for layer {sae_layer} but the loaded feature map is for "
@@ -363,7 +370,7 @@ def run_generate(req: GenerateRequest, loaded: LoadedModel) -> GenerateResponse:
         tokens = [TokenInfo(index=i, text=str(s)) for i, s in enumerate(token_strs)]
 
         # -- forward pass with cache ----------------------------------------
-        resid_hook_name = sae_hook_name(manifest, sae_layer)
+        resid_hook_name = sae_hook_name(manifest, sae_layer) if has_sae else None
 
         def names_filter(name: str) -> bool:
             return name.endswith("hook_pattern") or name == resid_hook_name
@@ -398,19 +405,23 @@ def run_generate(req: GenerateRequest, loaded: LoadedModel) -> GenerateResponse:
 
         # -- SAE features at the configured layer --------------------------
         sae_start = time.perf_counter()
-        resid = cache[resid_hook_name][0]  # [seq, d_model]
-        # H5 fix: ensure resid is on the SAE's device and matches its expected dtype.
-        # In normal operation both are on the same device, but explicit cast guards
-        # against mixed-placement edge cases and sae_lens dtype expectations (float32).
-        resid = resid.to(device=sae.device, dtype=getattr(sae, "dtype", resid.dtype))
-        with torch.no_grad():
-            feature_acts = sae.encode(resid)  # [seq, d_sae]
-        sae_ms = (time.perf_counter() - sae_start) * 1000
-
         sae_features: list[TokenFeatures] = []
         unique_feature_ids: set[int] = set()
         top_k = max(1, int(req.top_k_features))
-        for token_idx in range(feature_acts.shape[0]):
+        if has_sae:
+            resid = cache[resid_hook_name][0]  # [seq, d_model]
+            # H5 fix: ensure resid is on the SAE's device and matches its expected dtype.
+            # In normal operation both are on the same device, but explicit cast guards
+            # against mixed-placement edge cases and sae_lens dtype expectations (float32).
+            resid = resid.to(device=sae.device, dtype=getattr(sae, "dtype", resid.dtype))
+            with torch.no_grad():
+                feature_acts = sae.encode(resid)  # [seq, d_sae]
+            n_feature_tokens = feature_acts.shape[0]
+        else:
+            n_feature_tokens = 0
+        sae_ms = (time.perf_counter() - sae_start) * 1000
+
+        for token_idx in range(n_feature_tokens):
             top_vals, top_ids = torch.topk(feature_acts[token_idx], top_k)
             hits: list[FeatureHit] = []
             for val, fid in zip(top_vals.tolist(), top_ids.tolist()):
@@ -469,8 +480,8 @@ def run_generate(req: GenerateRequest, loaded: LoadedModel) -> GenerateResponse:
     # H2 fix: derive Neuronpedia ids from the preset manifest instead of
     # hardcoding "gpt2-small". Returns None for non-GPT-2 presets so we skip
     # the fetch entirely rather than producing garbage 404 release ids.
-    neuronpedia_model_id = manifest.neuronpedia_model_id
-    neuronpedia_release_id = manifest.neuronpedia_release_id(sae_layer)
+    neuronpedia_model_id = manifest.neuronpedia_model_id if has_sae else None
+    neuronpedia_release_id = manifest.neuronpedia_release_id(sae_layer) if has_sae else None
 
     def _fetch_one(fid: int) -> tuple[int, tuple[Optional[str], str, tuple[str, ...]]]:
         if neuronpedia_model_id is None or neuronpedia_release_id is None:

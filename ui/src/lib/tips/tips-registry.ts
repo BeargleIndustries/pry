@@ -36,9 +36,9 @@ const CUSTOM_MODEL_VERDICT_TIP: TipDef = {
   target: '[data-tip="custom-model-verdict"]',
   placement: 'bottom',
   blurb:
-    "Custom models can be saved here but can't be loaded yet. Use one of the built-in models to run prompts.",
+    "Models you add here run attention, predictions, logit lens, DLA, head ablation and patching, but not features.",
   why:
-    "To show features, a model needs a matching feature dictionary (an SAE) trained on it. Pry can remember the model name you enter, but it can't load custom models yet, so they won't run. The built-in models are tested and work today.",
+    "To show features, a model needs a matching feature dictionary (an SAE) trained on it, and Pry only has those for its built-in models. A model you add loads without one, so the Features and Steering panels stay empty for it. Everything that reads the model's own parts still works: attention, predictions, logit lens, Why (DLA), turning heads off, and Swap & Compare.",
 };
 
 export const tipsRegistry: TipDef[] = [
@@ -215,7 +215,7 @@ export const tipsRegistry: TipDef[] = [
     why:
       "Each circle is one attention head and each square one processing layer (MLP), placed on its layer. Bigger shapes pushed the prediction harder. Blue ones pushed toward the predicted word, orange ones pushed against it. The scores come from the same estimate as the Why (DLA) tab, and only parts above the threshold are shown. A line from an earlier part to a later head shows how much the earlier part's output, copied straight through that head, pushes the predicted word: blue lines push toward it, orange lines push away, and thicker lines push harder. It leaves out other ways parts affect each other, such as changing where a head looks, and it only connects the parts shown, so treat it as a partial map. Swap & Compare can test single parts directly, not connections.",
   },
-  // Only registered when custom models are switched on (contract §7).
+  // Only registered when custom models are switched on (contract §7; on since T32).
   ...(CUSTOM_MODELS_ENABLED ? [CUSTOM_MODEL_VERDICT_TIP] : []),
   {
     id: 'neuronpedia-link',

@@ -322,6 +322,7 @@ pub fn run() {
             crash::copy_diagnostic,
             crash::list_crash_logs,
             custom_models::validate_custom_model,
+            custom_models::evaluate_custom_model,
             custom_models::add_custom_model,
             custom_models::list_custom_models,
             custom_models::remove_custom_model,

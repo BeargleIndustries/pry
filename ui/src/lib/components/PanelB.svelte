@@ -263,7 +263,7 @@
             <div data-tip={i === 0 ? 'panel-b-feature-row' : undefined} class="flex items-start gap-2">
               {#if ablationMode}
                 <button
-                  onclick={() => onToggleFeatureAblation?.(hit.id, response.sae_layer_used)}
+                  onclick={() => onToggleFeatureAblation?.(hit.id, response.sae_layer_used ?? 0)}
                   class={[
                     'mt-2 flex-shrink-0 rounded-full p-1 text-xs transition-colors',
                     isFeatureAblated(hit.id)
@@ -281,7 +281,7 @@
                 <FeatureCard
                   {hit}
                   maxActivation={maxActivation}
-                  layer={response.sae_layer_used}
+                  layer={response.sae_layer_used ?? 0}
                   {presetDisplay}
                   allTokenFeatures={response.sae_features}
                 />
