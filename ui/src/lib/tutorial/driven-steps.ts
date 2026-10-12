@@ -29,7 +29,7 @@ export const drivenSteps: DrivenStep[] = [
     blurb:
       "Filling in a classic next-word test: *The cat sat on the ___*. Almost everyone reading this just auto-completed it in their head without trying. The model has the same problem.",
     why:
-      "This sentence is a benchmark for a reason. Just about every English speaker finishes it with 'mat' on autopilot, so if the model gets it right it's just reproducing a pattern baked into the language, not proving anything deep. If it picks something weirder (floor, ground, the edge of a cliff), that's telling you something about what it was trained on, not about whether it's broken. The other interesting thing: to predict what got sat on, the model has to look *backward* through the sentence. That backward looking is exactly what Panel A is about to show. Interpretability basically starts with 'okay, which earlier words was it actually paying attention to,' and unlike a lot of AI questions, that one has a mechanical answer instead of a vibes-based one.",
+      "This sentence is a benchmark for a reason. Just about every English speaker finishes it with 'mat' on autopilot, so if the model gets it right it's just reproducing a pattern baked into the language, not proving anything deep. If it picks something weirder (floor, ground, the edge of a cliff), that's telling you something about what it was trained on, not about whether it's broken. The other interesting thing: to predict what got sat on, the model has to look *backward* through the sentence. That backward looking is exactly what the Attention tab is about to show. Interpretability basically starts with 'okay, which earlier words was it actually paying attention to,' and unlike a lot of AI questions, that one has a mechanical answer instead of a vibes-based one.",
     target: 'prompt-input',
     action: (ctx) => {
       ctx.setPrompt('The cat sat on the');
@@ -50,9 +50,9 @@ export const drivenSteps: DrivenStep[] = [
   {
     id: '1.4',
     blurb:
-      'The model just read the sentence token by token, trying to predict the next word at every single position. Panel A is showing what it was paying attention to while it did that.',
+      'The model just read the sentence token by token, trying to predict the next word at every single position. The Attention tab is showing what it was paying attention to while it did that.',
     why:
-      "Here's a thing that surprises people. A transformer isn't really making one prediction. It's making a prediction at every word position at the same time, using the same machinery over and over (all twelve layers of it, if you're counting). The prediction you'd usually care about is the one at the last position. Pry isn't showing you those predictions yet, that's a planned panel for later. What it IS showing is the attention, basically the model's internal notes on which earlier words it used to build each prediction. So Panel A isn't the answer. It's the model showing its work. And showing your work is the part that's actually hard to fake. Outputs can be memorized. The pattern of which words looked at which other words, usually not.",
+      "Here's a thing that surprises people. A transformer isn't really making one prediction. It's making a prediction at every word position at the same time, using the same machinery over and over (all twelve layers of it in GPT-2 small, if you're counting). The prediction you'd usually care about is the one at the last position, and you can see it in the Predictions tab. What this tab shows is the attention, basically the model's internal notes on which earlier words it used to build each prediction. So the attention grid isn't the answer. It's the model showing its work. And showing your work is the part that's actually hard to fake. Outputs can be memorized. The pattern of which words looked at which other words, usually not.",
     target: 'panel-a-heatmap',
     action: (ctx) => {
       ctx.setActiveTab('attention');
@@ -61,7 +61,7 @@ export const drivenSteps: DrivenStep[] = [
   {
     id: '1.5',
     blurb:
-      "Clicking the 'cat' token. Panel A just reframed. Every cell is now about what *cat* was paying attention to, not the whole sentence at once.",
+      "Clicking the 'cat' token. The attention grid just reframed. Every cell is now about what *cat* was paying attention to, not the whole sentence at once.",
     why:
       "Attention is a huge table of 'who was looking at who,' but at any given moment you want to ask a specific question. When the model was working on *this* word, which earlier words did it actually look at? The token strip up top lets you pick the focus, and the grid below instantly re-computes around whatever you click. It's not showing you a different model, it's showing you a different slice of the same underlying data. Sort of like a mall security office where every camera is always recording, but the guard can only actually watch one screen at a time. You pick which camera to watch. 'Show me the whole model' is impossible. 'Show me what it did at this exact word' is completely doable, and it turns out to be way more useful anyway.",
     target: 'panel-a-heatmap',
@@ -75,12 +75,12 @@ export const drivenSteps: DrivenStep[] = [
   {
     id: '1.6',
     blurb:
-      "Every cell in that grid is one attention head at one layer. Switching the Agg dropdown from Max to Mean. Watch the pattern change. Same data, different question.",
+      "Every cell in that grid is one attention head at one layer. Switching the dropdown from Strongest look to Previous word. Watch the pattern change. Same data, different question.",
     why:
-      "GPT-2 small has twelve layers, each with twelve attention heads. That's the rows and columns in the grid (144 specialists, basically, all of them doing slightly different things). For whichever token you've focused, Pry takes that token's attention numbers at each head and has to squish them down into one number so it can color a cell. How it squishes depends on the Agg dropdown. **Max** asks 'did this head lock hard onto one specific earlier word?' **Mean** asks 'was attention peaky or spread thin?' **Entropy** asks 'how spread out was the focus, was this head basically refusing to choose?' Three different questions, same underlying numbers. Researchers flip through these constantly. Max is good for spotting heads that just copy. Mean shows general engagement. Entropy flags heads that are basically phoning it in, which, it turns out, a lot of heads do most of the time.",
+      "GPT-2 small has twelve layers, each with twelve attention heads. That's the rows and columns in the grid (144 specialists, basically, all of them doing slightly different things). For whichever word you've focused, Pry takes that word's attention at each head and has to squish it down into one number so it can color a cell. How it squishes depends on the dropdown. **Strongest look** asks 'did this head lock hard onto one earlier word?' **Spread** asks 'did it focus on one word, or scatter across many?' **Looks back** asks 'how far back in the sentence did it look, on average?' **Previous word** asks 'how much did it look at the word right before?' Flip FROM to TO and the questions turn around (how the later words looked back at this one), and you also get **Average received**: how much attention this word got, on average, from the words after it. Same underlying numbers, different questions. Previous word is a good one to start with. A few heads light up bright because a big part of their job is tracking the word right before, which is one of the simplest patterns researchers have found in these models.",
     target: 'panel-a-agg-selector',
     action: (ctx) => {
-      ctx.setPanelAAggregation('mean');
+      ctx.setPanelAAggregation('previous');
     },
   },
   {
@@ -120,9 +120,9 @@ export const drivenSteps: DrivenStep[] = [
   },
   {
     id: '2.3',
-    blurb: 'Now look at Panel B on the right \u2014 the feature explorer. If your screen is narrow, I\'ll switch the tab for you.',
+    blurb: 'Now look at the Features tab on the right. If your screen is narrow, I\'ll switch the tab for you.',
     why:
-      "Panel B shows the top SAE features that fired on whatever token you've focused, sorted by how strongly each one activated. Each row has a label (auto-generated from the feature's strongest training examples via Neuronpedia), a bar showing the activation strength, and a peek at the sort of text where that feature usually lights up. Labels aren't always great. SAE feature labeling is a whole active research area on its own, and sometimes the auto-label undersells what the feature actually captures, so always sanity-check against the example text. Think of Panel B as a list of concepts the model knows about, ranked by how loud each one was yelling about this specific word.",
+      "The Features tab shows the top SAE features that fired on whatever token you've focused, sorted by how strongly each one activated. Each row has a label (auto-generated from the feature's strongest training examples via Neuronpedia), a bar showing the activation strength, and a peek at the sort of text where that feature usually lights up. Labels aren't always great. SAE feature labeling is a whole active research area on its own, and sometimes the auto-label undersells what the feature actually captures, so always sanity-check against the example text. Think of it as a list of concepts the model knows about, ranked by how loud each one was yelling about this specific word.",
     target: 'tab-features',
     action: (ctx) => {
       ctx.setActiveTab('features');
@@ -131,7 +131,7 @@ export const drivenSteps: DrivenStep[] = [
   {
     id: '2.4',
     blurb:
-      "Clicking the 'she' token. That tells Panel B to show me the features that fired on that word specifically.",
+      "Clicking the 'she' token. That tells the Features tab to show the features that fired on that word specifically.",
     why:
       "Features are per-token. The model's internal state at each word position is one vector, and the SAE decomposes that one vector. So 'the SAE features of the prompt' isn't really a thing you can ask for, you always have to ask 'features on this one token.' Which means picking the right token matters a lot. On content words like 'nurse' you tend to get semantically rich features (healthcare, caregiving, specific job-role stuff). On function words like 'the' or 'would' you mostly get grammatical features. 'She' is the interesting one here because it's a pronoun, and pronouns have to carry an opinion about who they're referring to. The features firing on 'she' are basically the model's best guess about who 'she' is, frozen in place for us to look at.",
     target: 'panel-b-token-strip',
@@ -159,7 +159,7 @@ export const drivenSteps: DrivenStep[] = [
     blurb:
       "Now try something. I'm switching the SAE from layer 8 to layer 2. Watch how the features completely change. Same token, different depth in the model.",
     why:
-      "The model has 12 layers, and each one builds on the last. Early layers (0-3 or so) tend to catch surface stuff, grammar, word shapes, the kind of patterns you'd spot in a sentence diagram. Later layers (8-11) catch meaning, roles, relationships between concepts. Layer 8 is where we started because it's deep enough to see semantic features but not so deep that everything becomes abstract mush. Switching to layer 2 on the same 'she' token is going to show you a completely different set of features, more about the word itself and less about what it means in context. This is why layer selection matters: the question isn't just 'what features fired' but 'what features fired at what depth,' and the answer changes a lot.",
+      "GPT-2 small has 12 layers, and each one builds on the last. Early layers (0-3 or so) tend to catch surface stuff, grammar, word shapes, the kind of patterns you'd spot in a sentence diagram. Later layers (8-11) catch meaning, roles, relationships between concepts. Layer 8 is where we started because it's deep enough to see semantic features but not so deep that everything becomes abstract mush. Switching to layer 2 on the same 'she' token is going to show you a completely different set of features, more about the word itself and less about what it means in context. This is why layer selection matters: the question isn't just 'what features fired' but 'what features fired at what depth,' and the answer changes a lot.",
     target: 'panel-b-layer-selector',
     awaitLayerSwitch: true,
     action: (ctx) => {

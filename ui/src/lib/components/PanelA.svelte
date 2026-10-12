@@ -1,12 +1,18 @@
 <script lang="ts">
   import { viridis } from '$lib/viridis';
   import type { GenerateResponse, AblateResponse } from '$lib/types';
+  import {
+    FROM_OPTIONS,
+    TO_OPTIONS,
+    DEFAULT_AGG,
+    isValidAgg,
+    aggregateHead,
+    type Aggregation,
+  } from '$lib/attention-agg';
 
   // ---------------------------------------------------------------------------
   // Props
   // ---------------------------------------------------------------------------
-
-  type Aggregation = 'max' | 'mean' | 'entropy';
 
   interface Props {
     response: GenerateResponse | null;
@@ -100,52 +106,44 @@
   // Aggregation helpers
   // ---------------------------------------------------------------------------
 
-  function aggregate(values: number[], method: Aggregation): number {
-    if (values.length === 0) return 0;
-    if (method === 'max') {
-      let m = -Infinity;
-      for (const v of values) if (v > m) m = v;
-      return m;
-    }
-    if (method === 'mean') {
-      return values.reduce((a, b) => a + b, 0) / values.length;
-    }
-    // entropy: -sum(p log p), normalized to [0, 1] by dividing by log(n)
-    const maxEntropy = Math.log(values.length);
-    if (maxEntropy === 0) return 0;
-    let ent = 0;
-    for (const p of values) {
-      if (p > 1e-9) ent -= p * Math.log(p);
-    }
-    return ent / maxEntropy;
-  }
+  const NOT_DEFINED_MSG = 'Not defined for the first word: it can only look at itself.';
 
-  // Returns a nLayers × nHeads grid of aggregated values (raw, before normalizing)
-  const rawGrid = $derived.by<number[][]>(() => {
+  // The sidecar only keeps attention for the first 64 words of long prompts.
+  const ATTENTION_LIMIT = 64;
+  const truncated = $derived(response?.attention_truncated === true);
+  const focusPastLimit = $derived(truncated && effectiveFocusArrayPos >= ATTENTION_LIMIT);
+  const nullCellMsg = $derived(
+    focusPastLimit ? `No attention data past the first ${ATTENTION_LIMIT} words.` : NOT_DEFINED_MSG,
+  );
+
+  const aggOptions = $derived(focusMode === 'from' ? FROM_OPTIONS : TO_OPTIONS);
+
+  // If the current aggregation isn't valid for this mode, fall back to the default.
+  $effect(() => {
+    if (!isValidAgg(focusMode, aggregation)) aggregation = DEFAULT_AGG;
+  });
+
+  // nLayers x nHeads grid of aggregated values (raw, before normalizing); null = undefined
+  const rawGrid = $derived.by<(number | null)[][]>(() => {
     if (!response || nLayers === 0 || nHeads === 0) return [];
     const fi = effectiveFocusArrayPos;
-    const grid: number[][] = [];
+    const grid: (number | null)[][] = [];
+    if (focusPastLimit) {
+      for (let l = 0; l < nLayers; l++) grid.push(new Array<number | null>(nHeads).fill(null));
+      return grid;
+    }
     for (let l = 0; l < nLayers; l++) {
-      const row: number[] = [];
+      const row: (number | null)[] = [];
       for (let h = 0; h < nHeads; h++) {
         const headMatrix = attention[l]?.heads?.[h];
-        if (!headMatrix) { row.push(0); continue; }
-        let vals: number[];
-        if (focusMode === 'from') {
-          // Row fi: how much fi attends to each key
-          vals = headMatrix[fi] ?? [];
-        } else {
-          // Column fi: how much each query attends to fi
-          vals = headMatrix.map((row) => row[fi] ?? 0);
-        }
-        row.push(aggregate(vals, aggregation));
+        row.push(headMatrix ? aggregateHead(headMatrix, fi, focusMode, aggregation) : null);
       }
       grid.push(row);
     }
     return grid;
   });
 
-  // Normalize raw grid to [0, 1]
+  // Normalize raw grid to [0, 1] over non-null values only
   const normalizedGrid = $derived.by<number[][]>(() => {
     const g = rawGrid;
     if (g.length === 0) return [];
@@ -153,13 +151,15 @@
     let max = -Infinity;
     for (const row of g) {
       for (const v of row) {
+        if (v === null) continue;
         if (v < min) min = v;
         if (v > max) max = v;
       }
     }
     const range = max - min;
-    if (range === 0) return g.map((row) => row.map(() => 0.5));
-    return g.map((row) => row.map((v) => (v - min) / range));
+    return g.map((row) =>
+      row.map((v) => (v === null ? 0 : range > 0 ? (v - min) / range : 0.5)),
+    );
   });
 
   // ---------------------------------------------------------------------------
@@ -316,13 +316,13 @@
 </script>
 
 <!-- =========================================================================
-     Panel A — Attention Visualization
+     Attention Visualization
      ========================================================================= -->
 <div class="rounded-xl border border-zinc-700/60 bg-zinc-900 p-5 shadow-xl">
   <!-- Panel header -->
   <div class="mb-4 flex items-center justify-between">
     <h2 class="text-sm font-semibold uppercase tracking-widest text-zinc-400">
-      Panel A — Attention
+      Attention
     </h2>
     {#if response}
       <span class="rounded-full border border-zinc-700 px-2 py-0.5 text-[10px] text-zinc-500">
@@ -346,6 +346,11 @@
       <p class="text-sm text-zinc-500">Attention visualization requires at least 2 tokens.</p>
     </div>
   {:else}
+    {#if truncated}
+      <p class="mb-3 rounded border border-amber-800/60 bg-amber-950/30 px-3 py-1.5 text-xs text-amber-300">
+        Showing the first {ATTENTION_LIMIT} words. Pry only keeps attention for the start of long prompts{focusPastLimit ? ', so the word you picked is past the cutoff' : ''}.
+      </p>
+    {/if}
     <!-- -----------------------------------------------------------------------
          Token strip
          ----------------------------------------------------------------------- -->
@@ -358,6 +363,7 @@
             onclick={() => { handleTokenClick(token.index); }}
             class={[
               'rounded px-2 py-1 font-mono text-xs transition-all',
+              truncated && tokens.indexOf(token) >= ATTENTION_LIMIT ? 'opacity-40' : '',
               token.index === effectiveFocusIdx
                 ? 'border border-indigo-500 bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-500/50'
                 : 'border border-zinc-700 bg-zinc-800 text-zinc-300 hover:border-zinc-500 hover:text-zinc-100',
@@ -409,9 +415,9 @@
           bind:value={aggregation}
           class="rounded border border-zinc-700 bg-zinc-800 px-2 py-1 text-xs text-zinc-300 focus:border-indigo-500 focus:outline-none"
         >
-          <option value="max">Max</option>
-          <option value="mean">Mean</option>
-          <option value="entropy">Entropy</option>
+          {#each aggOptions as opt (opt.id)}
+            <option value={opt.id}>{opt.label}</option>
+          {/each}
         </select>
       </div>
 
@@ -564,7 +570,7 @@
             {#each { length: nLayers } as _, l}
               {#each { length: nHeads } as _, h}
                 {@const val = normalizedGrid[l]?.[h] ?? 0}
-                {@const rawVal = rawGrid[l]?.[h] ?? 0}
+                {@const rawVal = rawGrid[l]?.[h] ?? null}
                 {@const cx = LABEL_W + h * (CELL + GAP)}
                 {@const cy = LABEL_H + l * (CELL + GAP)}
                 {@const isHovered = tooltipLayer === l && tooltipHead === h}
@@ -574,13 +580,13 @@
                   y={cy}
                   width={CELL}
                   height={CELL}
-                  fill={isAbl ? '#991b1b' : viridis(val)}
+                  fill={isAbl ? '#991b1b' : rawVal === null ? '#3f3f46' : viridis(val)}
                   stroke={isAbl ? '#f87171' : isHovered ? '#6366f1' : 'transparent'}
                   stroke-width={isAbl ? 2 : isHovered ? 2 : 0}
                   rx="2"
                   style="cursor: pointer;"
                   role="gridcell"
-                  aria-label={`Layer ${l} Head ${h} value ${rawVal.toFixed(3)}`}
+                  aria-label={rawVal === null ? `Layer ${l} Head ${h}: ${nullCellMsg}` : `Layer ${l} Head ${h} value ${rawVal.toFixed(3)}`}
                   onmouseenter={(e) => onCellMouseEnter(l, h, e)}
                   onmouseleave={onCellMouseLeave}
                   onclick={() => { if (ablationMode) { onToggleAblation?.(l, h); } else { onCellClick(l, h); } }}
@@ -603,13 +609,14 @@
 
         <!-- Tooltip -->
         {#if tooltipLayer !== null && tooltipHead !== null}
+          {@const tv = rawGrid[tooltipLayer]?.[tooltipHead] ?? null}
           <div
             class="pointer-events-none fixed z-50 rounded border border-zinc-600 bg-zinc-800 px-2.5 py-1.5 text-xs shadow-lg"
             style="left: {tooltipX + 40}px; top: {tooltipY - 8}px;"
           >
             <span class="text-zinc-300">L{tooltipLayer} H{tooltipHead}</span>
             <span class="mx-1.5 text-zinc-600">·</span>
-            <span class="font-mono text-indigo-300">{(rawGrid[tooltipLayer]?.[tooltipHead] ?? 0).toFixed(4)}</span>
+            <span class="font-mono text-indigo-300">{tv === null ? nullCellMsg : tv.toFixed(4)}</span>
           </div>
         {/if}
       </div>

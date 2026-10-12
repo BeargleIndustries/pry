@@ -1,19 +1,17 @@
 <script lang="ts">
-  import type { CircuitResponse, CircuitNode, CircuitEdge } from '$lib/types';
+  import type { CircuitResponse, CircuitNode } from '$lib/types';
 
   interface Props {
     response: CircuitResponse | null;
     loading?: boolean;
-    onRun?: (source: 'dla' | 'patching', threshold?: number) => void;
+    onRun?: (threshold?: number) => void;
   }
 
   let { response, loading = false, onRun }: Props = $props();
 
-  let source = $state<'dla' | 'patching'>('dla');
   let thresholdInput = $state('');
 
   const nodes = $derived(response?.nodes ?? []);
-  const edges = $derived(response?.edges ?? []);
 
   // Layout: layers as rows (bottom to top), components as columns
   const maxLayer = $derived.by(() => {
@@ -75,7 +73,7 @@
 
   function handleRun() {
     const t = thresholdInput.trim() ? parseFloat(thresholdInput) : undefined;
-    onRun?.(source, t);
+    onRun?.(t);
     selectedNode = null;
   }
 
@@ -99,34 +97,23 @@
   data-tip="circuit-graph"
 >
   <div class="flex items-baseline gap-2">
-    <h2 class="text-sm font-semibold text-zinc-100">Circuit Graph</h2>
-    <span class="text-xs text-zinc-600">Component wiring</span>
+    <h2 class="text-sm font-semibold text-zinc-100">Key parts</h2>
+    <span class="text-xs text-zinc-600">From DLA</span>
     {#if loading}
       <span class="ml-auto inline-flex items-center gap-1.5 text-xs text-zinc-500">
         <span class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-zinc-500 border-t-transparent"></span>
-        Building graph...
+        Finding key parts...
       </span>
     {/if}
   </div>
 
+  <p class="text-xs text-zinc-400">
+    These are the heads and layers that pushed the prediction most. It doesn't show how they connect.
+  </p>
+
   <!-- Controls -->
   <div class="flex items-center gap-3 flex-wrap">
-    <label class="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Source</label>
-    <div class="flex gap-1">
-      {#each ['dla', 'patching'] as s (s)}
-        <button
-          type="button"
-          onclick={() => { source = s as 'dla' | 'patching'; }}
-          class={[
-            'rounded px-2 py-0.5 text-[10px] font-medium transition-colors',
-            source === s ? 'bg-indigo-950 text-indigo-300' : 'bg-zinc-800 text-zinc-500',
-          ].join(' ')}
-        >
-          {s === 'dla' ? 'DLA' : 'Patching'}
-        </button>
-      {/each}
-    </div>
-    <label class="text-[10px] font-medium uppercase tracking-wider text-zinc-500 ml-2">Threshold</label>
+    <label class="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Threshold</label>
     <input
       type="text"
       bind:value={thresholdInput}
@@ -139,13 +126,13 @@
       disabled={loading}
       class="ml-auto rounded bg-indigo-500 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-50"
     >
-      {loading ? 'Building...' : 'Build Circuit'}
+      {loading ? 'Finding...' : 'Find key parts'}
     </button>
   </div>
 
   {#if !response && !loading}
     <div class="flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 py-12">
-      <p class="text-sm text-zinc-600">Run a prompt first, then build a circuit to see the model's wiring diagram.</p>
+      <p class="text-sm text-zinc-600">Run a prompt first, then come back here to see which parts mattered most.</p>
     </div>
   {:else if response}
     <!-- Info -->
@@ -153,14 +140,8 @@
       <span class="text-zinc-500">Nodes:</span>
       <span class="text-zinc-300">{nodes.length}</span>
       <span class="mx-1 text-zinc-700">|</span>
-      <span class="text-zinc-500">Edges:</span>
-      <span class="text-zinc-300">{edges.length}</span>
-      <span class="mx-1 text-zinc-700">|</span>
       <span class="text-zinc-500">Threshold:</span>
       <span class="text-zinc-300">{response.threshold.toFixed(4)}</span>
-      <span class="mx-1 text-zinc-700">|</span>
-      <span class="text-zinc-500">Source:</span>
-      <span class="text-zinc-300">{response.source}</span>
     </div>
 
     {#if nodes.length === 0}
@@ -168,7 +149,7 @@
         <p class="text-sm text-zinc-600">No components exceed the threshold. Try lowering it.</p>
       </div>
     {:else}
-      <!-- SVG Graph -->
+      <!-- Key parts, one row per layer -->
       <div class="overflow-auto rounded-md border border-zinc-800 bg-zinc-900/40 p-2">
         <svg
           width={svgWidth}
@@ -176,22 +157,6 @@
           viewBox="0 0 {svgWidth} {svgHeight}"
           class="mx-auto"
         >
-          <!-- Edges -->
-          {#each edges as edge (edge.source + '-' + edge.target)}
-            {@const from = nodePositions.get(edge.source)}
-            {@const to = nodePositions.get(edge.target)}
-            {#if from && to}
-              <line
-                x1={from.x}
-                y1={from.y}
-                x2={to.x}
-                y2={to.y}
-                stroke="rgba(148, 163, 184, {Math.min(edge.weight * 2, 0.6)})"
-                stroke-width={Math.max(1, edge.weight * 4)}
-              />
-            {/if}
-          {/each}
-
           <!-- Layer labels -->
           {#each Array(maxLayer + 1) as _, layer}
             <text

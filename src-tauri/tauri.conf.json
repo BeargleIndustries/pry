@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Pry",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "identifier": "com.beargle.pry",
   "app": {
     "windows": [
@@ -23,7 +23,7 @@
     "frontendDist": "../ui/build",
     "devUrl": "http://localhost:5173",
     "beforeDevCommand": "npm run dev --prefix ./ui",
-    "beforeBuildCommand": "npm run build"
+    "beforeBuildCommand": "npm run build --prefix ./ui"
   },
   "bundle": {
     "active": true,
@@ -33,7 +33,7 @@
     "longDescription": "Local-first desktop interpretability tool for small transformer LLMs.",
     "copyright": "© 2026 Beargle Industries",
     "publisher": "Beargle Industries",
-    "homepage": "https://beargle.com/pry",
+    "homepage": "https://beargleindustries.com",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -43,12 +43,7 @@
     "resources": [
       "../sidecar/pyproject.toml",
       "../sidecar/presets.json",
-      "../sidecar/pry_sidecar/__init__.py",
-      "../sidecar/pry_sidecar/main.py",
-      "../sidecar/pry_sidecar/schemas.py",
-      "../sidecar/pry_sidecar/registry.py",
-      "../sidecar/pry_sidecar/presets.py",
-      "../sidecar/pry_sidecar/inference.py"
+      "../sidecar/pry_sidecar/*.py"
     ],
     "windows": {
       "certificateThumbprint": null,

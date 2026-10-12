@@ -3,26 +3,29 @@ use std::os::windows::process::CommandExt;
 use std::path::Path;
 use tokio::process::Command;
 
-pub async fn create(emit: &Emitter, runtime_dir: &Path) -> Result<(), BootstrapError> {
+/// Create a venv at `venv_dir` from the shared PBS interpreter `base_python`
+/// (`runtime\python.exe`). Venv paths come from `layout`; nothing here builds one.
+pub async fn create(
+    emit: &Emitter,
+    base_python: &Path,
+    venv_dir: &Path,
+) -> Result<(), BootstrapError> {
     emit.stage(BootstrapStage::CreatingVenv, "creating virtual environment...");
 
-    // python-build-standalone ships python.exe at the root of runtime_dir after the move.
-    let python_exe = runtime_dir.join("python.exe");
-    if !python_exe.exists() {
+    if !base_python.exists() {
         return Err(BootstrapError::Venv(format!(
             "python.exe not found at {}",
-            python_exe.display()
+            base_python.display()
         )));
     }
 
-    let venv_dir = runtime_dir.join("venv");
     let venv_dir_str = venv_dir.to_str().ok_or_else(|| {
         BootstrapError::Internal(format!(
             "venv path not valid UTF-8: {}",
             venv_dir.display()
         ))
     })?;
-    let output = Command::new(&python_exe)
+    let output = Command::new(base_python)
         .args(["-m", "venv", venv_dir_str])
         .creation_flags(0x08000000) // CREATE_NO_WINDOW
         .output()
@@ -39,12 +42,4 @@ pub async fn create(emit: &Emitter, runtime_dir: &Path) -> Result<(), BootstrapE
 
     emit.progress(BootstrapStage::CreatingVenv, "venv created", 1.0);
     Ok(())
-}
-
-pub fn venv_python(runtime_dir: &Path) -> std::path::PathBuf {
-    runtime_dir.join("venv").join("Scripts").join("python.exe")
-}
-
-pub fn venv_pip(runtime_dir: &Path) -> std::path::PathBuf {
-    runtime_dir.join("venv").join("Scripts").join("pip.exe")
 }

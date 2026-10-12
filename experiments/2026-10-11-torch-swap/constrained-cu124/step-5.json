@@ -1,0 +1,20 @@
+{
+  "pip_version": "25.0.1",
+  "environment": {
+    "python_full_version": "3.12.13"
+  },
+  "install_count": 1,
+  "install": [
+    {
+      "name": "pry-sidecar",
+      "version": "0.1.0",
+      "requested": true,
+      "url": "file:///C:/Users/Brad/AppData/Local/Temp/pry-replay/constrained-cu124/sidecar",
+      "requires_torch_or_tl": [
+        "sae-lens<6,>=5.0",
+        "torch==2.5.*",
+        "transformer-lens<3,>=2.11"
+      ]
+    }
+  ]
+}

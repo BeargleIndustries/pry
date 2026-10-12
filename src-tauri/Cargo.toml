@@ -1,6 +1,6 @@
 [package]
 name = "pry"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "Pry open the black box — local-first interpretability desktop app"
 license = "MIT"
@@ -60,6 +60,7 @@ windows = { version = "0.58", features = [
     "Win32_Graphics_Dxgi_Common",
     "Win32_Security",
     "Win32_Security_Credentials",
+    "Win32_Storage_FileSystem",
 ] }
 
 [target.'cfg(any(target_os = "windows", target_os = "linux"))'.dependencies]

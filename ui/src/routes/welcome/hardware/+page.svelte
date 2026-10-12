@@ -39,8 +39,8 @@
   <div class="mb-1 font-mono text-xs uppercase tracking-widest text-indigo-400">step 02</div>
   <h2 class="mb-2 text-2xl font-semibold text-zinc-100">Checking your hardware</h2>
   <p class="mb-6 text-sm text-zinc-400">
-    Pry needs to know what it's working with so it can pick sane defaults for batch sizes, dtype,
-    and which presets actually fit.
+    Pry checks your graphics card and memory so it can tell you which models will fit on this
+    computer.
   </p>
 
   {#if error}

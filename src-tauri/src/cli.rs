@@ -12,7 +12,9 @@ pub mod hardware;
 // The real implementations live in lib.rs (the Tauri app).
 mod bootstrap {
     use std::path::PathBuf;
-    pub fn is_runtime_ready() -> bool { false }
+    pub fn active_runtime_python() -> anyhow::Result<PathBuf> {
+        anyhow::bail!("bootstrap not available in pry-cli")
+    }
     pub fn runtime_dir() -> anyhow::Result<PathBuf> {
         anyhow::bail!("bootstrap not available in pry-cli")
     }

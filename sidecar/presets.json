@@ -27,7 +27,7 @@
       "license_gate": "huggingface_gemma",
       "tier": "power_user",
       "enabled": false,
-      "enabled_comment": "Tier 2 preset stays disabled until Bet 3 (Gemma-2 TL + Gemma Scope SAE) passes. See plan §7 Phase 1/Bet 3."
+      "enabled_comment": "Disabled until Gemma model + SAE loading is validated in Pry."
     },
     {
       "id": "gemma-2-9b",

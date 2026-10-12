@@ -73,11 +73,10 @@ pub fn evaluate_preset(
         };
     }
 
-    // Disabled preset (e.g. Gemma locked until Bet 3 validation passes)
+    // Disabled preset (e.g. Gemma, locked until its model + SAE are validated)
     if !enabled {
         notes.push(
-            "Disabled pending Bet 3 validation (Gemma-2 TransformerLens + Gemma Scope SAE \
-             smoketest must pass before this preset is unlocked)."
+            "Coming soon. This model isn't available in Pry yet."
                 .into(),
         );
         return PresetCompatibility {
@@ -234,7 +233,7 @@ mod tests {
         let hw = fake_4070_super();
         let result = evaluate_preset("gemma-2-2b", 8000, Some("huggingface_gemma"), false, &hw);
         assert_eq!(result.verdict, Compatibility::Insufficient);
-        assert!(result.notes.iter().any(|n| n.contains("Bet 3")));
+        assert!(result.notes.iter().any(|n| n.contains("Coming soon")));
     }
 
     // If gemma-2-2b were enabled: usable=10288, estimate=8000, headroom=2288 → Comfortable

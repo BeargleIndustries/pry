@@ -25,7 +25,7 @@
     'gpt2-small': {
       id: 'gpt2-small',
       display: 'GPT-2 small',
-      subtitle: '124M params · the classic interp playground. Start here.',
+      subtitle: 'The small, well-studied model the tour uses. Start here.',
       size: '600 MB',
       flagship: true,
       locked: false,
@@ -33,7 +33,7 @@
     'pythia-410m': {
       id: 'pythia-410m',
       display: 'Pythia-410M',
-      subtitle: 'EleutherAI · clean training data · good for circuits work.',
+      subtitle: 'A different small model, from EleutherAI. Good for comparing with GPT-2.',
       size: '1.6 GB',
       flagship: false,
       locked: false,
@@ -41,7 +41,7 @@
     'pythia-1.4b': {
       id: 'pythia-1.4b',
       display: 'Pythia-1.4B',
-      subtitle: 'Bigger Pythia. Needs more VRAM but sees more structure.',
+      subtitle: 'A bigger Pythia. Needs a stronger graphics card.',
       size: '5.6 GB',
       flagship: false,
       locked: false,
@@ -49,7 +49,7 @@
     'gemma-2-2b': {
       id: 'gemma-2-2b',
       display: 'Gemma-2-2B',
-      subtitle: 'Google · power-user tier. Requires a HuggingFace account.',
+      subtitle: 'Google · larger model. Requires a HuggingFace account.',
       size: '10 GB',
       flagship: false,
       locked: true,
@@ -57,7 +57,7 @@
     'gemma-2-9b': {
       id: 'gemma-2-9b',
       display: 'Gemma-2-9B',
-      subtitle: 'Stretch goal · 24GB+ VRAM recommended.',
+      subtitle: 'Very large. Needs a graphics card with 24 GB+ of memory.',
       size: '36 GB',
       flagship: false,
       locked: true,
@@ -98,10 +98,10 @@
 
 <div class="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-8 backdrop-blur">
   <div class="mb-1 font-mono text-xs uppercase tracking-widest text-indigo-400">step 04</div>
-  <h2 class="mb-2 text-2xl font-semibold text-zinc-100">Pick a starter preset</h2>
+  <h2 class="mb-2 text-2xl font-semibold text-zinc-100">Pick a starter model</h2>
   <p class="mb-6 text-sm text-zinc-400">
-    A preset is a model + tokenizer + SAE bundle. You can add more later. If you're just looking
-    around, skip this and grab one from inside the app.
+    Each choice is a model plus the feature detector (SAE) that goes with it. You can add more
+    later. If you're just looking around, skip this and pick one from inside the app.
   </p>
 
   {#if error}
@@ -113,7 +113,7 @@
   {#if presets.length === 0 && !error}
     <div class="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-950/40 p-6">
       <div class="h-2 w-2 animate-pulse rounded-full bg-indigo-500"></div>
-      <span class="text-sm text-zinc-500">Evaluating presets…</span>
+      <span class="text-sm text-zinc-500">Checking which models fit…</span>
     </div>
   {/if}
 

@@ -146,15 +146,15 @@
   <div class="mb-1 font-mono text-xs uppercase tracking-widest text-indigo-400">step 03</div>
   <h2 class="mb-2 text-2xl font-semibold text-zinc-100">Installing the runtime</h2>
   <p class="mb-6 text-sm text-zinc-400">
-    Downloading a bundled Python, PyTorch, TransformerLens, and SAE Lens. This is a one-time
-    setup — after this, launches are instant.
+    Downloading Python and the libraries Pry uses to run models. It's about a 2.5 GB download,
+    roughly 5–15 minutes on home internet. You only need to do this once.
   </p>
 
   {#if failed}
     <div class="mb-5 rounded-lg border border-red-800 bg-red-950/40 p-5">
       <div class="mb-2 flex items-center gap-2 text-red-300">
         <AlertTriangle class="h-5 w-5" />
-        <span class="font-semibold">Bootstrap failed</span>
+        <span class="font-semibold">Setup failed</span>
       </div>
       <div class="mb-4 max-h-40 overflow-auto rounded border border-red-900/60 bg-black/40 p-3 font-mono text-xs text-red-300/90">
         {errorDetail}

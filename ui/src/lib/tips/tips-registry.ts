@@ -37,9 +37,9 @@ export const tipsRegistry: TipDef[] = [
     target: '[data-tip="panel-a-heatmap"]',
     placement: 'right',
     blurb:
-      "Attention is how the model decides which earlier words to focus on when predicting the next one. Each cell here is one attention head at one layer (12 layers \u00d7 12 heads, so 144 attention heads all doing slightly different things). Rows are layers, columns are heads, and brightness is how much attention this cell paid to the currently-focused token.",
+      "Attention is how the model decides which earlier words to focus on when predicting the next one. Each cell here is one attention head at one layer (in GPT-2 small that's 12 layers \u00d7 12 heads, so 144 heads all doing slightly different things). Rows are layers, columns are heads, and brightness is how much attention this cell paid to the currently-focused token.",
     why:
-      "The heatmap is a survey, not the content of attention itself. What it shows is this: for whichever token you clicked up in the token strip, how hard did each (layer, head) pair engage with earlier words in the sentence? A bright cell means this head was doing real work on this token. A dim cell means it basically phoned it in. You can switch the Agg dropdown to control how Pry squishes a whole attention distribution down to one cell value. Click any cell to open the single-head view and see the full token-by-token matrix underneath.",
+      "The heatmap is a survey, not the content of attention itself. What it shows is this: for whichever token you clicked up in the token strip, how hard did each (layer, head) pair engage with earlier words in the sentence? A bright cell means this head was doing real work on this token. A dim cell means it basically phoned it in. You can switch the dropdown next to FROM/TO to control how Pry squishes a whole attention distribution down to one cell value. Click any cell to open the single-head view and see the full token-by-token matrix underneath.",
   },
   {
     id: 'panel-a-head-detail',
@@ -57,9 +57,9 @@ export const tipsRegistry: TipDef[] = [
     target: '[data-tip="panel-a-agg-selector"]',
     placement: 'bottom',
     blurb:
-      "Max, Mean, or Entropy. Three different questions about the same attention data. The heatmap re-colors based on which one you're asking.",
+      "Different questions about the same attention data. The heatmap re-colors based on which one you're asking.",
     why:
-      "Every cell in the grid has to boil a whole attention distribution down to one number for coloring. Max asks 'did this head lock hard onto one specific earlier word?' Mean asks 'was attention peaky, or spread thin?' Entropy asks 'how undecided was this head, was it basically refusing to choose?' Researchers flip through these constantly. Max surfaces copy-paste-style heads. Mean shows general engagement. Entropy flags heads that are essentially phoning it in. Same underlying numbers, three completely different pictures of what the model was doing.",
+      "Every cell in the grid has to boil a whole attention pattern down to one number for coloring. In FROM mode: Strongest look asks 'how hard did this head lock onto one earlier word?' Spread asks 'did it focus on one word or scatter across many?' Looks back asks 'how far back in the sentence did it look, on average?' Previous word asks 'how much did it look at the word right before?', which lights up heads that track the previous word. TO mode flips the direction (how the later words looked back at this one) and adds Average received: how much attention this word got, on average, from the words after it. The first word has nothing earlier to look at, so some of these don't apply to it and its cells show grey.",
   },
   {
     id: 'panel-a-token-strip',
@@ -76,7 +76,7 @@ export const tipsRegistry: TipDef[] = [
     target: '[data-tip="panel-b-token-strip"]',
     placement: 'bottom',
     blurb:
-      "Same idea as Panel A's token strip, different job. Click a token and Panel B shows the internal concepts (called SAE features) that lit up for that specific word.",
+      "Same word strip as the Attention tab, different job. Click a word and the Features tab shows the internal concepts (called SAE features) that lit up for that specific word.",
     why: null,
   },
   {
@@ -93,7 +93,7 @@ export const tipsRegistry: TipDef[] = [
     target: '[data-tip="panel-a-from-selector"]',
     placement: 'bottom',
     blurb:
-      "FROM is the token whose attention you're viewing. The grid shows where this token was looking when the model computed its prediction.",
+      "FROM shows where the focused word was looking. Each cell sums up how one head spread this word's attention over the earlier words.",
     why: null,
   },
   {
@@ -101,7 +101,7 @@ export const tipsRegistry: TipDef[] = [
     target: '[data-tip="panel-a-to-selector"]',
     placement: 'bottom',
     blurb:
-      "TO shows which earlier token is being attended to. Click a cell in the grid to update this, or pick a target token directly.",
+      "TO flips the direction: each cell shows how the later words looked back at the focused word. Pick a different word in the strip above to change which word is focused.",
     why: null,
   },
   {
@@ -111,7 +111,7 @@ export const tipsRegistry: TipDef[] = [
     blurb:
       "Pick how deep into the model to look. Deeper layers tend to hold more abstract concepts. Switching layers re-runs the feature detector at that depth.",
     why:
-      "The model has 12 layers stacked on top of each other, each one building a richer picture. Early layers (0-3) tend to catch surface features, things like word shape, grammar, part of speech. Later layers (8-11) catch meaning, relationships, and the kind of abstract role-playing you saw with 'she' and 'nurse.' Switching layers here swaps the SAE and re-runs it at the new depth, which takes a couple seconds. The model's forward pass doesn't need to re-run, just the feature extraction. Try jumping between layer 2 and layer 10 on the same token to see the difference.",
+      "The model has a stack of layers (12 in GPT-2 small), each one building a richer picture. Early layers tend to catch surface features, things like word shape, grammar, part of speech. Later layers catch meaning, relationships, and the kind of abstract role-playing you saw with 'she' and 'nurse.' Switching layers here loads the feature detector (SAE) for the new depth and runs the model on your prompt again, which takes a few seconds. Try jumping between an early layer and a late one on the same token to see the difference.",
     tutorialStepId: '2.5b',
   },
   {
@@ -119,7 +119,7 @@ export const tipsRegistry: TipDef[] = [
     target: '[data-tip="predictions-panel"]',
     placement: 'top',
     blurb:
-      "The model's top 10 guesses for the next word, ranked by confidence. The bar shows how sure it is about each one.",
+      "The model's top 10 guesses for the next word, ranked by probability. The bar shows how likely it thinks each one is.",
     why:
       "Every time the model processes a token, it produces a probability distribution over its entire vocabulary. Basically a ranked list of every word it knows, with a percentage next to each one. This panel shows you the top 10. If the model is confident, the first bar dominates and the rest are tiny. If it's torn between options, you'll see several bars roughly the same size. That ambiguity is usually where the interesting stuff lives, because a confident model is boring to analyze and an uncertain model is telling you something about the input.",
   },
@@ -139,7 +139,7 @@ export const tipsRegistry: TipDef[] = [
     blurb:
       "What the model would predict at every layer if you forced it to answer early. You're watching it make up its mind in slow motion.",
     why:
-      "The model has 12 layers, and each one refines the prediction. At layer 0, the model barely knows what it's looking at. By layer 11, it's settled on an answer. The logit lens takes the intermediate state at each layer and asks 'if you had to predict right now, what would you say?' The brighter a cell, the more that layer's guess matches the final answer. Interesting patterns: if the correct prediction appears early (layer 2-3) and stays stable, the model 'knew' from the start. If it changes its mind at layer 7, something in layers 5-7 was doing real computational work, and that's usually where the circuits worth studying live.",
+      "Each layer refines the prediction. At the first layer, the model barely knows what it's looking at. By the last layer, it's settled on an answer. The logit lens takes the intermediate state at each layer and asks 'if you had to predict right now, what would you say?' The brighter a cell, the more that layer's guess matches the final answer. Interesting patterns: if the correct prediction appears early (layer 2-3) and stays stable, the model 'knew' from the start. If it changes its mind partway up, the layers just before the change were doing real work, and that's usually the part worth studying.",
   },
   {
     id: 'dla-waterfall',
@@ -148,14 +148,14 @@ export const tipsRegistry: TipDef[] = [
     blurb:
       "Each bar is one part of the model. Blue means it pushed toward the predicted word, red means it pushed against. The tallest bars are the parts that mattered most.",
     why:
-      "When the model predicts 'mat' after 'The cat sat on the,' every attention head and every processing layer (MLP) contributed something to that decision. Some pushed toward 'mat' (positive logit contribution, blue). Some pushed against it (negative, red). Some did basically nothing (short bar). This waterfall shows you all of them ranked by impact. The tall blue bars are the components that most wanted the model to say 'mat.' The tall red bars are the ones that wanted something else. Researchers use this to find which specific heads are 'responsible' for a prediction, and it's the first step toward understanding the circuit behind any behavior.",
+      "When the model predicts 'mat' after 'The cat sat on the,' every attention head and every processing layer (MLP) contributed something to that decision. Some pushed toward 'mat' (positive logit contribution, blue). Some pushed against it (negative, red). Some did basically nothing (short bar). This waterfall shows you all of them ranked by impact. The tall blue bars are the components that most wanted the model to say 'mat.' The tall red bars are the ones that wanted something else. Researchers use this as a first pass at finding which heads matter for a prediction. It's a simplified estimate, so the bars won't add up exactly to the model's final score.",
   },
   {
     id: 'export-button',
     target: '[data-tip="export-button"]',
     placement: 'bottom',
     blurb:
-      "Save what you're looking at as a JSON file or a screenshot. Good for sharing findings or picking up where you left off.",
+      "Saves a JSON file of this run.",
     why: null,
   },
   {
@@ -165,7 +165,7 @@ export const tipsRegistry: TipDef[] = [
     blurb:
       "Pick a feature, slide the dial to turn it up or down, hit Run. You just rewired part of the model. Compare the outputs to see what changed.",
     why:
-      "This is the part where interpretability stops being observation and becomes experimentation. When you steer a feature, you're injecting a value into the model's internal state at a specific layer. If the 'nurse' feature activates at +5 normally, you can clamp it to +15 and see whether the model starts generating more nurse-related text, or clamp it to 0 and see whether the nurse association vanishes. If the output changes the way you'd expect, that's causal evidence that the feature does what the label says. If it doesn't change, the feature might be correlated with the concept but not causally driving it. That distinction matters a lot for safety work.",
+      "This is the part where interpretability stops being observation and becomes experimentation. When you steer a feature, Pry adds that feature's direction to the model's internal state at one layer, scaled by the strength you pick. Push a 'nurse' feature with a positive strength and see whether the model starts writing more nurse-related text, or use a negative strength and see whether the nurse association fades. If the output changes the way you'd expect, that's causal evidence that the feature does what the label says. If it doesn't change, the feature might be correlated with the concept but not causally driving it. That distinction matters a lot for safety work.",
   },
   {
     id: 'ablation-head-toggle',
@@ -192,25 +192,25 @@ export const tipsRegistry: TipDef[] = [
     blurb:
       "Run two prompts, then swap one piece of the model's internal state between them. The piece that changes the answer is the one that matters.",
     why:
-      "This is the standard way researchers find circuits. You pick two prompts that the model handles differently (a 'reference' prompt and an 'altered' prompt — called 'corrupted' in ML, but it just means deliberately changed for comparison), run both, then systematically replace one component's activations from the reference run into the altered run. If swapping head 7.3's output from reference into altered makes the altered prompt behave like the reference one, that head is causally responsible for the difference. It's sort of like debugging by swapping parts until you find the one that was broken. The heatmap shows the impact of patching each component, so you can see the whole model's causal structure at a glance.",
+      "This is a standard way researchers track down which parts of a model matter. You pick two prompts that the model handles differently (an 'original' prompt and a 'changed' prompt, which researchers call 'clean' and 'corrupted'), run both, then copy one part's internal state from the original run into the changed run, one part at a time. If swapping head 7.3's output from the original into the changed run makes the changed prompt behave like the original, that head helps cause the difference. It's sort of like debugging by swapping parts until you find the one that was broken. The heatmap shows the effect of swapping each part, so you can spot the ones that matter at a glance.",
   },
   {
     id: 'circuit-graph',
     target: '[data-tip="circuit-graph"]',
     placement: 'left',
     blurb:
-      "A wiring diagram. Each node is a head or MLP layer, each edge is information flow. This is the actual circuit the model used for this prediction.",
+      "These are the heads and layers that pushed the prediction most. It doesn't show how they connect.",
     why:
-      "Everything else in Pry shows you individual components. The circuit view connects them. An attention head at layer 3 feeds into a processing step (MLP) at layer 5, which feeds into a head at layer 8. That chain of connections is a circuit, and it's what the model actually uses to go from input to output. Nodes are sized by how important they were (from DLA or patching), edges show information flow direction. Most of the graph will be dim because most components aren't involved in any given prediction. The bright, thick-edged subgraph is the circuit that matters. This is the most advanced view in Pry, and it's also the one closest to what Anthropic's internal tools look like.",
+      "Each dot is one attention head or one processing layer (MLP), placed on its layer. Bigger dots pushed the prediction harder. Blue heads pushed toward the predicted word, red ones pushed against it, and processing layers are amber. The scores come from the same estimate as the Why (DLA) tab, and only parts above the threshold are shown. Treat it as a shortlist of parts worth a closer look, not a map of how they pass information to each other. Working out those connections takes more experiments, like the ones in Swap & Compare.",
   },
   {
     id: 'custom-model-verdict',
     target: '[data-tip="custom-model-verdict"]',
     placement: 'bottom',
     blurb:
-      "Comfortable means the model fits in your GPU memory with room to spare. Tight means it fits, but barely. Insufficient means it straight-up won't run.",
+      "Custom models can be saved here but can't be loaded yet. Use one of the built-in models to run prompts.",
     why:
-      "VRAM is your graphics card's memory. Bigger models need more of it to run. Pry estimates GPU memory usage per preset (model weights plus SAE plus some overhead for inference) and compares against what your GPU can actually give. Comfortable leaves enough headroom that other processes on your machine shouldn't get crowded out. Tight means it'll probably work, but if you run anything else at the same time you may start seeing out-of-memory errors. Insufficient means the math doesn't work, period, and the preset is blocked from loading so you don't get a mid-inference crash. These estimates are conservative, so an Insufficient might actually run on some machines, but the safe default is to not let you try.",
+      "To show features, a model needs a matching feature dictionary (an SAE) trained on it. Pry can remember the model name you enter, but it can't load custom models yet, so they won't run. The built-in models are tested and work today.",
   },
   {
     id: 'neuronpedia-link',

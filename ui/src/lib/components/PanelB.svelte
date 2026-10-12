@@ -108,8 +108,8 @@
 <section class="flex flex-col gap-4 rounded-lg border border-zinc-800 bg-zinc-950 p-5">
   <!-- Panel header -->
   <div class="flex items-baseline gap-2">
-    <h2 class="text-sm font-semibold text-zinc-100">Panel B</h2>
-    <span class="text-xs text-zinc-600">SAE Feature Explorer</span>
+    <h2 class="text-sm font-semibold text-zinc-100">Features</h2>
+    <span class="text-xs text-zinc-600">Concepts that lit up (SAE)</span>
     {#if response}
       {#if availableSaeLayers.length > 1}
         <div class="ml-auto flex items-center gap-1.5" data-tip="panel-b-layer-selector" data-tour="panel-b-layer-selector">

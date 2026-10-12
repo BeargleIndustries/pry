@@ -24,8 +24,8 @@
   </p>
 
   <p class="mb-8 text-sm leading-relaxed text-zinc-500">
-    Attention patterns. Residual streams. Sparse autoencoder features. The machinery that makes
-    these models tick — visible, pokeable, yours.
+    See which earlier words the model looks at, which ideas light up inside it, and what changes
+    when you poke it. No math or coding needed.
   </p>
 
   <button
@@ -47,18 +47,17 @@
     {#if expanded}
       <div class="mt-4 space-y-3 text-sm leading-relaxed text-zinc-400">
         <p>
-          Pry is a desktop app for mechanistic interpretability research. It runs small, open
-          transformers (GPT-2, Pythia) on your own machine and gives you an interactive window
-          into their internals: attention heads, MLP neurons, residual-stream decompositions, and
-          SAE features.
+          Pry is a desktop app for learning how language models work by looking inside one. It runs
+          small, open models (like GPT-2) on your own computer and shows you what's going on
+          inside: which words the model pays attention to, and which concepts (we call them
+          features) light up as it reads.
         </p>
         <p>
-          Everything runs locally. The first launch downloads a bundled Python runtime and the
-          research libraries (TransformerLens, SAE Lens). After that, you pick a model preset, and
-          Pry takes care of the rest.
+          Everything runs on your computer. The first launch downloads the tools Pry needs to run a
+          model. After that, you pick a model, and Pry takes care of the rest.
         </p>
         <p class="text-zinc-500">
-          This setup takes a couple of minutes. Grab a coffee.
+          Setup is about a 2.5 GB download, roughly 5–15 minutes on home internet.
         </p>
       </div>
     {/if}

@@ -75,7 +75,7 @@
   <!-- Inputs -->
   <div class="flex flex-col gap-2">
     <div class="flex flex-col gap-1">
-      <label class="text-[10px] font-medium uppercase tracking-wider text-zinc-500" for="patch-clean">Clean prompt</label>
+      <label class="text-[10px] font-medium uppercase tracking-wider text-zinc-500" for="patch-clean">Original prompt</label>
       <input
         id="patch-clean"
         type="text"
@@ -85,7 +85,7 @@
       />
     </div>
     <div class="flex flex-col gap-1">
-      <label class="text-[10px] font-medium uppercase tracking-wider text-zinc-500" for="patch-corrupted">Corrupted prompt</label>
+      <label class="text-[10px] font-medium uppercase tracking-wider text-zinc-500" for="patch-corrupted">Changed prompt</label>
       <input
         id="patch-corrupted"
         type="text"
@@ -123,15 +123,15 @@
 
   {#if !response && !loading}
     <div class="flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 py-12">
-      <p class="text-sm text-zinc-600">Enter two prompts and run patching to find causally important components.</p>
+      <p class="text-sm text-zinc-600">Enter an original prompt and a changed one, then run to see which parts of the model cause the difference.</p>
     </div>
   {:else if response}
     <!-- Info bar -->
     <div class="flex flex-wrap items-center gap-2 rounded-md border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-xs">
-      <span class="text-zinc-500">Clean predicts:</span>
+      <span class="text-zinc-500">Original predicts:</span>
       <span class="font-mono text-indigo-300">"{response.clean_predicted_token}"</span>
       <span class="mx-1 text-zinc-700">|</span>
-      <span class="text-zinc-500">Corrupted predicts:</span>
+      <span class="text-zinc-500">Changed predicts:</span>
       <span class="font-mono text-red-300">"{response.corrupted_predicted_token}"</span>
       <span class="mx-1 text-zinc-700">|</span>
       <span class="text-zinc-500">Type:</span>
@@ -213,9 +213,9 @@
           <span>Effect: <span class="font-mono" class:text-indigo-400={selectedComponent.effect >= 0} class:text-red-400={selectedComponent.effect < 0}>{selectedComponent.effect.toFixed(4)}</span></span>
         </div>
         <div class="mt-1 flex gap-4 text-zinc-500">
-          <span>Clean logit: <span class="text-zinc-300">{selectedComponent.clean_logit.toFixed(3)}</span></span>
-          <span>Corrupted logit: <span class="text-zinc-300">{selectedComponent.corrupted_logit.toFixed(3)}</span></span>
-          <span>Patched logit: <span class="text-zinc-300">{selectedComponent.patched_logit.toFixed(3)}</span></span>
+          <span>Original score: <span class="text-zinc-300">{selectedComponent.clean_logit.toFixed(3)}</span></span>
+          <span>Changed score: <span class="text-zinc-300">{selectedComponent.corrupted_logit.toFixed(3)}</span></span>
+          <span>Swapped score: <span class="text-zinc-300">{selectedComponent.patched_logit.toFixed(3)}</span></span>
         </div>
       </div>
     {/if}
@@ -224,11 +224,11 @@
     <div class="flex items-center gap-4 text-[10px] text-zinc-600">
       <span class="flex items-center gap-1">
         <span class="inline-block h-2 w-4 rounded-sm bg-indigo-500/70"></span>
-        Positive (restores clean behavior)
+        Positive (brings back the original answer)
       </span>
       <span class="flex items-center gap-1">
         <span class="inline-block h-2 w-4 rounded-sm bg-red-500/70"></span>
-        Negative (pushes further from clean)
+        Negative (pushes further from the original)
       </span>
       {#if response?.timing_ms}
         <span class="ml-auto text-zinc-700">

@@ -1,0 +1,84 @@
+{
+  "pip_version": "25.0.1",
+  "environment": {
+    "python_full_version": "3.12.13"
+  },
+  "install_count": 10,
+  "install": [
+    {
+      "name": "torch",
+      "version": "2.5.1+cpu",
+      "requested": true,
+      "url": "https://download-r2.pytorch.org/whl/cpu/torch-2.5.1%2Bcpu-cp312-cp312-win_amd64.whl",
+      "requires_torch_or_tl": [
+        "sympy==1.12.1; python_version == \"3.8\"",
+        "sympy==1.13.1; python_version >= \"3.9\""
+      ]
+    },
+    {
+      "name": "sympy",
+      "version": "1.13.1",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/b2/fe/81695a1aa331a842b582453b605175f419fe8540355886031328089d840a/sympy-1.13.1-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "typing_extensions",
+      "version": "4.16.0",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "filelock",
+      "version": "4.1.1",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/d7/8b/f837f52905395ba4510fe61f753c24833fb0a9c76e21267bb9f828b664a9/filelock-4.1.1-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "fsspec",
+      "version": "2026.9.0",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/6c/c0/a98505f18594f1bce828bb159cec0fcf9860562f1a2c85913409fc8f3d9e/fsspec-2026.9.0-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "Jinja2",
+      "version": "3.1.6",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/62/a1/3d680cbfd5f4b8f15abc1d571870c5fc3e594bb582bc3b64ea099db13e56/jinja2-3.1.6-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "networkx",
+      "version": "3.7",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/7e/cd/fe58041e9011f307c490e3e17dd48cc516448f7c698a3f2d9d9d65d7e6a8/networkx-3.7-py3-none-any.whl",
+      "requires_torch_or_tl": [
+        "sympy>=1.10; extra == \"extra\""
+      ]
+    },
+    {
+      "name": "setuptools",
+      "version": "84.0.0",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/95/9c/c510029fc6ef33a6275cd2c5d3cecd6613dfd6aa401d57c54f1c18852ccf/setuptools-84.0.0-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "MarkupSafe",
+      "version": "3.0.4",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/3f/bf/62495e180b7000aaf30000fff849e933f74264638057176cf46852500adc/markupsafe-3.0.4-cp312-cp312-win_amd64.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "mpmath",
+      "version": "1.3.0",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/43/e3/7d92a15f894aa0c9c4b49b8ee9ac9850d6e63b03c9c32c0367a13ae62209/mpmath-1.3.0-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    }
+  ]
+}

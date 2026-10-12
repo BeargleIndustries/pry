@@ -1,0 +1,492 @@
+{
+  "pip_version": "25.0.1",
+  "environment": {
+    "python_full_version": "3.12.13"
+  },
+  "install_count": 65,
+  "install": [
+    {
+      "name": "transformer-lens",
+      "version": "2.15.4",
+      "requested": true,
+      "url": "https://files.pythonhosted.org/packages/46/68/ff1fee1043060b70c307e70389dff64b3259e0a6e3197ace5df0477d2983/transformer_lens-2.15.4-py3-none-any.whl",
+      "requires_torch_or_tl": [
+        "torch (>=2.2)"
+      ]
+    },
+    {
+      "name": "accelerate",
+      "version": "1.15.0",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/8a/4c/34f0450479d01195027260da68d8a3880683f1640c3ca5adf64acb3185f1/accelerate-1.15.0-py3-none-any.whl",
+      "requires_torch_or_tl": [
+        "torch>=2.0.0"
+      ]
+    },
+    {
+      "name": "beartype",
+      "version": "0.14.1",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/f6/db/8d01583b4175e0e45a6e6cd0c28db2dae38ffe5477141a7ac3a5a09c8bb9/beartype-0.14.1-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "better-abc",
+      "version": "0.0.3",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/d9/e8/7d00a23039ab74c5741736ce05d7700eb6237e83747aac4df07a5bf2d074/better_abc-0.0.3-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "datasets",
+      "version": "2.21.0",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/72/b3/33c4ad44fa020e3757e9b2fad8a5de53d9079b501e6bbc45bdd18f82f893/datasets-2.21.0-py3-none-any.whl",
+      "requires_torch_or_tl": [
+        "torch (==2.0.1) ; extra == 'benchmarks'",
+        "torch (>=2.0.0) ; extra == 'dev'",
+        "torch ; extra == 'dev'",
+        "torch ; extra == 'docs'",
+        "torch (>=2.0.0) ; extra == 'tests'",
+        "torch (>=2.0.0) ; extra == 'tests_numpy2'",
+        "torch ; extra == 'torch'"
+      ]
+    },
+    {
+      "name": "einops",
+      "version": "0.8.2",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/2a/09/f8d8f8f31e4483c10a906437b4ce31bdf3d6d417b73fe33f1a8b59e34228/einops-0.8.2-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "fancy-einsum",
+      "version": "0.0.3",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/27/14/26fc262ba70976eea9a42e67b05c67aa78a0ee38332d9d094cca5d2c5ec3/fancy_einsum-0.0.3-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "jaxtyping",
+      "version": "0.3.11",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/8b/38/c66bbdc5047f4776c2bd3e47e5295a350e3fa44d5b8942105e71c2a876a0/jaxtyping-0.3.11-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "numpy",
+      "version": "1.26.4",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/16/2e/86f24451c2d530c88daf997cb8d6ac622c1d40d19f5a031ed68a4b73a374/numpy-1.26.4-cp312-cp312-win_amd64.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "pandas",
+      "version": "3.0.6",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/bd/2a/14b3b17cd75cef4a1ee1af4234eb41cc1afe4103b98c2d80e8916abfd42b/pandas-3.0.6-cp312-cp312-win_amd64.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "rich",
+      "version": "15.0.0",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/82/3b/64d4899d73f91ba49a8c18a8ff3f0ea8f1c1d75481760df8c68ef5235bf5/rich-15.0.0-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "tqdm",
+      "version": "4.70.1",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/a7/03/921a3d3c75785aca9ebfbfcabfbc3a1be12e2ab5265deb026d55a5a3f83e/tqdm-4.70.1-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "transformers",
+      "version": "4.57.6",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/03/b8/e484ef633af3887baeeb4b6ad12743363af7cce68ae51e938e00aaa0529d/transformers-4.57.6-py3-none-any.whl",
+      "requires_torch_or_tl": [
+        "torch>=2.2; extra == \"torch\"",
+        "torch>=2.2; extra == \"serving\"",
+        "torch>=2.2; extra == \"testing\"",
+        "torch>=2.2; extra == \"deepspeed-testing\"",
+        "torch>=2.2; extra == \"all\"",
+        "torch>=2.2; extra == \"dev-torch\"",
+        "torch>=2.2; extra == \"dev-torch\"",
+        "torch>=2.2; extra == \"dev-tensorflow\"",
+        "torch>=2.2; extra == \"dev\"",
+        "torch>=2.2; extra == \"dev\"",
+        "torch>=2.2; extra == \"torchhub\""
+      ]
+    },
+    {
+      "name": "transformers-stream-generator",
+      "version": "0.0.5",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/42/c2/65f13aec253100e1916e9bd7965fe17bde796ebabeb1265f45191ab4ddc0/transformers-stream-generator-0.0.5.tar.gz",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "typeguard",
+      "version": "4.6.0",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/8f/eb/461d5f167b6f5c7d97696f397c82f82e3480e003fce3f0a1cd1dd26e2eb2/typeguard-4.6.0-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "wandb",
+      "version": "0.30.0",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/2f/e7/821c363f0a74aa9826ca058d3f6f8f8e41697001a0a869b5ccc7eca5b0e4/wandb-0.30.0-py3-none-win_amd64.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "sentencepiece",
+      "version": "0.2.2",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/8d/11/753fca2e6b109be3ab7867abf357dfe48677fe726ae5a5363d0b54ca9450/sentencepiece-0.2.2-cp312-cp312-win_amd64.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "click",
+      "version": "8.5.0",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/58/50/6c0d534c5f134586a8e1ba4e330569e32f057e33372ae556463212fb4cd3/click-8.5.0-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "dill",
+      "version": "0.3.8",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/c9/7a/cef76fd8438a42f96db64ddaa85280485a9c395e7df3db8158cfec1eee34/dill-0.3.8-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "aiohttp",
+      "version": "3.14.5",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/ae/ce/1f08114679d49655b30a6e0a29858375c94b82c1de1a0bd0a20c2fee8b02/aiohttp-3.14.5-cp312-cp312-win_amd64.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "huggingface_hub",
+      "version": "0.36.2",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/a8/af/48ac8483240de756d2438c380746e7130d1c6f75802ef22f3c6d49982787/huggingface_hub-0.36.2-py3-none-any.whl",
+      "requires_torch_or_tl": [
+        "torch; extra == \"torch\""
+      ]
+    },
+    {
+      "name": "markdown-it-py",
+      "version": "4.2.0",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/b3/81/4da04ced5a082363ecfa159c010d200ecbd959ae410c10c0264a38cac0f5/markdown_it_py-4.2.0-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "opentelemetry-api",
+      "version": "1.45.1",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/1e/41/f7dcf80b81ee8e71c1a2b59f14208bc723edbd89ed027a73b175abf6348e/opentelemetry_api-1.45.1-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "opentelemetry-exporter-otlp-proto-http",
+      "version": "1.45.1",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/aa/1f/517eaa0187ba106a9da97160ce2add3a371812681dc440930b267f714e42/opentelemetry_exporter_otlp_proto_http-1.45.1-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "opentelemetry-exporter-http-transport",
+      "version": "0.66b1",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/04/69/6af86ff66492b481c6a4c05dcfd68beb47ed8ba046440a26a2aac76b95c7/opentelemetry_exporter_http_transport-0.66b1-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "opentelemetry-exporter-otlp-common",
+      "version": "0.66b1",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/fc/39/8c23d67665c762aa51840fa06f86e902e8f6f1693bc8d7e3d98cd6e2f753/opentelemetry_exporter_otlp_common-0.66b1-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "opentelemetry-exporter-otlp-proto-common",
+      "version": "1.45.1",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/84/aa/92f225d353904e7f70b8b3e3c1b02db0cf56f744c2e83c581dc372e78873/opentelemetry_exporter_otlp_proto_common-1.45.1-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "opentelemetry-proto",
+      "version": "1.45.1",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/ab/9a/42ec8180a769516ae757e893b69736826efceac7332553915b4528a91c6d/opentelemetry_proto-1.45.1-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "opentelemetry-sdk",
+      "version": "1.45.1",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/95/3c/87c42b4bd6dd297536f04cd9383d212ac557ecd49f2cbdcd46da1c9ef5c8/opentelemetry_sdk-1.45.1-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "opentelemetry-semantic-conventions",
+      "version": "0.66b1",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/bc/14/67f8aa798857f8cf686f515bf93d9bb877ce952ddc8efae0fa25b45ce0d6/opentelemetry_semantic_conventions-0.66b1-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "packaging",
+      "version": "26.3",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/63/34/ba1c580383c9eada3711951fef0795c80b829a078d72188184bcab9dd527/packaging-26.3-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "protobuf",
+      "version": "7.36.2",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/8a/55/b77bda4e5e5f5971fb51b07663694690e9afdb9402136c16a522bd621cad/protobuf-7.36.2-cp310-abi3-win_amd64.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "pyarrow",
+      "version": "23.0.1",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/f6/70/1fdda42d65b28b078e93d75d371b2185a61da89dda4def8ba6ba41ebdeb4/pyarrow-23.0.1-cp312-cp312-win_amd64.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "pydantic",
+      "version": "2.14.0",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/2d/eb/9146591cc819d040475bf7f2be786710c7f7eb8083693bf859728da2ca9c/pydantic-2.14.0-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "pydantic_core",
+      "version": "2.50.0",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/3f/7b/5ebf3e62f5d0f6e3503ffdfffd7d0c2f8d45690afd37fa0cfdcb1786d7d6/pydantic_core-2.50.0-cp312-cp312-win_amd64.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "Pygments",
+      "version": "2.21.0",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/71/46/17f022dd3e953bf20a04a028a21ec746d942f8d2af30fa0f124fa0e6a684/pygments-2.21.0-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "python-dateutil",
+      "version": "2.9.0.post0",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "PyYAML",
+      "version": "6.0.3",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/86/bf/899e81e4cce32febab4fb42bb97dcdf66bc135272882d1987881a4b519e9/pyyaml-6.0.3-cp312-cp312-win_amd64.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "regex",
+      "version": "2026.9.29",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/93/19/489bc8db91196381c935752df01ba3f607140daece33b78d88573f028e64/regex-2026.9.29-cp312-cp312-win_amd64.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "requests",
+      "version": "2.34.2",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/a0/f4/c67b0b3f1b9245e8d266f0f112c500d50e5b4e83cb6f3b71b6528104182a/requests-2.34.2-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "safetensors",
+      "version": "0.4.5",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/f1/5f/ab6b6cec85b40789801f35b7d2fb579ae242d8193929974a106d5ff5c835/safetensors-0.4.5-cp312-none-win_amd64.whl",
+      "requires_torch_or_tl": [
+        "torch >=1.10 ; extra == 'torch'"
+      ]
+    },
+    {
+      "name": "tokenizers",
+      "version": "0.22.2",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/65/71/0670843133a43d43070abeb1949abfdef12a86d490bea9cd9e18e37c5ff7/tokenizers-0.22.2-cp39-abi3-win_amd64.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "wadler_lindig",
+      "version": "0.1.7",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/8d/96/04e7b441807b26b794da5b11e59ed7f83b2cf8af202bd7eba8ad2fa6046e/wadler_lindig-0.1.7-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "xxhash",
+      "version": "4.0.1",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/aa/02/f9413d94fae43cec6d1a74c4f12156c6f4a7f5fd50e1d34defebdee3dec9/xxhash-4.0.1-cp312-cp312-win_amd64.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "colorama",
+      "version": "0.4.6",
+      "requested": false,
+      "url": "https://download.pytorch.org/whl/colorama-0.4.6-py2.py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "multiprocess",
+      "version": "0.70.16",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/0a/7d/a988f258104dcd2ccf1ed40fdc97e26c4ac351eeaf81d76e266c52d84e2f/multiprocess-0.70.16-py312-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "platformdirs",
+      "version": "4.13.0",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/8d/15/1633010b26e88e872c93b67c0b6c5e174fb74cb6fb5c1472b4d51d4a8f22/platformdirs-4.13.0-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "psutil",
+      "version": "7.2.2",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/b4/90/e2159492b5426be0c1fef7acba807a03511f97c5f86b3caeda6ad92351a7/psutil-7.2.2-cp37-abi3-win_amd64.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "tzdata",
+      "version": "2026.5",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/94/21/1e5995a1c920cce14e4bffae20c665ec10e7ed03ab25e006cd741092b718/tzdata-2026.5-py2.py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "aiohappyeyeballs",
+      "version": "2.7.1",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/71/43/1947f06babed6b3f1d7f38b0c767f52df66bfb2bc10b468c4a7de9eceff2/aiohappyeyeballs-2.7.1-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "aiosignal",
+      "version": "1.4.0",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/fb/76/641ae371508676492379f16e2fa48f4e2c11741bd63c48be4b12a6b09cba/aiosignal-1.4.0-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "annotated-types",
+      "version": "0.8.0",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/99/91/8acff4f5e50511b911bbccb72b8628a49c68ce14148cd9f6431094859a90/annotated_types-0.8.0-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "attrs",
+      "version": "26.1.0",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/64/b4/17d4b0b2a2dc85a6df63d1157e028ed19f90d4cd97c36717afef2bc2f395/attrs-26.1.0-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "certifi",
+      "version": "2026.7.22",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/0b/a7/71ac2cff56fec219ed242bb11b8efb69fcc4bec75db06fb7bfe35de520e6/certifi-2026.7.22-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "charset-normalizer",
+      "version": "3.5.2",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/eb/e6/e6e083884cbcfd49c64865af05027fe7011be7b2d9179524f099a1b611f3/charset_normalizer-3.5.2-cp312-cp312-win_amd64.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "frozenlist",
+      "version": "1.8.0",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/b8/af/38e51a553dd66eb064cdf193841f16f077585d4d28394c2fa6235cb41765/frozenlist-1.8.0-cp312-cp312-win_amd64.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "googleapis-common-protos",
+      "version": "1.75.5",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/65/b9/6b29500a1c581ff4d77fd83c6568d068bee06f1b139fb6eb0a4f2d4bce8a/googleapis_common_protos-1.75.5-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "idna",
+      "version": "3.20",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/58/a2/bb081bab032533a855d44de1d56f8e8426114ff1ba5d1f07a438a0a654f8/idna-3.20-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "mdurl",
+      "version": "0.1.2",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "multidict",
+      "version": "7.1.0",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/61/0a/11240e5e7d2e986e288f4a6090f569ad00225b7c2c513d4096b36643f9ab/multidict-7.1.0-cp312-cp312-win_amd64.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "propcache",
+      "version": "0.5.4",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/58/7b/6e8ef26f6d510a7916064fec68d55fcbfbdf7eb01e377480d66a122152d8/propcache-0.5.4-cp312-cp312-win_amd64.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "six",
+      "version": "1.17.0",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "typing-inspection",
+      "version": "0.4.4",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/67/81/4add07e5172b7ac40d8ed5ff580409a7801a4fe26d529bdd915401dabfbe/typing_inspection-0.4.4-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "urllib3",
+      "version": "2.8.0",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/92/9d/c4e665119135114480843e7ab388fa94d8480650450e6f8e26b70d323a4c/urllib3-2.8.0-py3-none-any.whl",
+      "requires_torch_or_tl": []
+    },
+    {
+      "name": "yarl",
+      "version": "1.25.1",
+      "requested": false,
+      "url": "https://files.pythonhosted.org/packages/bb/cc/51a7b4abf4ac593b8e7eb3794b28e5a35ae26eed8bc04787628d215af82f/yarl-1.25.1-cp312-cp312-win_amd64.whl",
+      "requires_torch_or_tl": []
+    }
+  ]
+}

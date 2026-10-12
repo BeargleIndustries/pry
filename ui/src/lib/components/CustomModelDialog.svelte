@@ -92,13 +92,13 @@
         class="mb-1.5 w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
       />
       <p class="mb-4 text-xs text-zinc-500">
-        Paste any model supported by TransformerLens. You'll get attention visualization — but no SAE features unless you also provide pretrained SAE weights.
+        The name of a model on HuggingFace that TransformerLens supports.
       </p>
 
       <!-- Warning callout -->
       <div class="mb-5 rounded-md border border-yellow-800 bg-yellow-950/40 px-3 py-2" data-tip="custom-model-verdict">
         <p class="text-xs text-yellow-400">
-          ⚠️ Custom models get attention viz only. Panel B will show an empty state.
+          Custom models can be saved here but can't be loaded yet.
         </p>
       </div>
 

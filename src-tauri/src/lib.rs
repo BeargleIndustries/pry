@@ -59,7 +59,7 @@ async fn open_devtools(window: tauri::WebviewWindow) -> Result<(), String> {
 
 // ── Phase 5a: hardware probe commands ────────────────────────────────────────
 
-/// Run the hardware probe, persist the result to %APPDATA%/Pry/hardware.json,
+/// Run the hardware probe, persist the result to %LOCALAPPDATA%/Pry/hardware.json,
 /// and return the report.
 #[tauri::command]
 fn probe_hardware() -> Result<hardware::HardwareReport, AppError> {
@@ -178,14 +178,20 @@ pub fn run() {
             let state: SidecarState = Arc::new(Mutex::new(None));
             app.manage(state.clone());
 
+            // Startup gate: filesystem-only health check (no process spawn).
+            // Ok / UpdateAvailable -> launch from the active venv;
+            // Missing / Broken (or stale sidecar package) -> onboarding.
+            bootstrap::startup_migrate();
             if bootstrap::is_runtime_current() {
                 let state_for_launch = state.clone();
                 let app_handle_for_launch = app.handle().clone();
                 tauri::async_runtime::spawn(async move {
+                    let post_launch_app = app_handle_for_launch.clone();
                     match sidecar::launch_with_app(Some(app_handle_for_launch)).await {
                         Ok(handle) => {
                             tracing::info!("sidecar launched on {}", handle.base_url);
                             *state_for_launch.lock().await = Some(handle);
+                            bootstrap::spawn_post_launch_tasks(post_launch_app, true);
                         }
                         Err(e) => {
                             let detail = format!("{e:#}");
@@ -196,6 +202,7 @@ pub fn run() {
                                 tracing::warn!("failed to write crash log: {log_err}");
                             }
                             // State stays None; frontend shows error state.
+                            bootstrap::spawn_post_launch_tasks(post_launch_app, false);
                         }
                     }
                 });
@@ -220,6 +227,8 @@ pub fn run() {
             cached_hardware_report,
             bootstrap::bootstrap_runtime_command,
             bootstrap::runtime_status,
+            bootstrap::runtime_update_status,
+            bootstrap::runtime_update,
             crash::copy_diagnostic,
             crash::list_crash_logs,
             custom_models::validate_custom_model,
@@ -235,10 +244,10 @@ pub fn run() {
         .expect("error building tauri application")
         .run(|app_handle, event| {
             if let tauri::RunEvent::ExitRequested { .. } = event {
-                // H1 fix: block_on panics when called from within a Tokio
-                // worker thread ("cannot start a runtime from within a
-                // runtime"). Shutdown is best-effort fire-and-forget, so
-                // spawn is correct here.
+                // block_on panics on a Tokio worker thread, so this spawns a
+                // best-effort graceful shutdown. The process may exit before
+                // it runs; the Windows Job Object (KILL_ON_JOB_CLOSE, see
+                // sidecar.rs) is what actually guarantees the sidecar dies.
                 let app = app_handle.clone();
                 tauri::async_runtime::spawn(async move {
                     let state = app.state::<SidecarState>();

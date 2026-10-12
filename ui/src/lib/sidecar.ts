@@ -1,4 +1,5 @@
 import { isTauri } from './is-tauri';
+import { sidecarErrorMessage } from './sidecar-errors';
 
 const FALLBACK_BASE =
   (import.meta.env.VITE_PRY_SIDECAR as string | undefined) ?? 'http://127.0.0.1:8765';
@@ -74,7 +75,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     throw new SidecarError(
-      `Sidecar responded with HTTP ${res.status} on ${path}`,
+      sidecarErrorMessage(body) ?? `Sidecar responded with HTTP ${res.status} on ${path}`,
       res.status,
       body,
     );

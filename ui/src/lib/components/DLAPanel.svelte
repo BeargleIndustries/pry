@@ -44,7 +44,7 @@
 
   {#if !response && !loading}
     <div class="flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 py-12">
-      <p class="text-sm text-zinc-600">Run a prompt, then click "DLA" to see per-component logit contributions.</p>
+      <p class="text-sm text-zinc-600">Run a prompt and this tab fills in on its own, showing which parts pushed toward or against the predicted word.</p>
     </div>
   {:else if response}
     <!-- Target info -->

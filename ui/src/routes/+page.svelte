@@ -2,23 +2,9 @@
   import { onMount, onDestroy } from 'svelte';
   import { CircleHelp, Settings, Download } from 'lucide-svelte';
   import PryLogo from '$lib/components/icons/PryLogo.svelte';
-  import {
-    health,
-    getSidecarBase,
-    loadPreset,
-    unloadPreset,
-    listModels,
-    switchSaeLayer,
-    fetchLogitLens,
-    fetchDLA,
-    steerGenerate,
-    ablateHeads,
-    ablateFeatures,
-    runPatching,
-    fetchCircuit,
-  } from '$lib/sidecar';
+  import { health, loadPreset, unloadPreset, listModels } from '$lib/sidecar';
   import type { LoadProgress } from '$lib/sidecar';
-  import type { GenerateResponse, LogitLensResponse, DLAResponse, SteerResponse, AblateResponse, PatchResponse, CircuitResponse } from '$lib/types';
+  import { createAnalysis } from '$lib/analysis.svelte';
   import { cachedHardwareReport, probeHardware, evaluatePresets } from '$lib/tauri';
   import type { HardwareReport, PresetCompatibility, CustomPreset } from '$lib/tauri';
   import HardwareCard from '$lib/components/HardwareCard.svelte';
@@ -43,6 +29,7 @@
   import { resetAllTips } from '$lib/tips/coordinate';
   import { invoke } from '@tauri-apps/api/core';
   import LoadProgressBanner from '$lib/components/LoadProgressBanner.svelte';
+  import RuntimeUpdatePrompt from '$lib/components/RuntimeUpdatePrompt.svelte';
   import ModelSwitcher from '$lib/components/ModelSwitcher.svelte';
   import { tutorialState } from '$lib/tutorial/tutorial-store.svelte';
   import type { TutorialActions } from '$lib/tutorial/actions';
@@ -121,46 +108,17 @@
   const selectedPreset = $derived(activePresetId ?? 'gpt2-small');
   let loadState = $state<"idle" | "loading" | "loaded" | "error">("idle");
   let loadProgress = $state<LoadProgress | null>(null);
-  let generating = $state(false);
-  let response = $state<GenerateResponse | null>(null);
-  let error = $state<string | null>(null);
-  let focusTokenIndex = $state<number | undefined>(undefined);
-  let saeLayer = $state<number | undefined>(undefined);
-  let layerSwitching = $state(false);
-  let availableSaeLayers = $state<number[]>([]);
   let pendingLoad = $state<Promise<void> | null>(null);
 
-  // Logit Lens state (Phase B4)
-  let logitLensResponse = $state<LogitLensResponse | null>(null);
-  let logitLensLoading = $state(false);
-
-  // DLA state (Phase B5)
-  let dlaResponse = $state<DLAResponse | null>(null);
-  let dlaLoading = $state(false);
-
-  // Steering state (Phase C7)
-  let steerResponse = $state<SteerResponse | null>(null);
-  let steerLoading = $state(false);
-
-  // Head ablation state (Phase C8)
-  let headAblateResponse = $state<AblateResponse | null>(null);
-  let headAblateLoading = $state(false);
-  let headAblations = $state<{ layer: number; head: number }[]>([]);
-  let headAblationMode = $state(false);
-
-  // Feature ablation state (Phase C9)
-  let featureAblateResponse = $state<AblateResponse | null>(null);
-  let featureAblateLoading = $state(false);
-  let featureAblations = $state<{ feature_index: number; layer: number }[]>([]);
-  let featureAblationMode = $state(false);
-
-  // Patching state (Phase D10)
-  let patchResponse = $state<PatchResponse | null>(null);
-  let patchLoading = $state(false);
-
-  // Circuit state (Phase D11)
-  let circuitResponse = $state<CircuitResponse | null>(null);
-  let circuitLoading = $state(false);
+  // Generate response + all analysis state/dispatchers live in the analysis
+  // module. Analyses always use the prompt that was run (response.prompt).
+  const analysis = createAnalysis({
+    getSelectedPreset: () => selectedPreset,
+    getActivePresetId: () => activePresetId,
+    ensureLoaded,
+  });
+  const st = analysis.state;
+  const promptEdited = $derived(analysis.isPromptEdited(prompt));
 
   let loadAbortController: AbortController | null = null;
 
@@ -209,7 +167,7 @@
       try {
         loadState = "loading";
         loadProgress = null;
-        error = null;
+        st.error = null;
         await loadPreset(
           selectedPreset,
           (ev) => {
@@ -226,7 +184,7 @@
       } catch (e: any) {
         if (e?.name === "AbortError") return;
         loadState = "error";
-        error = e?.message ?? String(e);
+        st.error = e?.message ?? String(e);
         throw e;
       } finally {
         pendingLoad = null;
@@ -264,7 +222,7 @@
           const targetId = sidecarActive ?? stored ?? null;
           if (targetId) {
             const presetInfo = (models.available as any[])?.find((p: any) => p.id === targetId);
-            availableSaeLayers = presetInfo?.available_sae_layers ?? [];
+            st.availableSaeLayers = presetInfo?.available_sae_layers ?? [];
           }
         } catch { /* sidecar may not be up yet; fall through */ }
 
@@ -333,26 +291,14 @@
       });
       activePresetId = presetId;
       loadState = 'loaded';
-      saeLayer = undefined;
       // Clear ALL analysis state when switching models
-      logitLensResponse = null;
-      dlaResponse = null;
-      steerResponse = null;
-      headAblateResponse = null;
-      featureAblateResponse = null;
-      patchResponse = null;
-      circuitResponse = null;
-      response = null;
-      headAblations = [];
-      featureAblations = [];
-      headAblationMode = false;
-      featureAblationMode = false;
+      analysis.clearForModelSwitch();
       try { localStorage.setItem('pry:active_preset', presetId); } catch { /* ignore */ }
       // Repopulate available layers for the new preset
       try {
         const models = await listModels();
         const presetInfo = models.available?.find((p: any) => p.id === presetId);
-        availableSaeLayers = presetInfo?.available_sae_layers ?? [];
+        st.availableSaeLayers = presetInfo?.available_sae_layers ?? [];
       } catch { /* best-effort */ }
       bannerPhase = 'idle';
       bannerMessage = null;
@@ -371,189 +317,35 @@
   // Generate flow
   // ---------------------------------------------------------------------------
 
-  async function handleGenerate() {
-    if (generating) return;
-    error = null;
-    generating = true;
-    try {
-      await ensureLoaded();
-      const base = await getSidecarBase();
-      const resp = await fetch(`${base}/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          preset_id: selectedPreset,
-          prompt,
-          max_new_tokens: 0,
-          top_k_features: 5,
-        }),
-      });
-      if (!resp.ok) throw new Error(`/generate failed: ${resp.status}`);
-      response = await resp.json() as GenerateResponse;
-      // Clear stale Phase B/C/D responses on new generate
-      logitLensResponse = null;
-      dlaResponse = null;
-      steerResponse = null;
-      headAblateResponse = null;
-      featureAblateResponse = null;
-      patchResponse = null;
-      circuitResponse = null;
-      headAblations = [];
-      featureAblations = [];
-      headAblationMode = false;
-      featureAblationMode = false;
-      focusTokenIndex = response.tokens.length > 0
-        ? response.tokens[response.tokens.length - 1].index
-        : undefined;
-      saeLayer = response.sae_layer_used;
-    } catch (e: any) {
-      error = e.message ?? String(e);
-      response = null;
-    } finally {
-      generating = false;
-    }
-  }
-
-  async function handleLayerSwitch(layer: number) {
-    if (layerSwitching || !response || !activePresetId) return;
-    layerSwitching = true;
-    try {
-      const result = await switchSaeLayer(activePresetId, prompt, layer);
-      response = {
-        ...response,
-        sae_features: result.sae_features,
-        sae_layer_used: result.sae_layer_used,
-        timing_ms: { ...response.timing_ms, ...result.timing_ms },
-      };
-      saeLayer = layer;
-    } catch (e: any) {
-      error = e.message ?? String(e);
-    } finally {
-      layerSwitching = false;
-    }
-  }
-
-  async function handleLogitLens() {
-    if (logitLensLoading || !activePresetId) return;
-    logitLensLoading = true;
-    try {
-      await ensureLoaded();
-      logitLensResponse = await fetchLogitLens(activePresetId, prompt);
-    } catch (e: any) {
-      error = e.message ?? String(e);
-    } finally {
-      logitLensLoading = false;
-    }
-  }
-
-  async function handleDLA() {
-    if (dlaLoading || !activePresetId) return;
-    dlaLoading = true;
-    try {
-      await ensureLoaded();
-      dlaResponse = await fetchDLA(activePresetId, prompt, focusTokenIndex);
-    } catch (e: any) {
-      error = e.message ?? String(e);
-    } finally {
-      dlaLoading = false;
-    }
-  }
-
-  async function handleSteer(featureId: number, saeLayerVal: number, alpha: number) {
-    if (steerLoading || !activePresetId) return;
-    steerLoading = true;
-    try {
-      await ensureLoaded();
-      steerResponse = await steerGenerate(activePresetId, prompt, featureId, saeLayerVal, alpha);
-    } catch (e: any) {
-      error = e.message ?? String(e);
-    } finally {
-      steerLoading = false;
-    }
-  }
-
-  function toggleHeadAblation(layer: number, head: number) {
-    const idx = headAblations.findIndex((a) => a.layer === layer && a.head === head);
-    if (idx >= 0) {
-      headAblations = headAblations.filter((_, i) => i !== idx);
-    } else {
-      headAblations = [...headAblations, { layer, head }];
-    }
-  }
-
-  async function handleHeadAblation() {
-    if (headAblateLoading || !activePresetId || headAblations.length === 0) return;
-    headAblateLoading = true;
-    try {
-      await ensureLoaded();
-      headAblateResponse = await ablateHeads(activePresetId, prompt, headAblations);
-    } catch (e: any) {
-      error = e.message ?? String(e);
-    } finally {
-      headAblateLoading = false;
-    }
-  }
-
-  function toggleFeatureAblation(featureIndex: number, layer: number) {
-    const idx = featureAblations.findIndex((a) => a.feature_index === featureIndex && a.layer === layer);
-    if (idx >= 0) {
-      featureAblations = featureAblations.filter((_, i) => i !== idx);
-    } else {
-      featureAblations = [...featureAblations, { feature_index: featureIndex, layer }];
-    }
-  }
-
-  async function handleFeatureAblation() {
-    if (featureAblateLoading || !activePresetId || featureAblations.length === 0) return;
-    featureAblateLoading = true;
-    try {
-      await ensureLoaded();
-      featureAblateResponse = await ablateFeatures(activePresetId, prompt, featureAblations);
-    } catch (e: any) {
-      error = e.message ?? String(e);
-    } finally {
-      featureAblateLoading = false;
-    }
-  }
-
-  async function handlePatching(cleanPrompt: string, corruptedPrompt: string, patchType: 'head' | 'mlp' | 'resid') {
-    if (patchLoading || !activePresetId) return;
-    patchLoading = true;
-    try {
-      await ensureLoaded();
-      patchResponse = await runPatching(activePresetId, cleanPrompt, corruptedPrompt, patchType);
-    } catch (e: any) {
-      error = e.message ?? String(e);
-    } finally {
-      patchLoading = false;
-    }
-  }
-
-  async function handleCircuit(source: 'dla' | 'patching', threshold?: number) {
-    if (circuitLoading || !activePresetId) return;
-    circuitLoading = true;
-    try {
-      await ensureLoaded();
-      circuitResponse = await fetchCircuit(activePresetId, prompt, source, threshold);
-    } catch (e: any) {
-      error = e.message ?? String(e);
-    } finally {
-      circuitLoading = false;
-    }
-  }
+  // Thin wrappers so the template and tutorial keep their existing names.
+  // Generate reads the text box; every analysis uses the prompt that was run.
+  const handleGenerate = () => analysis.generate(prompt);
+  const handleLayerSwitch = (layer: number) => analysis.layerSwitch(layer);
+  const handleLogitLens = () => analysis.logitLens();
+  const handleDLA = () => analysis.dla();
+  const handleSteer = (featureId: number, saeLayerVal: number, alpha: number) =>
+    analysis.steer(featureId, saeLayerVal, alpha);
+  const toggleHeadAblation = (layer: number, head: number) => analysis.toggleHeadAblation(layer, head);
+  const handleHeadAblation = () => analysis.runHeadAblation();
+  const toggleFeatureAblation = (featureIndex: number, layer: number) =>
+    analysis.toggleFeatureAblation(featureIndex, layer);
+  const handleFeatureAblation = () => analysis.runFeatureAblation();
+  const handlePatching = (cleanPrompt: string, corruptedPrompt: string, patchType: 'head' | 'mlp' | 'resid') =>
+    analysis.patching(cleanPrompt, corruptedPrompt, patchType);
+  const handleCircuit = (threshold?: number) => analysis.circuit('dla', threshold);
 
   function handleExportJSON() {
     const data = {
-      response,
-      saeLayer,
+      response: st.response,
+      saeLayer: st.saeLayer,
       activePresetId,
-      logitLensResponse,
-      dlaResponse,
-      steerResponse,
-      headAblateResponse,
-      featureAblateResponse,
-      patchResponse,
-      circuitResponse,
+      logitLensResponse: st.logitLensResponse,
+      dlaResponse: st.dlaResponse,
+      steerResponse: st.steerResponse,
+      headAblateResponse: st.headAblateResponse,
+      featureAblateResponse: st.featureAblateResponse,
+      patchResponse: st.patchResponse,
+      circuitResponse: st.circuitResponse,
       exportedAt: new Date().toISOString(),
     };
     const json = JSON.stringify(data, null, 2);
@@ -567,7 +359,7 @@
   }
 
   const isRunDisabled = $derived(
-    generating ||
+    st.generating ||
     loadState === "loading" ||
     bannerPhase === 'unloading' ||
     bannerPhase === 'loading' ||
@@ -585,12 +377,12 @@
 
   let retrying = $state(false);
   async function handleRetry() {
-    if (generating || retrying) return;
+    if (st.generating || retrying) return;
     retrying = true;
     try {
       loadAbortController?.abort();
       loadAbortController = null;
-      error = null;
+      st.error = null;
       loadState = "idle";
       pendingLoad = null;
       await handleGenerate();
@@ -627,7 +419,7 @@
   // ---------------------------------------------------------------------------
   // Phase 2 — Driven tutorial (replaces TutorialModal)
   // ---------------------------------------------------------------------------
-  let panelAAggregation = $state<'max' | 'mean' | 'entropy'>('max');
+  let panelAAggregation = $state<import('$lib/attention-agg').Aggregation>('max');
 
   onMount(() => {
     if (typeof localStorage === 'undefined') return;
@@ -682,12 +474,12 @@
       }
     },
     setFocusTokenIndex: (i) => {
-      focusTokenIndex = i;
+      st.focusTokenIndex = i;
     },
     setPanelAAggregation: (agg) => {
       panelAAggregation = agg;
     },
-    findTokenIndex: (pred) => response?.tokens.find(pred)?.index,
+    findTokenIndex: (pred) => st.response?.tokens.find(pred)?.index,
     switchSaeLayer: async (layer: number) => {
       await handleLayerSwitch(layer);
     },
@@ -735,13 +527,13 @@
     },
     {
       id: 'circuit',
-      label: 'Circuit Map',
-      title: 'Circuit view — a wiring diagram showing how attention heads and processing layers connect for this prediction.',
+      label: 'Key parts',
+      title: "The attention heads and layers that pushed this prediction the most. It doesn't show how they connect.",
     },
   ];
   const rightTabs: TabDef[] = [
     { id: 'features', label: 'Features', title: 'Internal concepts the model activated for each word — what it "knew" while processing your prompt.' },
-    { id: 'predictions', label: 'Predictions', title: "What the model thinks the next word should be, with its confidence in each guess." },
+    { id: 'predictions', label: 'Predictions', title: "What the model thinks the next word should be, and how likely it thinks each guess is." },
     { id: 'steering', label: 'Steering', title: "Turn a feature up or down and re-run — see how the model's answer shifts." },
   ];
   let leftActiveTab = $state('attention');
@@ -750,12 +542,12 @@
   // Auto-fetch logit lens / DLA when switching to those tabs
   function onLeftTabChange(tabId: string) {
     leftActiveTab = tabId;
-    if (tabId === 'logit-lens' && !logitLensResponse && !logitLensLoading && response) {
+    if (tabId === 'logit-lens' && !st.logitLensResponse && !st.logitLensLoading && st.response) {
       handleLogitLens();
-    } else if (tabId === 'dla' && !dlaResponse && !dlaLoading && response) {
+    } else if (tabId === 'dla' && !st.dlaResponse && !st.dlaLoading && st.response) {
       handleDLA();
-    } else if (tabId === 'circuit' && !circuitResponse && !circuitLoading && response) {
-      handleCircuit('dla');
+    } else if (tabId === 'circuit' && !st.circuitResponse && !st.circuitLoading && st.response) {
+      handleCircuit();
     }
   }
 
@@ -774,11 +566,11 @@
 
   // Narrow-mode left sub-tabs handler
   function onNarrowLeftTabChange(tabId: string) {
-    if (tabId === 'circuit' && !circuitResponse && !circuitLoading && response) {
-      handleCircuit('dla');
-    } else if (tabId === 'logit-lens' && !logitLensResponse && !logitLensLoading && response) {
+    if (tabId === 'circuit' && !st.circuitResponse && !st.circuitLoading && st.response) {
+      handleCircuit();
+    } else if (tabId === 'logit-lens' && !st.logitLensResponse && !st.logitLensLoading && st.response) {
       handleLogitLens();
-    } else if (tabId === 'dla' && !dlaResponse && !dlaLoading && response) {
+    } else if (tabId === 'dla' && !st.dlaResponse && !st.dlaLoading && st.response) {
       handleDLA();
     }
   }
@@ -810,6 +602,9 @@
           placeholder="e.g. The cat sat on the"
           class="flex-1 rounded border border-zinc-700 bg-zinc-950 px-3 py-1 text-sm text-zinc-100 placeholder-zinc-600 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
         />
+        {#if promptEdited}
+          <span role="status" class="flex-shrink-0 whitespace-nowrap text-xs text-amber-400">Prompt edited — press Run to analyze the new text</span>
+        {/if}
         <button
           onclick={handleGenerate}
           disabled={isRunDisabled}
@@ -817,7 +612,7 @@
           data-tour="run-button"
           class="flex-shrink-0 rounded bg-indigo-500 px-4 py-1 text-sm font-medium text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {#if generating}
+          {#if st.generating}
             <span class="inline-flex items-center gap-1.5">
               <span class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
               Running
@@ -834,7 +629,7 @@
         onclick={handleExportJSON}
         aria-label="Export JSON"
         data-tip="export-button"
-        disabled={!response}
+        disabled={!st.response}
         class="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 disabled:opacity-30 disabled:cursor-not-allowed"
       >
         <Download class="h-4 w-4" />
@@ -892,9 +687,12 @@
           data-tour="run-button"
           class="flex-shrink-0 rounded bg-indigo-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {#if generating}Running{:else}Run{/if}
+          {#if st.generating}Running{:else}Run{/if}
         </button>
       </div>
+      {#if promptEdited}
+        <p role="status" class="mt-1 text-xs text-amber-400">Prompt edited — press Run to analyze the new text</p>
+      {/if}
     </div>
   {/if}
 
@@ -911,12 +709,13 @@
     onRetry={() => handleSwitch(bannerTargetPreset ?? activePresetId ?? 'gpt2-small')}
     onDismiss={() => { bannerPhase = 'idle'; bannerError = null; bannerMessage = null; }}
   />
+  <RuntimeUpdatePrompt />
 
   <!-- Error card — full width, compact -->
-  {#if error}
+  {#if st.error}
     <div class="flex-shrink-0 border-b border-red-800 bg-red-950/40 px-4 py-2 flex items-center justify-between gap-3">
-      <p class="text-sm text-red-400">{error}</p>
-      <button onclick={handleRetry} disabled={generating || retrying}
+      <p class="text-sm text-red-400">{st.error}</p>
+      <button onclick={handleRetry} disabled={st.generating || retrying}
         class="shrink-0 rounded bg-red-900 px-3 py-1 text-xs text-red-300 hover:bg-red-800 disabled:opacity-50">
         Retry
       </button>
@@ -924,12 +723,12 @@
   {/if}
 
   <!-- Shared token strip — below error/banner, above panels -->
-  {#if response}
+  {#if st.response}
     <div class="flex-shrink-0 border-b border-zinc-800 bg-zinc-900/50 px-4">
       <SharedTokenStrip
-        tokens={response.tokens}
-        {focusTokenIndex}
-        onTokenFocus={(i) => (focusTokenIndex = i)}
+        tokens={st.response.tokens}
+        focusTokenIndex={st.focusTokenIndex}
+        onTokenFocus={(i) => (st.focusTokenIndex = i)}
       />
     </div>
   {/if}
@@ -945,39 +744,39 @@
               <div class="h-full overflow-y-auto p-4">
                 {#if tab === 'attention'}
                   <PanelA
-                    {response}
-                    {focusTokenIndex}
-                    onTokenFocus={(i) => (focusTokenIndex = i)}
+                    response={st.response}
+                    focusTokenIndex={st.focusTokenIndex}
+                    onTokenFocus={(i) => (st.focusTokenIndex = i)}
                     bind:aggregation={panelAAggregation}
                     showTokenStrip={false}
-                    ablationMode={headAblationMode}
-                    ablations={headAblations}
-                    ablateResponse={headAblateResponse}
-                    ablateLoading={headAblateLoading}
+                    ablationMode={st.headAblationMode}
+                    ablations={st.headAblations}
+                    ablateResponse={st.headAblateResponse}
+                    ablateLoading={st.headAblateLoading}
                     onToggleAblation={toggleHeadAblation}
                     onRunAblation={handleHeadAblation}
-                    onToggleAblationMode={(v) => { headAblationMode = v; }}
+                    onToggleAblationMode={(v) => { st.headAblationMode = v; }}
                   />
                 {:else if tab === 'logit-lens'}
                   <LogitLensPanel
-                    response={logitLensResponse}
-                    loading={logitLensLoading}
+                    response={st.logitLensResponse}
+                    loading={st.logitLensLoading}
                   />
                 {:else if tab === 'dla'}
                   <DLAPanel
-                    response={dlaResponse}
-                    loading={dlaLoading}
+                    response={st.dlaResponse}
+                    loading={st.dlaLoading}
                   />
                 {:else if tab === 'patching'}
                   <PatchingPanel
-                    response={patchResponse}
-                    loading={patchLoading}
+                    response={st.patchResponse}
+                    loading={st.patchLoading}
                     onRun={handlePatching}
                   />
                 {:else if tab === 'circuit'}
                   <CircuitPanel
-                    response={circuitResponse}
-                    loading={circuitLoading}
+                    response={st.circuitResponse}
+                    loading={st.circuitLoading}
                     onRun={handleCircuit}
                   />
                 {/if}
@@ -991,35 +790,36 @@
               <div class="h-full overflow-y-auto p-4">
                 {#if tab === 'features'}
                   <PanelB
-                    {response}
-                    {focusTokenIndex}
-                    onTokenFocus={(i) => (focusTokenIndex = i)}
+                    response={st.response}
+                    focusTokenIndex={st.focusTokenIndex}
+                    onTokenFocus={(i) => (st.focusTokenIndex = i)}
                     showTokenStrip={false}
-                    {availableSaeLayers}
-                    currentSaeLayer={saeLayer}
+                    availableSaeLayers={st.availableSaeLayers}
+                    currentSaeLayer={st.saeLayer}
                     onLayerChange={handleLayerSwitch}
-                    {layerSwitching}
-                    ablationMode={featureAblationMode}
-                    featureAblations={featureAblations}
-                    ablateResponse={featureAblateResponse}
-                    ablateLoading={featureAblateLoading}
+                    layerSwitching={st.layerSwitching}
+                    ablationMode={st.featureAblationMode}
+                    featureAblations={st.featureAblations}
+                    ablateResponse={st.featureAblateResponse}
+                    ablateLoading={st.featureAblateLoading}
                     onToggleFeatureAblation={toggleFeatureAblation}
                     onRunFeatureAblation={handleFeatureAblation}
-                    onToggleAblationMode={(v) => { featureAblationMode = v; }}
+                    onToggleAblationMode={(v) => { st.featureAblationMode = v; }}
                   />
                 {:else if tab === 'predictions'}
                   <PredictionsPanel
-                    {response}
+                    response={st.response}
                     showTokenStrip={false}
                   />
                 {:else if tab === 'steering'}
                   <SteeringPanel
-                    {response}
-                    {steerResponse}
-                    loading={steerLoading}
-                    {focusTokenIndex}
-                    currentSaeLayer={saeLayer}
+                    response={st.response}
+                    steerResponse={st.steerResponse}
+                    loading={st.steerLoading}
+                    focusTokenIndex={st.focusTokenIndex}
+                    currentSaeLayer={st.saeLayer}
                     onSteer={handleSteer}
+                    resetKey={st.steeringResetKey}
                   />
                 {/if}
               </div>
@@ -1063,39 +863,39 @@
               {#snippet children(tab)}
                 {#if tab === 'attention'}
                   <PanelA
-                    {response}
-                    {focusTokenIndex}
-                    onTokenFocus={(i) => (focusTokenIndex = i)}
+                    response={st.response}
+                    focusTokenIndex={st.focusTokenIndex}
+                    onTokenFocus={(i) => (st.focusTokenIndex = i)}
                     bind:aggregation={panelAAggregation}
                     showTokenStrip={false}
-                    ablationMode={headAblationMode}
-                    ablations={headAblations}
-                    ablateResponse={headAblateResponse}
-                    ablateLoading={headAblateLoading}
+                    ablationMode={st.headAblationMode}
+                    ablations={st.headAblations}
+                    ablateResponse={st.headAblateResponse}
+                    ablateLoading={st.headAblateLoading}
                     onToggleAblation={toggleHeadAblation}
                     onRunAblation={handleHeadAblation}
-                    onToggleAblationMode={(v) => { headAblationMode = v; }}
+                    onToggleAblationMode={(v) => { st.headAblationMode = v; }}
                   />
                 {:else if tab === 'logit-lens'}
                   <LogitLensPanel
-                    response={logitLensResponse}
-                    loading={logitLensLoading}
+                    response={st.logitLensResponse}
+                    loading={st.logitLensLoading}
                   />
                 {:else if tab === 'dla'}
                   <DLAPanel
-                    response={dlaResponse}
-                    loading={dlaLoading}
+                    response={st.dlaResponse}
+                    loading={st.dlaLoading}
                   />
                 {:else if tab === 'patching'}
                   <PatchingPanel
-                    response={patchResponse}
-                    loading={patchLoading}
+                    response={st.patchResponse}
+                    loading={st.patchLoading}
                     onRun={handlePatching}
                   />
                 {:else if tab === 'circuit'}
                   <CircuitPanel
-                    response={circuitResponse}
-                    loading={circuitLoading}
+                    response={st.circuitResponse}
+                    loading={st.circuitLoading}
                     onRun={handleCircuit}
                   />
                 {/if}
@@ -1107,35 +907,36 @@
               {#snippet children(tab)}
                 {#if tab === 'features'}
                   <PanelB
-                    {response}
-                    {focusTokenIndex}
-                    onTokenFocus={(i) => (focusTokenIndex = i)}
+                    response={st.response}
+                    focusTokenIndex={st.focusTokenIndex}
+                    onTokenFocus={(i) => (st.focusTokenIndex = i)}
                     showTokenStrip={false}
-                    {availableSaeLayers}
-                    currentSaeLayer={saeLayer}
+                    availableSaeLayers={st.availableSaeLayers}
+                    currentSaeLayer={st.saeLayer}
                     onLayerChange={handleLayerSwitch}
-                    {layerSwitching}
-                    ablationMode={featureAblationMode}
-                    featureAblations={featureAblations}
-                    ablateResponse={featureAblateResponse}
-                    ablateLoading={featureAblateLoading}
+                    layerSwitching={st.layerSwitching}
+                    ablationMode={st.featureAblationMode}
+                    featureAblations={st.featureAblations}
+                    ablateResponse={st.featureAblateResponse}
+                    ablateLoading={st.featureAblateLoading}
                     onToggleFeatureAblation={toggleFeatureAblation}
                     onRunFeatureAblation={handleFeatureAblation}
-                    onToggleAblationMode={(v) => { featureAblationMode = v; }}
+                    onToggleAblationMode={(v) => { st.featureAblationMode = v; }}
                   />
                 {:else if tab === 'predictions'}
                   <PredictionsPanel
-                    {response}
+                    response={st.response}
                     showTokenStrip={false}
                   />
                 {:else if tab === 'steering'}
                   <SteeringPanel
-                    {response}
-                    {steerResponse}
-                    loading={steerLoading}
-                    {focusTokenIndex}
-                    currentSaeLayer={saeLayer}
+                    response={st.response}
+                    steerResponse={st.steerResponse}
+                    loading={st.steerLoading}
+                    focusTokenIndex={st.focusTokenIndex}
+                    currentSaeLayer={st.saeLayer}
                     onSteer={handleSteer}
+                    resetKey={st.steeringResetKey}
                   />
                 {/if}
               {/snippet}
@@ -1277,7 +1078,7 @@
   </SettingsDrawer>
 
   <!-- Driven tutorial -->
-  <DrivenTutorial {generating} {response} {loadState} {bannerVisible} saeLayerSwitching={layerSwitching} actions={tutorialActions} />
+  <DrivenTutorial generating={st.generating} response={st.response} {loadState} {bannerVisible} saeLayerSwitching={st.layerSwitching} actions={tutorialActions} />
 
   <!-- First-time contextual tips (registry-driven) -->
   <FirstTimeTip />

@@ -24,11 +24,9 @@ if /i not "!CONFIRM!"=="y" (
 echo.
 echo [1/4] Killing Pry processes...
 taskkill /F /IM pry.exe 2>nul
-taskkill /F /IM python.exe /FI "WINDOWTITLE eq pry*" 2>nul
-rem Also kill any python process whose parent was pry (best-effort).
-for /f "tokens=2 delims=," %%p in ('tasklist /FI "IMAGENAME eq python.exe" /FO CSV /NH 2^>nul') do (
-    taskkill /F /PID %%~p 2>nul
-)
+rem Kill only Python processes running from Pry's managed runtime, so other
+rem Python work on this machine (Jupyter, scripts) is left alone.
+powershell -NoProfile -Command "$rt = Join-Path $env:LOCALAPPDATA 'Pry\runtime'; Get-CimInstance Win32_Process -Filter \"Name='python.exe' OR Name='pythonw.exe'\" | Where-Object { $_.ExecutablePath -and $_.ExecutablePath.StartsWith($rt, [StringComparison]::OrdinalIgnoreCase) } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
 timeout /t 1 /nobreak >nul
 
 echo.

@@ -8,6 +8,8 @@
     focusTokenIndex?: number;
     currentSaeLayer?: number;
     onSteer?: (featureId: number, saeLayer: number, alpha: number) => void;
+    /** Changing this value clears the selected feature (e.g. after an SAE layer switch). */
+    resetKey?: number;
   }
 
   let {
@@ -17,6 +19,7 @@
     focusTokenIndex,
     currentSaeLayer,
     onSteer,
+    resetKey = 0,
   }: Props = $props();
 
   // Collect unique features from current response for the picker
@@ -39,8 +42,18 @@
   let selectedFeatureId = $state<number | null>(null);
   let alpha = $state(5.0);
 
-  // Auto-select first feature when available features change
+  // Clear the selection whenever the parent bumps resetKey.
   $effect(() => {
+    void resetKey;
+    selectedFeatureId = null;
+  });
+
+  // Auto-select first feature when available features change; drop a
+  // selection that is no longer in the list (e.g. new prompt or SAE layer).
+  $effect(() => {
+    if (selectedFeatureId !== null && !availableFeatures.some((f) => f.id === selectedFeatureId)) {
+      selectedFeatureId = null;
+    }
     if (availableFeatures.length > 0 && selectedFeatureId === null) {
       selectedFeatureId = availableFeatures[0].id;
     }

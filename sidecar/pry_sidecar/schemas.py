@@ -58,11 +58,18 @@ class AttentionLayer(BaseModel):
     heads: list[list[list[float]]]  # [head][query_token][key_token]
 
 
+LabelDetail = Literal["detailed", "short", "none"]
+# Deprecated alias of label_detail (a label word-count bucket, not a real
+# confidence). Kept for one release; the UI reads `label_detail ?? confidence`.
+LegacyConfidence = Literal["high", "medium", "low", "none"]
+
+
 class FeatureHit(BaseModel):
     id: int
     activation: float
     description: str | None = None
-    confidence: Literal["high", "medium", "low", "none"] = "none"
+    label_detail: LabelDetail = "none"
+    confidence: LegacyConfidence = "none"
     top_activating_snippets: list[str] = Field(default_factory=list)
 
 
@@ -107,7 +114,8 @@ class FeatureResponse(BaseModel):
     feature_id: int
     top_activating_snippets: list[ActivatingSnippet] = Field(default_factory=list)
     description: str | None = None
-    confidence: Literal["high", "medium", "low", "none"] = "none"
+    label_detail: LabelDetail = "none"
+    confidence: LegacyConfidence = "none"
     status: str = "ok"
 
 
@@ -359,5 +367,8 @@ class CircuitResponse(BaseModel):
     source: str = "dla"
     nodes: list[CircuitNode] = Field(default_factory=list)
     edges: list[CircuitEdge] = Field(default_factory=list)
+    # How edges were computed. "none" = no edges are claimed (DLA alone can't
+    # show how components connect).
+    edges_method: str = "none"
     timing_ms: dict[str, float] = Field(default_factory=dict)
     status: str = "ok"

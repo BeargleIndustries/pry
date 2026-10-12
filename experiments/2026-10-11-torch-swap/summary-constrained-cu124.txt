@@ -1,0 +1,13 @@
+variant=cu124  pip 25.0.1 from C:\Users\Brad\AppData\Local\Temp\pry-replay\constrained-cu124\venv\Lib\site-packages\pip (python 3.12)   python=3.12.13
+before: 
+step 1 dry-run would install: torch==2.5.1+cu124 <- https://download-r2.pytorch.org/whl/cu124/torch-2.5.1%2Bcu124-cp312-cp312-win_amd64.whl | sympy==1.13.1 <- https://files.pythonhosted.org/packages/b2/fe/81695a1aa331a842b582453b605175f419fe8540355886031328089d840a/sympy-1.13.1-py3-none-any.whl
+step 1 after: sympy-1.13.1.dist-info, torch-2.5.1+cu124.dist-info
+step 2 dry-run would install: transformer-lens==2.15.4 <- https://files.pythonhosted.org/packages/46/68/ff1fee1043060b70c307e70389dff64b3259e0a6e3197ace5df0477d2983/transformer_lens-2.15.4-py3-none-any.whl | numpy==1.26.4 <- https://files.pythonhosted.org/packages/16/2e/86f24451c2d530c88daf997cb8d6ac622c1d40d19f5a031ed68a4b73a374/numpy-1.26.4-cp312-cp312-win_amd64.whl
+step 2 after: numpy-1.26.4.dist-info, sympy-1.13.1.dist-info, torch-2.5.1+cu124.dist-info, transformer_lens-2.15.4.dist-info
+step 3 dry-run would install: sae-lens==5.11.0 <- https://files.pythonhosted.org/packages/e3/20/385bdbabbf299af6ce1c79aa702153a467588e11ef7f607877cdacc2c27a/sae_lens-5.11.0-py3-none-any.whl
+step 3 after: numpy-1.26.4.dist-info, sae_lens-5.11.0.dist-info, sympy-1.13.1.dist-info, torch-2.5.1+cu124.dist-info, transformer_lens-2.15.4.dist-info
+step 4 dry-run would install: (no watched pkgs)
+step 4 after: numpy-1.26.4.dist-info, sae_lens-5.11.0.dist-info, sympy-1.13.1.dist-info, torch-2.5.1+cu124.dist-info, transformer_lens-2.15.4.dist-info
+step 5 dry-run would install: pry-sidecar==0.1.0 <- file:///C:/Users/Brad/AppData/Local/Temp/pry-replay/constrained-cu124/sidecar
+step 5 after: numpy-1.26.4.dist-info, pry_sidecar-0.1.0.dist-info, sae_lens-5.11.0.dist-info, sympy-1.13.1.dist-info, torch-2.5.1+cu124.dist-info, transformer_lens-2.15.4.dist-info
+size: venv=5.34 GiB  pbs-interpreter=0.14 GiB  (5733843154 / 151843337 bytes)

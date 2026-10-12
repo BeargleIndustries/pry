@@ -1,6 +1,6 @@
 """Bet 1 — TransformerLens + GPT-2 small attention extraction.
 
-Pass criteria (plan §7 Phase 1):
+Pass criteria:
 - HookedTransformer.from_pretrained("gpt2") loads without error
 - Runs prompt "The doctor told the nurse that she" and caches attention
 - cache["pattern", layer] has shape [batch, head, seq, seq] for all 12 layers
