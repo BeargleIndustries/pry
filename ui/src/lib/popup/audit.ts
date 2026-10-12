@@ -50,6 +50,10 @@ export interface AuditRecord {
   arrowExempt: boolean;
   /** placePopup counted the target as too large to sit beside (inset allowed). */
   largeTarget: boolean;
+  /** Whether the popup drew its arrow (null: the popup has no arrow to draw). */
+  arrowShown?: boolean | null;
+  /** Point the arrow aims at (inset and sheet). */
+  focus?: Point | null;
   waiting: boolean;
   jumped: boolean;
   skipped?: string;
@@ -159,7 +163,10 @@ function measure(
   rec.arrowLen = len ? Number(len) : null;
   rec.arrowExempt = el.getAttribute('data-popup-arrow-exempt') === 'true';
   rec.largeTarget = el.getAttribute('data-popup-large-target') === 'true';
-  const focus = rec.mode === 'inset' ? readFocus(el) : null;
+  const shown = el.getAttribute('data-popup-arrow-shown');
+  rec.arrowShown = shown === null ? null : shown === 'true';
+  const focus = rec.mode === 'inset' || rec.mode === 'sheet' ? readFocus(el) : null;
+  rec.focus = focus;
   const avoid = occupied.entries().filter(([k]) => !selfIds.includes(k)).map(([, r]) => r);
   const flags = placementFlags(box, vp(), target, focus, avoid);
   Object.assign(rec, flags);
@@ -176,10 +183,16 @@ function judge(rec: AuditRecord, opts: { tour?: boolean; allowFallback?: boolean
   }
   if (!rec.inViewport) f.push('outside the viewport');
   if (rec.overlapsAvoid) f.push(`covers occupied: ${rec.avoidHit.join(', ')}`);
+  // Arrows (tour card and tips): a drawn arrow is never longer than MAX_ARROW.
+  // A longer one may only be hidden (ring kept) in the bottom sheet; the inset
+  // far-corner fallback has no arrow at all (arrowExempt).
+  const arrowed = rec.kind === 'tour' || rec.kind === 'tip';
+  const longArrow = (rec.arrowLen ?? 0) > MAX_ARROW;
+  if (arrowed && longArrow && rec.arrowShown === true) f.push(`drawn arrow ${rec.arrowLen}px > ${MAX_ARROW}`);
   switch (rec.mode) {
     case 'anchored':
       if (rec.overlapsTarget) f.push('anchored popup overlaps its target');
-      if (opts.tour && (rec.arrowLen ?? 0) > MAX_ARROW) f.push(`arrow ${rec.arrowLen}px > ${MAX_ARROW}`);
+      if (arrowed && longArrow && rec.arrowShown !== true) f.push(`arrow ${rec.arrowLen}px > ${MAX_ARROW} (hidden)`);
       break;
     case 'inset':
       // Inset is only for targets too large to sit beside (user decision).
@@ -189,6 +202,17 @@ function judge(rec: AuditRecord, opts: { tour?: boolean; allowFallback?: boolean
       break;
     case 'sheet':
       if (window.innerWidth >= 760) f.push('sheet at a wide viewport');
+      if (rec.target && rec.rect) {
+        // The target is scrolled above the sheet: wholly when it fits in the
+        // scroller's visible area there, else with its focus point above it.
+        const fit = card()?.getAttribute('data-popup-sheet-fit');
+        const room = rec.rect.top - 10 - 12;
+        if (fit === 'whole' || (!fit && rec.target.height <= room)) {
+          if (rec.overlapsTarget) f.push('sheet covers its target');
+        } else if (rec.coversFocus) {
+          f.push('sheet covers the focus point of a tall target');
+        }
+      }
       break;
     case 'fallback':
       if (!opts.allowFallback) f.push('fallback placement not allowed here');
