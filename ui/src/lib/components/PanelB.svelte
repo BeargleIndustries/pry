@@ -270,7 +270,7 @@
                     'mt-2 flex-shrink-0 rounded-full p-1 text-xs transition-colors',
                     isFeatureAblated(hit.id)
                       ? 'bg-red-700 text-white'
-                      : 'border border-zinc-700 text-zinc-500 hover:text-red-400 hover:border-red-600',
+                      : 'border border-zinc-700 text-zinc-500 hover:text-orange-400 hover:border-orange-600',
                   ].join(' ')}
                   title={isFeatureAblated(hit.id) ? 'Remove from ablation' : 'Add to ablation'}
                 >

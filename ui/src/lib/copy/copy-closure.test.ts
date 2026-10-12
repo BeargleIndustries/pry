@@ -156,7 +156,7 @@ export const ROWS: Row[] = [
     lane: 'T4c',
     checks: [
       { test: { file: READOUTS_TEST, name: '"the end of the text" for <|endoftext|>' } },
-      { test: { file: READOUTS_TEST, name: '"a line break" for \\n' } },
+      { test: { file: READOUTS_TEST, name: '"a line break" for a newline token' } },
       { test: { file: READOUTS_TEST, name: '"word piece" for a fragment' } },
     ],
   },
@@ -165,7 +165,11 @@ export const ROWS: Row[] = [
   {
     id: 'copy:R4',
     lane: 'T4c',
-    checks: [{ file: C('DLAPanel'), has: ['Explaining the guess after'], lacks: ['Target token', 'pos '] }],
+    checks: [
+      // The sentence lives in readouts.ts; DLAPanel renders it through explainingLabel().
+      { file: READOUTS, has: ['Explaining the guess after'] },
+      { file: C('DLAPanel'), lacks: ['Target token', 'pos '], lacksRaw: [/^(?![\s\S]*explainingLabel\()/] },
+    ],
   },
   { id: 'copy:R5', lane: 'T4c', checks: [{ test: { file: READOUTS_TEST, name: 'near tie wording' } }] },
   { id: 'copy:R6', lane: 'T4c', checks: [{ file: READOUTS, has: ['nothing comes after it'] }] },
@@ -326,7 +330,7 @@ export const EXTRA_ROWS: Row[] = [
     checks: [
       {
         file: C('PatchingPanel'),
-        visibleMatch: { select: /^L\$?\{/, match: /^L\$?\{l\} H\$?\{h\}: .*score change/ },
+        visibleMatch: { select: /^L\$?\{l\} H/, match: /^L\$?\{l\} H\$?\{h\}: .*score change/ },
         lacks: ['L{l}.H{h}', 'L${l}.H${h}'],
       },
       { file: C('DLAPanel'), lacks: ['Attention Layer'] },

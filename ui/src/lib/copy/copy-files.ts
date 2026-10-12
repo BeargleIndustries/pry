@@ -11,7 +11,7 @@ export type Lane = 'T2' | 'T4a' | 'T4b' | 'T4c' | 'T4d' | 'T4e';
  * Lanes not merged into feat/clarity-0.3.8 yet. Their rows run as `test.todo`.
  * Remove a lane from this set when it merges; its rows then have to pass.
  */
-export const PENDING_LANES: ReadonlySet<Lane> = new Set<Lane>(['T4c']);
+export const PENDING_LANES: ReadonlySet<Lane> = new Set<Lane>();
 
 /** `ui/src`. */
 export const SRC = resolve(__dirname, '../..');

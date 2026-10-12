@@ -294,7 +294,7 @@ describe('predictionsReadout edge cases', () => {
     );
   });
 
-  it('"a line break" for \\n', () => {
+  it('"a line break" for a newline token', () => {
     expect(predictionsReadout([p('\n', 0.5, 1)])).toBe(
       "The model's top guess for what comes next is a line break (50%).",
     );
