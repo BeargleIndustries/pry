@@ -54,4 +54,29 @@ describe('glossary', () => {
     }
     expect(used.length).toBeGreaterThan(0);
   });
+
+  // copy:G1: an entry nobody can open is wasted; attach it where the word appears.
+  it('every glossary key is used by at least one <Term>', () => {
+    const usedKeys = new Set<string>();
+    for (const src of Object.values(svelteSources)) {
+      for (const m of src.matchAll(/<Term\s+key="([^"]+)"/g)) {
+        const key = resolveTerm(m[1]);
+        if (key) usedKeys.add(key);
+      }
+    }
+    const unused = Object.keys(glossary).filter((k) => !usedKeys.has(k));
+    expect(unused, `glossary keys with no <Term>: ${unused.join(', ')}`).toEqual([]);
+  });
+
+  // copy:G2
+  it('has entries: direct-value-path, threshold, query-key, name-mover, seed, circuit, patching', () => {
+    for (const key of ['direct-value-path', 'threshold', 'query-key', 'name-mover', 'seed', 'circuit', 'patching']) {
+      expect(glossary[key], key).toBeDefined();
+    }
+  });
+
+  it('copy:G3 and copy:G4 wording', () => {
+    expect(glossary.dla.definition).toContain('leaves out help');
+    expect(glossary.temperature.definition).toContain('randomness');
+  });
 });

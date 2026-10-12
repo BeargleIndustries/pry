@@ -371,7 +371,7 @@ export function patchingReadout(response: PatchResponse | null): string | null {
   const maxAbs = Math.max(...parts.map((c) => Math.abs(c.effect)));
   const same =
     response.clean_predicted_token === response.corrupted_predicted_token
-      ? ` Both prompts already guess ${answer}, so expect small changes.`
+      ? ` Both prompts already guess ${answer}, so don't expect big changes.`
       : '';
   if (!(maxAbs > 0)) return `None of the swaps changed the score for ${answer}.${same}`;
 
@@ -379,7 +379,7 @@ export function patchingReadout(response: PatchResponse | null): string | null {
   const quiet = parts.filter((c) => Math.abs(c.effect) < 0.1 * maxAbs).length;
   const quietText = quiet > 0 ? ` ${quiet} of ${parts.length} parts barely change it.` : '';
   if (best.effect <= 0) {
-    return `No single part brings ${answer} back. Copying any one of them over from the original prompt leaves its score the same or lower.${quietText}${same}`;
+    return `No single part brings ${answer} back. Copying any one of them over from the original prompt doesn't raise its score.${quietText}${same}`;
   }
   return (
     `Copying ${patchPartName(best, response.tokens)} over from the original prompt raises the score for ${answer} the most (${signedNumber(best.effect, 2)}).` +
@@ -418,7 +418,7 @@ export function steeringReadout(response: SteerResponse | null): string | null {
   const words = diff.right.filter((t) => /\S/.test(t.text));
   const feature = `feature #${response.feature_id}`;
   const strength = `strength ${response.alpha}`;
-  if (words.length === 0) return `Steering ${feature} at ${strength} wrote nothing new. Press Run Steered again.`;
+  if (words.length === 0) return `Steering ${feature} at ${strength} didn't write anything. Press Run Steered again.`;
   const changed = words.filter((t) => t.changed).length;
   if (changed === 0) {
     const which = words.length === 1 ? 'the one word' : `any of the ${words.length} words`;

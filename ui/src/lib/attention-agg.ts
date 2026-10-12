@@ -16,7 +16,7 @@ export const FROM_OPTIONS: AggOption<FromAgg>[] = [
 ];
 
 export const TO_OPTIONS: AggOption<ToAgg>[] = [
-  { id: 'max', label: 'Strongest' },
+  { id: 'max', label: 'Strongest look' },
   { id: 'mean', label: 'Average received' },
   { id: 'spread', label: 'Spread (one word vs. many)' },
 ];

@@ -1,6 +1,8 @@
 <script lang="ts">
   import Term from './Term.svelte';
+  import Readout from './Readout.svelte';
   import type { PatchResponse, PatchComponent } from '$lib/types';
+  import { patchingReadout, quoteToken } from '$lib/readouts';
   import {
     patchLengthStatus,
     TOKENIZE_DEBOUNCE_MS,
@@ -118,11 +120,20 @@
       ? 'brings back the original answer'
       : s === 'negative'
         ? 'pushes further from the original'
-        : 'no effect';
+        : 'no change';
   }
 
   function cellLabel(where: string, effect: number): string {
-    return `${where}: effect ${signedNumber(effect, 3)}, ${effectWords(effect)}`;
+    return `${where}: score change ${signedNumber(effect, 3)}, ${effectWords(effect)}`;
+  }
+
+  /** The detail line for a clicked part, in plain words. */
+  function detailSentence(c: PatchComponent, answer: string): string {
+    const by = Math.abs(c.effect).toFixed(2);
+    const numbers = `(from ${c.corrupted_logit.toFixed(2)} to ${c.patched_logit.toFixed(2)}; the original prompt scores ${c.clean_logit.toFixed(2)}).`;
+    if (c.effect > 0) return `Swapping this in raised the score for ${answer} by ${by} ${numbers}`;
+    if (c.effect < 0) return `Swapping this in lowered the score for ${answer} by ${by} ${numbers}`;
+    return `Swapping this in left the score for ${answer} where it was ${numbers}`;
   }
 
   // Keyboard model (T29): roving tabindex over whichever grid is showing.
@@ -165,15 +176,21 @@
   data-tip="patching-panel"
 >
   <div class="flex items-baseline gap-2">
-    <h2 class="text-sm font-semibold text-zinc-100"><Term key="activation-patching">Activation Patching</Term></h2>
-    <span class="text-xs text-zinc-600">Causal importance</span>
+    <h2 class="text-sm font-semibold text-zinc-100">Swap test</h2>
+    <span class="text-xs text-zinc-600">Which parts carry the difference between two prompts</span>
     {#if loading}
       <span class="ml-auto inline-flex items-center gap-1.5 text-xs text-zinc-500">
         <span class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-zinc-500 border-t-transparent"></span>
-        Patching...
+        Swapping...
       </span>
     {/if}
   </div>
+
+  <p class="text-xs text-zinc-400">
+    Here's the idea: Pry runs the changed prompt, copies one part's work over from the original prompt, and checks how
+    much the original answer comes back. Researchers call this <Term key="patching">patching</Term>. Every number here is a raw
+    change in the answer's <Term key="logit">score</Term>. It's not a percentage.
+  </p>
 
   <!-- Inputs -->
   <div class="flex flex-col gap-2">
@@ -187,7 +204,7 @@
         class="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-zinc-200 placeholder-zinc-600 focus:border-indigo-500 focus:outline-none"
       />
       {#if tokenize && cleanCount !== null}
-        <span class="text-[10px] text-zinc-600">{cleanCount} tokens</span>
+        <span class="text-[10px] text-zinc-600">{cleanCount} tokens (word pieces)</span>
       {/if}
     </div>
     <div class="flex flex-col gap-1">
@@ -200,7 +217,7 @@
         class="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-zinc-200 placeholder-zinc-600 focus:border-indigo-500 focus:outline-none"
       />
       {#if tokenize && corruptedCount !== null}
-        <span class="text-[10px] text-zinc-600">{corruptedCount} tokens</span>
+        <span class="text-[10px] text-zinc-600">{corruptedCount} tokens (word pieces)</span>
       {/if}
     </div>
     {#if lengthStatus}
@@ -210,11 +227,11 @@
         class:text-amber-400={!lengthStatus.same}
         role="status"
       >
-        {lengthStatus.label}{#if !lengthStatus.same}. Patching needs both prompts to be the same number of tokens.{/if}
+        {lengthStatus.label}{#if !lengthStatus.same}. The swap test can't run unless both prompts are the same number of tokens.{/if}
       </p>
     {/if}
     <div class="flex items-center gap-3">
-      <span id={patchTypeLabelId} class="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Patch type</span>
+      <span id={patchTypeLabelId} class="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Swap</span>
       <div class="flex gap-1" role="group" aria-labelledby={patchTypeLabelId}>
         {#each ['head', 'mlp', 'resid'] as pt (pt)}
           <button
@@ -236,33 +253,39 @@
         disabled={loading || lengthsDiffer || !cleanPrompt.trim() || !corruptedPrompt.trim()}
         class="ml-auto rounded bg-indigo-500 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {loading ? 'Running...' : 'Run Patching'}
+        {loading ? 'Running...' : 'Run swap test'}
       </button>
     </div>
+    <p class="text-[10px] text-zinc-500">
+      Heads swaps one attention head at a time. <Term key="mlp">MLPs</Term> swaps each layer's processing block.
+      <Term key="residual-stream">Residual</Term> swaps the running notes at one word, going into one layer.
+    </p>
   </div>
 
   {#if !response && !loading}
     <div class="flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 py-12">
-      <p class="text-sm text-zinc-600">Enter an original prompt and a changed one, then run to see which parts of the model cause the difference.</p>
+      <p class="text-sm text-zinc-600">Type an original prompt and a changed one, then press Run swap test to see which parts carry the difference.</p>
     </div>
   {:else if response}
+    <Readout text={patchingReadout(response)} />
+
     <!-- Info bar -->
     <div class="flex flex-wrap items-center gap-2 rounded-md border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-xs">
-      <span class="text-zinc-500">Original predicts:</span>
-      <span class="font-mono text-indigo-300">"{response.clean_predicted_token}"</span>
+      <span class="text-zinc-500">Original prompt guesses:</span>
+      <span class="font-mono text-indigo-300">{quoteToken(response.clean_predicted_token)}</span>
       <span class="mx-1 text-zinc-700">|</span>
-      <span class="text-zinc-500">Changed predicts:</span>
-      <span class="font-mono text-red-300">"{response.corrupted_predicted_token}"</span>
+      <span class="text-zinc-500">Changed prompt guesses:</span>
+      <span class="font-mono text-zinc-300">{quoteToken(response.corrupted_predicted_token)}</span>
       <span class="mx-1 text-zinc-700">|</span>
-      <span class="text-zinc-500">Type:</span>
-      <span class="text-zinc-300">{response.patch_type}</span>
+      <span class="text-zinc-500">Swapped:</span>
+      <span class="text-zinc-300">{response.patch_type === 'head' ? 'heads' : response.patch_type === 'mlp' ? 'MLPs' : 'residual'}</span>
     </div>
 
     {#if shownPatchType === 'head' && nHeads > 0}
       <!-- Heatmap for head patching -->
       <div class="overflow-x-auto">
         <div id={gridDescId} class="text-[10px] text-zinc-600 mb-1">
-          Layer (rows) x Head (columns). Brightness = patching effect magnitude. Arrow keys move between squares; Enter shows the details.
+          Rows are layers, columns are heads. Blue squares bring the original answer back, orange push it further away. Brighter means a bigger change. Look for <Term key="name-mover">name mover</Term> heads in the late layers. Click a square for its numbers; arrow keys move between squares.
         </div>
         <div
           bind:this={gridEl}
@@ -300,7 +323,7 @@
                   onclick={() => { selectedComponent = comp ?? null; }}
                   class="flex h-5 w-5 items-center justify-center rounded-sm border border-zinc-800 text-[10px] font-bold leading-none transition-colors hover:border-zinc-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
                   style="background-color: {cellColor(effect)}; color: {glyphColor(effect)};"
-                  title="L{l}.H{h}: {signedNumber(effect, 4)}"
+                  title="L{l} H{h}: {signedNumber(effect, 2)} score change"
                   aria-label={cellLabel(`Layer ${l}, head ${h}`, effect)}
                 ><span aria-hidden="true">{cellGlyph(effect)}</span></button>
               {/each}
@@ -312,7 +335,7 @@
       <!-- Heatmap for residual patching: one square per (layer, word) -->
       <div class="overflow-x-auto">
         <div id={gridDescId} class="text-[10px] text-zinc-600 mb-1">
-          Layer (rows) x word (columns). Each square swaps in the original prompt's information at one word, going into one layer. Arrow keys move between squares; Enter shows the details.
+          Rows are layers, columns are words. Each square swaps in the original prompt's information at one word, going into one layer. Blue squares bring the original answer back, orange push it further away. Click a square for its numbers; arrow keys move between squares.
         </div>
         <div
           bind:this={gridEl}
@@ -347,7 +370,7 @@
                   onclick={() => { selectedComponent = comp ?? null; }}
                   class="flex h-5 min-w-5 items-center justify-center rounded-sm border border-zinc-800 text-[10px] font-bold leading-none transition-colors hover:border-zinc-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
                   style="background-color: {cellColor(effect)}; color: {glyphColor(effect)};"
-                  title="Layer {l}, {JSON.stringify(tok)}: {signedNumber(effect, 4)}"
+                  title="Layer {l}, {JSON.stringify(tok)}: {signedNumber(effect, 2)} score change"
                   aria-label={cellLabel(`Layer ${l}, word ${p + 1} ${JSON.stringify(tok)}`, effect)}
                 ><span aria-hidden="true">{cellGlyph(effect)}</span></button>
               {/each}
@@ -385,7 +408,7 @@
               class="w-16 shrink-0 text-right font-mono text-[10px]"
               style="color: {signedHex(comp.effect)};"
             >
-              {signedNumber(comp.effect, 4)}
+              {signedNumber(comp.effect, 2)}
             </span>
           </button>
         {/each}
@@ -398,13 +421,9 @@
         <div class="flex items-center gap-3 text-zinc-300">
           <span class="font-mono font-semibold">{selectedComponent.name}</span>
           <span class="text-zinc-600">|</span>
-          <span>Effect: <span class="font-mono" style="color: {signedHex(selectedComponent.effect)};">{signedNumber(selectedComponent.effect, 4)}</span> <span class="text-zinc-500">({effectWords(selectedComponent.effect)})</span></span>
+          <span>Score change: <span class="font-mono" style="color: {signedHex(selectedComponent.effect)};">{signedNumber(selectedComponent.effect, 2)}</span> <span class="text-zinc-500">({effectWords(selectedComponent.effect)})</span></span>
         </div>
-        <div class="mt-1 flex gap-4 text-zinc-500">
-          <span>Original score: <span class="text-zinc-300">{selectedComponent.clean_logit.toFixed(3)}</span></span>
-          <span>Changed score: <span class="text-zinc-300">{selectedComponent.corrupted_logit.toFixed(3)}</span></span>
-          <span>Swapped score: <span class="text-zinc-300">{selectedComponent.patched_logit.toFixed(3)}</span></span>
-        </div>
+        <p class="mt-1 text-zinc-400">{detailSentence(selectedComponent, quoteToken(response.clean_predicted_token))}</p>
       </div>
     {/if}
 
@@ -413,7 +432,7 @@
       <span class="flex items-center gap-1">
         <span class="inline-block h-2 w-4 rounded-sm" style="background-color: {POSITIVE_HEX};" aria-hidden="true"></span>
         <span aria-hidden="true" class="font-mono font-bold">+</span>
-        Positive (blue: brings back the original answer)
+        Positive (blue: brings the original answer back)
       </span>
       <span class="flex items-center gap-1">
         <span class="inline-block h-2 w-4 rounded-sm" style="background-color: {NEGATIVE_HEX};" aria-hidden="true"></span>

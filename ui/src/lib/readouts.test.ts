@@ -494,7 +494,7 @@ describe('patchingReadout', () => {
   it('both prompts with the same guess', () => {
     const r = patchFixture();
     r.corrupted_predicted_token = ' Mary';
-    expect(patchingReadout(r)).toContain('Both prompts already guess "·Mary", so expect small changes.');
+    expect(patchingReadout(r)).toContain('Both prompts already guess "·Mary", so don\'t expect big changes.');
   });
 
   it('returns null without parts', () => {
@@ -574,7 +574,7 @@ describe('steeringReadout', () => {
 
   it('nothing written', () => {
     expect(steeringReadout(steer('', ''))).toBe(
-      'Steering feature #123 at strength 5 wrote nothing new. Press Run Steered again.',
+      "Steering feature #123 at strength 5 didn't write anything. Press Run Steered again.",
     );
     expect(steeringReadout(null)).toBeNull();
   });
