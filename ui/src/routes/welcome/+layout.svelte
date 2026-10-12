@@ -9,7 +9,7 @@
   const STEPS: { path: string; label: string; hidden?: boolean }[] = [
     { path: '/welcome', label: 'Welcome' },
     { path: '/welcome/hardware', label: 'Hardware' },
-    { path: '/welcome/installing', label: 'Runtime' },
+    { path: '/welcome/installing', label: 'Engine' },
     { path: '/welcome/preset', label: 'Preset' },
     { path: '/welcome/hf-token', label: 'HF Token', hidden: true },
     { path: '/welcome/downloading', label: 'Download' },

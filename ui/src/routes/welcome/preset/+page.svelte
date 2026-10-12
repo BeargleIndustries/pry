@@ -110,7 +110,7 @@
       onclick={skip}
       class="inline-flex items-center gap-2 rounded-lg px-5 py-2 text-sm text-zinc-500 transition hover:text-zinc-300"
     >
-      Skip — take me in
+      Skip and take me in
       <SkipForward class="h-4 w-4" />
     </button>
   </div>

@@ -70,9 +70,8 @@
       the second time through, look at whatever came next last time. That is one way models copy.
     </p>
     <p class="mt-2 text-xs text-zinc-500">
-      <span class="text-zinc-400">The guided tour</span> walks you through two guided demos on GPT-2
-      small: one on attention (which words the model looks at) and one on features (which concepts
-      light up). You can start it anytime from the ? icon.
+      <span class="text-zinc-400">The guided tour</span> walks you through every part of Pry in nine short
+      chapters, on GPT-2 small. Start it anytime from the ? button.
     </p>
   </div>
 </div>
