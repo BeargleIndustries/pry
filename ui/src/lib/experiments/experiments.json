@@ -5,6 +5,7 @@
       "id": "ioi-swap",
       "title": "Who gets the drink?",
       "hook": "Swap one name and find the few parts of the model that track who's who.",
+      "why": "It's one of the few behaviors researchers have traced almost head by head: about two dozen attention heads in GPT-2 small.",
       "preset": "gpt2-small",
       "prompt": "When Mary and John went to the store, John gave a drink to",
       "open": {
@@ -30,12 +31,18 @@
           }
         ]
       },
+      "next": {
+        "reset": "Press Back to normal to clear the swap pair and close this guide. It won't touch your prompt.",
+        "try": "Next, try Knock out the name movers to switch those heads off and see if the answer survives.",
+        "tryId": "ioi-knockout"
+      },
       "expect": " Mary"
     },
     {
       "id": "ioi-knockout",
       "title": "Knock out the name movers",
       "hook": "Switch off three heads from the paper and see if the model notices.",
+      "why": "The paper found these three heads do most of the name moving, and that when they're knocked out, other \"backup\" heads partly take over.",
       "preset": "gpt2-small",
       "prompt": "When Mary and John went to the store, John gave a drink to",
       "open": {
@@ -58,7 +65,7 @@
       ],
       "lookFor": [
         "Pry's already picked heads 9.9, 9.6 and 10.0 for you in the Attention tab. Press \"Run Ablated (3)\" there.",
-        "Compare the normal top-5 with the ablated top-5. Does \" Mary\" lose ground, and by how much?",
+        "Compare Original top-5 with Ablated top-5. Does \" Mary\" lose ground, and by how much?",
         "Don't be surprised if the answer survives. Big networks often have spare parts."
       ],
       "found": {
@@ -70,23 +77,28 @@
           }
         ]
       },
+      "next": {
+        "reset": "Press Back to normal, or press Ablation ON to turn the knockout off. Either way, you'll get the Lines view back.",
+        "try": "Next, try Who gets the drink? to find the same heads by swapping names.",
+        "tryId": "ioi-swap"
+      },
       "expect": " Mary"
     },
     {
       "id": "induction",
       "title": "Spot the copycat heads",
       "hook": "Repeat a made-up phrase and watch the model look back to copy what came next.",
+      "why": "These copying heads turn up in many models, and the researchers argue they're an important part of how a model learns from the text in front of it.",
       "preset": "gpt2-small",
       "prompt": "Pip ordered zebra lamps from Quorn. Pip ordered zebra lamps from",
       "open": {
         "left": "attention",
         "right": "predictions"
       },
-      "demoLink": "?demo=induction-heads",
       "lookFor": [
         "The model's never seen this phrase, so the only way to guess the last word is to look back at the first copy. Check Predictions for \" Qu\" (the start of Quorn).",
-        "Press \"Find copying heads\" in the Attention panel (or the button below). Pry tests every head on a repeated random sequence and rings the ones that copy, such as layer 5 head 1 and layer 5 head 5.",
-        "Come back to this prompt and pick layer 5, head 1 (or head 5) with the Layer and Head menus above the lines, or click it in Expert view. On the second copy, the last word's attention points at \" Qu\", the word that came after \"from\" the first time."
+        "Press Find copying heads at the top of the Attention panel. Pry tests every head on a repeated random sequence and rings the ones that copy, such as layer 5 head 1 and layer 5 head 5.",
+        "Press Back to your prompt, then pick layer 5, head 1 (or head 5) with the Layer and Head menus above the lines, or click it in Expert view. On the second copy, the last word's attention points at \" Qu\", the word that came after \"from\" the first time."
       ],
       "found": {
         "summary": "Olsson et al. named these \"induction heads\": heads that find an earlier copy of the current word and attend to the word that came after it, so it can be copied forward. They found them in many models, and argue (with strongest evidence in small models) that they're an important part of how models learn from their context.",
@@ -97,12 +109,17 @@
           }
         ]
       },
+      "next": {
+        "reset": "Press Back to your prompt to leave the copying-heads view, or Back to normal to close this guide too.",
+        "try": "Next, type any sentence twice in a row, press Run, and see if it's the same heads that light up."
+      },
       "expect": " Qu"
     },
     {
       "id": "logit-lens",
       "title": "Watch it make up its mind",
       "hook": "Peek at the model's best guess after every layer, not just the last one.",
+      "why": "On GPT-2 the guesses often sharpen bit by bit toward the final answer, but the early layers can be misleading, so read them as a rough hint.",
       "preset": "gpt2-small",
       "prompt": "Michael Jordan played the sport of",
       "open": {
@@ -127,12 +144,17 @@
           }
         ]
       },
+      "next": {
+        "reset": "There's nothing to undo here. Press Back to normal to close this guide.",
+        "try": "Next, try your own fact, like \"The Eiffel Tower is in the city of\", and find the layer where the answer shows up."
+      },
       "expect": " basketball"
     },
     {
       "id": "fact-recall",
       "title": "Where does it keep facts?",
       "hook": "Swap Michael Jordan for Tom Brady and see which layers carry the sport.",
+      "why": "In larger GPT models, researchers found that MLP layers in the middle of the network mattered most for recalling facts.",
       "preset": "gpt2-small",
       "prompt": "Michael Jordan played the sport of",
       "open": {
@@ -158,6 +180,10 @@
           }
         ]
       },
+      "next": {
+        "reset": "Press Back to normal to clear the swap pair and close this guide. It won't touch your prompt.",
+        "try": "Next, switch Patch type to Residual and press Run Patching again to see which word's carrying the fact."
+      },
       "expect": " basketball",
       "expectCorrupted": " football"
     },
@@ -165,6 +191,7 @@
       "id": "greater-than",
       "title": "Can it count years?",
       "hook": "\"From 1732 to 17..\": find the layers that know the end year must be bigger.",
+      "why": "Researchers found that in GPT-2 small, MLP layers near the end of the network (roughly layers 8 to 11) push up the years bigger than the start year.",
       "preset": "gpt2-small",
       "prompt": "The war lasted from the year 1732 to the year 17",
       "open": {
@@ -189,12 +216,17 @@
             "url": "https://arxiv.org/abs/2305.00586"
           }
         ]
+      },
+      "next": {
+        "reset": "Press Back to normal to clear the swap pair and close this guide. It won't touch your prompt.",
+        "try": "Next, change 1732 to 1785 in both prompts and see if it's the same layers that light up."
       }
     },
     {
       "id": "he-or-she",
       "title": "He or she?",
       "hook": "See which parts of the model push a pronoun one way or the other.",
+      "why": "Researchers studying gender bias in GPT-2 found the effect was concentrated in a small part of the network, such as a handful of attention heads.",
       "preset": "gpt2-small",
       "prompt": "The nurse said that",
       "open": {
@@ -219,12 +251,17 @@
           }
         ]
       },
+      "next": {
+        "reset": "There's nothing to undo here. Press Back to normal to close this guide.",
+        "try": "Next, press Compare at the top and try other jobs, like \"The engineer said that\"."
+      },
       "expect": " she"
     },
     {
       "id": "features-steering",
       "title": "Turn up a concept",
       "hook": "Find a learned concept inside the model, then dial it up and see what it writes.",
+      "why": "Many features match a single human-readable idea, and researchers showed that turning one up can steer what a model says.",
       "preset": "gpt2-small",
       "prompt": "On our trip we walked along the beach and watched the ocean",
       "open": {
@@ -248,6 +285,10 @@
             "url": "https://transformer-circuits.pub/2024/scaling-monosemanticity/index.html"
           }
         ]
+      },
+      "next": {
+        "reset": "If the text turns to mush, you've turned it up too far, so lower Steering strength. Press Back to normal to close this guide.",
+        "try": "Next, use Find a concept in Steering to look for a concept that isn't in your prompt."
       }
     }
   ]

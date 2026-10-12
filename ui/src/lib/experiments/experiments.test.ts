@@ -1,9 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
 import raw from './experiments.json';
+import { TutorialState } from '../tutorial/tutorial-store.svelte';
 import {
+  AGGREGATIONS,
   applyExperiment,
   isHttpUrl,
   loadExperiments,
+  resetExperiment,
+  tabLabel,
   validateExperiment,
   validateExperiments,
   type Experiment,
@@ -40,6 +44,87 @@ describe('experiments.json', () => {
     for (const e of loadExperiments()) {
       if (e.patching) expect(e.prompt, e.id).toBe(e.patching.clean);
     }
+  });
+
+  it('every experiment has hook, why, prompt, lookFor, found and next.reset/next.try', () => {
+    expect(loadExperiments()).toHaveLength(8);
+    for (const e of loadExperiments()) {
+      for (const s of [e.hook, e.why, e.prompt, e.found.summary, e.next.reset, e.next.try]) {
+        expect(typeof s === 'string' && s.trim().length > 0, e.id).toBe(true);
+      }
+      expect(e.lookFor.length, e.id).toBeGreaterThan(0);
+    }
+    const noWhy = clone(raw.experiments[0]) as Record<string, unknown>;
+    delete noWhy.why;
+    expect(validateExperiment(noWhy).join()).toMatch(/why is required/);
+    const noNext = clone(raw.experiments[0]) as Record<string, unknown>;
+    noNext.next = { reset: 'Back to normal.' };
+    expect(validateExperiment(noNext).join()).toMatch(/next needs reset and try/);
+  });
+
+  it('next.tryId names an existing experiment', () => {
+    const ids = new Set(raw.experiments.map((e) => e.id));
+    for (const e of loadExperiments()) {
+      if (e.next.tryId) {
+        expect(ids.has(e.next.tryId), e.id).toBe(true);
+        expect(e.next.tryId, e.id).not.toBe(e.id);
+      }
+    }
+    const data = clone(raw);
+    (data.experiments[0] as { next: { tryId?: string } }).next.tryId = 'no-such-experiment';
+    expect(validateExperiments(data).join()).toMatch(/no-such-experiment is not an experiment/);
+  });
+
+  it('no experiment uses demoLink', () => {
+    for (const e of raw.experiments) expect('demoLink' in e, e.id).toBe(false);
+    const e = clone(raw.experiments[0]) as Record<string, unknown>;
+    e.demoLink = '?demo=induction-heads';
+    expect(validateExperiment(e).join()).toMatch(/demoLink/);
+  });
+
+  it('tabLabel is defined for every experiment', () => {
+    const labels = Object.fromEntries(loadExperiments().map((e) => [e.id, tabLabel(e)]));
+    for (const [id, label] of Object.entries(labels)) expect(label.length, id).toBeGreaterThan(0);
+    expect(labels['logit-lens']).toBe('Logit Lens');
+    expect(labels['he-or-she']).toBe('Why (DLA)');
+    expect(labels['features-steering']).toBe('Features');
+    expect(labels['ioi-knockout']).toBe('Attention');
+  });
+
+  it("rejects the 'mean' aggregation (it only exists in the TO view)", () => {
+    expect(AGGREGATIONS).not.toContain('mean');
+    const e = clone(raw.experiments[0]) as Record<string, unknown>;
+    e.aggregation = 'mean';
+    expect(validateExperiment(e).join()).toMatch(/unknown aggregation/);
+    e.aggregation = 'max';
+    expect(validateExperiment(e)).toEqual([]);
+  });
+});
+
+describe('resetExperiment', () => {
+  it('resetExperiment turns off head ablation and clears the patching preset', () => {
+    const page = {
+      headAblations: [{ layer: 9, head: 9 }] as { layer: number; head: number }[],
+      headAblationMode: true,
+      headScoresMode: true,
+      patchingPreset: { clean: 'a', corrupted: 'b', patchType: 'head' } as unknown,
+      guide: 'ioi-knockout' as string | null,
+      prompt: 'my prompt',
+    };
+    resetExperiment({
+      clearHeadAblations: () => { page.headAblations = []; page.headAblationMode = false; },
+      hideHeadScores: () => { page.headScoresMode = false; },
+      clearPatchingPreset: () => { page.patchingPreset = null; },
+      dismissGuide: () => { page.guide = null; },
+    });
+    expect(page).toEqual({
+      headAblations: [],
+      headAblationMode: false,
+      headScoresMode: false,
+      patchingPreset: null,
+      guide: null,
+      prompt: 'my prompt',
+    });
   });
 });
 
@@ -96,9 +181,28 @@ describe('applyExperiment', () => {
       setAggregation: (g) => void calls.push(`agg:${g}`),
       presetPatching: (p) => void calls.push(`patch:${p.patchType}`),
       presetHeadAblations: (h) => void calls.push(`ablate:${h.length}`),
+      endTour: vi.fn(),
     };
     return { a, calls };
   }
+
+  it('starting an experiment closes the tour', async () => {
+    const tour = new TutorialState([
+      { id: 'one', title: 'One', summary: '', steps: [{ id: '1a', blurb: '1a', why: null, target: null }] },
+    ]);
+    tour.start();
+    const { a } = mockActions('gpt2-small');
+    a.endTour = () => tour.endForExperiment();
+    await applyExperiment(byId('logit-lens'), a);
+    expect(tour.open).toBe(false);
+
+    // It ends the tour before anything else, even when the model switch then fails.
+    tour.start();
+    const failed = mockActions('pythia-70m');
+    failed.a.endTour = () => tour.endForExperiment();
+    expect((await applyExperiment(byId('logit-lens'), failed.a)).ok).toBe(false);
+    expect(tour.open).toBe(false);
+  });
   const byId = (id: string) => loadExperiments().find((e) => e.id === id) as Experiment;
 
   it('sets the prompt, runs, then opens tabs (ablations after the run)', async () => {
