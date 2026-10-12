@@ -206,7 +206,7 @@ export function attentionReadout(
   const [top, next] = ranked;
   let text = `${where} looks mostly at ${name(top.k)} (${pct(top.weight)} of its attention).`;
   if (top.k === 0 && isStartMarker(tokens[0]?.text ?? '')) {
-    text += ' That is the start-of-text marker, where many heads park their attention when nothing else stands out.';
+    text += " That's the start-of-text marker, where lots of heads park their attention when nothing else stands out.";
   }
   if (next && next.weight >= 0.1) text += ` Next: ${name(next.k)} (${pct(next.weight)}).`;
   return text;

@@ -791,7 +791,7 @@
       {#if isStartMarker(tokens[0]?.text ?? '')}
         <p class="mt-2 text-[11px] leading-relaxed text-zinc-500">
           The first token, {displayToken(tokens[0].text)}, is the model's
-          <Term key="attention-sink">start-of-text marker</Term>, not a word you typed. It is often bright.
+          <Term key="attention-sink">start-of-text marker</Term>, not a word you typed. It's often bright.
         </p>
       {/if}
     </div>

@@ -70,7 +70,38 @@
       : null;
     if (control && (control as HTMLButtonElement).disabled) return false;
     if (el.getAttribute('aria-disabled') === 'true') return false;
+    // Not covered by something else, like the loading screen or a dialog.
+    const r = el.getBoundingClientRect();
+    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    if (!hit) return false;
+    const ours = tipEl?.contains(hit) ?? false; // the tip itself can overlap its target
+    if (!ours && !(el === hit || el.contains(hit) || hit.contains(el))) return false;
     return true;
+  }
+
+  /** Hide the current tip without marking it seen; it comes back later. */
+  function release(): void {
+    resizeObserver?.disconnect();
+    resizeObserver = null;
+    intersectionObserver?.disconnect();
+    intersectionObserver = null;
+    window.removeEventListener('resize', onWindowResize);
+    window.removeEventListener('scroll', onWindowScroll, {
+      capture: true,
+    } as AddEventListenerOptions);
+    window.removeEventListener('keydown', onKeydown);
+    window.removeEventListener('mousedown', onMouseDown, true);
+    if (targetEl) {
+      if (prevAriaDescribedBy !== null) {
+        targetEl.setAttribute('aria-describedby', prevAriaDescribedBy);
+      } else {
+        targetEl.removeAttribute('aria-describedby');
+      }
+    }
+    activeTip = null;
+    position = null;
+    targetEl = null;
+    prevAriaDescribedBy = null;
   }
 
   function schedulePick(): void {
@@ -262,27 +293,7 @@
   $effect(() => {
     if (tutorialState.open && activeTip) {
       // Tutorial took over mid-tip; silently release without marking seen.
-      resizeObserver?.disconnect();
-      resizeObserver = null;
-      intersectionObserver?.disconnect();
-      intersectionObserver = null;
-      window.removeEventListener('resize', onWindowResize);
-      window.removeEventListener('scroll', onWindowScroll, {
-        capture: true,
-      } as AddEventListenerOptions);
-      window.removeEventListener('keydown', onKeydown);
-      window.removeEventListener('mousedown', onMouseDown, true);
-      if (targetEl) {
-        if (prevAriaDescribedBy !== null) {
-          targetEl.setAttribute('aria-describedby', prevAriaDescribedBy);
-        } else {
-          targetEl.removeAttribute('aria-describedby');
-        }
-      }
-      activeTip = null;
-      position = null;
-      targetEl = null;
-      prevAriaDescribedBy = null;
+      release();
     }
     if (!tutorialState.open) {
       schedulePick();
@@ -291,7 +302,18 @@
 
   onMount(() => {
     mutationObserver = new MutationObserver((mutations) => {
+      // Something now covers the active tip's target (loading screen, dialog).
+      if (activeTip && targetEl && !usable(targetEl)) {
+        release();
+        schedulePick();
+        return;
+      }
       for (const m of mutations) {
+        // An overlay went away: a waiting tip may be usable now.
+        if (m.removedNodes.length > 0 && !activeTip) {
+          schedulePick();
+          return;
+        }
         for (const node of m.addedNodes) {
           if (!(node instanceof Element)) continue;
           if (

@@ -36,6 +36,8 @@
   let cardEl: HTMLDivElement | null = $state(null);
   /** The element the current step points at, once it's on screen. */
   let pointedEl: HTMLElement | null = $state(null);
+  /** True once the target has been missing for a moment (not just mounting). */
+  let targetMissing = $state(false);
 
   const step = $derived(tutorialState.currentStep);
   const chapter = $derived(tutorialState.currentChapter);
@@ -98,7 +100,9 @@
     const target = step?.target ?? null;
     clearHighlights();
     pointedEl = null;
+    targetMissing = false;
     if (!target) return;
+    const missingTimer = setTimeout(() => (targetMissing = pointedEl === null), 1200);
     let el: HTMLElement | null = null;
     const find = () => {
       if (el?.isConnected && el.getClientRects().length > 0) return;
@@ -106,6 +110,7 @@
       el = findAnchor(target);
       pointedEl = el;
       if (!el) return;
+      targetMissing = false;
       el.setAttribute('data-tour-active', 'true');
       el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
     };
@@ -113,6 +118,7 @@
     const timer = setInterval(find, 250);
     return () => {
       clearInterval(timer);
+      clearTimeout(missingTimer);
       el?.removeAttribute('data-tour-active');
       pointedEl = null;
     };
@@ -344,7 +350,7 @@
         {#if step.target}
           <p class="mb-1.5 text-[11px] text-indigo-300" data-testid="tour-look-at">
             <span class="font-semibold uppercase tracking-widest">{tourUi.lookAt}</span>
-            {targetLabels[step.target] ?? step.target}{#if !pointedEl}<span class="text-zinc-500"> · {tourUi.notOnScreen}</span>{/if}
+            {targetLabels[step.target] ?? step.target}{#if targetMissing}<span class="text-zinc-500"> · {tourUi.notOnScreen}</span>{/if}
           </p>
         {/if}
         <p class="text-sm leading-relaxed text-zinc-200">{step.blurb}</p>
