@@ -248,3 +248,122 @@ def test_dla_matches_transformer_lens_apply_ln_to_stack(gpt2_loaded):
     assert tab.contribution == pytest.approx(expected, rel=1e-3)
     assert node.importance == pytest.approx(expected, rel=1e-3)
     assert 1.0 < node.importance < 10.0  # logits, not the raw ~50 of an unscaled projection
+
+    # GPT-2 has no ln1_post, so the DLA / circuit cache keys are unchanged (arch:2).
+    from pry_sidecar.inference import circuit_hook_filter, dla_hook_filter
+
+    hooks = list(m.hook_dict)
+    expected_dla = {
+        n for n in hooks
+        if n.endswith("hook_result") or n.endswith("hook_mlp_out") or n == "ln_final.hook_scale"
+    }
+    expected_circuit = {
+        n for n in hooks
+        if n.endswith("hook_result") or n.endswith("hook_mlp_out") or n.endswith("attn.hook_z")
+        or n.endswith("attn.hook_pattern") or n.endswith("ln1.hook_scale") or n == "ln_final.hook_scale"
+    }
+    assert {n for n in hooks if dla_hook_filter(m)(n)} == expected_dla
+    assert {n for n in hooks if circuit_hook_filter(m)(n)} == expected_circuit
+
+
+# ---------------------------------------------------------------------------
+# code:A1 / code:A4 on tiny models (no download)
+# ---------------------------------------------------------------------------
+
+
+def test_edges_post_ln_model():
+    """With Gemma-2-style ln1_post, each edge equals the drop in the predicted
+    logit when S's (post-normed) output is removed from T's value input only,
+    with T's pattern, T's ln1 / ln1_post scales and the final scale frozen."""
+    from tests.tiny_models import tiny_model
+
+    model = tiny_model(post_norm=True)
+    tokens = model.to_tokens("")
+    t = tokens.shape[1] - 1
+    with torch.no_grad():
+        clean_logits, cache = model.run_with_cache(tokens)
+    pred = int(clean_logits[0, t].argmax())
+    sources = [f"L0.H{h}" for h in range(3)] + ["MLP.0"]
+    targets = [f"L1.H{h}" for h in range(3)]
+    edges = direct_value_path_edges(model, cache, t, pred, sources, targets)
+    assert len(edges) == 12
+
+    frozen_names = (
+        "blocks.1.attn.hook_pattern", "blocks.1.ln1.hook_scale",
+        "blocks.1.ln1_post.hook_scale", "ln_final.hook_scale",
+        "blocks.1.hook_mlp_out",  # no route through the later MLP
+    )
+    frozen = {name: cache[name] for name in frozen_names}
+    post0 = model.blocks[0].ln1_post.w / cache["blocks.0.ln1_post.hook_scale"][0]  # [pos, d_model]
+    for (sid, tid), weight in edges.items():
+        ht = int(tid[-1])
+        if sid.startswith("MLP"):
+            s_out = cache["blocks.0.hook_mlp_out"][0]
+        else:
+            hs = int(sid[-1])
+            s_out = (cache["blocks.0.attn.hook_z"][0, :, hs, :] @ model.blocks[0].attn.W_O[hs]) * post0
+
+        def remove_s(v_in, hook, ht=ht, s_out=s_out):
+            v_in = v_in.clone()
+            v_in[0, :, ht, :] -= s_out
+            return v_in
+
+        hooks = [(name, lambda x, hook, val=val: val) for name, val in frozen.items()]
+        hooks.append(("blocks.1.hook_v_input", remove_s))
+        with torch.no_grad():
+            ablated = model.run_with_hooks(tokens, fwd_hooks=hooks)
+        delta = float(clean_logits[0, t, pred] - ablated[0, t, pred])
+        assert weight == pytest.approx(delta, rel=1e-4, abs=1e-6), (sid, tid, weight, delta)
+
+
+def test_circuit_uses_target_token_index():
+    from pry_sidecar.inference import run_circuit, run_dla
+    from pry_sidecar.schemas import CircuitRequest, DLARequest
+    from tests.tiny_models import loaded_for, tiny_model
+
+    loaded = loaded_for(tiny_model(post_norm=True))
+    t = 2
+    dla = run_dla(DLARequest(preset_id="tiny", prompt="x", target_token_index=t), loaded)
+    circ = run_circuit(
+        CircuitRequest(preset_id="tiny", prompt="x", target_token_index=t, threshold=0.0), loaded
+    )
+    by_id = {n.id: n.importance for n in circ.nodes}
+    for c in dla.components:
+        cid = f"L{c.layer}.H{c.head}" if c.type == "attention" else f"MLP.{c.layer}"
+        assert by_id[cid] == pytest.approx(c.contribution, rel=1e-9, abs=1e-12)
+
+    last = run_circuit(CircuitRequest(preset_id="tiny", prompt="x", threshold=0.0), loaded)
+    assert {n.id: n.importance for n in last.nodes} != by_id  # default is still the last word
+
+    with pytest.raises(ValueError):
+        run_circuit(CircuitRequest(preset_id="tiny", prompt="x", target_token_index=99), loaded)
+
+
+@pytest.mark.inference
+def test_gpt2_response_has_real_weights_verified_true(gpt2_loaded):
+    from pry_sidecar.inference import run_circuit, run_dla
+    from pry_sidecar.schemas import CircuitRequest, DLARequest
+
+    assert run_dla(DLARequest(preset_id="gpt2-small", prompt=IOI), gpt2_loaded).real_weights_verified is True
+    assert run_circuit(CircuitRequest(preset_id="gpt2-small", prompt=IOI), gpt2_loaded).real_weights_verified is True
+
+
+def test_post_norm_response_real_weights_verified_follows_constant(monkeypatch):
+    from pry_sidecar import inference
+    from pry_sidecar.schemas import CircuitRequest, DLARequest
+    from tests.tiny_models import loaded_for, tiny_model
+
+    post = loaded_for(tiny_model(post_norm=True))
+    plain = loaded_for(tiny_model(post_norm=False))
+    dla = DLARequest(preset_id="tiny", prompt="x")
+    circ = CircuitRequest(preset_id="tiny", prompt="x")
+
+    monkeypatch.setattr(inference, "POST_NORM_VERIFIED", False)
+    assert inference.run_dla(dla, post).real_weights_verified is False
+    assert inference.run_circuit(circ, post).real_weights_verified is False
+    assert inference.run_dla(dla, plain).real_weights_verified is True
+    assert inference.run_circuit(circ, plain).real_weights_verified is True
+
+    monkeypatch.setattr(inference, "POST_NORM_VERIFIED", True)
+    assert inference.run_dla(dla, post).real_weights_verified is True
+    assert inference.run_circuit(circ, post).real_weights_verified is True
