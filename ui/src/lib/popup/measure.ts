@@ -28,6 +28,7 @@ export function placementChanged(a: Placement | null, b: Placement | null): bool
     a.side !== b.side ||
     a.caretEdge !== b.caretEdge ||
     a.arrowExempt !== b.arrowExempt ||
+    a.largeTarget !== b.largeTarget ||
     Math.abs(a.top - b.top) > 0.5 ||
     Math.abs(a.left - b.left) > 0.5 ||
     Math.abs(a.width - b.width) > 0.5 ||
@@ -45,6 +46,7 @@ export function placementAttrs(p: Placement | null, focus: Point | null): Record
     'data-popup-side': p.side ?? '',
     'data-popup-arrow-len': p.arrowFrom ? p.arrowLen.toFixed(1) : '',
     'data-popup-arrow-exempt': String(p.arrowExempt),
+    'data-popup-large-target': String(p.largeTarget),
     'data-popup-focus': focus ? `${focus.x.toFixed(1)},${focus.y.toFixed(1)}` : '',
   };
 }

@@ -9,10 +9,18 @@
 //                opposite, then the two cross sides. Must sit inside the
 //                viewport minus edgePad and touch neither the target nor any
 //                `avoid` rect.
-//   3. inset     target too large to sit beside (no side fits, or it covers
-//                more than half the viewport): inside the target, next to the
-//                focus point on the side with the most room. The target corner
-//                farthest from focus is only a fallback (arrowExempt).
+//      (minW)    if no side fits, the same at narrower widths down to minW.
+//   3. inset     only for a target too large to sit beside (the caller says
+//                so with `large`, it covers more than half the viewport, or
+//                no side of it has room for the popup): inside the target,
+//                next to the focus point on the side with the most room. The
+//                target corner farthest from focus is only a fallback
+//                (arrowExempt).
+//      nearest   a small target with no side free (crowded by `avoid` rects):
+//                the closest spot that covers neither the target nor any
+//                avoid rect, reported as anchored. If there is none, the popup
+//                is clamped into the viewport (inset, arrowExempt; the audit
+//                fails it).
 //   4. fallback  no target, or the target is off screen.
 // Every non-fallback result carries an arrow (arrowFrom on the popup edge,
 // arrowTo at the target or focus) and a caret offset lined up with it.
@@ -61,6 +69,8 @@ export interface PlaceInput {
    * next to the focus point at full width. The result's `width` says how wide.
    */
   minW?: number;
+  /** The caller knows the target is one of the big panels (tour LARGE_TARGETS): inset is allowed. */
+  large?: boolean;
 }
 
 export interface Placement {
@@ -81,6 +91,8 @@ export interface Placement {
   /** Inset far-corner fallback: the ring shows, the arrow doesn't. */
   arrowExempt: boolean;
   mode: PlaceMode;
+  /** The target counted as too large to sit beside, so inset (covering it) was allowed. */
+  largeTarget: boolean;
 }
 
 export const DEFAULT_GAP = 10;
@@ -201,12 +213,14 @@ function result(
     return {
       top: box.top, left: box.left, width: box.width, height: box.height,
       side, caret: 0, caretEdge: null, arrowFrom: null, arrowTo: null, arrowLen: 0, arrowExempt, mode,
+      largeTarget: false,
     };
   }
   const a = arrowFor(box, edge, to);
   return {
     top: box.top, left: box.left, width: box.width, height: box.height,
     side, caret: a.caret, caretEdge: edge, arrowFrom: a.from, arrowTo: to, arrowLen: a.len, arrowExempt, mode,
+    largeTarget: false,
   };
 }
 
@@ -226,27 +240,36 @@ function dockBottom(left: number, right: number, vp: { w: number; h: number }, p
 // ---------------------------------------------------------------------------
 
 export function placePopup(input: PlaceInput): Placement {
-  const first = placeAtSize(input);
-  if (!input.minW || first.mode !== 'inset') return first;
-  // Crowded (say, a docked guide taking most of a narrow window): a narrower
-  // popup beside the target beats one inside it; failing that, keep the
-  // widest one next to the focus point.
-  let best = placedWell(first) ? first : null;
-  const { w, h } = input.size;
-  for (let nw = w - 20; nw >= input.minW; nw -= 20) {
-    const p = placeAtSize({ ...input, size: { w: nw, h: Math.ceil((h * w) / nw) } });
-    if (p.mode === 'anchored') return p;
-    if (!best && placedWell(p)) best = p;
-  }
-  return best ?? first;
+  const full = placeAtSize(input, 'beside');
+  if (full) return full;
+  const narrower = (stage: Stage): Placement | null => {
+    if (!input.minW) return null;
+    const { w, h } = input.size;
+    for (let nw = w - 20; nw >= input.minW; nw -= 20) {
+      const p = placeAtSize({ ...input, size: { w: nw, h: Math.ceil((h * w) / nw) } }, stage);
+      if (p && placedWell(p)) return p;
+    }
+    return null;
+  };
+  // A narrower popup beside the target beats one inside it or farther away.
+  const beside = narrower('beside');
+  if (beside) return beside;
+  const first = placeAtSize(input, 'rest')!;
+  if (placedWell(first)) return first;
+  // Crowded (say, a docked guide taking most of a narrow window): keep the
+  // widest popup that lands next to the focus point or near the target.
+  return narrower('rest') ?? first;
 }
 
-/** Beside the target, or next to the focus point inside it, or a docked/fallback card. */
+/** Beside the target, near it, or next to the focus point inside a large one. */
 function placedWell(p: Placement): boolean {
   return p.mode !== 'inset' || !p.arrowExempt;
 }
 
-function placeAtSize(input: PlaceInput): Placement {
+/** 'beside': only sheet, fallback or anchored (else null). 'rest': inset or the nearest free spot. */
+type Stage = 'beside' | 'rest';
+
+function placeAtSize(input: PlaceInput, stage: Stage): Placement | null {
   const gap = input.gap ?? DEFAULT_GAP;
   const pad = input.edgePad ?? DEFAULT_EDGE_PAD;
   const vp = input.viewport;
@@ -282,8 +305,9 @@ function placeAtSize(input: PlaceInput): Placement {
     insideViewport(box, vp, pad) && !intersects(box, target) && !avoid.some((a) => intersects(box, a));
 
   // 2. anchored
-  const large = visible.width * visible.height > 0.5 * vp.w * vp.h;
-  if (!large) {
+  const covers = visible.width * visible.height > 0.5 * vp.w * vp.h;
+  if (stage === 'beside') {
+    if (covers) return null;
     const order: Side[] = [];
     if (input.previousSide && (input.previousMode ?? 'anchored') === 'anchored') order.push(input.previousSide);
     for (const s of [input.preferred, OPPOSITE[input.preferred], ...CROSS[input.preferred]]) {
@@ -296,10 +320,16 @@ function placeAtSize(input: PlaceInput): Placement {
         return result(box, 'anchored', side, OPPOSITE[side], to);
       }
     }
+    return null;
   }
 
-  // 3. inset
-  return inset(input, target, visible, focus, w, h, gap, pad, view, avoid);
+  // 3. inset, only for a target too large to sit beside
+  if (input.large || covers || tooLargeToSitBeside(target, visible, w, h, gap, view)) {
+    const p = inset(input, target, visible, focus, w, h, gap, pad, view, avoid);
+    p.largeTarget = true;
+    return p;
+  }
+  return nearestFreeSpot(target, focus, w, h, gap, pad, vp, view, avoid, fits);
 
   function anchoredBox(side: Side, t: Rect, f: Point, bw: number, bh: number, g: number, area: Rect, av: Rect[]): Rect | null {
     if (vertical(side)) {
@@ -317,6 +347,71 @@ function placeAtSize(input: PlaceInput): Placement {
     }
     return null;
   }
+}
+
+/** No side of the target has room for the popup, and the target is at least popup-sized one way. */
+function tooLargeToSitBeside(t: Rect, visible: Rect, w: number, h: number, gap: number, view: Rect): boolean {
+  const room =
+    t.top - gap - view.top >= h ||
+    view.bottom - t.bottom - gap >= h ||
+    t.left - gap - view.left >= w ||
+    view.right - t.right - gap >= w;
+  return !room && (visible.width >= w || visible.height >= h);
+}
+
+/** Gap between two rects (0 when they touch or overlap). */
+function rectDistance(a: Rect, b: Rect): number {
+  const dx = Math.max(0, b.left - a.right, a.left - b.right);
+  const dy = Math.max(0, b.top - a.bottom, a.top - b.bottom);
+  return Math.hypot(dx, dy);
+}
+
+/**
+ * A small target with no side free: the closest spot in the viewport that
+ * covers neither the target nor an avoid rect, reported as anchored on the
+ * side it ended up on. None at all: clamped next to focus (inset, arrowExempt),
+ * which the popup audit fails.
+ */
+function nearestFreeSpot(
+  target: Rect,
+  focus: Point,
+  w: number,
+  h: number,
+  gap: number,
+  pad: number,
+  vp: { w: number; h: number },
+  view: Rect,
+  avoid: Rect[],
+  fits: (box: Rect) => boolean,
+): Placement {
+  const xs = [target.left - gap - w, target.right + gap, focus.x - w / 2, target.left, target.right - w, view.left, view.right - w];
+  const ys = [target.top - gap - h, target.bottom + gap, focus.y - h / 2, target.top, target.bottom - h, view.top, view.bottom - h];
+  for (const a of avoid) {
+    xs.push(a.left - gap - w, a.right + gap);
+    ys.push(a.top - gap - h, a.bottom + gap);
+  }
+  let best: Rect | null = null;
+  let bestScore = Infinity;
+  for (const x of xs) {
+    for (const y of ys) {
+      const box = rect(clamp(x, view.left, view.right - w), clamp(y, view.top, view.bottom - h), w, h);
+      if (!fits(box)) continue;
+      const score = rectDistance(box, target) * 1000 + Math.hypot(box.left + w / 2 - focus.x, box.top + h / 2 - focus.y);
+      if (score < bestScore) {
+        bestScore = score;
+        best = box;
+      }
+    }
+  }
+  if (best) {
+    const side: Side =
+      best.bottom <= target.top ? 'top' : best.top >= target.bottom ? 'bottom' : best.right <= target.left ? 'left' : 'right';
+    return result(best, 'anchored', side, OPPOSITE[side], edgePointToward(target, side, best));
+  }
+  const off = gap + FOCUS_RING_R;
+  const left = clamp(focus.x + off, pad, vp.w - pad - w);
+  const top = clamp(focus.y - h / 2, pad, vp.h - pad - h);
+  return result(rect(left, top, w, h), 'inset', null, null, null, true);
 }
 
 /** Where an anchored arrow lands: on the ring around the target, on the side facing the popup. */

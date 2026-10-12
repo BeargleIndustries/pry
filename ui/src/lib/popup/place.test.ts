@@ -278,4 +278,68 @@ describe('placePopup', () => {
     const q = placePopup({ target: rect(600, 300, 60, 16), viewport: VP, size: { w: 256, h: 80 }, preferred: 'bottom', gap: 6, edgePad: 8 });
     expect(q.side).toBe('bottom');
   });
+
+  it('› small target crowded by avoid rects: nearest free spot, never inset', () => {
+    // A button with avoid rects hugging every side: nothing sits right beside it.
+    const target = rect(600, 380, 40, 24);
+    const avoid = [rect(560, 300, 120, 70), rect(560, 414, 120, 70), rect(480, 360, 110, 64), rect(650, 360, 110, 64)];
+    const p = placePopup(base({ target, avoid, preferred: 'bottom' }));
+    expect(p.mode).toBe('anchored');
+    expect(p.largeTarget).toBe(false);
+    expect(intersects(boxOf(p), target)).toBe(false);
+    for (const a of avoid) expect(intersects(boxOf(p), a)).toBe(false);
+    expect(insideViewport(boxOf(p), VP, 12)).toBe(true);
+  });
+
+  it('› small target with no free spot anywhere is clamped and flagged, not treated as large', () => {
+    const vp = { w: 740, h: 700 };
+    const guide = rect(16, 64, 400, 620);
+    const target = rect(660, 8, 28, 28);
+    const p = placePopup({ target, viewport: vp, size: { w: 320, h: 130 }, preferred: 'bottom', avoid: [guide] });
+    expect(p.mode).toBe('inset');
+    expect(p.arrowExempt).toBe(true);
+    expect(p.largeTarget).toBe(false);
+  });
+
+  it('› minW is tried before inset on a target too large to sit beside at full width', () => {
+    const target = rect(300, 100, 700, 600); // 258px free on the right, 78px above and below
+    const inset = placePopup(base({ target, preferred: 'right' }));
+    expect(inset.mode).toBe('inset');
+    expect(inset.largeTarget).toBe(true);
+    const narrow = placePopup(base({ target, preferred: 'right', minW: 220 }));
+    expect(narrow.mode).toBe('anchored');
+    expect(narrow.width).toBeLessThan(300);
+    expect(intersects(boxOf(narrow), target)).toBe(false);
+  });
+
+  it('› the large flag allows inset; without it a crowded medium target is only clamped and flagged', () => {
+    // Medium panel with room below it, but a dock fills that room.
+    const target = rect(200, 150, 500, 300);
+    const avoid = [rect(0, 450, 1280, 350), rect(700, 0, 580, 450)];
+    // No free spot is left, so the popup is clamped and flagged for the audit.
+    const plain = placePopup(base({ target, avoid, preferred: 'bottom' }));
+    expect(plain.largeTarget).toBe(false);
+    expect(plain.mode).toBe('inset');
+    expect(plain.arrowExempt).toBe(true);
+    const flagged = placePopup(base({ target, avoid, preferred: 'bottom', large: true }));
+    expect(flagged.mode).toBe('inset');
+    expect(flagged.largeTarget).toBe(true);
+  });
+
+  it('› inset only ever happens on a large target', () => {
+    const rnd = mulberry32(5);
+    for (let i = 0; i < 500; i++) {
+      const vp = { w: 740 + Math.round(rnd() * 1180), h: 600 + Math.round(rnd() * 600) };
+      const tw = 4 + rnd() * vp.w * 0.6;
+      const th = 4 + rnd() * vp.h * 0.6;
+      const target = rect(rnd() * (vp.w - tw), rnd() * (vp.h - th), tw, th);
+      const size = { w: 200 + rnd() * 200, h: 80 + rnd() * 180 };
+      const avoid = Array.from({ length: Math.floor(rnd() * 4) }, () =>
+        rect(rnd() * vp.w, rnd() * vp.h, 40 + rnd() * 400, 40 + rnd() * 300),
+      );
+      const p = placePopup({ target, viewport: vp, size, preferred: 'bottom', avoid, minW: rnd() < 0.5 ? 180 : undefined });
+      if (p.mode === 'inset' && !p.arrowExempt) expect(p.largeTarget, `case ${i}`).toBe(true);
+      if (p.mode === 'anchored') expect(intersects(boxOf(p), target), `case ${i}`).toBe(false);
+    }
+  });
 });

@@ -2,7 +2,7 @@
   import { untrack } from 'svelte';
   import { tutorialState } from '$lib/tutorial/tutorial-store.svelte';
   import type { TourContext, TutorialActions } from '$lib/tutorial/actions';
-  import { tourUi, targetLabels } from '$lib/tutorial/tour-steps';
+  import { LARGE_TARGETS, tourUi, targetLabels } from '$lib/tutorial/tour-steps';
   import Pointer from './Pointer.svelte';
   import { findAnchor } from '$lib/tutorial/anchors';
   import { asyncStepSucceeded, needsModelOffer, TOUR_PRESET_ID } from '$lib/tutorial/step-machine';
@@ -160,6 +160,7 @@
         previousMode: prev?.mode,
         avoid: occupied.rects([OCCUPIED.tourCard]),
         sheetBelow: SHEET_BELOW,
+        large: s.target !== null && LARGE_TARGETS.includes(s.target),
       });
       prev = next;
       if (placementChanged(placed, next)) {
