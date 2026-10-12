@@ -46,6 +46,8 @@ from .schemas import (
     SteerResponse,
     TokenFeatures,
     TokenInfo,
+    TokenizeRequest,
+    TokenizeResponse,
     TopPrediction,
 )
 
@@ -66,6 +68,49 @@ def _layer_mismatch_msg(requested: int, loaded_layer: int) -> str:
         f"This feature belongs to layer {requested} but the loaded feature map "
         f"is for layer {loaded_layer}. Re-run after switching layers."
     )
+
+
+def _target_position(requested: Optional[int], seq_len: int) -> int:
+    """The token position to analyse: ``requested``, or the last token.
+
+    Raises ValueError (a 400 at the endpoint) when ``requested`` is past the
+    end of the prompt, instead of silently clamping to the last token.
+    """
+    if requested is None:
+        return seq_len - 1
+    if requested >= seq_len:
+        raise ValueError(
+            f"Token position {requested} is out of range; this prompt has "
+            f"positions 0-{seq_len - 1}."
+        )
+    return requested
+
+
+def run_tokenize(req: TokenizeRequest, loaded: LoadedModel) -> TokenizeResponse:
+    """Tokenize ``req.text`` exactly as the analyses do (BOS prepended)."""
+    if loaded.model is None:
+        raise RuntimeError(f"model '{req.preset_id}' was unloaded during tokenize")
+    tokens = [str(t) for t in loaded.model.to_str_tokens(req.text)]
+    return TokenizeResponse(tokens=tokens, count=len(tokens))
+
+
+def _generate_continuation(model, prompt_tokens, max_new_tokens: int) -> str:
+    """Greedy-generate from ``prompt_tokens`` and decode only the new tokens.
+
+    Works at the token level (generate returns prompt + new ids), so the
+    prompt is removed exactly even when decoding it wouldn't round-trip.
+    """
+    out = model.generate(
+        prompt_tokens,
+        max_new_tokens=max_new_tokens,
+        temperature=0.0,
+        verbose=False,
+    )
+    new_ids = out[0, prompt_tokens.shape[1]:].tolist()
+    eos = getattr(getattr(model, "tokenizer", None), "eos_token_id", None)
+    if eos is not None and eos in new_ids:
+        new_ids = new_ids[: new_ids.index(eos)]  # generate pads with EOS after stopping
+    return model.to_string(new_ids) if new_ids else ""
 
 
 # Word-count bucket of an auto-interp label -> how detailed the label is.
@@ -670,8 +715,7 @@ def run_dla(req: DLARequest, loaded: LoadedModel) -> DLAResponse:
         seq_len = len(tokens)
 
         # Target position: default to last token
-        target_pos = req.target_token_index if req.target_token_index is not None else (seq_len - 1)
-        target_pos = min(target_pos, seq_len - 1)
+        target_pos = _target_position(req.target_token_index, seq_len)
 
         # Cache: hook_result (attention output per head) + hook_mlp_out
         def names_filter(name: str) -> bool:
@@ -804,19 +848,8 @@ def run_steer(req: SteerRequest, loaded: LoadedModel) -> SteerResponse:
             orig_logits = model(orig_tokens)
             orig_preds = _extract_top_predictions(model, orig_logits[0])
 
-            # Generate text
-            orig_gen = model.generate(
-                req.prompt,
-                max_new_tokens=req.max_new_tokens,
-                temperature=0.0,
-            )
-            if isinstance(orig_gen, str):
-                orig_text = orig_gen
-            else:
-                try:
-                    orig_text = model.to_string(orig_gen.squeeze(0))
-                except Exception:
-                    orig_text = str(orig_gen)
+            # Continuation only; the response carries the prompt separately.
+            orig_text = _generate_continuation(model, orig_tokens, req.max_new_tokens)
         orig_ms = (time.perf_counter() - orig_start) * 1000
 
         # -- Steered generation (persistent hook approach) --
@@ -835,19 +868,7 @@ def run_steer(req: SteerRequest, loaded: LoadedModel) -> SteerResponse:
                 steered_logits = model(orig_tokens)
                 steered_preds = _extract_top_predictions(model, steered_logits[0])
 
-                # Generate steered text
-                steered_gen = model.generate(
-                    req.prompt,
-                    max_new_tokens=req.max_new_tokens,
-                    temperature=0.0,
-                )
-                if isinstance(steered_gen, str):
-                    steered_text = steered_gen
-                else:
-                    try:
-                        steered_text = model.to_string(steered_gen.squeeze(0))
-                    except Exception:
-                        steered_text = str(steered_gen)
+                steered_text = _generate_continuation(model, orig_tokens, req.max_new_tokens)
             finally:
                 model.reset_hooks()
         steer_ms = (time.perf_counter() - steer_start) * 1000
@@ -1102,8 +1123,7 @@ def run_patching(req: PatchRequest, loaded: LoadedModel) -> PatchResponse:
     clean_strs = model.to_str_tokens(req.clean_prompt)
     corrupted_strs = model.to_str_tokens(req.corrupted_prompt)
     seq_len = min(len(clean_strs), len(corrupted_strs))
-    target_pos = req.target_token_index if req.target_token_index is not None else (seq_len - 1)
-    target_pos = min(target_pos, seq_len - 1)
+    target_pos = _target_position(req.target_token_index, seq_len)
 
     # Determine names_filter based on patch_type for efficient caching
     if req.patch_type == "head":

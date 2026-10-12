@@ -19,17 +19,25 @@ export function laterKey(schema: number, variant: string): string {
   return `pry:runtime_update_later:${schema}:${variant}`;
 }
 
+/** "~3.5 GB" / "~420 MB" for the prompt. */
+export function formatDownload(mb: number): string {
+  return mb >= 1000 ? `~${(mb / 1000).toFixed(1)} GB` : `~${mb} MB`;
+}
+
 /**
- * Prompt copy from the current -> target variant. Only a CPU engine moving to
- * the GPU build is "faster"; a cu124 engine rebuilt for a schema/constraints
- * change is just an update.
+ * Prompt copy from the current -> target variant. A CPU engine moving to a
+ * GPU build is "faster"; a cu124 engine moving to cu128 happens only because
+ * the card (Blackwell) can't run cu124; anything else is just an update.
  */
-export function promptCopy(currentVariant: string | null, targetVariant: string): string {
-  if (targetVariant !== 'cu124') return 'Engine update (~400 MB).';
+export function promptCopy(currentVariant: string | null, targetVariant: string, downloadMb: number): string {
+  const size = formatDownload(downloadMb);
+  if (targetVariant === 'cpu') return `Engine update (${size}).`;
   const cpuNow = currentVariant === 'cpu' || currentVariant === 'unknown-cpu';
-  return cpuNow
-    ? 'A faster engine is available for your graphics card (one-time ~2.7 GB download).'
-    : 'An engine update is available (one-time ~2.7 GB download).';
+  if (cpuNow) return `A faster engine is available for your graphics card (one-time ${size} download).`;
+  if (currentVariant === 'cu124' && targetVariant === 'cu128') {
+    return `Your graphics card needs a newer engine (one-time ${size} download).`;
+  }
+  return `An engine update is available (one-time ${size} download).`;
 }
 
 /** KEEP IN SYNC: src-tauri/src/bootstrap/mod.rs `RuntimeUpdateError`. */

@@ -8,7 +8,7 @@ pub mod presets_compat;
 pub mod bootstrap;
 
 use std::sync::Arc;
-use tauri::{Manager, Runtime, State};
+use tauri::{Manager, State};
 use tokio::sync::Mutex;
 
 use error::AppError;
@@ -24,6 +24,93 @@ async fn sidecar_url(state: State<'_, SidecarState>) -> Result<String, AppError>
         Some(h) => Ok(h.base_url.clone()),
         None => Err(AppError::Sidecar("not running".into())),
     }
+}
+
+/// `{ base_url, token }` for the running sidecar (T14). The token changes on
+/// every launch, so the UI caches the pair and refetches after a 403,
+/// `sidecar:crashed`, or `sidecar:restarted`.
+#[derive(serde::Serialize)]
+struct SidecarConnection {
+    base_url: String,
+    token: String,
+}
+
+#[tauri::command]
+async fn sidecar_connection(state: State<'_, SidecarState>) -> Result<SidecarConnection, AppError> {
+    let guard = state.inner().lock().await;
+    match &*guard {
+        Some(h) => Ok(SidecarConnection {
+            base_url: h.base_url.clone(),
+            token: h.token.clone(),
+        }),
+        None => Err(AppError::Sidecar("not running".into())),
+    }
+}
+
+/// Stop the current sidecar (if any, including a crashed one whose handle is
+/// still in state), launch a new one with a new token, emit
+/// `sidecar:restarted { base_url }`, and start the post-launch tasks.
+#[tauri::command]
+async fn restart_sidecar(app: tauri::AppHandle) -> Result<(), AppError> {
+    restart_sidecar_engine(&app, false)
+        .await
+        .map(|_| ())
+        .map_err(AppError::Sidecar)
+}
+
+/// Restart the sidecar only if one is in state (used after the HF token
+/// changes). Returns the new base URL, or None if nothing was running.
+pub(crate) async fn restart_sidecar_if_running(
+    app: &tauri::AppHandle,
+) -> Result<Option<String>, String> {
+    restart_sidecar_engine(app, true).await
+}
+
+async fn restart_sidecar_engine(
+    app: &tauri::AppHandle,
+    only_if_running: bool,
+) -> Result<Option<String>, String> {
+    use tauri::Emitter;
+
+    // Clone the Arc out before awaiting (State isn't held across awaits).
+    let state_arc: SidecarState = app.state::<SidecarState>().inner().clone();
+
+    // Same launch lock as bootstrap_runtime_command / runtime_update: holding
+    // the state mutex across shutdown + launch serializes concurrent restarts.
+    let mut guard = state_arc.lock().await;
+    if only_if_running && guard.is_none() {
+        return Ok(None);
+    }
+    if let Some(mut old) = guard.take() {
+        // A crashed sidecar leaves a dead handle here; shutdown() tolerates
+        // that (taskkill fails, wait() returns at once).
+        tracing::info!("restart: stopping current sidecar");
+        if let Err(e) = old.shutdown().await {
+            tracing::warn!("restart: shutdown of previous sidecar failed: {e}");
+        }
+    }
+
+    let handle = match sidecar::launch_with_app(Some(app.clone())).await {
+        Ok(h) => h,
+        Err(e) => {
+            let detail = format!("{e:#}");
+            tracing::error!("restart: sidecar launch failed: {detail}");
+            if let Err(log_err) = crash::record_crash("sidecar restart", &detail) {
+                tracing::warn!("failed to write crash log: {log_err}");
+            }
+            return Err(detail);
+        }
+    };
+    let base_url = handle.base_url.clone();
+    tracing::info!("restart: sidecar relaunched on {base_url}");
+    *guard = Some(handle);
+    drop(guard);
+
+    if let Err(e) = app.emit("sidecar:restarted", serde_json::json!({ "base_url": base_url })) {
+        tracing::warn!("failed to emit sidecar:restarted: {e}");
+    }
+    bootstrap::spawn_post_launch_tasks(app.clone(), true);
+    Ok(Some(base_url))
 }
 
 #[tauri::command]
@@ -221,12 +308,15 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
             sidecar_url,
+            sidecar_connection,
+            restart_sidecar,
             sidecar_stderr,
             probe_hardware,
             evaluate_presets,
             cached_hardware_report,
             bootstrap::bootstrap_runtime_command,
             bootstrap::runtime_status,
+            bootstrap::runtime_readiness,
             bootstrap::runtime_update_status,
             bootstrap::runtime_update,
             crash::copy_diagnostic,

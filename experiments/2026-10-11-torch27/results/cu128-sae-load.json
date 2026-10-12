@@ -1,0 +1,23 @@
+Loaded pretrained model gpt2 into HookedTransformer
+Loaded pretrained model pythia-70m-deduped into HookedTransformer
+{
+ "torch": "2.7.1+cu128",
+ "presets": {
+  "gpt2-small": {
+   "device": "cuda",
+   "sae_layer": 8,
+   "d_sae": 24576,
+   "sae_device": "cuda"
+  },
+  "pythia-70m": {
+   "device": "cuda",
+   "sae_layer": 3,
+   "d_sae": 32768,
+   "sae_device": "cuda"
+  },
+  "gemma-2-2b": "disabled (skipped)",
+  "gemma-2-9b": "disabled (skipped)"
+ },
+ "weights_only_warnings": [],
+ "torch_load_calls": []
+}

@@ -139,7 +139,7 @@
 
       <div class="min-w-0 flex-1">
         {#if phase === 'prompt' && status?.target_variant}
-          <div class="font-medium">{promptCopy(status.current_variant, status.target_variant)}</div>
+          <div class="font-medium">{promptCopy(status.current_variant, status.target_variant, status.download_mb)}</div>
         {:else if phase === 'updating'}
           <div class="truncate font-medium">
             Updating the engine. You can keep using Pry meanwhile; the model will reload at the end.

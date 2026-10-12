@@ -5,14 +5,27 @@ import { drivenSteps } from './driven-steps';
 import type { DrivenStep } from './driven-steps';
 import { advancedDrivenSteps } from './advanced-steps';
 import { markTipsSeenForStep } from '$lib/tips/coordinate';
+import { initialStepMachine, stepReducer, type StepEvent } from './step-machine';
 
 class TutorialState {
   open = $state(false);
   stepIndex = $state(0);
   whyExpanded = $state(false);
-  awaitingAsync = $state(false);
+  /** Async step state (idle / running / failed); see step-machine.ts. */
+  machine = $state(initialStepMachine());
+  /** Set once the user declines the GPT-2 small switch offer for this tour. */
+  modelOfferDismissed = $state(false);
   highlightTarget = $state<string | null>(null);
   isAdvanced = $state(false);
+
+  /** True while a step's Run / layer switch is in flight. */
+  get awaitingAsync() {
+    return this.machine.status === 'running';
+  }
+
+  dispatch(event: StepEvent) {
+    this.machine = stepReducer(this.machine, event);
+  }
 
   private get activeSteps(): DrivenStep[] {
     return this.isAdvanced ? advancedDrivenSteps : drivenSteps;
@@ -30,7 +43,8 @@ class TutorialState {
     this.isAdvanced = false;
     this.stepIndex = 0;
     this.whyExpanded = false;
-    this.awaitingAsync = false;
+    this.machine = initialStepMachine();
+    this.modelOfferDismissed = false;
     this.highlightTarget = drivenSteps[0]?.target ?? null;
     this.open = true;
   }
@@ -39,7 +53,8 @@ class TutorialState {
     this.isAdvanced = true;
     this.stepIndex = 0;
     this.whyExpanded = false;
-    this.awaitingAsync = false;
+    this.machine = initialStepMachine();
+    this.modelOfferDismissed = false;
     this.highlightTarget = advancedDrivenSteps[0]?.target ?? null;
     this.open = true;
   }
@@ -49,7 +64,7 @@ class TutorialState {
     const current = steps[this.stepIndex];
     if (current) markTipsSeenForStep(current.id, current.target);
     this.open = false;
-    this.awaitingAsync = false;
+    this.machine = initialStepMachine();
     this.highlightTarget = null;
   }
 
@@ -61,6 +76,7 @@ class TutorialState {
         markTipsSeenForStep(advancingFrom.id, advancingFrom.target);
       this.stepIndex += 1;
       this.whyExpanded = false;
+      this.machine = initialStepMachine();
       this.highlightTarget = steps[this.stepIndex]?.target ?? null;
     }
   }
@@ -70,6 +86,7 @@ class TutorialState {
     if (this.stepIndex > 0) {
       this.stepIndex -= 1;
       this.whyExpanded = false;
+      this.machine = initialStepMachine();
       this.highlightTarget = steps[this.stepIndex]?.target ?? null;
     }
   }
@@ -78,7 +95,7 @@ class TutorialState {
     const steps = this.activeSteps;
     this.stepIndex = 0;
     this.whyExpanded = false;
-    this.awaitingAsync = false;
+    this.machine = initialStepMachine();
     this.highlightTarget = steps[0]?.target ?? null;
   }
 }

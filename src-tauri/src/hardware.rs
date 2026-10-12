@@ -63,6 +63,10 @@ pub struct HardwareReport {
     pub probed_at: String,
     /// OS description (e.g. "windows 11")
     pub os: String,
+    /// Total physical RAM in MB (T11: CPU-only presets need RAM >= 2x estimate).
+    /// `default` keeps older cached hardware.json files readable.
+    #[serde(default)]
+    pub system_ram_mb: Option<u64>,
 }
 
 // ── Entry point ───────────────────────────────────────────────────────────────
@@ -72,6 +76,17 @@ pub struct HardwareReport {
 pub fn probe() -> anyhow::Result<HardwareReport> {
     let now = chrono::Utc::now().to_rfc3339();
     let os = detect_os();
+
+    // Dev-only: PRY_FAKE_HARDWARE=cpu forces the CPU-only report so the
+    // CPU onboarding path can be exercised on a GPU machine. Compiled out of
+    // release builds.
+    #[cfg(debug_assertions)]
+    if let Some(report) =
+        fake_hardware(std::env::var("PRY_FAKE_HARDWARE").ok().as_deref(), &now, &os)
+    {
+        tracing::warn!("PRY_FAKE_HARDWARE=cpu: returning the CPU-only hardware report");
+        return Ok(report);
+    }
 
     // Path 1: NVML (NVIDIA only, Windows + Linux)
     #[cfg(any(target_os = "windows", target_os = "linux"))]
@@ -93,6 +108,15 @@ pub fn probe() -> anyhow::Result<HardwareReport> {
 
     // Path 3: CPU-only fallback
     Ok(cpu_only_report(now, os))
+}
+
+/// The report forced by `PRY_FAKE_HARDWARE`, if any. Only "cpu" is supported.
+#[cfg(debug_assertions)]
+fn fake_hardware(value: Option<&str>, now: &str, os: &str) -> Option<HardwareReport> {
+    match value.map(|v| v.trim().to_ascii_lowercase()) {
+        Some(v) if v == "cpu" => Some(cpu_only_report(now.to_string(), os.to_string())),
+        _ => None,
+    }
 }
 
 // ── NVML path ─────────────────────────────────────────────────────────────────
@@ -137,6 +161,7 @@ fn probe_nvml(now: &str, os: &str) -> anyhow::Result<HardwareReport> {
         probe_warnings: vec![],
         probed_at: now.to_string(),
         os: os.to_string(),
+        system_ram_mb: system_ram_mb(),
     })
 }
 
@@ -224,6 +249,7 @@ fn probe_dxgi(now: &str, os: &str) -> anyhow::Result<HardwareReport> {
             probe_warnings: warnings,
             probed_at: now.to_string(),
             os: os.to_string(),
+            system_ram_mb: system_ram_mb(),
         })
     }
 }
@@ -241,11 +267,48 @@ fn cpu_only_report(now: String, os: String) -> HardwareReport {
         backend: "cpu".into(),
         driver_version: None,
         probe_warnings: vec![
-            "No GPU detected. Generation will run on CPU and will be slow.".into(),
+            "No graphics card detected. Small models still work on your computer, \
+             just more slowly."
+                .into(),
         ],
         probed_at: now,
         os,
+        system_ram_mb: system_ram_mb(),
     }
+}
+
+// ── System RAM ───────────────────────────────────────────────────────────────
+
+/// Total physical RAM in MB, or None if it can't be read.
+#[cfg(target_os = "windows")]
+fn system_ram_mb() -> Option<u64> {
+    use windows::Win32::System::SystemInformation::{GlobalMemoryStatusEx, MEMORYSTATUSEX};
+    let mut status = MEMORYSTATUSEX {
+        dwLength: std::mem::size_of::<MEMORYSTATUSEX>() as u32,
+        ..Default::default()
+    };
+    // SAFETY: `status` is a valid, writable MEMORYSTATUSEX with dwLength set,
+    // as GlobalMemoryStatusEx requires.
+    match unsafe { GlobalMemoryStatusEx(&mut status) } {
+        Ok(()) => Some(status.ullTotalPhys / (1024 * 1024)),
+        Err(e) => {
+            tracing::warn!("GlobalMemoryStatusEx failed: {e}");
+            None
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn system_ram_mb() -> Option<u64> {
+    let meminfo = std::fs::read_to_string("/proc/meminfo").ok()?;
+    let line = meminfo.lines().find(|l| l.starts_with("MemTotal:"))?;
+    let kb: u64 = line.split_whitespace().nth(1)?.parse().ok()?;
+    Some(kb / 1024)
+}
+
+#[cfg(not(any(target_os = "windows", target_os = "linux")))]
+fn system_ram_mb() -> Option<u64> {
+    None
 }
 
 // ── OS detection ─────────────────────────────────────────────────────────────
@@ -256,4 +319,54 @@ fn detect_os() -> String {
     // version info on the fallback path. os_info::get() is a single syscall
     // and works consistently across Windows/Linux/macOS.
     os_info::get().to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[cfg(debug_assertions)]
+    #[test]
+    fn fake_hardware_cpu_returns_cpu_only_report() {
+        let r = fake_hardware(Some("cpu"), "2026-10-11T00:00:00Z", "windows").unwrap();
+        assert_eq!(r.vendor, "cpu");
+        assert_eq!(r.backend, "cpu");
+        assert_eq!(r.vram_total_mb, 0);
+        assert_eq!(r.vram_source, VramSource::None);
+        assert_eq!(fake_hardware(Some(" CPU "), "t", "o").unwrap().vendor, "cpu");
+    }
+
+    #[cfg(debug_assertions)]
+    #[test]
+    fn fake_hardware_ignores_unset_or_unknown_values() {
+        assert!(fake_hardware(None, "t", "o").is_none());
+        assert!(fake_hardware(Some(""), "t", "o").is_none());
+        assert!(fake_hardware(Some("nvidia"), "t", "o").is_none());
+    }
+
+    #[test]
+    fn cpu_warning_does_not_say_cpu_is_unsupported() {
+        let r = cpu_only_report("t".into(), "o".into());
+        assert!(r.probe_warnings.iter().all(|w| !w.contains("not supported")));
+        assert!(r.probe_warnings.iter().any(|w| w.contains("Small models still work")));
+        assert!(
+            r.probe_warnings.iter().all(|w| !w.contains("  ")),
+            "warning has a run of spaces: {:?}", r.probe_warnings
+        );
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn system_ram_is_reported_on_windows() {
+        assert!(system_ram_mb().unwrap_or(0) > 0);
+    }
+
+    #[test]
+    fn old_cached_report_without_ram_still_parses() {
+        let json = r#"{"gpu_name":"none","vram_total_mb":0,"vram_used_mb":null,"vendor":"cpu",
+            "cuda_driver":null,"vram_source":"none","backend":"cpu","driver_version":null,
+            "probe_warnings":[],"probed_at":"t","os":"o"}"#;
+        let r: HardwareReport = serde_json::from_str(json).unwrap();
+        assert_eq!(r.system_ram_mb, None);
+    }
 }

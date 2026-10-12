@@ -167,6 +167,22 @@ pub fn list_crash_logs() -> Result<Vec<String>, String> {
     Ok(entries)
 }
 
+// Top-level (not in `tests`) so `cargo test crash::redacts_hf_token` matches.
+#[cfg(test)]
+#[test]
+fn redacts_hf_token() {
+    let token = "hf_AbCdEfGhIjKlMnOpQrStUvWxYz01234567";
+    let input = format!(
+        "HF_TOKEN={token}\nAuthorization: Bearer {token}\n401 for token '{token}' in url"
+    );
+    let out = sanitize(&input);
+    assert!(!out.contains(token), "token leaked: {out}");
+    assert!(!out.contains("AbCdEfGhIjKlMnOpQrSt"), "token fragment leaked: {out}");
+    assert!(out.contains("<hf_token>"));
+    // Ordinary words starting with hf_ are left alone.
+    assert_eq!(sanitize("hf_hub download"), "hf_hub download");
+}
+
 #[cfg(test)]
 mod tests {
     use super::truncate_utf8;

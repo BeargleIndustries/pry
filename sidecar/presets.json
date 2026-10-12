@@ -7,7 +7,19 @@
       "total_download_mb": 600,
       "vram_estimate_mb": 1800,
       "license_gate": null,
-      "tier": "flagship"
+      "tier": "flagship",
+      "display": {
+        "name": "GPT-2 small",
+        "blurb": "124M params · the classic interp playground. Start here.",
+        "params": "124M",
+        "size_label": "600 MB",
+        "n_layers": 12,
+        "n_heads": 12,
+        "neuronpedia_model_id": "gpt2-small",
+        "neuronpedia_release_suffix": "res-jb",
+        "recommended": true
+      },
+      "cpu_ok": true
     },
     {
       "id": "pythia-70m",
@@ -16,7 +28,19 @@
       "total_download_mb": 350,
       "vram_estimate_mb": 1200,
       "license_gate": null,
-      "tier": "standard"
+      "tier": "standard",
+      "display": {
+        "name": "Pythia-70M",
+        "blurb": "70M params · tiny and quick. A fast second model to compare against.",
+        "params": "70M",
+        "size_label": "350 MB",
+        "n_layers": 6,
+        "n_heads": 8,
+        "neuronpedia_model_id": "pythia-70m-deduped",
+        "neuronpedia_release_suffix": "res-sm",
+        "recommended": false
+      },
+      "cpu_ok": true
     },
     {
       "id": "gemma-2-2b",
@@ -27,7 +51,19 @@
       "license_gate": "huggingface_gemma",
       "tier": "power_user",
       "enabled": false,
-      "enabled_comment": "Disabled until Gemma model + SAE loading is validated in Pry."
+      "enabled_comment": "Disabled until Gemma model + SAE loading is validated in Pry.",
+      "display": {
+        "name": "Gemma 2 2B",
+        "blurb": "2.6B params · a modern model with Gemma Scope features. Needs a GPU and a Hugging Face login.",
+        "params": "2.6B",
+        "size_label": "6.4 GB",
+        "n_layers": 26,
+        "n_heads": 8,
+        "neuronpedia_model_id": null,
+        "neuronpedia_release_suffix": null,
+        "recommended": false
+      },
+      "cpu_ok": false
     },
     {
       "id": "gemma-2-9b",
@@ -37,7 +73,19 @@
       "vram_estimate_mb": 18000,
       "license_gate": "huggingface_gemma",
       "tier": "stretch",
-      "enabled": false
+      "enabled": false,
+      "display": {
+        "name": "Gemma 2 9B",
+        "blurb": "9.2B params · the big one. Needs a large GPU and a Hugging Face login.",
+        "params": "9.2B",
+        "size_label": "20.4 GB",
+        "n_layers": 42,
+        "n_heads": 16,
+        "neuronpedia_model_id": null,
+        "neuronpedia_release_suffix": null,
+        "recommended": false
+      },
+      "cpu_ok": false
     }
   ]
 }

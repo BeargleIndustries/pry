@@ -11,6 +11,11 @@
 //!   headroom >= 2000 MB  → Comfortable
 //!   0 <= headroom < 2000 → Tight
 //!   headroom < 0         → Insufficient
+//!
+//! CPU fallback (T11): when there is no usable GPU (vendor "cpu", or the GPU
+//! is too small for the preset), a preset marked `cpu_ok` in presets.json is
+//! `CpuOk` if system RAM >= 2x its `vram_estimate_mb`. Disabled presets are
+//! always Insufficient.
 
 use serde::Serialize;
 use std::path::Path;
@@ -21,14 +26,17 @@ use crate::hardware::HardwareReport;
 
 // KEEP IN SYNC: ui/src/lib/tauri.ts::Verdict
 // NOTE: no rename_all — serde emits PascalCase variant names ("Comfortable" /
-// "Tight" / "Insufficient") which is what the frontend matches on. The earlier
-// snake_case rename was a silent bug that made every preset render as ❌.
+// "Tight" / "CpuOk" / "Insufficient") which is what the frontend matches on.
+// The earlier snake_case rename was a silent bug that made every preset
+// render as ❌.
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub enum Compatibility {
     /// Fits with >2 GB headroom
     Comfortable,
     /// Fits but <2 GB headroom — warn the user
     Tight,
+    /// No usable GPU, but small enough to run on the CPU (slower)
+    CpuOk,
     /// Does not fit
     Insufficient,
 }
@@ -41,7 +49,13 @@ pub struct PresetCompatibility {
     /// Positive = spare VRAM; negative = over budget
     pub headroom_mb: i64,
     pub notes: Vec<String>,
+    /// Passthrough of the preset's presets.json `display` block (null if absent)
+    pub display: serde_json::Value,
+    pub enabled: bool,
 }
+
+/// Note shown on a `CpuOk` verdict.
+pub const CPU_OK_NOTE: &str = "Works on your computer (slower).";
 
 // ── Core evaluation ───────────────────────────────────────────────────────────
 
@@ -52,39 +66,32 @@ pub struct PresetCompatibility {
 /// - `vram_estimate_mb` — from the preset's `vram_estimate_mb` field
 /// - `license_gate`     — from `license_gate` (e.g. `Some("huggingface_gemma")`)
 /// - `enabled`          — from `enabled` field (absent = true)
+/// - `cpu_ok`           — from `cpu_ok` field (absent = false)
 /// - `hw`               — the HardwareReport from the probe
+///
+/// `display` is left null here; `evaluate_all` fills it from presets.json.
 pub fn evaluate_preset(
     preset_id: &str,
     vram_estimate_mb: u64,
     license_gate: Option<&str>,
     enabled: bool,
+    cpu_ok: bool,
     hw: &HardwareReport,
 ) -> PresetCompatibility {
     let mut notes: Vec<String> = vec![];
-
-    // CPU-only: all presets are insufficient
-    if hw.vendor == "cpu" {
-        notes.push("GPU required. Generation on CPU is not supported for this preset.".into());
-        return PresetCompatibility {
-            preset_id: preset_id.to_string(),
-            verdict: Compatibility::Insufficient,
-            headroom_mb: -(vram_estimate_mb as i64),
-            notes,
-        };
-    }
+    let result = |verdict, headroom_mb, notes| PresetCompatibility {
+        preset_id: preset_id.to_string(),
+        verdict,
+        headroom_mb,
+        notes,
+        display: serde_json::Value::Null,
+        enabled,
+    };
 
     // Disabled preset (e.g. Gemma, locked until its model + SAE are validated)
     if !enabled {
-        notes.push(
-            "Coming soon. This model isn't available in Pry yet."
-                .into(),
-        );
-        return PresetCompatibility {
-            preset_id: preset_id.to_string(),
-            verdict: Compatibility::Insufficient,
-            headroom_mb: 0,
-            notes,
-        };
+        notes.push("Coming soon. This model isn't available in Pry yet.".into());
+        return result(Compatibility::Insufficient, 0, notes);
     }
 
     // License gate annotation (does not block compatibility — UI shows lock icon)
@@ -94,6 +101,22 @@ pub fn evaluate_preset(
                 "Requires a free HuggingFace account and Gemma license acceptance.".into(),
             );
         }
+    }
+
+    // RAM check for the CPU fallback: RAM >= 2x the preset's estimate.
+    let ram_ok = hw
+        .system_ram_mb
+        .is_some_and(|ram| ram >= vram_estimate_mb.saturating_mul(2));
+
+    // CPU-only: no GPU at all
+    if hw.vendor == "cpu" {
+        let headroom_mb = -(vram_estimate_mb as i64);
+        if cpu_ok && ram_ok {
+            notes.push(CPU_OK_NOTE.into());
+            return result(Compatibility::CpuOk, headroom_mb, notes);
+        }
+        notes.push(cpu_fallback_refusal(cpu_ok, vram_estimate_mb, hw));
+        return result(Compatibility::Insufficient, headroom_mb, notes);
     }
 
     // VRAM math
@@ -120,15 +143,28 @@ pub fn evaluate_preset(
         Compatibility::Comfortable
     } else if headroom_mb >= 0 {
         Compatibility::Tight
+    } else if cpu_ok && ram_ok {
+        // GPU too small for this preset: fall back to the CPU.
+        notes.push(CPU_OK_NOTE.into());
+        Compatibility::CpuOk
     } else {
         Compatibility::Insufficient
     };
 
-    PresetCompatibility {
-        preset_id: preset_id.to_string(),
-        verdict,
-        headroom_mb,
-        notes,
+    result(verdict, headroom_mb, notes)
+}
+
+/// Why a preset can't run on a machine without a usable GPU.
+fn cpu_fallback_refusal(cpu_ok: bool, vram_estimate_mb: u64, hw: &HardwareReport) -> String {
+    if !cpu_ok {
+        return "GPU required. This model is too large to run on the CPU.".into();
+    }
+    match hw.system_ram_mb {
+        Some(ram) => format!(
+            "Not enough memory to run on the CPU: needs {} MB of RAM, this computer has {ram} MB.",
+            vram_estimate_mb.saturating_mul(2)
+        ),
+        None => "Couldn't read this computer's memory size, so CPU mode isn't offered.".into(),
     }
 }
 
@@ -159,10 +195,14 @@ pub fn evaluate_all(hw: &HardwareReport, presets_json: &serde_json::Value) -> Ve
             let id = p.get("id")?.as_str()?;
             let vram_estimate_mb = p.get("vram_estimate_mb")?.as_u64()?;
             let license_gate = p.get("license_gate").and_then(|v| v.as_str());
-            // `enabled` defaults to true if absent
+            // `enabled` defaults to true if absent; `cpu_ok` to false
             let enabled = p.get("enabled").and_then(|v| v.as_bool()).unwrap_or(true);
+            let cpu_ok = p.get("cpu_ok").and_then(|v| v.as_bool()).unwrap_or(false);
 
-            Some(evaluate_preset(id, vram_estimate_mb, license_gate, enabled, hw))
+            let mut compat =
+                evaluate_preset(id, vram_estimate_mb, license_gate, enabled, cpu_ok, hw);
+            compat.display = p.get("display").cloned().unwrap_or(serde_json::Value::Null);
+            Some(compat)
         })
         .collect()
 }
@@ -188,6 +228,7 @@ mod tests {
             probe_warnings: vec![],
             probed_at: "2026-04-13T00:00:00Z".into(),
             os: "windows".into(),
+            system_ram_mb: Some(32768),
         }
     }
 
@@ -205,6 +246,7 @@ mod tests {
             probe_warnings: vec!["No GPU detected.".into()],
             probed_at: "2026-04-13T00:00:00Z".into(),
             os: "windows".into(),
+            system_ram_mb: Some(32768),
         }
     }
 
@@ -213,16 +255,16 @@ mod tests {
     #[test]
     fn test_gpt2_small_comfortable() {
         let hw = fake_4070_super();
-        let result = evaluate_preset("gpt2-small", 1800, None, true, &hw);
+        let result = evaluate_preset("gpt2-small", 1800, None, true, false, &hw);
         assert_eq!(result.verdict, Compatibility::Comfortable);
         assert_eq!(result.headroom_mb, 8488);
     }
 
-    // headroom vs pythia-1.4b (6000 MB) = 10288 - 6000 = 4288 → Comfortable
+    // headroom vs a mid-size preset (6000 MB) = 10288 - 6000 = 4288 → Comfortable
     #[test]
-    fn test_pythia_1_4b_comfortable() {
+    fn test_mid_size_preset_comfortable() {
         let hw = fake_4070_super();
-        let result = evaluate_preset("pythia-1.4b", 6000, None, true, &hw);
+        let result = evaluate_preset("mid-size-preset", 6000, None, true, false, &hw);
         assert_eq!(result.verdict, Compatibility::Comfortable);
         assert_eq!(result.headroom_mb, 4288);
     }
@@ -231,7 +273,7 @@ mod tests {
     #[test]
     fn test_gemma_2_2b_disabled_insufficient() {
         let hw = fake_4070_super();
-        let result = evaluate_preset("gemma-2-2b", 8000, Some("huggingface_gemma"), false, &hw);
+        let result = evaluate_preset("gemma-2-2b", 8000, Some("huggingface_gemma"), false, false, &hw);
         assert_eq!(result.verdict, Compatibility::Insufficient);
         assert!(result.notes.iter().any(|n| n.contains("Coming soon")));
     }
@@ -240,7 +282,7 @@ mod tests {
     #[test]
     fn test_gemma_2_2b_enabled_comfortable_hypothetical() {
         let hw = fake_4070_super();
-        let result = evaluate_preset("gemma-2-2b", 8000, Some("huggingface_gemma"), true, &hw);
+        let result = evaluate_preset("gemma-2-2b", 8000, Some("huggingface_gemma"), true, false, &hw);
         assert_eq!(result.verdict, Compatibility::Comfortable);
         assert_eq!(result.headroom_mb, 2288);
         // License gate note is present
@@ -251,24 +293,113 @@ mod tests {
     #[test]
     fn test_gemma_2_9b_insufficient() {
         let hw = fake_4070_super();
-        let result = evaluate_preset("gemma-2-9b", 18000, Some("huggingface_gemma"), true, &hw);
+        let result = evaluate_preset("gemma-2-9b", 18000, Some("huggingface_gemma"), true, false, &hw);
         assert_eq!(result.verdict, Compatibility::Insufficient);
         assert!(result.headroom_mb < 0);
     }
 
-    // CPU-only: everything is Insufficient
+    // CPU-only: small cpu_ok presets run on the CPU; large ones are Insufficient
     #[test]
-    fn test_cpu_only_all_insufficient() {
-        let hw = fake_cpu_only();
-        for (id, vram) in [("gpt2-small", 1800u64), ("pythia-70m", 1200), ("gemma-2-9b", 18000)] {
-            let result = evaluate_preset(id, vram, None, true, &hw);
-            assert_eq!(
-                result.verdict,
-                Compatibility::Insufficient,
-                "{id} should be Insufficient on CPU-only"
-            );
-            assert!(result.notes.iter().any(|n| n.contains("GPU required")));
+    fn test_cpu_only_small_presets_cpu_ok() {
+        let hw = fake_cpu_only(); // 32 GB RAM
+        for (id, vram) in [("gpt2-small", 1800u64), ("pythia-70m", 1200)] {
+            let result = evaluate_preset(id, vram, None, true, true, &hw);
+            assert_eq!(result.verdict, Compatibility::CpuOk, "{id} should be CpuOk on CPU-only");
+            assert!(result.notes.iter().any(|n| n == CPU_OK_NOTE));
+            assert!(result.enabled);
         }
+        let big = evaluate_preset("gemma-2-9b", 18000, None, true, false, &hw);
+        assert_eq!(big.verdict, Compatibility::Insufficient);
+        assert!(big.notes.iter().any(|n| n.contains("GPU required")));
+    }
+
+    // RAM must be >= 2x the estimate: 3000 MB RAM < 2 * 1800 → Insufficient
+    #[test]
+    fn test_cpu_only_ram_too_low_insufficient() {
+        let mut hw = fake_cpu_only();
+        hw.system_ram_mb = Some(3000);
+        let result = evaluate_preset("gpt2-small", 1800, None, true, true, &hw);
+        assert_eq!(result.verdict, Compatibility::Insufficient);
+        assert!(result.notes.iter().any(|n| n.contains("Not enough memory")));
+
+        // Exactly 2x is enough
+        hw.system_ram_mb = Some(3600);
+        let result = evaluate_preset("gpt2-small", 1800, None, true, true, &hw);
+        assert_eq!(result.verdict, Compatibility::CpuOk);
+
+        // Unknown RAM: CPU mode isn't offered
+        hw.system_ram_mb = None;
+        let result = evaluate_preset("gpt2-small", 1800, None, true, true, &hw);
+        assert_eq!(result.verdict, Compatibility::Insufficient);
+    }
+
+    // Disabled presets stay Insufficient even when cpu_ok and RAM is plentiful
+    #[test]
+    fn test_cpu_only_disabled_preset_stays_insufficient() {
+        let hw = fake_cpu_only();
+        let result = evaluate_preset("gemma-2-2b", 8000, Some("huggingface_gemma"), false, true, &hw);
+        assert_eq!(result.verdict, Compatibility::Insufficient);
+        assert!(!result.enabled);
+        assert!(result.notes.iter().any(|n| n.contains("Coming soon")));
+    }
+
+    // GPU too small for the preset: cpu_ok preset falls back to CpuOk
+    // 2048 MB card, 0 used → usable 548; gpt2-small 1800 → headroom -1252
+    #[test]
+    fn test_small_gpu_falls_back_to_cpu_ok() {
+        let mut hw = fake_4070_super();
+        hw.vram_total_mb = 2048;
+        hw.vram_used_mb = Some(0);
+        let result = evaluate_preset("gpt2-small", 1800, None, true, true, &hw);
+        assert_eq!(result.verdict, Compatibility::CpuOk);
+        assert_eq!(result.headroom_mb, -1252);
+        let not_cpu_ok = evaluate_preset("gpt2-small", 1800, None, true, false, &hw);
+        assert_eq!(not_cpu_ok.verdict, Compatibility::Insufficient);
+    }
+
+    // A GPU that fits never reports CpuOk, even for cpu_ok presets
+    #[test]
+    fn test_fitting_gpu_ignores_cpu_ok() {
+        let hw = fake_4070_super();
+        let result = evaluate_preset("gpt2-small", 1800, None, true, true, &hw);
+        assert_eq!(result.verdict, Compatibility::Comfortable);
+    }
+
+    #[test]
+    fn test_cpu_ok_serializes_as_pascal_case() {
+        assert_eq!(serde_json::to_value(Compatibility::CpuOk).unwrap(), "CpuOk");
+    }
+
+    // evaluate_all passes `display` through and tolerates missing fields
+    #[test]
+    fn test_evaluate_all_display_passthrough_and_defaults() {
+        let json = serde_json::json!({ "presets": [
+            { "id": "gpt2-small", "vram_estimate_mb": 1800, "cpu_ok": true,
+              "display": { "name": "GPT-2 small", "n_layers": 12, "recommended": true } },
+            { "id": "bare", "vram_estimate_mb": 1200 },
+            { "id": "off", "vram_estimate_mb": 8000, "enabled": false, "cpu_ok": true }
+        ]});
+        let out = evaluate_all(&fake_cpu_only(), &json);
+        assert_eq!(out.len(), 3);
+        assert_eq!(out[0].verdict, Compatibility::CpuOk);
+        assert_eq!(out[0].display["name"], "GPT-2 small");
+        assert!(out[1].display.is_null());
+        assert_eq!(out[1].verdict, Compatibility::Insufficient); // cpu_ok absent = false
+        assert!(out[1].enabled);
+        assert!(!out[2].enabled);
+        assert_eq!(out[2].verdict, Compatibility::Insufficient);
+        let v = serde_json::to_value(&out[1]).unwrap();
+        assert!(v.get("display").unwrap().is_null());
+        assert_eq!(v["enabled"], true);
+    }
+
+    // The real presets.json parses and every preset is evaluated
+    #[test]
+    fn test_real_presets_json_evaluates() {
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../sidecar");
+        let json = load_presets_json(&dir).unwrap();
+        let n = json["presets"].as_array().unwrap().len();
+        assert_eq!(evaluate_all(&fake_4070_super(), &json).len(), n);
     }
 
     // Tight: fake a GPU with just barely enough VRAM
@@ -279,7 +410,7 @@ mod tests {
         let mut hw = fake_4070_super();
         hw.vram_total_mb = 8000;
         hw.vram_used_mb = Some(500);
-        let result = evaluate_preset("some-preset", 5000, None, true, &hw);
+        let result = evaluate_preset("some-preset", 5000, None, true, false, &hw);
         assert_eq!(result.verdict, Compatibility::Tight);
         assert_eq!(result.headroom_mb, 1000);
     }
@@ -301,14 +432,19 @@ mod tests {
             probe_warnings: vec!["VRAM value is reported-by-driver".into()],
             probed_at: "2026-04-13T00:00:00Z".into(),
             os: "windows 11".into(),
+            system_ram_mb: Some(32768),
         };
-        let compat = evaluate_preset("gpt2-small", 1800, None, true, &hw);
+        let compat = evaluate_preset("gpt2-small", 1800, None, true, false, &hw);
         assert_eq!(compat.verdict, Compatibility::Comfortable);
         assert_eq!(compat.headroom_mb, 17180);
         // Should warn that live usage data is unavailable
         assert!(
             compat.notes.iter().any(|n| n.contains("driver-reported") || n.contains("live usage")),
             "expected driver-reported VRAM note, got: {:?}", compat.notes
+        );
+        assert!(
+            compat.notes.iter().all(|n| !n.contains("  ")),
+            "note has a run of spaces: {:?}", compat.notes
         );
     }
 
@@ -317,7 +453,7 @@ mod tests {
     #[test]
     fn test_cpu_only_note_and_negative_headroom() {
         let hw = fake_cpu_only();
-        let compat = evaluate_preset("gpt2-small", 1800, None, true, &hw);
+        let compat = evaluate_preset("gpt2-small", 1800, None, true, false, &hw);
         assert_eq!(compat.verdict, Compatibility::Insufficient);
         assert!(compat.headroom_mb < 0);
         assert!(
@@ -333,7 +469,7 @@ mod tests {
     fn test_exact_2000_mb_headroom_is_comfortable() {
         let mut hw = fake_4070_super();
         hw.vram_used_mb = Some(0);
-        let compat = evaluate_preset("boundary-preset", 8788, None, true, &hw);
+        let compat = evaluate_preset("boundary-preset", 8788, None, true, false, &hw);
         assert_eq!(
             compat.verdict, Compatibility::Comfortable,
             "headroom of exactly 2000 MB should be Comfortable, got {:?} (headroom={})",
@@ -348,7 +484,7 @@ mod tests {
     fn test_1999_mb_headroom_is_tight() {
         let mut hw = fake_4070_super();
         hw.vram_used_mb = Some(0);
-        let compat = evaluate_preset("boundary-preset", 8789, None, true, &hw);
+        let compat = evaluate_preset("boundary-preset", 8789, None, true, false, &hw);
         assert_eq!(
             compat.verdict, Compatibility::Tight,
             "headroom of 1999 MB should be Tight, got {:?} (headroom={})",
@@ -364,7 +500,7 @@ mod tests {
     fn test_license_gated_preset_comfortable_with_note() {
         let hw = fake_4070_super();
         // usable = 10288, estimate = 8000, headroom = 2288 → Comfortable
-        let compat = evaluate_preset("gemma-2-2b", 8000, Some("huggingface_gemma"), true, &hw);
+        let compat = evaluate_preset("gemma-2-2b", 8000, Some("huggingface_gemma"), true, false, &hw);
         assert_eq!(compat.verdict, Compatibility::Comfortable);
         assert!(
             compat.notes.iter().any(|n| n.contains("HuggingFace") || n.contains("license")),

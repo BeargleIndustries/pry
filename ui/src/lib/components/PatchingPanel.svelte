@@ -1,17 +1,51 @@
 <script lang="ts">
   import type { PatchResponse, PatchComponent } from '$lib/types';
+  import {
+    patchLengthStatus,
+    TOKENIZE_DEBOUNCE_MS,
+    type TokenizeResponse,
+  } from '$lib/analysis-core';
 
   interface Props {
     response: PatchResponse | null;
     loading?: boolean;
     onRun?: (cleanPrompt: string, corruptedPrompt: string, patchType: 'head' | 'mlp' | 'resid') => void;
+    /** Token counter (`analysis.tokenize`). Without it the counters are hidden and Run isn't gated. */
+    tokenize?: (text: string) => Promise<TokenizeResponse | null>;
   }
 
-  let { response, loading = false, onRun }: Props = $props();
+  let { response, loading = false, onRun, tokenize }: Props = $props();
 
-  let cleanPrompt = $state('The cat sat on the');
-  let corruptedPrompt = $state('The dog sat on the');
+  // Default pair: indirect object identification (IOI). Same token length in GPT-2.
+  const IOI_CLEAN = 'When Mary and John went to the store, John gave a drink to';
+  const IOI_CHANGED = 'When Mary and John went to the store, Mary gave a drink to';
+
+  let cleanPrompt = $state(IOI_CLEAN);
+  let corruptedPrompt = $state(IOI_CHANGED);
   let patchType = $state<'head' | 'mlp' | 'resid'>('head');
+
+  // Live token counts, debounced. A sequence number drops stale replies.
+  let cleanCount = $state<number | null>(null);
+  let corruptedCount = $state<number | null>(null);
+  let countSeq = 0;
+  $effect(() => {
+    const clean = cleanPrompt;
+    const changed = corruptedPrompt;
+    const tk = tokenize;
+    if (!tk) return;
+    const seq = ++countSeq;
+    const timer = setTimeout(async () => {
+      const [a, b] = await Promise.all([tk(clean), tk(changed)]);
+      if (seq !== countSeq) return;
+      cleanCount = a?.count ?? null;
+      corruptedCount = b?.count ?? null;
+    }, TOKENIZE_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  });
+  const lengthStatus = $derived(patchLengthStatus(cleanCount, corruptedCount));
+  const lengthsDiffer = $derived(lengthStatus !== null && !lengthStatus.same);
+  // Key the result view on what the server actually ran, not the live toggle.
+  const shownPatchType = $derived(response?.patch_type ?? patchType);
 
   const components = $derived(response?.components ?? []);
 
@@ -21,7 +55,7 @@
     return Math.max(...components.map((c) => c.layer)) + 1;
   });
   const nHeads = $derived.by(() => {
-    if (patchType !== 'head' || components.length === 0) return 0;
+    if (shownPatchType !== 'head' || components.length === 0) return 0;
     const heads = components.filter((c) => c.head !== null).map((c) => c.head!);
     return heads.length > 0 ? Math.max(...heads) + 1 : 0;
   });
@@ -80,9 +114,12 @@
         id="patch-clean"
         type="text"
         bind:value={cleanPrompt}
-        placeholder="The cat sat on the"
+        placeholder={IOI_CLEAN}
         class="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-zinc-200 placeholder-zinc-600 focus:border-indigo-500 focus:outline-none"
       />
+      {#if tokenize && cleanCount !== null}
+        <span class="text-[10px] text-zinc-600">{cleanCount} tokens</span>
+      {/if}
     </div>
     <div class="flex flex-col gap-1">
       <label class="text-[10px] font-medium uppercase tracking-wider text-zinc-500" for="patch-corrupted">Changed prompt</label>
@@ -90,10 +127,23 @@
         id="patch-corrupted"
         type="text"
         bind:value={corruptedPrompt}
-        placeholder="The dog sat on the"
+        placeholder={IOI_CHANGED}
         class="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-zinc-200 placeholder-zinc-600 focus:border-indigo-500 focus:outline-none"
       />
+      {#if tokenize && corruptedCount !== null}
+        <span class="text-[10px] text-zinc-600">{corruptedCount} tokens</span>
+      {/if}
     </div>
+    {#if lengthStatus}
+      <p
+        class="text-[11px]"
+        class:text-emerald-400={lengthStatus.same}
+        class:text-amber-400={!lengthStatus.same}
+        role="status"
+      >
+        {lengthStatus.label}{#if !lengthStatus.same}. Patching needs both prompts to be the same number of tokens.{/if}
+      </p>
+    {/if}
     <div class="flex items-center gap-3">
       <label class="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Patch type</label>
       <div class="flex gap-1">
@@ -113,7 +163,7 @@
       <button
         type="button"
         onclick={handleRun}
-        disabled={loading || !cleanPrompt.trim() || !corruptedPrompt.trim()}
+        disabled={loading || lengthsDiffer || !cleanPrompt.trim() || !corruptedPrompt.trim()}
         class="ml-auto rounded bg-indigo-500 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading ? 'Running...' : 'Run Patching'}
@@ -138,7 +188,7 @@
       <span class="text-zinc-300">{response.patch_type}</span>
     </div>
 
-    {#if patchType === 'head' && nHeads > 0}
+    {#if shownPatchType === 'head' && nHeads > 0}
       <!-- Heatmap for head patching -->
       <div class="overflow-x-auto">
         <div class="text-[10px] text-zinc-600 mb-1">Layer (rows) x Head (columns). Brightness = patching effect magnitude.</div>

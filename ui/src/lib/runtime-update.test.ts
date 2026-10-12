@@ -18,16 +18,25 @@ const base: RuntimeUpdateStatus = {
 };
 
 describe('runtime update prompt', () => {
-  it('says "faster" only for a CPU engine moving to cu124', () => {
+  it('says "faster" only for a CPU engine moving to a GPU build', () => {
     const faster =
-      'A faster engine is available for your graphics card (one-time ~2.7 GB download).';
-    expect(promptCopy('cpu', 'cu124')).toBe(faster);
-    expect(promptCopy('unknown-cpu', 'cu124')).toBe(faster);
-    expect(promptCopy('cu124', 'cu124')).toBe(
+      'A faster engine is available for your graphics card (one-time ~3.5 GB download).';
+    expect(promptCopy('cpu', 'cu128', 3500)).toBe(faster);
+    expect(promptCopy('unknown-cpu', 'cu128', 3500)).toBe(faster);
+    expect(promptCopy('cu128', 'cu128', 3500)).toBe(
+      'An engine update is available (one-time ~3.5 GB download).',
+    );
+    expect(promptCopy('cu124', 'cu124', 2700)).toBe(
       'An engine update is available (one-time ~2.7 GB download).',
     );
-    expect(promptCopy('cpu', 'cpu')).toBe('Engine update (~400 MB).');
-    expect(promptCopy('unknown-cpu', 'cpu')).toBe('Engine update (~400 MB).');
+    expect(promptCopy('cpu', 'cpu', 420)).toBe('Engine update (~420 MB).');
+    expect(promptCopy('unknown-cpu', 'cpu', 420)).toBe('Engine update (~420 MB).');
+  });
+
+  it('explains a cu124 -> cu128 move as the card needing it', () => {
+    expect(promptCopy('cu124', 'cu128', 3500)).toBe(
+      'Your graphics card needs a newer engine (one-time ~3.5 GB download).',
+    );
   });
 
   it('claims the current engine still works only when it is running', () => {

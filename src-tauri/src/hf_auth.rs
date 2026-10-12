@@ -49,7 +49,6 @@ mod windows_impl {
         unsafe {
             CredWriteW(&cred, 0).map_err(|e| anyhow!("CredWriteW: {e}"))?;
         }
-        drop(cred); // ensure raw pointer is not accessible past token_bytes lifetime
         Ok(())
     }
 
@@ -115,6 +114,12 @@ mod windows_impl {
     }
 }
 
+/// The saved HuggingFace token, if any. Used at sidecar launch to set
+/// `HF_TOKEN` in the child env (never in this process's env).
+pub fn load_token() -> anyhow::Result<Option<String>> {
+    windows_impl::load()
+}
+
 fn validate_token(token: &str) -> Result<(), String> {
     let t = token.trim();
     if t.is_empty() {
@@ -131,10 +136,13 @@ fn validate_token(token: &str) -> Result<(), String> {
     Ok(())
 }
 
+/// Save the token, then restart the engine (if one is running) so it picks
+/// the token up.
 #[tauri::command]
-pub fn save_hf_token(token: String) -> Result<(), String> {
+pub async fn save_hf_token(app: tauri::AppHandle, token: String) -> Result<(), String> {
     validate_token(&token)?;
-    windows_impl::save(token.trim()).map_err(|e| format!("{e:#}"))
+    windows_impl::save(token.trim()).map_err(|e| format!("{e:#}"))?;
+    restart_engine_after_token_change(&app).await
 }
 
 #[tauri::command]
@@ -144,7 +152,19 @@ pub fn has_hf_token() -> Result<bool, String> {
         .map_err(|e| format!("{e:#}"))
 }
 
+/// Delete the token, then restart the engine (if one is running) so it no
+/// longer has it.
 #[tauri::command]
-pub fn clear_hf_token() -> Result<(), String> {
-    windows_impl::delete().map_err(|e| format!("{e:#}"))
+pub async fn clear_hf_token(app: tauri::AppHandle) -> Result<(), String> {
+    windows_impl::delete().map_err(|e| format!("{e:#}"))?;
+    restart_engine_after_token_change(&app).await
+}
+
+async fn restart_engine_after_token_change(app: &tauri::AppHandle) -> Result<(), String> {
+    match crate::restart_sidecar_if_running(app).await {
+        Ok(_) => Ok(()),
+        Err(e) => Err(format!(
+            "Your HuggingFace token was updated, but Pry's engine failed to restart: {e}"
+        )),
+    }
 }

@@ -1,5 +1,6 @@
 <script lang="ts">
-  import type { HardwareReport, PresetCompatibility } from '$lib/tauri';
+  import { saveJsonFile, type HardwareReport, type PresetCompatibility } from '$lib/tauri';
+  import { displayName, statusInfo, type VerdictTone } from '$lib/preset-display';
 
   interface Props {
     report: HardwareReport;
@@ -27,16 +28,13 @@
     }
   }
 
-  function displayName(id: string): string {
-    const names: Record<string, string> = {
-      'gpt2-small': 'GPT-2 small',
-      'pythia-410m': 'Pythia-410M',
-      'pythia-1.4b': 'Pythia-1.4B',
-      'gemma-2-2b': 'Gemma-2-2B',
-      'gemma-2-9b': 'Gemma-2-9B',
-    };
-    return names[id] ?? id;
-  }
+  const TONE_STYLE: Record<VerdictTone, { color: string; glyph: string }> = {
+    good: { color: '#22C55E', glyph: '✅' },
+    warn: { color: '#EAB308', glyph: '⚠️' },
+    cpu: { color: '#38BDF8', glyph: '🖥️' },
+    bad: { color: '#EF4444', glyph: '❌' },
+    soon: { color: '#71717A', glyph: '⏳' },
+  };
 
   function drawCard(
     ctx: CanvasRenderingContext2D,
@@ -104,12 +102,8 @@
     compat.slice(0, 5).forEach((p, i) => {
       const x = 60 + i * 220;
       const y = 510;
-      const color =
-        p.verdict === 'Comfortable' ? '#22C55E' :
-        p.verdict === 'Tight' ? '#EAB308' : '#EF4444';
-      const glyph =
-        p.verdict === 'Comfortable' ? '✅' :
-        p.verdict === 'Tight' ? '⚠️' : '❌';
+      const info = statusInfo(p);
+      const { color, glyph } = TONE_STYLE[info.tone];
 
       ctx.fillStyle = '#27272A';
       ctx.fillRect(x, y, 200, 60);
@@ -120,11 +114,11 @@
 
       ctx.fillStyle = '#FAFAFA';
       ctx.font = '14px system-ui, sans-serif';
-      ctx.fillText(displayName(p.preset_id), x + 48, y + 26);
+      ctx.fillText(displayName(p), x + 48, y + 26);
 
       ctx.fillStyle = '#71717A';
       ctx.font = '12px system-ui, sans-serif';
-      ctx.fillText(p.verdict, x + 48, y + 44);
+      ctx.fillText(info.short, x + 48, y + 44, 148);
     });
 
     // Footer
@@ -164,22 +158,15 @@
   async function exportJson() {
     exportError = null;
     try {
-      const { save } = await import('@tauri-apps/plugin-dialog');
-      const jsonPath = await save({
-        defaultPath: `pry-hardware-card-${Date.now()}.json`,
-        filters: [{ name: 'JSON', extensions: ['json'] }],
-      });
-      if (jsonPath) {
-        const { writeTextFile } = await import('@tauri-apps/plugin-fs');
-        const payload = {
-          report,
-          compatibilities,
-          pry_version: '0.1.0',
-          exported_at: new Date().toISOString(),
-        };
-        await writeTextFile(jsonPath, JSON.stringify(payload, null, 2));
-      }
-      exportError = null;
+      const payload = {
+        report,
+        compatibilities,
+        exported_at: new Date().toISOString(),
+      };
+      await saveJsonFile(
+        JSON.stringify(payload, null, 2),
+        `pry-hardware-card-${Date.now()}.json`,
+      );
     } catch (e) {
       exportError = e instanceof Error ? e.message : String(e);
       console.error('exportJson failed:', e);

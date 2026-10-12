@@ -1,0 +1,1 @@
+pip 25.0.1 from C:\Users\Brad\AppData\Local\Temp\pry-torch27\cpu\Lib\site-packages\pip (python 3.12)

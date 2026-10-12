@@ -22,6 +22,11 @@ mod bootstrap {
 mod crash {
     pub fn record_line(_line: impl Into<String>) {}
 }
+mod hf_auth {
+    pub fn load_token() -> anyhow::Result<Option<String>> {
+        Ok(None)
+    }
+}
 
 use anyhow::Context;
 use clap::{Parser, Subcommand};
@@ -37,7 +42,7 @@ struct Cli {
 enum Command {
     /// Run a preset model on a prompt and print top features as JSON.
     Run {
-        /// Preset id (e.g. "gpt2-small", "pythia-410m")
+        /// Preset id (e.g. "gpt2-small", "pythia-70m")
         preset: String,
         /// Prompt to run
         prompt: String,
@@ -82,7 +87,15 @@ async fn run_command(
         .context("failed to launch sidecar")?;
 
     let base_url = handle.base_url.clone();
-    let client = reqwest::Client::new();
+    let mut headers = reqwest::header::HeaderMap::new();
+    headers.insert(
+        sidecar::TOKEN_HEADER,
+        reqwest::header::HeaderValue::from_str(&handle.token).context("sidecar token header")?,
+    );
+    let client = reqwest::Client::builder()
+        .default_headers(headers)
+        .build()
+        .context("building HTTP client")?;
 
     // Load preset — SSE stream, print progress to stderr
     eprintln!("[pry-cli] loading preset '{preset}'...");

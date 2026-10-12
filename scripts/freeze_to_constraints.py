@@ -2,11 +2,13 @@
 
 Usage (from the repo root):
 
-    python scripts/freeze_to_constraints.py experiments/2026-10-11-torch-swap/freeze-cu124.txt
+    python scripts/freeze_to_constraints.py experiments/2026-10-11-torch27/freeze-cu128.txt
+    python scripts/freeze_to_constraints.py experiments/2026-10-11-torch-swap/freeze-cu124.txt --variants cu124
 
-Writes src-tauri/resources/constraints-runtime-cu124.txt and
-constraints-runtime-cpu.txt. The two files are identical except for the torch
-line (`torch==<v>+cu124` / `torch==<v>+cpu`).
+Writes src-tauri/resources/constraints-runtime-<variant>.txt for each variant
+(default: cu128 and cpu, which share torch 2.7.1). Files generated from one
+freeze are identical except for the torch line (`torch==<v>+<variant>`).
+cu124 is the legacy torch 2.5.1 set for drivers older than 572.30.
 
 Stripped:
   - local/URL installs (`name @ file:///...`, e.g. pry-sidecar itself)
@@ -28,7 +30,7 @@ from pathlib import Path
 BUILD_TOOLS = {"pip", "setuptools", "wheel", "hatchling", "packaging"}
 DROPPED = {"sse-starlette"}
 FORCED = {"pyarrow": "23.0.1"}
-VARIANTS = ("cu124", "cpu")
+DEFAULT_VARIANTS = ("cu128", "cpu")
 
 PIN = re.compile(r"^([A-Za-z0-9][A-Za-z0-9._-]*)==([^\s;#]+)$")
 
@@ -73,6 +75,7 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         default=Path(__file__).resolve().parent.parent / "src-tauri" / "resources",
     )
+    ap.add_argument("--variants", nargs="+", default=list(DEFAULT_VARIANTS))
     args = ap.parse_args(argv)
 
     pins = parse_freeze(args.freeze.read_text(encoding="utf-8"))
@@ -89,7 +92,7 @@ def main(argv: list[str] | None = None) -> int:
         source = args.freeze.resolve().relative_to(Path.cwd().resolve()).as_posix()
     except ValueError:
         pass
-    for variant in VARIANTS:
+    for variant in args.variants:
         path = args.out_dir / f"constraints-runtime-{variant}.txt"
         path.write_text(render(pins, variant, source), encoding="utf-8", newline="\n")
         print(f"wrote {path} ({len(pins)} pins)")

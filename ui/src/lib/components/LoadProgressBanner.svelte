@@ -26,13 +26,26 @@
     progress ? Math.max(0, Math.min(100, Math.round((progress.progress ?? 0) * 100))) : 0,
   );
 
+  function fmtMB(bytes: number): string {
+    return (bytes / (1024 * 1024)).toFixed(bytes >= 100 * 1024 * 1024 ? 0 : 1);
+  }
+
+  const bytesLabel = $derived.by(() => {
+    const done = progress?.bytes_downloaded;
+    const total = progress?.bytes_total;
+    if (typeof done !== 'number') return '';
+    if (typeof total === 'number' && total > 0) return `${fmtMB(done)} / ${fmtMB(total)} MB`;
+    return `${fmtMB(done)} MB`;
+  });
+
   const message = $derived.by(() => {
     if (phase === 'error') return errorMessage ?? 'Load failed.';
     if (phase === 'warning') return errorMessage ?? '';
     if (phase === 'unloading') return `Unloading ${presetId ?? ''}…`;
-    // loading
+    // loading: prefer the sidecar's stage message ("Preparing features…", …)
     const pStr = progress ? ` (${pct}%)` : '';
-    return `Loading ${presetId ?? ''}…${pStr}`;
+    const what = progress?.message?.trim() || `Loading ${presetId ?? ''}…`;
+    return `${what}${pStr}`;
   });
 
   const barClass = $derived(
@@ -61,7 +74,14 @@
       {/if}
 
       <div class="min-w-0 flex-1">
-        <div class="truncate font-medium">{message}</div>
+        <div class="flex items-baseline gap-3">
+          <div class="min-w-0 flex-1 truncate font-medium">{message}</div>
+          {#if phase === 'loading' && bytesLabel}
+            <div class="flex-none font-mono text-xs tabular-nums text-indigo-300" data-testid="load-bytes">
+              {bytesLabel}
+            </div>
+          {/if}
+        </div>
         {#if phase === 'loading' || phase === 'unloading'}
           <div class="mt-1 h-1 w-full overflow-hidden rounded-full bg-zinc-800/60">
             <div

@@ -45,6 +45,20 @@ class LoadProgressEvent(BaseModel):
     stage: Literal["download_model", "download_sae", "load_model", "load_sae", "ready", "already_loaded", "error"]
     progress: float = Field(ge=0.0, le=1.0)
     message: str
+    # Byte progress, only on download_model / download_sae events that are
+    # actually fetching files (omitted from the JSON otherwise).
+    bytes_downloaded: int | None = None
+    bytes_total: int | None = None
+
+
+class TokenizeRequest(BaseModel):
+    preset_id: str = "gpt2-small"
+    text: str = Field(..., max_length=4000)
+
+
+class TokenizeResponse(BaseModel):
+    tokens: list[str]
+    count: int  # includes BOS, the same length /patch compares
 
 
 class TokenInfo(BaseModel):

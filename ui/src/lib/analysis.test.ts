@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // `$lib/sidecar` (imported relatively by the analysis module, since vitest here
 // has no SvelteKit alias). Every analysis call is a spy.
 vi.mock('./sidecar', () => ({
-  getSidecarBase: vi.fn(async () => 'http://sidecar.test'),
+  // Delegates to the (stubbed) global fetch so tests can inspect URL + body.
+  sidecarFetch: vi.fn((path: string, init?: RequestInit) => fetch(`http://sidecar.test${path}`, init)),
   switchSaeLayer: vi.fn(async (_p: string, _prompt: string, layer: number) => ({
     preset_id: 'gpt2-small',
     prompt: 'ran prompt',
@@ -21,7 +22,12 @@ vi.mock('./sidecar', () => ({
 }));
 
 import * as sidecar from './sidecar';
-import { AnalysisController, createInitialAnalysisState } from './analysis-core';
+import {
+  AnalysisController,
+  DLA_FOCUS_DEBOUNCE_MS,
+  createInitialAnalysisState,
+  patchLengthStatus,
+} from './analysis-core';
 import type { GenerateResponse } from './types';
 
 const RAN = 'ran prompt';
@@ -47,7 +53,7 @@ function makeController(withResponse = true) {
   if (withResponse) state.response = fakeResponse();
   const deps = {
     getSelectedPreset: () => 'gpt2-small',
-    getActivePresetId: () => 'gpt2-small' as string | null,
+    getActivePresetId: (): string | null => 'gpt2-small',
     ensureLoaded: vi.fn(async () => {}),
   };
   return { ctl: new AnalysisController(state, deps), state, deps };
@@ -164,5 +170,108 @@ describe('dispatch without a response', () => {
     expect(state.error).toBeNull();
     expect(state.logitLensLoading || state.dlaLoading || state.steerLoading || state.circuitLoading).toBe(false);
     expect(ctl.isPromptEdited(EDITED)).toBe(false);
+  });
+});
+
+describe('DLA refreshes when the focused token changes', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it('re-fetches once, 250 ms after the last focus change, with response.prompt', async () => {
+    const { ctl, state } = makeController();
+    state.focusTokenIndex = 1;
+    await ctl.dla();
+    expect(sidecar.fetchDLA).toHaveBeenCalledTimes(1);
+
+    state.focusTokenIndex = 0;
+    ctl.focusChanged();
+    await vi.advanceTimersByTimeAsync(100);
+    state.focusTokenIndex = 1;
+    ctl.focusChanged();
+    state.focusTokenIndex = 0;
+    ctl.focusChanged();
+    await vi.advanceTimersByTimeAsync(DLA_FOCUS_DEBOUNCE_MS - 1);
+    expect(sidecar.fetchDLA).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(sidecar.fetchDLA).toHaveBeenCalledTimes(2);
+    expect(sidecar.fetchDLA).toHaveBeenLastCalledWith('gpt2-small', RAN, 0);
+  });
+
+  it('does nothing until DLA has been shown for this response', async () => {
+    const { ctl, state } = makeController();
+    state.focusTokenIndex = 0;
+    ctl.focusChanged();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(sidecar.fetchDLA).not.toHaveBeenCalled();
+  });
+
+  it('does not re-fetch when focus returns to the token DLA already shows', async () => {
+    const { ctl, state } = makeController();
+    state.focusTokenIndex = 1;
+    await ctl.dla();
+    ctl.focusChanged();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(sidecar.fetchDLA).toHaveBeenCalledTimes(1);
+  });
+
+  it('a new Run cancels a pending refresh', async () => {
+    const { ctl, state } = makeController();
+    state.focusTokenIndex = 1;
+    await ctl.dla();
+    state.focusTokenIndex = 0;
+    ctl.focusChanged();
+    ctl.clearForModelSwitch();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(sidecar.fetchDLA).toHaveBeenCalledTimes(1);
+  });
+
+  it('a focus change during an in-flight DLA refreshes after it lands', async () => {
+    const { ctl, state } = makeController();
+    let release!: () => void;
+    vi.mocked(sidecar.fetchDLA).mockImplementationOnce(
+      () => new Promise((r) => { release = () => r({ kind: 'dla' } as never); }),
+    );
+    state.focusTokenIndex = 1;
+    const first = ctl.dla();
+    await vi.advanceTimersByTimeAsync(0);
+    state.focusTokenIndex = 0;
+    ctl.focusChanged();
+    release();
+    await first;
+    await vi.advanceTimersByTimeAsync(DLA_FOCUS_DEBOUNCE_MS);
+    expect(sidecar.fetchDLA).toHaveBeenCalledTimes(2);
+    expect(sidecar.fetchDLA).toHaveBeenLastCalledWith('gpt2-small', RAN, 0);
+  });
+});
+
+describe('tokenize (patching token counters)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('POSTs {preset_id, text} to /tokenize and returns {tokens, count}', async () => {
+    const { ctl } = makeController();
+    const fetchSpy = vi.fn(async (_url: string, _init: { body: string }) => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ tokens: ['<|endoftext|>', 'Hi'], count: 2 }),
+    }));
+    vi.stubGlobal('fetch', fetchSpy);
+    const out = await ctl.tokenize('Hi');
+    expect(out).toEqual({ tokens: ['<|endoftext|>', 'Hi'], count: 2 });
+    expect(fetchSpy.mock.calls[0][0]).toBe('http://sidecar.test/tokenize');
+    expect(JSON.parse(fetchSpy.mock.calls[0][1].body)).toEqual({ preset_id: 'gpt2-small', text: 'Hi' });
+  });
+
+  it('returns null on HTTP errors and when no model is loaded', async () => {
+    const { ctl, deps } = makeController();
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 500, json: async () => ({}) })));
+    expect(await ctl.tokenize('Hi')).toBeNull();
+    deps.getActivePresetId = () => null;
+    expect(await ctl.tokenize('Hi')).toBeNull();
+  });
+
+  it('patchLengthStatus labels same vs differing lengths', () => {
+    expect(patchLengthStatus(null, 5)).toBeNull();
+    expect(patchLengthStatus(14, 14)).toEqual({ same: true, label: 'same length ✓' });
+    expect(patchLengthStatus(14, 15)).toEqual({ same: false, label: 'lengths differ: 14 vs 15' });
   });
 });

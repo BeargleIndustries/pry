@@ -10,6 +10,8 @@
 // `panel-a-heatmap`, `panel-a-agg-selector`, `panel-b-token-strip`) will auto-
 // suppress the matching tip without needing an explicit `tutorialStepId`.
 
+import { CUSTOM_MODELS_ENABLED } from '../flags';
+
 export type TipPlacement = 'top' | 'bottom' | 'left' | 'right';
 
 export interface TipDef {
@@ -28,6 +30,16 @@ export interface TipDef {
    */
   tutorialStepId?: string;
 }
+
+const CUSTOM_MODEL_VERDICT_TIP: TipDef = {
+  id: 'custom-model-verdict',
+  target: '[data-tip="custom-model-verdict"]',
+  placement: 'bottom',
+  blurb:
+    "Custom models can be saved here but can't be loaded yet. Use one of the built-in models to run prompts.",
+  why:
+    "To show features, a model needs a matching feature dictionary (an SAE) trained on it. Pry can remember the model name you enter, but it can't load custom models yet, so they won't run. The built-in models are tested and work today.",
+};
 
 export const tipsRegistry: TipDef[] = [
   {
@@ -203,15 +215,8 @@ export const tipsRegistry: TipDef[] = [
     why:
       "Each dot is one attention head or one processing layer (MLP), placed on its layer. Bigger dots pushed the prediction harder. Blue heads pushed toward the predicted word, red ones pushed against it, and processing layers are amber. The scores come from the same estimate as the Why (DLA) tab, and only parts above the threshold are shown. Treat it as a shortlist of parts worth a closer look, not a map of how they pass information to each other. Working out those connections takes more experiments, like the ones in Swap & Compare.",
   },
-  {
-    id: 'custom-model-verdict',
-    target: '[data-tip="custom-model-verdict"]',
-    placement: 'bottom',
-    blurb:
-      "Custom models can be saved here but can't be loaded yet. Use one of the built-in models to run prompts.",
-    why:
-      "To show features, a model needs a matching feature dictionary (an SAE) trained on it. Pry can remember the model name you enter, but it can't load custom models yet, so they won't run. The built-in models are tested and work today.",
-  },
+  // Only registered when custom models are switched on (contract §7).
+  ...(CUSTOM_MODELS_ENABLED ? [CUSTOM_MODEL_VERDICT_TIP] : []),
   {
     id: 'neuronpedia-link',
     target: '[data-tip="neuronpedia-link"]',

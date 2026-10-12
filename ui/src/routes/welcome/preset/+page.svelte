@@ -8,61 +8,10 @@
     evaluatePresets,
     type PresetCompatibility,
   } from '$lib/tauri';
+  import { needsHfToken } from '$lib/preset-display';
 
   let presets = $state<PresetCompatibility[]>([]);
   let error = $state<string | null>(null);
-
-  interface PresetMeta {
-    id: string;
-    display: string;
-    subtitle: string;
-    size: string;
-    flagship: boolean;
-    locked: boolean;
-  }
-
-  const META: Record<string, PresetMeta> = {
-    'gpt2-small': {
-      id: 'gpt2-small',
-      display: 'GPT-2 small',
-      subtitle: 'The small, well-studied model the tour uses. Start here.',
-      size: '600 MB',
-      flagship: true,
-      locked: false,
-    },
-    'pythia-410m': {
-      id: 'pythia-410m',
-      display: 'Pythia-410M',
-      subtitle: 'A different small model, from EleutherAI. Good for comparing with GPT-2.',
-      size: '1.6 GB',
-      flagship: false,
-      locked: false,
-    },
-    'pythia-1.4b': {
-      id: 'pythia-1.4b',
-      display: 'Pythia-1.4B',
-      subtitle: 'A bigger Pythia. Needs a stronger graphics card.',
-      size: '5.6 GB',
-      flagship: false,
-      locked: false,
-    },
-    'gemma-2-2b': {
-      id: 'gemma-2-2b',
-      display: 'Gemma-2-2B',
-      subtitle: 'Google · larger model. Requires a HuggingFace account.',
-      size: '10 GB',
-      flagship: false,
-      locked: true,
-    },
-    'gemma-2-9b': {
-      id: 'gemma-2-9b',
-      display: 'Gemma-2-9B',
-      subtitle: 'Very large. Needs a graphics card with 24 GB+ of memory.',
-      size: '36 GB',
-      flagship: false,
-      locked: true,
-    },
-  };
 
   onMount(async () => {
     try {
@@ -74,9 +23,9 @@
   });
 
   function pick(id: string) {
-    const meta = META[id];
+    const c = presets.find((p) => p.preset_id === id);
     localStorage.setItem('pry:onboarding_preset', id);
-    if (meta?.locked) {
+    if (c && needsHfToken(c)) {
       goto('/welcome/hf-token');
     } else {
       goto('/welcome/downloading');
@@ -119,18 +68,7 @@
 
   <div class="space-y-3">
     {#each presets as c (c.preset_id)}
-      {@const meta = META[c.preset_id]}
-      {#if meta}
-        <PresetPickerCard
-          compat={c}
-          displayName={meta.display}
-          subtitle={meta.subtitle}
-          sizeLabel={meta.size}
-          flagship={meta.flagship}
-          locked={meta.locked}
-          onpick={pick}
-        />
-      {/if}
+      <PresetPickerCard compat={c} locked={needsHfToken(c)} onpick={pick} />
     {/each}
   </div>
 

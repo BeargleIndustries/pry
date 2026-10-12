@@ -6,7 +6,7 @@
     localStorage.setItem('pry:onboarding_done', 'true');
     localStorage.removeItem('pry:onboarding_step');
     if (withTour) {
-      goto('/?tutorial=1');
+      goto('/?demo=tour');
     } else {
       // Skipping: don't auto-start the tour. It's still under the ? icon.
       localStorage.setItem('pry:tutorial_seen', 'true');
@@ -43,7 +43,7 @@
         class="group inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 font-medium text-white transition hover:bg-indigo-500 hover:shadow-[0_0_24px_-4px_rgba(99,102,241,0.8)]"
       >
         <PlayCircle class="h-4 w-4" />
-        Take the tour
+        Start the guided tour
       </button>
       <button
         onclick={() => finish(false)}

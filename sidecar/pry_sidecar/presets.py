@@ -28,6 +28,22 @@ class SAESpec(BaseModel):
     size_mb: int
 
 
+class PresetDisplay(BaseModel):
+    """User-facing preset metadata (contract §1). The UI and Rust lanes
+    read this block instead of keeping their own per-preset maps."""
+
+    name: str
+    blurb: str
+    params: str
+    size_label: str
+    n_layers: int
+    n_heads: int
+    # Neuronpedia coverage; both null when the preset has none.
+    neuronpedia_model_id: Optional[str] = None
+    neuronpedia_release_suffix: Optional[str] = None
+    recommended: bool = False
+
+
 class PresetManifest(BaseModel):
     id: str
     model: ModelSpec
@@ -38,6 +54,8 @@ class PresetManifest(BaseModel):
     tier: str
     enabled: bool = True
     enabled_comment: Optional[str] = Field(default=None)
+    display: PresetDisplay
+    cpu_ok: bool = False  # small enough to run on CPU (T11)
 
     @property
     def available_sae_layers(self) -> list[int]:
@@ -53,38 +71,19 @@ class PresetManifest(BaseModel):
 
     @property
     def neuronpedia_model_id(self) -> Optional[str]:
-        """Neuronpedia model slug, or None if this preset has no coverage.
-
-        Only GPT-2 small presets map to Neuronpedia at the moment. Pythia,
-        Gemma, and future non-GPT-2 presets return None so callers can skip
-        the fetch entirely rather than producing garbage release ids.
-        """
-        tl = self.model.tl_name.lower()
-        if tl in ("gpt2", "gpt2-small"):
-            return "gpt2-small"
-        return None
+        """Neuronpedia model slug from ``display``, or None if no coverage."""
+        return self.display.neuronpedia_model_id
 
     def neuronpedia_release_id(self, sae_layer: int) -> Optional[str]:
-        """Neuronpedia release id for this preset at the given SAE layer.
+        """Neuronpedia SAE-set id ``{layer}-{suffix}`` (e.g. ``8-res-jb``).
 
-        Returns None when :meth:`neuronpedia_model_id` is None (no coverage),
-        or when the SAE release string doesn't start with the expected prefix
-        (prevents silently producing garbage IDs for edge-case releases).
-        Format: ``{layer}-res-{suffix}`` where suffix is derived from the SAE
-        release string by stripping the ``gpt2-small-res-`` prefix.
+        None when the preset has no Neuronpedia coverage, so callers skip the
+        fetch instead of producing a bogus id.
         """
-        if self.neuronpedia_model_id is None:
+        suffix = self.display.neuronpedia_release_suffix
+        if self.neuronpedia_model_id is None or suffix is None:
             return None
-        # M2 fix: use str.removeprefix (Python 3.9+) instead of str.replace so
-        # the strip is anchored to the start of the string. If the prefix is
-        # absent, the suffix equals the full release string — which means the
-        # release format is unexpected. Return None instead of a garbage id.
-        _PREFIX = "gpt2-small-res-"
-        suffix = self.sae.release.removeprefix(_PREFIX)
-        if suffix == self.sae.release:
-            # Prefix was not present — no valid Neuronpedia release id for this SAE.
-            return None
-        return f"{sae_layer}-res-{suffix}"
+        return f"{sae_layer}-{suffix}"
 
 
 def _load_presets() -> dict[str, PresetManifest]:

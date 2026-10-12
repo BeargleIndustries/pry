@@ -1,0 +1,11 @@
+base : {'torch': '2.5.1+cpu', 'transformer_lens': '2.15.4', 'sae_lens': '5.11.0', 'device_name': 'cpu'}
+other: {'torch': '2.7.1+cpu', 'transformer_lens': '2.15.4', 'sae_lens': '5.11.0', 'device_name': 'cpu'}
+gpt2-small  'The capital of France is'       feat_ids=ok logit_ids=ok act_abs=0 act_rel=0 logit_abs=0 preds=ok
+gpt2-small  'When Mary and John went to t'   feat_ids=ok logit_ids=ok act_abs=0 act_rel=0 logit_abs=0 preds=ok
+gpt2-small  'def fibonacci(n):\n    return'  feat_ids=ok logit_ids=ok act_abs=0 act_rel=0 logit_abs=0 preds=ok
+gpt2-small  'The quick brown fox jumps ov'   feat_ids=ok logit_ids=ok act_abs=0 act_rel=0 logit_abs=0 preds=ok
+pythia-70m  'The capital of France is'       feat_ids=ok logit_ids=ok act_abs=0 act_rel=0 logit_abs=0 preds=ok
+pythia-70m  'When Mary and John went to t'   feat_ids=ok logit_ids=ok act_abs=0 act_rel=0 logit_abs=0 preds=ok
+pythia-70m  'def fibonacci(n):\n    return'  feat_ids=ok logit_ids=ok act_abs=0 act_rel=0 logit_abs=0 preds=ok
+pythia-70m  'The quick brown fox jumps ov'   feat_ids=ok logit_ids=ok act_abs=0 act_rel=0 logit_abs=0 preds=ok
+worst: {'act_abs': '0', 'act_rel': '0', 'logit_abs': '0'}
