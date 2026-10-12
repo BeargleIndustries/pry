@@ -86,7 +86,7 @@
       "lookFor": [
         "The model has never seen this phrase, so the only way to guess the last word is to look back at the first copy. Check Predictions for \" Qu\" (the start of Quorn).",
         "Press \"Find copying heads\" in the Attention panel (or the button below). Pry tests every head on a repeated random sequence and rings the ones that copy, such as layer 5 head 1 and layer 5 head 5.",
-        "Come back to this prompt and click layer 5 head 1 or head 5 in the grid. On the second copy, the last word's attention points at \" Qu\", the word that came after \"from\" the first time."
+        "Come back to this prompt and pick layer 5, head 1 (or head 5) with the Layer and Head menus above the lines, or click it in Expert view. On the second copy, the last word's attention points at \" Qu\", the word that came after \"from\" the first time."
       ],
       "found": {
         "summary": "Olsson et al. named these \"induction heads\": heads that find an earlier copy of the current word and attend to the word that came after it, so it can be copied forward. They found them in many models, and argue (with strongest evidence in small models) that they are an important part of how models learn from their context.",

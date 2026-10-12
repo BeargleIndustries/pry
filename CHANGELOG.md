@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.2
+
+### New
+- **Attention as lines.** The Attention panel now opens on a lines view: each word on the left, the words it looks at on the right, joined by lines that are darker where attention is stronger. Click a word to follow its lines. The layer × head grid is still there as "Expert view".
+- **Glossary hovers.** Terms like *attention head*, *logit*, *feature* and *steering* have a dotted underline. Hover or tab to one for a one-line definition.
+- **New first-time tips** for Experiments, Compare, Watch it write, Find a concept and the copying-heads view.
+
+### Accessibility
+- Every grid works from the keyboard: one Tab stop per grid, arrow keys to move, Enter to open. Each square says what it is and its value.
+- Screen readers get each chart's plain-language summary as its description.
+- Positive and negative now use a colorblind-safe blue and orange (instead of red and green), and strong squares carry a + or − mark.
+- No accessibility warnings left in the build. Keyboard controls are listed in `docs/accessibility.md`.
+
 ## 0.3.1
 
 ### New

@@ -575,6 +575,25 @@
     tourMenuOpen = false;
   }
 
+  // Escape closes the tour menu and the hardware card (T29). Their backdrops
+  // close on click too; this is the keyboard way out.
+  function onWindowKeydown(e: KeyboardEvent) {
+    if (e.key !== 'Escape') return;
+    if (tradingCardOpen) tradingCardOpen = false;
+    else if (tourMenuOpen) tourMenuOpen = false;
+  }
+
+  // Put the cursor in the prompt box once, when the app first opens. This
+  // replaces the `autofocus` attribute, which re-fired whenever the input
+  // remounted (resizing between wide and narrow, leaving Compare) and pulled
+  // focus away from wherever the user was.
+  let promptFocusedOnce = false;
+  function focusPromptOnce(node: HTMLInputElement) {
+    if (promptFocusedOnce) return;
+    promptFocusedOnce = true;
+    queueMicrotask(() => node.focus());
+  }
+
   // ---------------------------------------------------------------------------
   // Experiment cards (T22)
   // ---------------------------------------------------------------------------
@@ -688,6 +707,8 @@
   }
 </script>
 
+<svelte:window onkeydown={onWindowKeydown} />
+
 <div class="flex h-screen flex-col overflow-hidden bg-zinc-950">
   <!-- Header bar — 44px -->
   <header class="flex h-11 flex-shrink-0 items-center gap-3 border-b border-zinc-800 bg-zinc-900 px-4">
@@ -711,7 +732,7 @@
           bind:value={prompt}
           onkeydown={onPromptKeydown}
           data-tour="prompt-input"
-          autofocus
+          use:focusPromptOnce
           placeholder="e.g. The cat sat on the"
           class="flex-1 rounded border border-zinc-700 bg-zinc-950 px-3 py-1 text-sm text-zinc-100 placeholder-zinc-600 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
         />
@@ -750,6 +771,7 @@
       <button
         onclick={() => (experimentsOpen = true)}
         title="Try a guided experiment"
+        data-tip="experiments-button"
         class="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
       >
         <FlaskConical class="h-4 w-4" />
@@ -768,12 +790,13 @@
       </button>
       <div class="relative">
         <button onclick={() => { tourMenuOpen = !tourMenuOpen; }} aria-label="Open tutorial" data-tour="header-help"
+          aria-expanded={tourMenuOpen}
           class="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100">
           <CircleHelp class="h-4 w-4" />
         </button>
         {#if tourMenuOpen}
-          <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-          <div class="fixed inset-0 z-40" onclick={() => { tourMenuOpen = false; }}></div>
+          <!-- Click-outside catcher; Escape closes the menu via onWindowKeydown. -->
+          <div role="presentation" class="fixed inset-0 z-40" onclick={() => { tourMenuOpen = false; }}></div>
           <div class="absolute right-0 top-full z-50 mt-1 w-40 rounded-md border border-zinc-700 bg-zinc-900 py-1 shadow-xl">
             <button
               type="button"
@@ -808,7 +831,7 @@
           bind:value={prompt}
           onkeydown={onPromptKeydown}
           data-tour="prompt-input"
-          autofocus
+          use:focusPromptOnce
           placeholder="e.g. The cat sat on the"
           class="flex-1 rounded border border-zinc-700 bg-zinc-950 px-3 py-1.5 text-sm text-zinc-100 placeholder-zinc-600 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
         />
@@ -985,7 +1008,7 @@
       <!-- Tabbed mode (narrow) -->
       <div class="flex h-full flex-col">
         <!-- Tab strip -->
-        <div role="tablist" aria-label="Analysis panels" onkeydown={onTabKey}
+        <div role="tablist" tabindex="-1" aria-label="Analysis panels" onkeydown={onTabKey}
           class="flex-shrink-0 flex gap-6 border-b border-zinc-800 px-4">
           <button type="button" role="tab" aria-selected={activeTab === 'attention'}
             tabindex={activeTab === 'attention' ? 0 : -1}
@@ -1270,14 +1293,20 @@
 
   <!-- Hardware trading card modal -->
   {#if tradingCardOpen && hardware}
-    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+    <!-- Backdrop: click outside closes; Escape closes via onWindowKeydown. -->
     <div
+      role="presentation"
       class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 px-4 py-10"
       onclick={(e) => { if (e.target === e.currentTarget) tradingCardOpen = false; }}
     >
-      <div class="w-full max-w-4xl rounded-lg border border-zinc-700 bg-zinc-900 p-6 shadow-xl">
+      <div
+        class="w-full max-w-4xl rounded-lg border border-zinc-700 bg-zinc-900 p-6 shadow-xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="hardware-card-title"
+      >
         <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-base font-semibold text-zinc-100">Hardware Card</h2>
+          <h2 id="hardware-card-title" class="text-base font-semibold text-zinc-100">Hardware Card</h2>
           <button
             onclick={() => (tradingCardOpen = false)}
             class="rounded border border-zinc-700 px-2 py-1 text-xs text-zinc-400 hover:bg-zinc-800"

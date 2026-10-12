@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Term from './Term.svelte';
   import type { GenerateResponse, TopPrediction } from '$lib/types';
   import { predictionsReadout } from '$lib/readouts';
   import Readout from './Readout.svelte';
@@ -40,7 +41,7 @@
 >
   <div class="flex items-baseline gap-2">
     <h2 class="text-sm font-semibold text-zinc-100">Top-k Predictions</h2>
-    <span class="text-xs text-zinc-600">Next token probabilities</span>
+    <span class="text-xs text-zinc-600">Next <Term key="token">token</Term> <Term key="probability">probabilities</Term></span>
     {#if isConfident}
       <span class="ml-auto rounded bg-emerald-900/60 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
         confident
