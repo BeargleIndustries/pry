@@ -6,12 +6,12 @@ import pytest
 
 
 @pytest.mark.inference
-def test_circuit_returns_no_fabricated_edges(gpt2_client):
+def test_circuit_edges_are_labelled(gpt2_client):
+    # T23: edges are only returned with a named method (see test_circuit_edges.py).
     r = gpt2_client.post("/circuit", json={"preset_id": "gpt2-small", "prompt": "The capital of France is"})
     assert r.status_code == 200, r.text
     body = r.json()
-    assert body["edges"] == []
-    assert body["edges_method"] == "none"
+    assert body["edges_method"] == "direct_value_path"
     assert len(body["nodes"]) > 0
 
 

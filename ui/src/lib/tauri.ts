@@ -426,13 +426,23 @@ export function exportFileName(now: Date = new Date()): string {
   return `pry-export-${ts}.json`;
 }
 
+/** Save-dialog filter plus the blob MIME type for the browser fallback. */
+export interface SaveFileKind {
+  name: string;
+  extensions: string[];
+  mime: string;
+}
+
+export const JSON_FILE: SaveFileKind = { name: 'JSON', extensions: ['json'], mime: 'application/json' };
+export const HTML_FILE: SaveFileKind = { name: 'Web page', extensions: ['html'], mime: 'text/html' };
+
 /**
- * Save `json` to a user-chosen file. Returns false when the user cancels the
+ * Save `text` to a user-chosen file. Returns false when the user cancels the
  * dialog. Outside Tauri, falls back to a blob download.
  */
 let saveDialogOpen = false;
 
-export async function saveJsonFile(json: string, defaultName = exportFileName()): Promise<boolean> {
+export async function saveTextFile(text: string, defaultName: string, kind: SaveFileKind): Promise<boolean> {
   if (isTauri()) {
     // A second click while the dialog is up would stack another dialog.
     if (saveDialogOpen) return false;
@@ -442,16 +452,16 @@ export async function saveJsonFile(json: string, defaultName = exportFileName())
       const { writeTextFile } = await import('@tauri-apps/plugin-fs');
       const path = await save({
         defaultPath: defaultName,
-        filters: [{ name: 'JSON', extensions: ['json'] }],
+        filters: [{ name: kind.name, extensions: kind.extensions }],
       });
       if (!path) return false;
-      await writeTextFile(path, json);
+      await writeTextFile(path, text);
       return true;
     } finally {
       saveDialogOpen = false;
     }
   }
-  const blob = new Blob([json], { type: 'application/json' });
+  const blob = new Blob([text], { type: kind.mime });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -462,4 +472,8 @@ export async function saveJsonFile(json: string, defaultName = exportFileName())
   // Revoking immediately can cancel the download in some browsers.
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
   return true;
+}
+
+export function saveJsonFile(json: string, defaultName = exportFileName()): Promise<boolean> {
+  return saveTextFile(json, defaultName, JSON_FILE);
 }

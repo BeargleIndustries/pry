@@ -1,8 +1,9 @@
 <script lang="ts">
   import Term from './Term.svelte';
-  import type { CircuitResponse, CircuitNode } from '$lib/types';
+  import type { CircuitResponse, CircuitNode, CircuitEdge } from '$lib/types';
   import { clampCell, handleGridKey, type GridCell } from '$lib/grid-nav';
   import { NEGATIVE_HEX, POSITIVE_HEX, signedColor, signedHex, signedNumber, signGlyph, signOf } from '$lib/signed-color';
+  import { edgeColor, edgeGlyph, edgeWidth, EDGE_POSITIVE_COLOR, EDGE_NEGATIVE_COLOR } from '$lib/edge-style';
 
   interface Props {
     response: CircuitResponse | null;
@@ -74,10 +75,33 @@
 
   let selectedNode = $state<CircuitNode | null>(null);
 
+  // Direct value path edges (T23): signed, in logits of the predicted word.
+  const edges = $derived(
+    response?.edges_method === 'direct_value_path' ? (response?.edges ?? []) : [],
+  );
+  const maxAbsEdge = $derived(Math.max(...edges.map((e) => Math.abs(e.weight)), 1e-9));
+  const edgeKey = (e: CircuitEdge) => `${e.source}->${e.target}`;
+  let activeEdge = $state<string | null>(null);
+  // Edges touching the selected part, strongest first (listed in words in its detail box).
+  const nodeEdges = $derived(
+    selectedNode
+      ? edges
+          .filter((e) => e.source === selectedNode!.id || e.target === selectedNode!.id)
+          .sort((a, b) => Math.abs(b.weight) - Math.abs(a.weight))
+      : [],
+  );
+  let selectedEdge = $state<CircuitEdge | null>(null);
+
+  function edgeLabel(e: CircuitEdge): string {
+    const dir = e.weight >= 0 ? 'toward' : 'away from';
+    return `${e.source} to ${e.target}: ${edgeGlyph(e.weight)}${Math.abs(e.weight).toFixed(3)}, pushes ${dir} the predicted word`;
+  }
+
   function handleRun() {
     const t = thresholdInput.trim() ? parseFloat(thresholdInput) : undefined;
     onRun?.(t);
     selectedNode = null;
+    selectedEdge = null;
   }
 
   // Fill = sign (blue +, orange −, colorblind-safe), opacity and size = |importance|.
@@ -139,7 +163,7 @@
   </div>
 
   <p class="text-xs text-zinc-400">
-    These are the <Term key="head">heads</Term> and <Term key="layer">layers</Term> that pushed the prediction most. It doesn't show how they connect.
+    These are the <Term key="head">heads</Term> and <Term key="layer">layers</Term> that pushed the prediction most. Lines show only one kind of connection, the direct value path; other ways parts affect each other (like changing where a head looks) aren't drawn.
   </p>
 
   <!-- Controls -->
@@ -171,6 +195,9 @@
     <div class="flex flex-wrap items-center gap-2 rounded-md border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-xs">
       <span class="text-zinc-500">Nodes:</span>
       <span class="text-zinc-300">{nodes.length}</span>
+      <span class="mx-1 text-zinc-700">|</span>
+      <span class="text-zinc-500">Lines (direct value path):</span>
+      <span class="text-zinc-300">{edges.length}</span>
       <span class="mx-1 text-zinc-700">|</span>
       <span class="text-zinc-500">Threshold:</span>
       <span class="text-zinc-300">{response.threshold.toFixed(4)}</span>
@@ -207,6 +234,50 @@
             >
               L{layer}
             </text>
+          {/each}
+
+          <!-- Edges: direct value path, colour = sign, width = |weight| -->
+          {#each edges as edge (edgeKey(edge))}
+            {@const a = nodePositions.get(edge.source)}
+            {@const b = nodePositions.get(edge.target)}
+            {#if a && b}
+              {@const key = edgeKey(edge)}
+              {@const shown = activeEdge === key || (selectedEdge !== null && edgeKey(selectedEdge) === key)}
+              <!-- Mouse shortcut only: keyboard and screen-reader users get each
+                   part's connections in words in its detail box. -->
+              <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+              <g
+                class="cursor-pointer"
+                aria-hidden="true"
+                onclick={() => { selectedEdge = edge; }}
+                onmouseenter={() => { activeEdge = key; }}
+                onmouseleave={() => { if (activeEdge === key) activeEdge = null; }}
+              >
+                <title>{edgeLabel(edge)}</title>
+                <!-- wide transparent hit area -->
+                <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="transparent" stroke-width={10} />
+                <line
+                  x1={a.x}
+                  y1={a.y}
+                  x2={b.x}
+                  y2={b.y}
+                  stroke={edgeColor(edge.weight)}
+                  stroke-width={edgeWidth(edge.weight, maxAbsEdge)}
+                  stroke-linecap="round"
+                  opacity={shown ? 1 : 0.55}
+                />
+                {#if shown}
+                  <circle cx={(a.x + b.x) / 2} cy={(a.y + b.y) / 2} r={7} fill="#18181b" stroke={edgeColor(edge.weight)} />
+                  <text
+                    x={(a.x + b.x) / 2}
+                    y={(a.y + b.y) / 2 + 3.5}
+                    text-anchor="middle"
+                    class="pointer-events-none text-[10px] font-bold"
+                    fill={edgeColor(edge.weight)}
+                  >{edgeGlyph(edge.weight)}</text>
+                {/if}
+              </g>
+            {/if}
           {/each}
 
           <!-- Nodes, one grid row per layer -->
@@ -294,7 +365,28 @@
             <span>Layer {selectedNode.layer}{selectedNode.head !== null ? `, Head ${selectedNode.head}` : ''}</span>
           </div>
           <div class="mt-1 text-zinc-500">
-            Importance: <span class="font-mono" style="color: {signedHex(selectedNode.importance)};">{signedNumber(selectedNode.importance, 4)}</span>
+            Importance: <span class="font-mono" style="color: {signedHex(selectedNode.importance)};">{signedNumber(selectedNode.importance, 4)}</span> logits
+          </div>
+          {#if nodeEdges.length > 0}
+            <ul class="mt-1 flex flex-col gap-0.5 text-zinc-400" aria-label="Connections of {selectedNode.id}">
+              {#each nodeEdges as e (edgeKey(e))}
+                <li>{edgeLabel(e)}</li>
+              {/each}
+            </ul>
+          {/if}
+        </div>
+      {/if}
+
+      {#if selectedEdge}
+        <div class="rounded-md border border-zinc-700 bg-zinc-900/80 px-3 py-2 text-xs">
+          <div class="flex items-center gap-3 text-zinc-300">
+            <span class="font-mono font-semibold">{selectedEdge.source} → {selectedEdge.target}</span>
+            <span class="text-zinc-600">|</span>
+            <span class="text-zinc-500">direct value path</span>
+          </div>
+          <div class="mt-1 text-zinc-500">
+            Weight: <span class="font-mono" style="color: {edgeColor(selectedEdge.weight)}">{edgeGlyph(selectedEdge.weight)}{Math.abs(selectedEdge.weight).toFixed(4)}</span>
+            {selectedEdge.weight >= 0 ? 'toward' : 'away from'} the predicted word
           </div>
         </div>
       {/if}
@@ -326,6 +418,23 @@
           </span>
         {/if}
       </div>
+      {#if response.edges_method === 'direct_value_path'}
+        <div class="flex flex-col gap-1 text-[10px] text-zinc-500">
+          <div class="flex flex-wrap items-center gap-4">
+            <span class="font-medium text-zinc-400">Lines: direct value path</span>
+            <span class="flex items-center gap-1">
+              <span class="inline-block h-0.5 w-4" style="background: {EDGE_POSITIVE_COLOR}"></span>
+              + toward the predicted word
+            </span>
+            <span class="flex items-center gap-1">
+              <span class="inline-block h-0.5 w-4" style="background: {EDGE_NEGATIVE_COLOR}"></span>
+              − away from it
+            </span>
+            <span>Line width = strength</span>
+          </div>
+          <p>Shows how much this part's output, passed straight through the later head's value path, pushes the predicted word. Effects that travel through other parts in between aren't included, and lines only connect the parts shown above the threshold, so big inputs from parts below it are missing.</p>
+        </div>
+      {/if}
     {/if}
   {/if}
 </section>

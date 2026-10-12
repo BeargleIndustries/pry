@@ -25,6 +25,7 @@ from .schemas import (
     AblateResponse,
     AblationPrediction,
     AttentionLayer,
+    CircuitEdge,
     CircuitNode,
     CircuitRequest,
     CircuitResponse,
@@ -777,9 +778,14 @@ def run_dla(req: DLARequest, loaded: LoadedModel) -> DLAResponse:
         # Target position: default to last token
         target_pos = _target_position(req.target_token_index, seq_len)
 
-        # Cache: hook_result (attention output per head) + hook_mlp_out
+        # Cache: hook_result (attention output per head) + hook_mlp_out, and
+        # the final LN scale so contributions come out in logits.
         def names_filter(name: str) -> bool:
-            return name.endswith("hook_result") or name.endswith("hook_mlp_out")
+            return (
+                name.endswith("hook_result")
+                or name.endswith("hook_mlp_out")
+                or name == "ln_final.hook_scale"
+            )
 
         forward_start = time.perf_counter()
         with torch.no_grad():
@@ -797,10 +803,10 @@ def run_dla(req: DLARequest, loaded: LoadedModel) -> DLAResponse:
         # Get the unembedding direction for the predicted token
         # W_U shape: [d_model, vocab]
         dla_start = time.perf_counter()
-        unembed_dir = model.W_U[:, predicted_id]  # [d_model]
-        if hasattr(model, "b_U") and model.b_U is not None:
-            # bias is per-vocab, doesn't contribute to per-component attribution
-            pass
+        # Pulled back through the final LayerNorm (scale frozen at target_pos),
+        # so each contribution is in logits. The unembedding bias is per-token,
+        # not per-component, so it isn't attributed to anything.
+        unembed_dir = final_ln_logit_direction(model, cache, predicted_id, target_pos)
 
         components: list[DLAComponent] = []
 
@@ -1400,13 +1406,161 @@ def run_patching(req: PatchRequest, loaded: LoadedModel) -> PatchResponse:
 # Circuit Subgraph Visualization (Phase D11)
 # ---------------------------------------------------------------------------
 
+EDGES_METHOD_DIRECT_VALUE_PATH = "direct_value_path"
+# Edges are returned only when |weight| >= this many logits (unless the
+# request overrides it), and at most CIRCUIT_MAX_EDGES of them, largest first.
+CIRCUIT_EDGE_THRESHOLD = 0.05
+CIRCUIT_MAX_EDGES = 30
+
+
+def final_ln_logit_direction(model, cache, predicted_id: int, target_pos: int):
+    """Unembedding direction for ``predicted_id`` pulled back through the final
+    LayerNorm, with its scale at ``target_pos`` frozen from the clean run.
+
+    ``x @ direction`` is then component x's direct contribution to the
+    predicted token's logit, in logits (TransformerLens' apply_ln_to_stack).
+    Needs ``ln_final.hook_scale`` in the cache; without it the scale is skipped.
+    """
+    import torch
+
+    norm = getattr(model.cfg, "normalization_type", None)
+    u = model.W_U[:, predicted_id].float()
+    w = getattr(getattr(model, "ln_final", None), "w", None)
+    if isinstance(w, torch.Tensor):
+        u = u * w.float()
+    if norm in ("LN", "LNPre"):
+        u = u - u.mean()
+    if "ln_final.hook_scale" in cache:
+        u = u / cache["ln_final.hook_scale"][0, target_pos, 0].float()
+    return u
+
+
+def circuit_edge_hook_filter(name: str) -> bool:
+    """Cache entries ``direct_value_path_edges`` needs."""
+    return (
+        name.endswith("attn.hook_z")
+        or name.endswith("attn.hook_pattern")
+        or name.endswith("hook_mlp_out")
+        or name.endswith("ln1.hook_scale")
+        or name == "ln_final.hook_scale"
+    )
+
+
+def _component_layer(cid: str) -> tuple[int, int | None]:
+    """``"L3.H7"`` -> (3, 7); ``"MLP.4"`` -> (4, None)."""
+    if cid.startswith("MLP."):
+        return int(cid.split(".")[1]), None
+    layer_s, head_s = cid[1:].split(".H")
+    return int(layer_s), int(head_s)
+
+
+def direct_value_path_edges(
+    model,
+    cache,
+    target_pos: int,
+    predicted_id: int,
+    source_ids: list[str],
+    target_ids: list[str],
+) -> dict[tuple[str, str], float]:
+    """Signed "direct value path" edge weights, in logits of the predicted token.
+
+    For a source component S (an attention head ``L{l}.H{h}`` or ``MLP.{l}``)
+    in layer l_s and a target attention head T in layer l_t > l_s, with
+    t = ``target_pos``::
+
+        edge(S -> T) = sum_p  A_T[t, p] / s1_T[p]
+                              * ( c(S_out[p]) * w1_T ) @ W_V^T @ W_O^T
+                              * ( c(.) * w_f / s_f[t] ) @ W_U[:, predicted]
+
+    where
+
+    - ``S_out[p]`` is what S writes to the residual stream at position p
+      (``z_S[p] @ W_O^S`` for a head, without the shared ``b_O``; the MLP
+      output for an MLP);
+    - ``c(x) = x - mean(x)`` is LayerNorm centering (identity for RMSNorm or
+      no norm);
+    - ``s1_T[p]`` is T's ``ln1`` scale at p and ``s_f[t]`` the final LN scale
+      at t, both FROZEN from the clean run; ``w1_T`` / ``w_f`` are the LN
+      weights (already folded into W_V / W_U when TransformerLens folded LN,
+      so they are 1 here);
+    - ``A_T[t, p]`` is T's attention pattern from the clean run, frozen;
+    - LN biases, ``b_V`` and ``b_O`` are excluded: they don't depend on S.
+
+    Read it as: the part of T's output at t that is built from S's output
+    (S enters T's value input through T's frozen ln1, gets mixed by T's frozen
+    attention, then reaches the logits through the frozen final LN without
+    passing through any other component), projected on the predicted token's
+    unembedding direction. Positive = pushes toward the predicted token.
+
+    Only the value (V) path is measured. Q- and K-composition (S changing
+    *where* T attends) are excluded, and so is any route through components
+    between S and T or after T.
+    """
+    import torch
+
+    cfg = model.cfg
+    norm = getattr(cfg, "normalization_type", None)
+    centers = norm in ("LN", "LNPre")
+
+    def center(v: "torch.Tensor") -> "torch.Tensor":
+        return v - v.mean(dim=-1, keepdim=True) if centers else v
+
+    def ln_weight(ln_module) -> "torch.Tensor | None":
+        w = getattr(ln_module, "w", None)
+        return w.float() if isinstance(w, torch.Tensor) else None
+
+    def ln_scale(name: str, head: int | None = None) -> "torch.Tensor | None":
+        if name not in cache:
+            return None
+        s = cache[name][0].float()  # [pos, 1] or [pos, n_heads, 1]
+        if s.dim() == 3:
+            return s[:, head if head is not None else 0, 0]
+        return s[:, 0]
+
+    with torch.no_grad():
+        # Output side: logit direction pulled back through the frozen final LN.
+        u = final_ln_logit_direction(model, cache, predicted_id, target_pos)
+
+        # Source outputs, [pos, d_model] each.
+        source_out: dict[str, torch.Tensor] = {}
+        for sid in source_ids:
+            layer, head = _component_layer(sid)
+            if head is None:
+                source_out[sid] = cache[f"blocks.{layer}.hook_mlp_out"][0].float()
+            else:
+                z = cache[f"blocks.{layer}.attn.hook_z"][0, :, head, :].float()
+                source_out[sid] = z @ model.blocks[layer].attn.W_O[head].float()
+
+        edges: dict[tuple[str, str], float] = {}
+        for tid in target_ids:
+            lt, ht = _component_layer(tid)
+            if ht is None:
+                continue  # value path only exists for attention heads
+            attn = model.blocks[lt].attn
+            # T's value-input direction that moves the predicted logit.
+            v_dir = attn.W_V[ht].float() @ (attn.W_O[ht].float() @ u)  # [d_model]
+            w1 = ln_weight(getattr(model.blocks[lt], "ln1", None))
+            if w1 is not None:
+                v_dir = v_dir * w1
+            v_dir = center(v_dir)
+            coef = cache[f"blocks.{lt}.attn.hook_pattern"][0, ht, target_pos, :].float()
+            s1 = ln_scale(f"blocks.{lt}.ln1.hook_scale", ht)
+            if s1 is not None:
+                coef = coef / s1
+            for sid, out in source_out.items():
+                if _component_layer(sid)[0] >= lt:
+                    continue
+                edges[(sid, tid)] = float((coef * (out @ v_dir)).sum().item())
+    return edges
+
 
 def run_circuit(req: CircuitRequest, loaded: LoadedModel) -> CircuitResponse:
     """List the components (heads + MLPs) whose direct logit attribution to
     the predicted token exceeds the threshold.
 
-    Returns no edges (``edges_method="none"``): DLA does not tell us how
-    components connect.
+    Edges between the listed components are "direct value path" weights
+    (``edges_method="direct_value_path"``, see ``direct_value_path_edges``):
+    signed, in logits, value path only.
     """
     import torch
 
@@ -1433,9 +1587,13 @@ def run_circuit(req: CircuitRequest, loaded: LoadedModel) -> CircuitResponse:
         token_strs = model.to_str_tokens(req.prompt)
         seq_len = len(token_strs)
 
-        # Run with cache to get component outputs
+        # Run with cache to get component outputs (+ what the edges need)
         def names_filter(name: str) -> bool:
-            return name.endswith("hook_result") or name.endswith("hook_mlp_out")
+            return (
+                name.endswith("hook_result")
+                or name.endswith("hook_mlp_out")
+                or circuit_edge_hook_filter(name)
+            )
 
         forward_start = time.perf_counter()
         with torch.no_grad():
@@ -1445,10 +1603,10 @@ def run_circuit(req: CircuitRequest, loaded: LoadedModel) -> CircuitResponse:
             )
         forward_ms = (time.perf_counter() - forward_start) * 1000
 
-        # Get component importance via DLA
+        # Get component importance via DLA, in logits (same units as the edges)
         target_pos = seq_len - 1
         predicted_id = int(torch.argmax(logits[0, target_pos, :]).item())
-        unembed_dir = model.W_U[:, predicted_id]  # [d_model]
+        unembed_dir = final_ln_logit_direction(model, cache, predicted_id, target_pos)
 
         graph_start = time.perf_counter()
 
@@ -1504,8 +1662,20 @@ def run_circuit(req: CircuitRequest, loaded: LoadedModel) -> CircuitResponse:
                     ))
                 node_ids.add(cid)
 
-        # No edges: DLA scores components independently and says nothing about
-        # how they connect. Real edges need path patching (roadmap T23).
+        # Edges among the listed components: direct value path (T23).
+        node_list = [n.id for n in nodes]
+        edge_weights = direct_value_path_edges(
+            model, cache, target_pos, predicted_id, node_list, node_list
+        )
+        edge_threshold = (
+            req.edge_threshold if req.edge_threshold is not None else CIRCUIT_EDGE_THRESHOLD
+        )
+        ranked = sorted(edge_weights.items(), key=lambda kv: abs(kv[1]), reverse=True)
+        edges = [
+            CircuitEdge(source=s, target=t, weight=w)
+            for (s, t), w in ranked
+            if abs(w) >= edge_threshold
+        ][:CIRCUIT_MAX_EDGES]
         graph_ms = (time.perf_counter() - graph_start) * 1000
 
     # Lock released — build response outside lock
@@ -1517,8 +1687,9 @@ def run_circuit(req: CircuitRequest, loaded: LoadedModel) -> CircuitResponse:
         threshold=threshold,
         source=req.source,
         nodes=nodes,
-        edges=[],
-        edges_method="none",
+        edges=edges,
+        edges_method=EDGES_METHOD_DIRECT_VALUE_PATH,
+        edge_threshold=edge_threshold,
         timing_ms={
             "forward_ms": forward_ms,
             "graph_ms": graph_ms,

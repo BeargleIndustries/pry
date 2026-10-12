@@ -431,6 +431,8 @@ class CircuitRequest(BaseModel):
     prompt: str = Field(..., max_length=4000)
     threshold: float | None = Field(default=None, ge=0.0)
     source: Literal["dla", "patching"] = "dla"
+    # Minimum |edge weight| (logits) to return an edge; None = server default.
+    edge_threshold: float | None = Field(default=None, ge=0.0)
 
 
 class CircuitNode(BaseModel):
@@ -444,6 +446,7 @@ class CircuitNode(BaseModel):
 class CircuitEdge(BaseModel):
     source: str
     target: str
+    # Signed, in logits of the predicted token: > 0 pushes toward it.
     weight: float
 
 
@@ -454,8 +457,11 @@ class CircuitResponse(BaseModel):
     source: str = "dla"
     nodes: list[CircuitNode] = Field(default_factory=list)
     edges: list[CircuitEdge] = Field(default_factory=list)
-    # How edges were computed. "none" = no edges are claimed (DLA alone can't
-    # show how components connect).
+    # How edges were computed. "direct_value_path" = the source's output
+    # passed straight through the target head's value path to the predicted
+    # logit (Q/K composition excluded). "none" = no edges are claimed.
     edges_method: str = "none"
+    # Edges with |weight| below this were dropped.
+    edge_threshold: float = 0.0
     timing_ms: dict[str, float] = Field(default_factory=dict)
     status: str = "ok"
