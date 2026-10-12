@@ -89,7 +89,7 @@
 
   {#if open}
     <div
-      class="absolute right-0 top-full z-20 mt-1 w-80 overflow-hidden rounded-md border border-zinc-800 bg-zinc-950 shadow-lg"
+      class="absolute left-0 top-full z-20 mt-1 w-80 max-w-[calc(100vw-1rem)] overflow-hidden rounded-md border border-zinc-800 bg-zinc-950 shadow-lg"
       role="listbox"
     >
       {#each loadable as c (c.preset_id)}
