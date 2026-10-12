@@ -146,7 +146,7 @@ export const tourChapters: TourChapter[] = [
         blurb:
           "Welcome to Pry! It's a microscope for a language model. You type a sentence, the model guesses the next word, and Pry shows you what went on inside while it guessed.",
         why:
-          "A language model is a big stack of layers full of numbers. It learned to guess the next word by reading a mountain of text, and nobody wrote its rules by hand, so even the people who build these things have to study them the way a biologist studies a cell. That's interpretability: looking inside to see how the answer got made. Pry runs GPT-2 small, a little model researchers know really well, right on your computer. You can hop around with the Chapters button, and the ? button up here gets you back to the tour later.",
+          "Inside, a language model is a big stack of layers full of numbers, and it learned to guess the next word by reading a mountain of text, and nobody wrote its rules by hand, so even the people who build these things have to study them the way a biologist studies a cell. That's interpretability: looking inside to see how the answer got made. Pry runs GPT-2 small, a little model researchers know really well, right on your computer. You can hop around with the Chapters button, and the ? button up here gets you back to the tour later.",
       },
       {
         id: 'basics.prompt',
@@ -180,7 +180,7 @@ export const tourChapters: TourChapter[] = [
         target: 'predictions-panel',
         enter: (ctx) => ctx.openRightTab('predictions'),
         blurb:
-          "Here are the model's top guesses for the next word, each with its chance. The sentence in the blue box says the same thing in plain words, and most panels have one.",
+          "Here are the model's top guesses for the next word, each with its chance. The sentence in the shaded box says the same thing in plain words, and most panels have one.",
         why:
           "The model doesn't pick one word. It scores every token it knows and turns the scores into chances that add up to 100%, and the bars show the top few. One long bar means it's sure. A few bars about the same length means it's torn. Pry calls the plain-words sentence a readout, and it's built from the same numbers, so you can get the gist without squinting at a chart.",
       },
@@ -261,7 +261,7 @@ export const tourChapters: TourChapter[] = [
         blurb:
           'Time for a famous experiment! Pry feeds the model some random word pieces, then repeats them, and rings the heads that copy "what came next last time".',
         why:
-          "A model can't guess random words. The second time the same random words come around, though, it can, as long as it remembers what followed each one the first time. Copying heads (researchers call them induction heads) handle exactly that: spot a repeat, look at what came after it last time, copy it forward. They often team up with previous-word heads, which get their own ring. Finding these was one of interpretability's first big wins. Press Back to your prompt to leave this view.",
+          "A model can't guess random words. The second time the same random words come around, though, it can, as long as it remembers what followed each one the first time. Copying heads (researchers call them induction heads) handle exactly that: spot a repeat, look at what came after it last time, copy it forward. They often team up with previous-word heads, which get their own ring. Researchers at Anthropic wrote them up in 2021 and 2022, and they're still one of the best-understood tricks these models have. Press \"Back to your prompt\" to leave this view.",
       },
     ],
   },
@@ -278,7 +278,7 @@ export const tourChapters: TourChapter[] = [
         blurb:
           'New prompt: "Michael Jordan played the sport of". To get this one right, the model needs a fact it picked up from its training text. Running it now.',
         why:
-          "The cat sentence mostly takes habit and grammar. This one takes knowledge, since to say basketball the model has to have stored something about Michael Jordan. Researchers love fact recall as a test case because it raises a great question: where, in all those numbers, does a fact live? The next few steps give you two ways to watch the answer form.",
+          "The cat sentence mostly takes habit and grammar. This one takes knowledge, since to say basketball the model has to have stored something about Michael Jordan. Fact recall makes a good test case because it raises a big question: where, in all those numbers, does a fact live? The next few steps give you two ways to watch the answer form.",
       },
       {
         id: 'guesses.predictions',
@@ -322,7 +322,7 @@ export const tourChapters: TourChapter[] = [
         blurb:
           'Next up: "When Mary and John went to the store, John gave a drink to". You know it\'s Mary. Let\'s find the parts of the model that know it too.',
         why:
-          "Interpretability folks know this sentence well. To say Mary, the model has to notice the two names, notice that John showed up twice, and pick the other one. Researchers traced how GPT-2 small does it and found a whole team of heads working together. It makes a great test, because the answer depends on this exact sentence and not on some phrase the model memorized.",
+          "This one's a classic in interpretability. To say Mary, the model has to notice the two names, notice that John showed up twice, and pick the other one. Researchers traced how GPT-2 small does it and found a whole team of heads working together. It makes a great test, because the answer depends on this exact sentence and not on some phrase the model memorized.",
       },
       {
         id: 'responsible.dla',
@@ -331,7 +331,7 @@ export const tourChapters: TourChapter[] = [
         blurb:
           'Why (DLA) hands out credit and blame. Blue bars pushed toward the predicted word and orange bars pushed against it. Bigger bar, bigger push.',
         why:
-          "Direct Logit Attribution splits the word's final score (its logit) into pieces, one for each head and one for each layer's MLP, the model's other kind of part. A +2 means that part raised the word's score by 2 logits. One catch: it only counts direct effects, meaning each part's own push on the answer. A part that helps by nudging other parts gets no credit here, so treat the chart as a list of suspects and not a verdict.",
+          "Direct Logit Attribution splits the word's final score (its logit) into pieces, one for each head and one for each layer's MLP (the model's other kind of part, which works on each word by itself). A +2 means that part raised the word's score by 2 logits. One catch: it only counts direct effects, meaning each part's own push on the answer. A part that helps by nudging other parts gets no credit here, so treat the chart as a list of suspects and not a verdict.",
       },
       {
         id: 'responsible.parts',
@@ -378,7 +378,7 @@ export const tourChapters: TourChapter[] = [
         blurb:
           'Compare the normal top five with the knocked-out top five. Did Mary lose ground? Big networks have spare parts, so a small drop still counts as a result.',
         why:
-          "In the original study, when the name movers got switched off, other heads partly took over (the researchers called them backup name movers). Worth remembering: a model can route around damage, so one knockout can make a part look less important than it is. Press Ablation ON to turn ablation off when you're done. While it's on, the Attention panel sticks to the grid, since the grid is where you pick heads.",
+          "In the original study, when the name movers got switched off, other heads partly took over (the researchers called them backup name movers). Worth remembering: a model can route around damage, so one knockout can make a part look less important than it is. While it's on, the button reads \"Ablation ON\", so press it again when you're done. Until then, the Attention panel sticks to the grid, since that's where you pick heads.",
       },
       {
         id: 'poke.swap',
@@ -565,7 +565,7 @@ export const tourChapters: TourChapter[] = [
         blurb:
           "This menu switches models, and each one gets a badge for how well it fits your computer. Gemma 2 2B needs a graphics card. The tour sticks with GPT-2 small.",
         why:
-          "Different models, different specimens. Pythia-70M is tiny, GPT-2 small is the classic, and Gemma 2 2B is way bigger and needs a graphics card plus a free Hugging Face account (Pry walks you through that part). Settings also lets you add a model from Hugging Face by name, and Pry checks whether it can run it and estimates its size first. Models you add don't come with a feature dictionary, so Features and Steering won't work for them.",
+          "Different models, different specimens. Pythia-70M is tiny, GPT-2 small is the classic, and Gemma 2 2B is way bigger and needs a graphics card plus a free Hugging Face account (Pry walks you through that part). Under the full model list there's a button to add a model from Hugging Face by name, and Pry checks whether it can run it and estimates its size first. Models you add don't come with a feature dictionary, so Features and Steering won't work for them.",
       },
       {
         id: 'models.engine',
@@ -581,7 +581,7 @@ export const tourChapters: TourChapter[] = [
         blurb:
           "You made it through the tour! The ? button gets you back anytime, to start over, pick up where you left off, or jump to a chapter. Settings can restart it too.",
         why:
-          "Pretty much every tool here follows the scientific method: look at something, guess what it means, then poke it to test the guess. Attention and features are the looking. Knockouts, steering and swaps are the poking. Try your own prompts, and try saying the same idea a different way to see if the same parts light up. If a pattern holds up through that, you've probably found something real.",
+          "Pretty much every tool here follows the scientific method: look at something, guess what it means, then poke it to test the guess. In Pry, you look with attention and features, and you poke with knockouts, steering and swaps. Try your own prompts, and try saying the same idea a different way to see if the same parts light up. If a pattern holds up through that, you've probably found something real.",
       },
     ],
   },
