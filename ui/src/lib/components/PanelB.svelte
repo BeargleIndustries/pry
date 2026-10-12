@@ -49,6 +49,15 @@
     return featureAblations.some((a) => a.feature_index === featureIndex);
   }
 
+  // A failed layer switch leaves the layer unchanged, so the select's `value`
+  // prop doesn't change either and the menu would keep showing the layer that
+  // failed. Put it back once the switch is over.
+  let layerSelect = $state<HTMLSelectElement | null>(null);
+  $effect(() => {
+    const layer = currentSaeLayer ?? response?.sae_layer_used;
+    if (!layerSwitching && layerSelect && layer !== undefined) layerSelect.value = String(layer);
+  });
+
   // Default focus to last token when response arrives and no external focus set
   let internalFocusIndex = $state<number | null>(null);
 
@@ -114,6 +123,7 @@
         <div class="ml-auto flex items-center gap-1.5" data-tip="panel-b-layer-selector" data-tour="panel-b-layer-selector">
           <span class="text-[10px] uppercase tracking-widest text-zinc-600">Layer</span>
           <select
+            bind:this={layerSelect}
             value={currentSaeLayer ?? response.sae_layer_used}
             onchange={(e) => {
               const val = parseInt((e.target as HTMLSelectElement).value, 10);
