@@ -67,11 +67,15 @@ export function aggregateFrom(matrix: number[][], fi: number, agg: FromAgg): num
   }
 }
 
-/** TO mode: column `fi`, causal queries q >= fi only. */
+/**
+ * TO mode: column `fi`, later queries q > fi only. The word's attention to
+ * itself is left out, so the last word (no later words) gives null.
+ */
 export function aggregateTo(matrix: number[][], fi: number, agg: ToAgg): number | null {
   if (fi < 0 || fi >= matrix.length) return null;
   const col: number[] = [];
-  for (let q = fi; q < matrix.length; q++) col.push(matrix[q]?.[fi] ?? 0);
+  for (let q = fi + 1; q < matrix.length; q++) col.push(matrix[q]?.[fi] ?? 0);
+  if (col.length === 0) return null;
   switch (agg) {
     case 'max': {
       let m = -Infinity;
