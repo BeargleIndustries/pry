@@ -1035,6 +1035,9 @@ async def circuit(request: Request) -> JSONResponse:
             {"error": "not_implemented", "detail": str(e)},
             status_code=501,
         )
+    except ValueError as e:
+        # Token position past the end of the prompt
+        return _error(str(e), status=400)
     except Exception as e:
         logger.exception("circuit failed for preset %r", req.preset_id)
         return JSONResponse(

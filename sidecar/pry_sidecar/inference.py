@@ -705,6 +705,9 @@ def run_logit_lens(req: LogitLensRequest, loaded: LoadedModel) -> LogitLensRespo
         lens_start = time.perf_counter()
         final_probs = torch.softmax(logits[0].float(), dim=-1)  # [seq, vocab]
         final_preds = torch.argmax(final_probs, dim=-1)  # [seq]
+        # Gemma 2 soft-caps its output logits (cap * tanh(x / cap)); the lens
+        # must too, or its last row disagrees with the real predictions.
+        soft_cap = float(getattr(model.cfg, "output_logits_soft_cap", 0.0) or 0.0)
 
         # Build grid: [layer][token_pos]
         grid: list[list[LogitLensCell]] = []
@@ -724,7 +727,10 @@ def run_logit_lens(req: LogitLensRequest, loaded: LoadedModel) -> LogitLensRespo
             layer_logits = normed @ model.W_U  # [seq, vocab]
             if hasattr(model, "b_U") and model.b_U is not None:
                 layer_logits = layer_logits + model.b_U
-            layer_probs = torch.softmax(layer_logits.float(), dim=-1)  # [seq, vocab]
+            layer_logits = layer_logits.float()
+            if soft_cap > 0:
+                layer_logits = soft_cap * torch.tanh(layer_logits / soft_cap)
+            layer_probs = torch.softmax(layer_logits, dim=-1)  # [seq, vocab]
             layer_preds = torch.argmax(layer_probs, dim=-1)  # [seq]
 
             row: list[LogitLensCell] = []
@@ -790,19 +796,13 @@ def run_dla(req: DLARequest, loaded: LoadedModel) -> DLAResponse:
         target_pos = _target_position(req.target_token_index, seq_len)
 
         # Cache: hook_result (attention output per head) + hook_mlp_out, and
-        # the final LN scale so contributions come out in logits.
-        def names_filter(name: str) -> bool:
-            return (
-                name.endswith("hook_result")
-                or name.endswith("hook_mlp_out")
-                or name == "ln_final.hook_scale"
-            )
-
+        # the final LN scale (+ ln1_post scales on post-norm models) so
+        # contributions come out in logits.
         forward_start = time.perf_counter()
         with torch.no_grad():
             logits, cache = model.run_with_cache(
                 tokens_tensor,
-                names_filter=names_filter,
+                names_filter=dla_hook_filter(model),
             )
         forward_ms = (time.perf_counter() - forward_start) * 1000
 
@@ -826,9 +826,10 @@ def run_dla(req: DLARequest, loaded: LoadedModel) -> DLAResponse:
             result_key = f"blocks.{layer_idx}.attn.hook_result"
             if result_key in cache:
                 result = cache[result_key][0]  # [seq, n_heads, d_model]
+                head_dir = _head_logit_direction(model, cache, layer_idx, target_pos, unembed_dir)
                 for head_idx in range(n_heads):
                     head_output = result[target_pos, head_idx, :]  # [d_model]
-                    contribution = float((head_output.float() @ unembed_dir).item())
+                    contribution = float((head_output.float() @ head_dir).item())
                     components.append(DLAComponent(
                         name=f"L{layer_idx}.H{head_idx}",
                         type="attention",
@@ -865,6 +866,7 @@ def run_dla(req: DLARequest, loaded: LoadedModel) -> DLAResponse:
         target_token=str(token_strs[target_pos]) if target_pos < len(token_strs) else "",
         predicted_token=predicted_token,
         components=components,
+        real_weights_verified=real_weights_verified(model),
         timing_ms={
             "forward_ms": forward_ms,
             "dla_ms": dla_ms,
@@ -1473,15 +1475,93 @@ def final_ln_logit_direction(model, cache, predicted_id: int, target_pos: int):
     return u
 
 
-def circuit_edge_hook_filter(name: str) -> bool:
-    """Cache entries ``direct_value_path_edges`` needs."""
+# Post-norm models (Gemma 2: cfg.use_normalization_before_and_after) send the
+# summed head output through ln1_post before the residual stream. DLA, Key
+# parts and edges map head outputs through it (attn_post_norm), but those
+# numbers haven't yet been checked against real Gemma weights
+# (tests/test_gemma.py::test_real_gemma_sums). Until then responses for these
+# models carry real_weights_verified=False.
+POST_NORM_VERIFIED = False
+
+
+def uses_attn_post_norm(model) -> bool:
+    """True when attention output goes through ``ln1_post`` (Gemma 2)."""
+    return bool(getattr(model.cfg, "use_normalization_before_and_after", False))
+
+
+def real_weights_verified(model) -> bool:
+    return POST_NORM_VERIFIED or not uses_attn_post_norm(model)
+
+
+def attn_post_norm(model, cache, layer: int):
+    """``ln1_post`` of ``layer`` as a per-position multiplier, or None.
+
+    ln1_post is a weighted RMSNorm (no centering). With its scale frozen from
+    the clean run it is linear, ``x -> x * w / scale``, so it can be applied
+    to each head's output separately. Returns ``[pos, d_model]`` (w / scale)
+    for post-norm models, None otherwise. Needs
+    ``blocks.{layer}.ln1_post.hook_scale`` in the cache.
+    """
+    if not uses_attn_post_norm(model):
+        return None
+    scale = cache[f"blocks.{layer}.ln1_post.hook_scale"][0].float()  # [pos, 1]
+    w = model.blocks[layer].ln1_post.w.float()  # [d_model]
+    return w / scale
+
+
+def _head_logit_direction(model, cache, layer: int, target_pos: int, unembed_dir):
+    """``unembed_dir`` pulled back through ``layer``'s ln1_post at
+    ``target_pos`` (unchanged when the model has none), so
+    ``head_output @ direction`` is the head's contribution in logits."""
+    post = attn_post_norm(model, cache, layer)
+    return unembed_dir * post[target_pos] if post is not None else unembed_dir
+
+
+def _is_post_norm_scale(name: str) -> bool:
+    return name.endswith("ln1_post.hook_scale")
+
+
+def dla_hook_filter(model):
+    """Cache names filter for DLA: head results, MLP outputs, the final norm
+    scale, and the ln1_post scales only on post-norm models."""
+    post = uses_attn_post_norm(model)
+
+    def keep(name: str) -> bool:
+        return (
+            name.endswith("hook_result")
+            or name.endswith("hook_mlp_out")
+            or name == "ln_final.hook_scale"
+            or (post and _is_post_norm_scale(name))
+        )
+
+    return keep
+
+
+def circuit_edge_hook_filter(name: str, post_norm: bool = False) -> bool:
+    """Cache entries ``direct_value_path_edges`` needs. ``post_norm`` adds the
+    ln1_post scales (post-norm models only)."""
     return (
         name.endswith("attn.hook_z")
         or name.endswith("attn.hook_pattern")
         or name.endswith("hook_mlp_out")
         or name.endswith("ln1.hook_scale")
         or name == "ln_final.hook_scale"
+        or (post_norm and _is_post_norm_scale(name))
     )
+
+
+def circuit_hook_filter(model):
+    """Cache names filter for ``run_circuit``: node importance + edges."""
+    post = uses_attn_post_norm(model)
+
+    def keep(name: str) -> bool:
+        return (
+            name.endswith("hook_result")
+            or name.endswith("hook_mlp_out")
+            or circuit_edge_hook_filter(name, post)
+        )
+
+    return keep
 
 
 def _component_layer(cid: str) -> tuple[int, int | None]:
@@ -1514,7 +1594,9 @@ def direct_value_path_edges(
 
     - ``S_out[p]`` is what S writes to the residual stream at position p
       (``z_S[p] @ W_O^S`` for a head, without the shared ``b_O``; the MLP
-      output for an MLP);
+      output for an MLP). On post-norm models (Gemma 2) a head's output and
+      T's output both pass through their layer's frozen ``ln1_post``
+      (``attn_post_norm``), as in the real forward pass;
     - ``c(x) = x - mean(x)`` is LayerNorm centering (identity for RMSNorm or
       no norm);
     - ``s1_T[p]`` is T's ``ln1`` scale at p and ``s_f[t]`` the final LN scale
@@ -1567,7 +1649,9 @@ def direct_value_path_edges(
                 source_out[sid] = cache[f"blocks.{layer}.hook_mlp_out"][0].float()
             else:
                 z = cache[f"blocks.{layer}.attn.hook_z"][0, :, head, :].float()
-                source_out[sid] = z @ model.blocks[layer].attn.W_O[head].float()
+                out = z @ model.blocks[layer].attn.W_O[head].float()
+                post = attn_post_norm(model, cache, layer)
+                source_out[sid] = out * post if post is not None else out
 
         edges: dict[tuple[str, str], float] = {}
         for tid in target_ids:
@@ -1575,8 +1659,11 @@ def direct_value_path_edges(
             if ht is None:
                 continue  # value path only exists for attention heads
             attn = model.blocks[lt].attn
+            # T's output reaches the residual through its frozen ln1_post, if any.
+            post_t = attn_post_norm(model, cache, lt)
+            u_t = u * post_t[target_pos] if post_t is not None else u
             # T's value-input direction that moves the predicted logit.
-            v_dir = attn.W_V[ht].float() @ (attn.W_O[ht].float() @ u)  # [d_model]
+            v_dir = attn.W_V[ht].float() @ (attn.W_O[ht].float() @ u_t)  # [d_model]
             w1 = ln_weight(getattr(model.blocks[lt], "ln1", None))
             if w1 is not None:
                 v_dir = v_dir * w1
@@ -1624,25 +1711,19 @@ def run_circuit(req: CircuitRequest, loaded: LoadedModel) -> CircuitResponse:
         tokens_tensor = model.to_tokens(req.prompt)
         token_strs = model.to_str_tokens(req.prompt)
         seq_len = len(token_strs)
+        # The word to explain: the focused word if given, else the last (code:A4).
+        target_pos = _target_position(req.target_token_index, seq_len)
 
         # Run with cache to get component outputs (+ what the edges need)
-        def names_filter(name: str) -> bool:
-            return (
-                name.endswith("hook_result")
-                or name.endswith("hook_mlp_out")
-                or circuit_edge_hook_filter(name)
-            )
-
         forward_start = time.perf_counter()
         with torch.no_grad():
             logits, cache = model.run_with_cache(
                 tokens_tensor,
-                names_filter=names_filter,
+                names_filter=circuit_hook_filter(model),
             )
         forward_ms = (time.perf_counter() - forward_start) * 1000
 
         # Get component importance via DLA, in logits (same units as the edges)
-        target_pos = seq_len - 1
         predicted_id = int(torch.argmax(logits[0, target_pos, :]).item())
         unembed_dir = final_ln_logit_direction(model, cache, predicted_id, target_pos)
 
@@ -1655,9 +1736,10 @@ def run_circuit(req: CircuitRequest, loaded: LoadedModel) -> CircuitResponse:
             result_key = f"blocks.{layer_idx}.attn.hook_result"
             if result_key in cache:
                 result = cache[result_key][0]  # [seq, n_heads, d_model]
+                head_dir = _head_logit_direction(model, cache, layer_idx, target_pos, unembed_dir)
                 for head_idx in range(n_heads):
                     head_output = result[target_pos, head_idx, :]
-                    contribution = float((head_output.float() @ unembed_dir).item())
+                    contribution = float((head_output.float() @ head_dir).item())
                     cid = f"L{layer_idx}.H{head_idx}"
                     component_importance[cid] = contribution
 
@@ -1728,6 +1810,7 @@ def run_circuit(req: CircuitRequest, loaded: LoadedModel) -> CircuitResponse:
         edges=edges,
         edges_method=EDGES_METHOD_DIRECT_VALUE_PATH,
         edge_threshold=edge_threshold,
+        real_weights_verified=real_weights_verified(model),
         timing_ms={
             "forward_ms": forward_ms,
             "graph_ms": graph_ms,

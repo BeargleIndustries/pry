@@ -291,6 +291,9 @@ class DLAResponse(BaseModel):
     target_token: str = ""
     predicted_token: str = ""
     components: list[DLAComponent] = Field(default_factory=list)
+    # False only for post-norm models (Gemma 2) until their numbers have been
+    # checked against the real weights (inference.POST_NORM_VERIFIED).
+    real_weights_verified: bool = True
     timing_ms: dict[str, float] = Field(default_factory=dict)
     status: str = "ok"
 
@@ -463,6 +466,8 @@ class CircuitRequest(BaseModel):
     source: Literal["dla", "patching"] = "dla"
     # Minimum |edge weight| (logits) to return an edge; None = server default.
     edge_threshold: float | None = Field(default=None, ge=0.0)
+    # Word position to explain; None = the last word.
+    target_token_index: int | None = Field(default=None, ge=0)
 
 
 class CircuitNode(BaseModel):
@@ -493,5 +498,7 @@ class CircuitResponse(BaseModel):
     edges_method: str = "none"
     # Edges with |weight| below this were dropped.
     edge_threshold: float = 0.0
+    # See DLAResponse.real_weights_verified.
+    real_weights_verified: bool = True
     timing_ms: dict[str, float] = Field(default_factory=dict)
     status: str = "ok"
