@@ -7,24 +7,37 @@
 //   score. Never use "add up", "sum" or "total" in DLA wording.
 // - Attention shows where a word looks, not what the model uses. Say "looks
 //   at", never "uses" or "because of".
+// - Key parts lines are the direct value path only: say they show one kind of
+//   link.
 import type {
+  CircuitResponse,
   DLAComponent,
   DLAResponse,
   FeatureHit,
   GenerateResponse,
   LogitLensResponse,
+  PatchComponent,
+  PatchResponse,
+  SteerResponse,
   TokenFeatures,
   TopPrediction,
 } from './types';
 import { isNamedFeature } from './feature-label';
+import { signedNumber } from './signed-color';
+import { diffTokens } from './token-diff';
+
+/** A token shown the way the panels show it: a leading space becomes a middle dot. */
+function showToken(text: string): string {
+  const shown = text.startsWith(' ') ? '·' + text.slice(1) : text;
+  return shown.replace(/\n/g, '\\n');
+}
 
 /**
  * A token in quotes, shown the way the panels show it: a leading space becomes
  * a middle dot, so " Paris" reads as "·Paris".
  */
 export function quoteToken(text: string): string {
-  const shown = text.startsWith(' ') ? '·' + text.slice(1) : text;
-  return `"${shown.replace(/\n/g, '\\n')}"`;
+  return `"${showToken(text)}"`;
 }
 
 /** A probability (0–1) as a rounded percentage; never rounds a nonzero value to 0% or a non-certain one to 100%. */
@@ -35,22 +48,54 @@ export function pct(p: number): string {
   return `${r}%`;
 }
 
+/** Joins with commas and "and"; a list of 3+ switches to semicolons when an item has its own comma ("layer 9, head 9"). */
 function joinAnd(items: string[]): string {
   if (items.length <= 1) return items.join('');
   if (items.length === 2) return `${items[0]} and ${items[1]}`;
-  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+  const last = items[items.length - 1];
+  if (items.some((i) => i.includes(','))) return `${items.slice(0, -1).join('; ')}; and ${last}`;
+  return `${items.slice(0, -1).join(', ')} and ${last}`;
+}
+
+/** Special tokens like `<|endoftext|>` that models use as a start marker. */
+export function isStartMarker(text: string): boolean {
+  return /^<\|.*\|>$/.test(text);
+}
+
+/**
+ * The label above Why (DLA) and Key parts: which word's next-word guess the
+ * panel explains. `index` is the token index; words are counted from 1, like
+ * the word chips.
+ */
+export function explainingLabel(target: { text: string; index: number } | null | undefined): string {
+  if (!target) return 'Explaining the guess after the last word';
+  return `Explaining the guess after ${showToken(target.text)} (word ${target.index + 1})`;
 }
 
 // ---------------------------------------------------------------------------
 // Predictions
 // ---------------------------------------------------------------------------
 
+/** A next-word guess in plain words: special tokens and word pieces are named for what they are. */
+function guessPhrase(token: string): string {
+  if (isStartMarker(token)) return 'the end of the text';
+  if (/^\n+$/.test(token)) return 'a line break';
+  if (/^[A-Za-z]/.test(token) && token.length > 0) {
+    return `the word piece ${quoteToken(token)} (part of a longer word)`;
+  }
+  return quoteToken(token);
+}
+
 export function predictionsReadout(predictions: TopPrediction[] | undefined | null): string | null {
   if (!predictions || predictions.length === 0) return null;
   const sorted = [...predictions].sort((a, b) => a.rank - b.rank);
   const [top, next] = sorted;
-  let text = `The model's top guess for the next word is ${quoteToken(top.token)} (${pct(top.probability)}).`;
-  if (next) text += ` Next most likely: ${quoteToken(next.token)} (${pct(next.probability)}).`;
+  const what = /^[ A-Za-z]/.test(top.token) && !isStartMarker(top.token) ? 'the next word' : 'what comes next';
+  if (next && next.probability > 0 && pct(next.probability) === pct(top.probability)) {
+    return `The model's top guess for ${what} is a near tie between ${guessPhrase(top.token)} and ${guessPhrase(next.token)} (${pct(top.probability)} each).`;
+  }
+  let text = `The model's top guess for ${what} is ${guessPhrase(top.token)} (${pct(top.probability)}).`;
+  if (next && next.probability > 0) text += ` Next most likely: ${guessPhrase(next.token)} (${pct(next.probability)}).`;
   return text;
 }
 
@@ -68,9 +113,11 @@ export function logitLensReadout(response: LogitLensResponse | null): string | n
   if (!finalCell) return null;
   const answer = quoteToken(finalCell.predicted_token);
   const lastLayer = nLayers - 1;
+  const lastWord = quoteToken(response.tokens[pos]?.text ?? '');
+  const lead = response.tokens.length === 1 ? `For the only word, ${lastWord}: ` : `For the last word, ${lastWord}: `;
 
   const first = column.findIndex((c) => c?.matches_final);
-  if (first < 0) return `The model's final answer is ${answer}.`;
+  if (first < 0) return `${lead}the model's final answer is ${answer}.`;
 
   // First layer from which the answer stays on top all the way to the end.
   let settled = lastLayer;
@@ -78,17 +125,21 @@ export function logitLensReadout(response: LogitLensResponse | null): string | n
 
   let text: string;
   if (first === lastLayer) {
-    text = `The final answer, ${answer}, only becomes the top guess at the last layer (layer ${lastLayer}).`;
+    text = `${lead}the final answer, ${answer}, only becomes the top guess at the last layer (layer ${lastLayer}).`;
   } else if (first === 0) {
-    text = `The final answer, ${answer}, is already the top guess at layer 0, the very first layer.`;
+    text = `${lead}the final answer, ${answer}, is already the top guess at layer 0, the very first layer.`;
   } else {
-    text = `The final answer, ${answer}, first becomes the top guess at layer ${first} (layers run 0 to ${lastLayer}).`;
+    text = `${lead}the final answer, ${answer}, first becomes the top guess at layer ${first} (layers run 0 to ${lastLayer}).`;
   }
 
   if (settled !== first) {
     text += ` It drops back out, then stays on top from layer ${settled} onward.`;
   } else if (first !== lastLayer) {
     text += ' ' + chanceTrend(column, first, lastLayer);
+  }
+  // The lens is a rough read in early layers (honesty caveat 6).
+  if (first !== lastLayer && first < nLayers / 3) {
+    text += ' Early layers are a rough read, so that early guess is a hint, not proof.';
   }
   return text;
 }
@@ -124,7 +175,7 @@ function chanceTrend(column: LogitLensResponse['grid'][number], first: number, l
 // ---------------------------------------------------------------------------
 
 function componentName(c: DLAComponent): string {
-  return c.type === 'mlp' ? `the MLP in layer ${c.layer}` : `head ${c.head} in layer ${c.layer}`;
+  return c.type === 'mlp' ? `the MLP in layer ${c.layer}` : `layer ${c.layer}, head ${c.head}`;
 }
 
 /** Which parts pushed the chosen word up most, and which pushed it down most. */
@@ -140,6 +191,7 @@ export function dlaReadout(response: DLAResponse | null, maxEach = 2): string | 
     .sort((a, b) => a.contribution - b.contribution)
     .slice(0, maxEach);
 
+  if (up.length === 0 && down.length === 0) return `No part pushed ${word} up or down directly.`;
   const upText = up.length
     ? `The parts that pushed ${word} up most directly: ${joinAnd(up.map(componentName))}.`
     : `No part pushed ${word} up directly.`;
@@ -196,7 +248,11 @@ export function attentionReadout(
   }
 
   if (!row || row.length === 0) return `There is no attention data for ${word}.`;
-  if (focusPos === 0) return `The first word, ${word}, can only look at itself.`;
+  if (focusPos === 0) {
+    return isStartMarker(focusTok.text)
+      ? 'The start-of-text marker can only look at itself. Pick a word you typed.'
+      : `The first word, ${word}, can only look at itself.`;
+  }
 
   const ranked = row
     .map((weight, k) => ({ weight, k }))
@@ -204,17 +260,15 @@ export function attentionReadout(
     .sort((a, b) => b.weight - a.weight);
   const name = (k: number) => (k === focusPos ? 'itself' : quoteToken(tokens[k]?.text ?? ''));
   const [top, next] = ranked;
-  let text = `${where} looks mostly at ${name(top.k)} (${pct(top.weight)} of its attention).`;
+  const tie = next && next.weight > 0 && pct(next.weight) === pct(top.weight);
+  let text = tie
+    ? `${where} looks equally at ${name(top.k)} and ${name(next.k)} (${pct(top.weight)} each).`
+    : `${where} looks mostly at ${name(top.k)} (${pct(top.weight)} of its attention).`;
   if (top.k === 0 && isStartMarker(tokens[0]?.text ?? '')) {
     text += " That's the start-of-text marker, where lots of heads park their attention when nothing else stands out.";
   }
-  if (next && next.weight >= 0.1) text += ` Next: ${name(next.k)} (${pct(next.weight)}).`;
+  if (!tie && next && next.weight >= 0.1) text += ` Next: ${name(next.k)} (${pct(next.weight)}).`;
   return text;
-}
-
-/** Special tokens like `<|endoftext|>` that models use as a start marker. */
-export function isStartMarker(text: string): boolean {
-  return /^<\|.*\|>$/.test(text);
 }
 
 /** "To" view: which later word looks at the focus word the most. */
@@ -247,7 +301,11 @@ function attentionToReadout(
     }
     if (n > 0) received.push({ k, weight: sum / n });
   }
-  if (received.length === 0) return `No later word looks back at ${word}.`;
+  if (received.length === 0) {
+    return focusPos === tokens.length - 1
+      ? `${word} is the last word, so nothing comes after it to look back. Pick an earlier word.`
+      : `No later word looks back at ${word}.`;
+  }
 
   received.sort((a, b) => b.weight - a.weight);
   const top = received[0];
@@ -272,12 +330,100 @@ export function featuresReadout(
 ): string | null {
   if (!features || tokenText === null) return null;
   const word = quoteToken(tokenText);
-  const hits = [...features.top_k].sort((a, b) => b.activation - a.activation).slice(0, maxShown);
-  if (hits.length === 0) return `No features are strongly active on ${word}.`;
+  const marker = isStartMarker(tokenText)
+    ? ' This is the start-of-text marker; features here are often odd, so pick a word you typed.'
+    : '';
+  const hits = features.top_k
+    .filter((h) => h.activation > 0)
+    .sort((a, b) => b.activation - a.activation)
+    .slice(0, maxShown);
+  if (hits.length === 0) return `No features are strongly active on ${word}.${marker}`;
   const lead = hits.length === 1 ? 'The strongest feature' : 'The strongest features';
   let text = `${lead} on ${word}: ${joinAnd(hits.map(featurePhrase))}.`;
   if (hits.some((h) => isNamedFeature(h) && h.description?.trim())) {
     text += ' Labels are best guesses from Neuronpedia, not certainties.';
   }
+  return text + marker;
+}
+
+// ---------------------------------------------------------------------------
+// Swap test (activation patching)
+// ---------------------------------------------------------------------------
+
+function patchPartName(c: PatchComponent, tokens: string[] | undefined): string {
+  if (c.position != null) {
+    const tok = tokens?.[c.position];
+    const at = tok !== undefined ? quoteToken(tok) : `word ${c.position + 1}`;
+    return `the information at ${at} going into layer ${c.layer}`;
+  }
+  return c.head === null ? `the MLP in layer ${c.layer}` : `layer ${c.layer}, head ${c.head}`;
+}
+
+/**
+ * Which part, copied over from the original prompt into the changed one,
+ * brings the original answer back the most. The numbers are a raw change in
+ * the answer's score (logit), not a percentage.
+ */
+export function patchingReadout(response: PatchResponse | null): string | null {
+  if (!response || response.components.length === 0) return null;
+  const answer = quoteToken(response.clean_predicted_token);
+  const parts = response.components;
+  const maxAbs = Math.max(...parts.map((c) => Math.abs(c.effect)));
+  const same =
+    response.clean_predicted_token === response.corrupted_predicted_token
+      ? ` Both prompts already guess ${answer}, so expect small changes.`
+      : '';
+  if (!(maxAbs > 0)) return `None of the swaps changed the score for ${answer}.${same}`;
+
+  const best = parts.reduce((a, b) => (b.effect > a.effect ? b : a));
+  const quiet = parts.filter((c) => Math.abs(c.effect) < 0.1 * maxAbs).length;
+  const quietText = quiet > 0 ? ` ${quiet} of ${parts.length} parts barely change it.` : '';
+  if (best.effect <= 0) {
+    return `No single part brings ${answer} back. Copying any one of them over from the original prompt leaves its score the same or lower.${quietText}${same}`;
+  }
+  return (
+    `Copying ${patchPartName(best, response.tokens)} over from the original prompt raises the score for ${answer} the most (${signedNumber(best.effect, 2)}).` +
+    quietText +
+    same
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Key parts (circuit)
+// ---------------------------------------------------------------------------
+
+/** How many parts pushed the guess directly, which pushed hardest, and what the lines mean. */
+export function circuitReadout(response: CircuitResponse | null): string | null {
+  if (!response || response.nodes.length === 0) return null;
+  const nodes = response.nodes;
+  const biggest = nodes.reduce((a, b) => (Math.abs(b.importance) > Math.abs(a.importance) ? b : a));
+  const name = biggest.type === 'mlp' ? `the MLP in layer ${biggest.layer}` : `layer ${biggest.layer}, head ${biggest.head}`;
+  const dir = biggest.importance >= 0 ? 'toward' : 'against';
+  const count = nodes.length === 1 ? 'One part pushed the guess directly' : `${nodes.length} parts pushed the guess directly`;
+  let text = `${count}. The biggest is ${name}, which pushed ${dir} it (${signedNumber(biggest.importance, 2)}).`;
+  if (response.edges_method === 'direct_value_path') {
+    text += ' Lines show only one kind of link, the direct value path.';
+  }
   return text;
+}
+
+// ---------------------------------------------------------------------------
+// Steering
+// ---------------------------------------------------------------------------
+
+/** How many of the words the model wrote changed when the feature was steered. */
+export function steeringReadout(response: SteerResponse | null): string | null {
+  if (!response) return null;
+  const diff = diffTokens(response.original_generation, response.steered_generation);
+  const words = diff.right.filter((t) => /\S/.test(t.text));
+  const feature = `feature #${response.feature_id}`;
+  const strength = `strength ${response.alpha}`;
+  if (words.length === 0) return `Steering ${feature} at ${strength} wrote nothing new. Press Run Steered again.`;
+  const changed = words.filter((t) => t.changed).length;
+  if (changed === 0) {
+    const which = words.length === 1 ? 'the one word' : `any of the ${words.length} words`;
+    return `Steering ${feature} at ${strength} didn't change ${which} it wrote. Try a bigger strength.`;
+  }
+  const of = changed === words.length ? `all ${words.length}` : `${changed} of the ${words.length}`;
+  return `Steering ${feature} at ${strength} changed ${of} words it wrote.`;
 }
