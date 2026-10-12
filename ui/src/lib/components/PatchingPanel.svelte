@@ -187,9 +187,9 @@
   </div>
 
   <p class="text-xs text-zinc-400">
-    Here's the idea: Pry runs the changed prompt, copies one part's work over from the original prompt, and checks how
-    much the original answer comes back. Researchers call this <Term key="patching">patching</Term>. Every number here is a raw
-    change in the answer's <Term key="logit">score</Term>. It's not a percentage.
+    Pry runs the changed prompt, copies one part's work over from the original prompt, and checks how much of the
+    original answer comes back. Researchers call this <Term key="patching">patching</Term>. The numbers here are raw
+    changes in the answer's <Term key="logit">score</Term>, not percentages.
   </p>
 
   <!-- Inputs -->

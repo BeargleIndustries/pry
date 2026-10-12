@@ -197,7 +197,7 @@
         {:else}
           <p class="text-[11px] text-zinc-500">
             Closest <Term key="neuronpedia">Neuronpedia</Term> labels for "{conceptResult.query}". The search ranks by how similar the words of a
-            label are to yours, so there is always a top result, even when nothing really fits. Labels
+            label are to yours, so there's always a top result, even when nothing really fits. Labels
             were written by another AI and can be wrong.
           </p>
           <ul class="flex max-h-56 flex-col gap-1 overflow-y-auto">

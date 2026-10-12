@@ -128,7 +128,7 @@
         "right": "predictions"
       },
       "lookFor": [
-        "Each row's a layer (layer 0 at the bottom) and each column is a word. Read the last column, under ·of (the dot means the word starts with a space). That's what the model would guess next if it had to stop at that layer.",
+        "Each row's a layer (layer 0 at the bottom) and each column's a word. Read the last column, under ·of (the dot means the word starts with a space). That's what the model would guess next if it had to stop at that layer.",
         "Indigo cells already match the final answer, and brighter means more sure. Gray cells guess something else.",
         "The early rows guess filler words like ·the. Around layer 7 a sport shows up, but it's ·baseball. From layer 8 on, ·basketball takes the top spot.",
         "The model's most sure around layer 9 and a little less sure at the very end. The last layers often soften a confident guess."
@@ -169,7 +169,7 @@
         "patchType": "mlp"
       },
       "lookFor": [
-        "This one swaps MLP layers instead of attention heads. An MLP is the part of each layer that works on each word by itself, where many facts seem to be stored. Press Run swap test in Swap test.",
+        "This one swaps MLP layers instead of attention heads. An MLP's the part of each layer that works on each word by itself, where many facts seem to be stored. Press Run swap test in Swap test.",
         "The original sentence makes the model say ·basketball (the dot means the word starts with a space), and the changed one says ·football. Each bar copies one layer's MLP from the Michael Jordan sentence and shows how much that raises the score for ·basketball. Blue bars help, orange bars push the other way.",
         "Expect the layer 0 bar to win by a mile. Layer 2 also brings back a good chunk, and the last layer pushes the other way.",
         "That big layer 0 bar is expected. Pry copies a layer at every word at once, and layer 0's MLP acts a lot like part of the word lookup, so copying it basically puts Michael Jordan back into the sentence. It doesn't mean the fact lives there. The researchers below restored one spot at a time, at the last word of the name, in bigger models, and that's how they found the middle layers."
@@ -185,7 +185,7 @@
       },
       "next": {
         "reset": "Press Back to normal to clear the swap pair and close this guide. It won't touch your prompt.",
-        "try": "Next, switch Patch type to Residual and press Run swap test again to see which word's carrying the fact."
+        "try": "Next, switch Patch type to Residual and press Run swap test again to see which word carries the fact."
       },
       "expect": " basketball",
       "expectCorrupted": " football"
@@ -210,10 +210,10 @@
         "Check Predictions first. The model should lean toward two-digit endings bigger than 32. It won't be perfect.",
         "The changed sentence starts in 1701, which tells the model almost nothing, because nearly any later year fits. Press Run swap test in Swap test.",
         "The bar at the top says what each sentence predicts. Each bar below copies one layer's MLP from the 1732 sentence and shows how much that raises the score for the original answer.",
-        "What to expect: the biggest blue bars should sit in the last few layers (8 to 11), the layers the researchers found push up years bigger than the start. Earlier layers shouldn't do much."
+        "The biggest blue bars should sit in the last few layers (8 to 11), the layers the researchers found push up years bigger than the start. Earlier layers shouldn't do much."
       ],
       "found": {
-        "summary": "Hanna et al. studied this exact setup in GPT-2 small. They found a few attention heads that move the start year to the end of the sentence, and MLP layers near the end of the network (roughly layers 8 to 11) that push up the years bigger than the start. They used the same model but a more targeted kind of patching than Pry's, so your picture may be blurrier. Pry tracks only the single year the model picked, while Hanna et al. added up the chance of every bigger year, so expect a rougher picture.",
+        "summary": "Hanna et al. studied this exact setup in GPT-2 small. They found a few attention heads that move the start year to the end of the sentence, and MLP layers near the end of the network (roughly layers 8 to 11) that push up the years bigger than the start. They used the same model but a more targeted kind of patching than Pry's. Pry tracks only the single year the model picked, while Hanna et al. added up the chance of every bigger year, so expect rougher results than theirs.",
         "citations": [
           {
             "label": "Hanna et al. 2023, How does GPT-2 compute greater-than?",

@@ -262,7 +262,7 @@ export const tourChapters: TourChapter[] = [
         blurb:
           "Over here's Attention, in the Lines view. Each word on the left draws lines to the earlier words it looked at. Brighter, bolder line, harder look.",
         why:
-          "Attention's how a word pulls in information from the words before it. Picture a student glancing back at their notes before writing the next word. A word can look at itself and anything earlier, but never ahead. The model's got lots of these lookers running at once, called attention heads, and the Lines view shows you one. On Auto, Pry picks the head that looks hardest from the focused word, and the Layer and Head menus let you pick a different one.",
+          "Attention's how a word pulls in information from the words before it, the way you'd glance back at your notes before writing the next word. A word can look at itself and anything earlier, but never ahead. The model's got lots of these lookers running at once, called attention heads, and the Lines view shows you one. On Auto, Pry picks the head that looks hardest from the focused word, and the Layer and Head menus let you pick a different one.",
       },
       {
         id: 'basics.focus',
@@ -303,7 +303,7 @@ export const tourChapters: TourChapter[] = [
         blurb:
           "Now the Expert view (the grid), with every attention head in it: 12 layers top to bottom, 12 heads across. Each square's one head.",
         why:
-          "GPT-2 small's got 12 layers with 12 heads each, so 144 little lookers. The Lines view shows you one of them, and the grid shows all of them, each scored for the word you focused. Brighter squares score higher. Click a square to open that head's whole pattern, a table of which word looked at which. Think of a wall of security monitors: you scan the whole wall, then zoom in on the screen where something's going on.",
+          "GPT-2 small's got 12 layers with 12 heads each, so 144 little lookers. The Lines view shows you one of them, and the grid shows all of them, each scored for the word you focused. Brighter squares score higher. Click a square to open that head's whole pattern, a table of which word looked at which. The grid's your wall of security monitors, and a head's pattern is the one screen you zoom in on when something's going on.",
       },
       {
         id: 'attention.agg',
@@ -665,7 +665,7 @@ export const tourChapters: TourChapter[] = [
         blurb:
           "The download button saves this run's raw numbers as a JSON file, through a normal Save dialog. Handy if you want to dig in with your own code.",
         why:
-          "Everything Pry draws comes from numbers, and you can have them. The export holds the run plus any extra analysis you did on it: Logit Lens, Why (DLA), knockouts, steering, Swap test and Key parts. JSON's a plain text format that pretty much every programming language can read, so it's an easy way to get your results into your own notebooks and scripts. Next up: switching models and checking on the engine.",
+          "Everything Pry draws comes from numbers, and you can have them. The export holds the run plus any extra analysis you did on it: Logit Lens, Why (DLA), knockouts, steering, Swap test and Key parts. JSON's a plain text format that almost every programming language can read, so it's an easy way to get your results into your own notebooks and scripts. Next up: switching models and checking on the engine.",
       },
     ],
   },

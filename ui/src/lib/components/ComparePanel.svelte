@@ -226,7 +226,7 @@
           {:else}
             The prompts have different numbers of <Term key="token">tokens</Term>, so positions don’t line up. Each <Term key="head">head</Term>’s attention is split into
             three shares (the first token, the words in between, and the word itself), and those shares are compared.
-            This is coarse: it can miss shifts between the words in between.
+            It’s a rough check, so it can miss shifts among the words in between.
           {/if}
           Brighter = more different. Average over all heads: {pct(attn.mean)}.
         </p>

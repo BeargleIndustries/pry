@@ -20,7 +20,7 @@
   </div>
 
   <p class="mb-6 text-lg leading-relaxed text-zinc-300">
-    Pry opens the black box. See what's actually happening inside a small language model, right
+    Pry opens the black box. See what's happening inside a small language model, right
     on your computer. No cloud.
   </p>
 
