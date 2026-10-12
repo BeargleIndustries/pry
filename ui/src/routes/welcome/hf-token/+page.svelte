@@ -1,11 +1,31 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
   import { ArrowLeft, ExternalLink, Key, Loader2 } from 'lucide-svelte';
-  import { saveHfToken } from '$lib/tauri';
+  import { hasHfToken, saveHfToken } from '$lib/tauri';
+  import { GEMMA_LICENSE_URL, HF_TOKENS_URL, openExternal } from '$lib/hf-gate';
 
   let token = $state('');
   let saving = $state(false);
   let error = $state<string | null>(null);
+  let tokenSaved = $state(false);
+
+  // Opened from the app's model switcher (?next=app): return there afterwards
+  // instead of continuing onboarding.
+  const fromApp = $derived($page.url.searchParams.get('next') === 'app');
+
+  onMount(async () => {
+    try {
+      tokenSaved = await hasHfToken();
+    } catch {
+      tokenSaved = false;
+    }
+  });
+
+  function next() {
+    goto(fromApp ? '/' : '/welcome/downloading');
+  }
 
   async function save() {
     const trimmed = token.trim();
@@ -21,7 +41,7 @@
     error = null;
     try {
       await saveHfToken(trimmed);
-      goto('/welcome/downloading');
+      next();
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
     } finally {
@@ -30,7 +50,7 @@
   }
 
   function back() {
-    goto('/welcome/preset');
+    goto(fromApp ? '/' : '/welcome/preset');
   }
 </script>
 
@@ -38,10 +58,15 @@
   <div class="mb-1 font-mono text-xs uppercase tracking-widest text-indigo-400">step 04b</div>
   <h2 class="mb-2 text-2xl font-semibold text-zinc-100">HuggingFace access</h2>
   <p class="mb-6 text-sm text-zinc-400">
-    Gemma is a gated model. Google asks you to accept the license before downloading, which means
-    Pry needs your HuggingFace token to pull the weights on your behalf. The token stays on your
-    machine.
+    Gemma is a gated model. Google asks you to accept its license on Hugging Face before downloading,
+    and Pry needs your Hugging Face token to download the weights on your behalf. The token stays on
+    this computer.
   </p>
+  {#if tokenSaved}
+    <p class="mb-4 text-sm text-green-400">
+      A token is already saved. Paste a new one below to replace it, or keep the saved one.
+    </p>
+  {/if}
 
   <!-- Instructions -->
   <div class="mb-6 space-y-3 rounded-lg border border-zinc-800 bg-zinc-950/40 p-5 text-sm">
@@ -50,15 +75,14 @@
         1
       </div>
       <div class="text-zinc-300">
-        Accept the Gemma license on HuggingFace (requires an account).
-        <a
-          href="https://huggingface.co/google/gemma-2-2b"
-          target="_blank"
-          rel="noopener"
+        Accept the Gemma license on Hugging Face, in your own browser (requires a free account).
+        <button
+          type="button"
+          onclick={() => openExternal(GEMMA_LICENSE_URL)}
           class="ml-1 inline-flex items-center gap-1 text-indigo-400 hover:text-indigo-300"
         >
           huggingface.co/google/gemma-2-2b <ExternalLink class="h-3 w-3" />
-        </a>
+        </button>
       </div>
     </div>
     <div class="flex items-start gap-3">
@@ -67,14 +91,13 @@
       </div>
       <div class="text-zinc-300">
         Create a read token.
-        <a
-          href="https://huggingface.co/settings/tokens"
-          target="_blank"
-          rel="noopener"
+        <button
+          type="button"
+          onclick={() => openExternal(HF_TOKENS_URL)}
           class="ml-1 inline-flex items-center gap-1 text-indigo-400 hover:text-indigo-300"
         >
           huggingface.co/settings/tokens <ExternalLink class="h-3 w-3" />
-        </a>
+        </button>
       </div>
     </div>
     <div class="flex items-start gap-3">
@@ -112,6 +135,14 @@
     >
       <ArrowLeft class="h-4 w-4" /> Back
     </button>
+    {#if tokenSaved && !token.trim()}
+    <button
+      onclick={next}
+      class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 font-medium text-white transition hover:bg-indigo-500"
+    >
+      Keep the saved token
+    </button>
+    {:else}
     <button
       onclick={save}
       disabled={saving || !token.trim()}
@@ -123,5 +154,6 @@
         Save & continue
       {/if}
     </button>
+    {/if}
   </div>
 </div>

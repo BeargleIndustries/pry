@@ -115,8 +115,9 @@ const MOCK_PRESETS: PresetCompatibility[] = [
     display: mockDisplay('Pythia-70M', '70M', '350 MB', 6, 8, ['pythia-70m-deduped', 'res-sm']),
   },
   {
-    preset_id: 'gemma-2-2b', verdict: 'Insufficient', headroom_mb: -500, notes: ['Disabled pending Bet 3 validation'], enabled: false,
-    display: mockDisplay('Gemma-2-2B', '2B', '6.4 GB', 26, 8, null),
+    preset_id: 'gemma-2-2b', verdict: 'Comfortable', headroom_mb: 2288,
+    notes: ['Requires a free HuggingFace account and Gemma license acceptance.'], enabled: true,
+    display: mockDisplay('Gemma 2 2B', '2.6B', '10.8 GB', 26, 8, ['gemma-2-2b', 'gemmascope-res-16k']),
   },
 ];
 

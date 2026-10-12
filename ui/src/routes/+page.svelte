@@ -38,7 +38,10 @@
   import EngineCrashBanner from '$lib/components/EngineCrashBanner.svelte';
   import { CUSTOM_MODELS_ENABLED } from '$lib/flags';
   import { friendlyError } from '$lib/errors';
-  import { displayName, findPreset } from '$lib/preset-display';
+  import { displayName, findPreset, needsHfToken } from '$lib/preset-display';
+  import { gatePassedKey, gateStepMissing, type GateStep } from '$lib/hf-gate';
+  import LicenseGateSteps from '$lib/components/LicenseGateSteps.svelte';
+  import { goto } from '$app/navigation';
   import ExperimentGallery from '$lib/components/ExperimentGallery.svelte';
   import { loadExperiments, applyExperiment } from '$lib/experiments/experiments';
   import type { Experiment, ExperimentActions, PatchType } from '$lib/experiments/experiments';
@@ -293,6 +296,7 @@
             loadState = "error";
             bannerPhase = 'error';
             bannerError = err instanceof Error ? err.message : String(err);
+            openGateOnError(target, bannerError);
           });
       } catch {
         // swallow — auto-load is best-effort
@@ -317,9 +321,32 @@
   // Model switch flow
   // ---------------------------------------------------------------------------
 
-  async function handleSwitch(presetId: string) {
+  // T31: a gated model (Gemma) explains its license steps before the first
+  // load, and again whenever a load fails on a missing step.
+  let gateFor = $state<{ presetId: string; missing: GateStep | null } | null>(null);
+
+  function isGated(presetId: string): boolean {
+    const c = findPreset(presetId, presets);
+    return !!c && needsHfToken(c);
+  }
+
+  function gatePassed(presetId: string): boolean {
+    try { return localStorage.getItem(gatePassedKey(presetId)) === '1'; } catch { return false; }
+  }
+
+  function openGateOnError(presetId: string, message: string | null) {
+    const missing = gateStepMissing(message);
+    if (missing) gateFor = { presetId, missing };
+  }
+
+  async function handleSwitch(presetId: string, pastGate = false) {
     if (switchInFlight) return;
     if (presetId === activePresetId && loadState === 'loaded') return;
+    if (!pastGate && isGated(presetId) && !gatePassed(presetId)) {
+      gateFor = { presetId, missing: null };
+      return;
+    }
+    gateFor = null;
     switchInFlight = true;
     bannerError = null;
     bannerTargetPreset = presetId;
@@ -344,7 +371,10 @@
       // Clear ALL analysis state when switching models
       analysis.clearForModelSwitch();
       compare.clear();
-      try { localStorage.setItem('pry:active_preset', presetId); } catch { /* ignore */ }
+      try {
+        localStorage.setItem('pry:active_preset', presetId);
+        if (isGated(presetId)) localStorage.setItem(gatePassedKey(presetId), '1');
+      } catch { /* ignore */ }
       // Repopulate available layers for the new preset
       try {
         const models = await listModels();
@@ -360,6 +390,7 @@
       loadState = 'error';
       bannerPhase = 'error';
       bannerError = err instanceof Error ? err.message : String(err);
+      openGateOnError(presetId, bannerError);
     } finally {
       switchInFlight = false;
     }
@@ -913,6 +944,32 @@
     onRetry={() => handleSwitch(bannerTargetPreset ?? activePresetId ?? 'gpt2-small')}
     onDismiss={() => { bannerPhase = 'idle'; bannerError = null; bannerMessage = null; }}
   />
+  {#if gateFor}
+    {@const gate = gateFor}
+    {@const gateName = displayName(gate.presetId, presets)}
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-label="Before {gateName}">
+      <div class="w-full max-w-lg rounded-xl border border-zinc-800 bg-zinc-900 p-5 shadow-xl">
+        <h2 class="mb-3 text-base font-semibold text-zinc-100">Before {gateName}: two steps on Hugging Face</h2>
+        <LicenseGateSteps
+          name={gateName}
+          missing={gate.missing}
+          onAddToken={() => goto('/welcome/hf-token?next=app')}
+        />
+        <div class="mt-5 flex items-center justify-end gap-3">
+          <button type="button" onclick={() => (gateFor = null)} class="text-sm text-zinc-400 hover:text-zinc-200">
+            Not now
+          </button>
+          <button
+            type="button"
+            onclick={() => handleSwitch(gate.presetId, true)}
+            class="rounded-md bg-indigo-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-indigo-500"
+          >
+            {gate.missing ? "I've done it. Try again" : `Done both. Load ${gateName}`}
+          </button>
+        </div>
+      </div>
+    </div>
+  {/if}
   <EngineCrashBanner onRestarted={handleEngineRestarted} />
   <RuntimeUpdatePrompt />
 
