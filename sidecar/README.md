@@ -90,7 +90,8 @@ If loading on CUDA runs out of memory (a GPU smaller than the preset needs), the
 
 - `GET /health`: `{status, version, device, gpu_name, torch, cuda, loaded_preset, sae_layer, hf_token_present}`. `device` is `"cuda"`, `"cpu"` or `null` (nothing loaded) and reflects the device actually in use. Health never imports torch: before a model loads, `torch` comes from package metadata and `cuda`/`gpu_name` are `null`.
 - `GET /models`: loaded presets, plus every preset with its download/VRAM size, SAE layers, whether the model is already in the HF cache, its `display` block and `cpu_ok`.
-- `POST /load`: load a preset's model and SAE. Streams progress as server-sent events (see "Load progress").
+- `POST /load`: load a preset's model and SAE. Streams progress as server-sent events (see "Load progress"). `{"custom": {"hf_id": "org/name"}}` instead loads a user-added model with no SAE (T32); it is then addressed as `preset_id: "custom:org/name"`. Feature endpoints (`/sae-features`, `/steer`, `/ablate-feature`, `/concept-search`, `/feature/{id}`) return 409 with a plain message for it.
+- `POST /custom-models/validate`: `{hf_id}` → can Pry load this model? Checks TransformerLens' model list, fetches the repo's config.json (using `HF_TOKEN` if set), checks the architecture and estimates parameters and memory. 422 `{error, gated}` when the repo can't be checked.
 - `POST /tokenize`: `{preset_id, text}` → `{tokens, count}`. `count` includes the BOS token, so it is the same length `/patch` compares. The preset must be loaded.
 - `POST /unload`: free a preset's model and SAE from memory.
 - `POST /generate`: run a prompt. Returns tokens, attention for every layer, the top SAE features per token, next-token predictions, and optionally a continuation.

@@ -42,7 +42,8 @@ export interface GenerateResponse {
   /** True when attention was only captured for the first 64 tokens. */
   attention_truncated?: boolean;
   sae_features: TokenFeatures[];
-  sae_layer_used: number;
+  /** null for a custom model (T32): it has no feature dictionary. */
+  sae_layer_used: number | null;
   top_predictions?: TopPrediction[];
   timing_ms: Record<string, number>;
   status?: string;

@@ -314,31 +314,54 @@ export async function clearHfToken(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Phase 6 — Custom model escape hatch
-// KEEP IN SYNC: src-tauri/src/custom_models.rs::CustomPreset
+// Custom models (T32): persisted list + hardware verdict
+// KEEP IN SYNC: src-tauri/src/custom_models.rs::CustomPreset / CustomModelDetails
 // ---------------------------------------------------------------------------
 
 export interface CustomPreset {
+  /** HuggingFace repo id; the sidecar preset id is `custom:<id>`. */
   id: string;
   display_name: string;
   architecture: string;
   added_at: string;
   sae_available: boolean;
+  // Absent in lists saved before T32.
+  n_params?: number | null;
+  params_label?: string | null;
+  vram_estimate_mb?: number | null;
+  cpu_ok?: boolean;
 }
 
-export async function validateCustomModel(hfId: string): Promise<CustomPreset> {
-  if (!isTauri()) throw new Error("custom models unavailable in dev mode");
+/** What the engine's check found, stored with the model. */
+export interface CustomModelDetails {
+  architecture: string | null;
+  n_params: number | null;
+  params_label: string | null;
+  vram_estimate_mb: number | null;
+  cpu_ok: boolean;
+}
+
+/** Same Comfortable / Tight / CpuOk / Insufficient verdict presets get. */
+export async function evaluateCustomModel(
+  hfId: string,
+  vramEstimateMb: number,
+  cpuOk: boolean,
+  hw: HardwareReport,
+): Promise<PresetCompatibility> {
+  if (!isTauri()) {
+    return { preset_id: hfId, verdict: 'Comfortable', headroom_mb: 4000, notes: [], display: null, enabled: true };
+  }
   try {
-    return await invoke<CustomPreset>("validate_custom_model", { hfId });
+    return await invoke<PresetCompatibility>('evaluate_custom_model', { hfId, vramEstimateMb, cpuOk, hw });
   } catch (e) {
     throw new Error(formatTauriError(e));
   }
 }
 
-export async function addCustomModel(hfId: string): Promise<CustomPreset> {
+export async function addCustomModel(hfId: string, details: CustomModelDetails): Promise<CustomPreset> {
   if (!isTauri()) throw new Error("custom models unavailable in dev mode");
   try {
-    return await invoke<CustomPreset>("add_custom_model", { hfId });
+    return await invoke<CustomPreset>("add_custom_model", { hfId, details });
   } catch (e) {
     throw new Error(formatTauriError(e));
   }

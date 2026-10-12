@@ -4,6 +4,7 @@ import { isTauri } from './is-tauri';
 import { sidecarErrorMessage } from './sidecar-errors';
 import type { SidecarHealth } from './types';
 import { buildConceptSearchBody, parseConceptSearch, type ConceptSearchResult } from './concept-search';
+import { hfIdOf, isCustomPresetId } from './custom-models';
 
 // Browser dev only (`npm run dev` against a manually started sidecar). Under
 // Tauri we never fall back to this: the port and token come from Rust.
@@ -231,7 +232,10 @@ export async function loadPreset(
   const res = await sidecarFetch('/load', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ preset_id: presetId }),
+    // T32: a custom model loads by its HF id, without a feature dictionary.
+    body: JSON.stringify(
+      isCustomPresetId(presetId) ? { custom: { hf_id: hfIdOf(presetId) } } : { preset_id: presetId },
+    ),
     signal,
   });
   if (!res.ok) throw await errorFromResponse(res, '/load');
@@ -467,4 +471,57 @@ export async function fetchHeadScores(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ preset_id: presetId }),
   });
+}
+
+// ---------------------------------------------------------------------------
+// Custom models (T32)
+// KEEP IN SYNC: sidecar/pry_sidecar/custom_models.py::assess_config
+// ---------------------------------------------------------------------------
+
+/** What the sidecar found when it checked a HuggingFace model. */
+export interface CustomModelCheck {
+  /** The repo id in TransformerLens' spelling (use this one from now on). */
+  hf_id: string;
+  supported: boolean;
+  architecture: string;
+  /** Plain-language summary; says why when `supported` is false. */
+  message: string;
+  n_params: number | null;
+  params_label: string | null;
+  n_layers: number | null;
+  n_heads: number | null;
+  vram_estimate_mb: number | null;
+  cpu_ok: boolean;
+  gated: boolean;
+}
+
+/** The model couldn't be checked at all (gated, missing, offline). */
+export class CustomModelCheckError extends Error {
+  constructor(
+    message: string,
+    public readonly gated: boolean,
+  ) {
+    super(message);
+    this.name = 'CustomModelCheckError';
+  }
+}
+
+/**
+ * Ask the engine whether Pry can load `hfId`: it fetches the repo's
+ * config.json, checks the architecture against TransformerLens and estimates
+ * the size. Throws CustomModelCheckError with a plain message when the repo
+ * can't be checked (gated without access, not found, offline).
+ */
+export async function checkCustomModel(hfId: string): Promise<CustomModelCheck> {
+  const res = await sidecarFetch('/custom-models/validate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ hf_id: hfId }),
+  });
+  if (res.status === 422) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string; gated?: boolean };
+    throw new CustomModelCheckError(body.error ?? "Couldn't check this model.", body.gated === true);
+  }
+  if (!res.ok) throw await errorFromResponse(res, '/custom-models/validate');
+  return res.json() as Promise<CustomModelCheck>;
 }

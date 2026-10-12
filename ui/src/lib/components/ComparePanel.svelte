@@ -20,6 +20,7 @@
   import Readout from './Readout.svelte';
   import { clampCell, handleGridKey, type GridCell } from '$lib/grid-nav';
   import { signedHex } from '$lib/signed-color';
+  import { NO_SAE_MESSAGE } from '$lib/custom-models';
 
   interface Props {
     compare: CompareController;
@@ -178,7 +179,9 @@
       <!-- 2. Features -->
       <div class="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
         <h3 class="mb-1 text-sm font-semibold text-zinc-100">Features on this word</h3>
-        {#if !sameLayer}
+        {#if ready.a.sae_layer_used == null || ready.b.sae_layer_used == null}
+          <p class="text-xs text-zinc-500">{NO_SAE_MESSAGE}</p>
+        {:else if !sameLayer}
           <p class="text-xs text-zinc-500">The two runs used different feature layers, so their features can’t be matched. Run Compare again.</p>
         {:else if feats}
           <p class="mb-3 text-xs text-zinc-500">

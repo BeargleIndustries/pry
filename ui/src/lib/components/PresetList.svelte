@@ -14,10 +14,17 @@
     compatibilities,
     activePresetId = null,
     onSwitch = undefined,
+    title = 'Preset Compatibility',
+    switchLabel = 'Switch',
+    onRemove = undefined,
   }: {
     compatibilities: PresetCompatibility[];
     activePresetId?: string | null;
     onSwitch?: (presetId: string) => void;
+    title?: string;
+    switchLabel?: string;
+    /** Custom models (T32): show a Remove button on each row. */
+    onRemove?: (presetId: string) => void;
   } = $props();
 
   const TONE: Record<VerdictTone, { glyph: string; cls: string }> = {
@@ -54,7 +61,7 @@
 </script>
 
 <div class="mb-6 space-y-2">
-  <p class="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">Preset Compatibility</p>
+  <p class="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">{title}</p>
   {#each compatibilities as c (c.preset_id)}
     {@const b = badge(c)}
     {@const locked = needsHfToken(c)}
@@ -79,7 +86,17 @@
             onclick={() => onSwitch?.(c.preset_id)}
             class="rounded-md border border-indigo-700 bg-indigo-900/40 px-2 py-0.5 text-xs text-indigo-200 hover:bg-indigo-800/60"
           >
-            Switch
+            {switchLabel}
+          </button>
+        {/if}
+        {#if onRemove && c.preset_id !== activePresetId}
+          <button
+            type="button"
+            onclick={() => onRemove?.(c.preset_id)}
+            aria-label="Remove {displayName(c)}"
+            class="rounded-md border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400 hover:border-red-700 hover:text-red-300"
+          >
+            Remove
           </button>
         {/if}
       </div>

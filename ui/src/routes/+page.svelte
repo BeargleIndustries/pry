@@ -5,7 +5,15 @@
   import { health, loadPreset, unloadPreset, listModels } from '$lib/sidecar';
   import type { LoadProgress, PresetInfo } from '$lib/sidecar';
   import { createAnalysis } from '$lib/analysis.svelte';
-  import { cachedHardwareReport, probeHardware, evaluatePresets, saveJsonFile } from '$lib/tauri';
+  import {
+    cachedHardwareReport,
+    probeHardware,
+    evaluatePresets,
+    saveJsonFile,
+    listCustomModels,
+    removeCustomModel,
+    evaluateCustomModel,
+  } from '$lib/tauri';
   import type { HardwareReport, PresetCompatibility, CustomPreset } from '$lib/tauri';
   import HardwareCard from '$lib/components/HardwareCard.svelte';
   import PresetList from '$lib/components/PresetList.svelte';
@@ -37,6 +45,8 @@
   import EngineStatusChip from '$lib/components/EngineStatusChip.svelte';
   import EngineCrashBanner from '$lib/components/EngineCrashBanner.svelte';
   import { CUSTOM_MODELS_ENABLED } from '$lib/flags';
+  import { customCompatibility, hfIdOf, isCustomPresetId } from '$lib/custom-models';
+  import NoFeaturesNotice from '$lib/components/NoFeaturesNotice.svelte';
   import { friendlyError } from '$lib/errors';
   import { displayName, findPreset } from '$lib/preset-display';
   import ExperimentGallery from '$lib/components/ExperimentGallery.svelte';
@@ -273,7 +283,7 @@
         // Fire-and-forget auto-load with banner updates
         bannerPhase = 'loading';
         bannerTargetPreset = target;
-        bannerMessage = `Loading ${displayName(target, presets)}…`;
+        bannerMessage = `Loading ${displayName(target, allCompat)}…`;
         bannerError = null;
         loadProgress = null;
         loadState = "loading";
@@ -327,12 +337,12 @@
     try {
       if (previousActive && previousActive !== presetId) {
         bannerPhase = 'unloading';
-        bannerMessage = `Unloading ${displayName(previousActive, presets)}…`;
+        bannerMessage = `Unloading ${displayName(previousActive, allCompat)}…`;
         loadProgress = null;
         await unloadPreset(previousActive);
       }
       bannerPhase = 'loading';
-      bannerMessage = `Loading ${displayName(presetId, presets)}…`;
+      bannerMessage = `Loading ${displayName(presetId, allCompat)}…`;
       loadProgress = null;
       loadState = 'loading';
       await loadPreset(presetId, (ev) => {
@@ -445,11 +455,49 @@
   // ---------------------------------------------------------------------------
   // Phase 6 — Custom model dialog
   // ---------------------------------------------------------------------------
+  // Custom models (T32): the saved list is reloaded from disk at startup and
+  // shown in Settings and the model switcher with the same verdicts as presets.
   let customModelDialogOpen = $state(false);
   let customModels = $state<CustomPreset[]>([]);
+  let customCompat = $state<PresetCompatibility[]>([]);
+  let customModelsError = $state<string | null>(null);
+  // Presets plus custom models, for the switcher and name lookups.
+  const allCompat = $derived(
+    presets ? [...presets, ...customCompat] : customCompat.length > 0 ? customCompat : null,
+  );
+  // The loaded model has no feature dictionary (SAE).
+  const noFeatures = $derived(isCustomPresetId(activePresetId));
+
+  onMount(() => {
+    if (!CUSTOM_MODELS_ENABLED) return;
+    listCustomModels()
+      .then((list) => { customModels = list; customModelsError = null; })
+      .catch((e) => { customModelsError = e instanceof Error ? e.message : String(e); });
+  });
+
+  $effect(() => {
+    const list = customModels;
+    const hw = hardware;
+    let cancelled = false;
+    Promise.all(list.map((m) => customCompatibility(m, hw, evaluateCustomModel)))
+      .then((rows) => { if (!cancelled) customCompat = rows; })
+      .catch((e) => console.error('custom model verdicts failed:', e));
+    return () => { cancelled = true; };
+  });
 
   function handleCustomModelAdded(preset: CustomPreset) {
     customModels = [...customModels, preset];
+  }
+
+  async function handleCustomModelRemove(presetId: string) {
+    const hfId = hfIdOf(presetId);
+    try {
+      await removeCustomModel(hfId);
+      customModels = customModels.filter((m) => m.id !== hfId);
+      customModelsError = null;
+    } catch (e) {
+      customModelsError = e instanceof Error ? e.message : String(e);
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -661,7 +709,7 @@
     return notebook.add({
       title,
       note,
-      modelName: displayName(response.preset_id, presets),
+      modelName: displayName(response.preset_id, allCompat),
       display: presetDisplay,
       experiment: exp ? { id: exp.id, title: exp.title, citations: exp.found.citations } : null,
       run: { ...rest, response, saeLayer: saeLayer ?? null },
@@ -748,12 +796,12 @@
     <span class="text-sm font-semibold text-zinc-100 flex-shrink-0">Pry</span>
 
     <ModelSwitcher
-      compatibilities={presets}
+      compatibilities={allCompat}
       {activePresetId}
       disabled={switchInFlight}
       onSwitch={handleSwitch}
     />
-    <EngineStatusChip compatibilities={presets} refreshKey={healthKey} />
+    <EngineStatusChip compatibilities={allCompat} refreshKey={healthKey} />
 
     {#if isWide && !compareMode}
       <!-- Inline prompt input (Wireshark filter-bar style) -->
@@ -907,7 +955,7 @@
   <LoadProgressBanner
     visible={bannerVisible}
     phase={bannerPhase === 'idle' ? 'loading' : bannerPhase}
-    presetId={bannerTargetPreset ?? activePresetId}
+    presetId={bannerTargetPreset ?? activePresetId ? hfIdOf(bannerTargetPreset ?? activePresetId ?? '') : null}
     progress={loadProgress}
     errorMessage={bannerError}
     onRetry={() => handleSwitch(bannerTargetPreset ?? activePresetId ?? 'gpt2-small')}
@@ -1013,7 +1061,9 @@
           <TabbedPanel tabs={rightTabs} bind:activeTab={rightActiveTab}>
             {#snippet children(tab)}
               <div class="h-full overflow-y-auto p-4">
-                {#if tab === 'features'}
+                {#if tab === 'features' && noFeatures}
+                  <NoFeaturesNotice panel="Features" />
+                {:else if tab === 'features'}
                   <PanelB
                     {presetDisplay}
                     response={st.response}
@@ -1037,6 +1087,8 @@
                     response={st.response}
                     showTokenStrip={false}
                   />
+                {:else if tab === 'steering' && noFeatures}
+                  <NoFeaturesNotice panel="Steering" />
                 {:else if tab === 'steering'}
                   <SteeringPanel
                     response={st.response}
@@ -1139,7 +1191,9 @@
             <!-- Nested right-side tabs for narrow mode -->
             <TabbedPanel tabs={rightTabs} bind:activeTab={rightActiveTab}>
               {#snippet children(tab)}
-                {#if tab === 'features'}
+                {#if tab === 'features' && noFeatures}
+                  <NoFeaturesNotice panel="Features" />
+                {:else if tab === 'features'}
                   <PanelB
                     {presetDisplay}
                     response={st.response}
@@ -1163,6 +1217,8 @@
                     response={st.response}
                     showTokenStrip={false}
                   />
+                {:else if tab === 'steering' && noFeatures}
+                  <NoFeaturesNotice panel="Steering" />
                 {:else if tab === 'steering'}
                   <SteeringPanel
                     response={st.response}
@@ -1255,20 +1311,23 @@
         onclick={() => (customModelDialogOpen = true)}
         class="rounded-md border border-dashed border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-500 hover:border-indigo-600 hover:text-indigo-400"
       >
-        + Custom model
+        + Add a model from HuggingFace
       </button>
     </div>
 
-    <!-- Custom model list (when any added) -->
-    {#if customModels.length > 0}
-      <div class="mb-6 space-y-1">
-        {#each customModels as cm}
-          <div class="flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-900/50 px-3 py-2 text-xs text-zinc-400">
-            <span class="font-mono">{cm.id}</span>
-            <span class="rounded bg-zinc-800 px-2 py-0.5 text-zinc-500">{cm.architecture} · attention only</span>
-          </div>
-        {/each}
-      </div>
+    <!-- Custom models (reloaded from disk at startup) -->
+    {#if customCompat.length > 0}
+      <PresetList
+        title="Your models (no feature dictionary)"
+        switchLabel="Load"
+        compatibilities={customCompat}
+        {activePresetId}
+        onSwitch={handleSwitch}
+        onRemove={handleCustomModelRemove}
+      />
+    {/if}
+    {#if customModelsError}
+      <p class="mb-4 text-xs text-red-400">Couldn't read your custom models: {customModelsError}</p>
     {/if}
     {/if}
 
@@ -1341,10 +1400,11 @@
   <!-- First-time contextual tips (registry-driven) -->
   <FirstTimeTip />
 
-  <!-- Custom model dialog (hidden for 0.2.0, contract §7) -->
+  <!-- Custom model dialog (T32) -->
   {#if CUSTOM_MODELS_ENABLED}
     <CustomModelDialog
       open={customModelDialogOpen}
+      {hardware}
       onClose={() => (customModelDialogOpen = false)}
       onAdded={handleCustomModelAdded}
     />
