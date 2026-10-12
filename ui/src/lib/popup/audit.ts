@@ -425,8 +425,23 @@ async function tipPass(deps: AuditDeps, out: AuditRecord[], phase: Phase, only?:
   }
 }
 
-async function termPass(out: AuditRecord[]) {
-  const terms = [...document.querySelectorAll<HTMLElement>('[data-tour="glossary-term"]')].filter(visibleIn);
+async function termPass(deps: AuditDeps, out: AuditRecord[]) {
+  const visibleTerms = () => [...document.querySelectorAll<HTMLElement>('[data-tour="glossary-term"]')].filter(visibleIn);
+  // Narrow windows show one panel at a time: try views until some terms show.
+  const views: (() => unknown)[] = [
+    () => {},
+    () => deps.actions.openRightTab('predictions'),
+    () => deps.actions.openLeftTab('attention'),
+    () => deps.actions.openLeftTab('dla'),
+    () => deps.actions.openLeftTab('logit-lens'),
+    () => deps.actions.openRightTab('features'),
+  ];
+  let terms: HTMLElement[] = [];
+  for (const open of views) {
+    await open();
+    terms = (await waitFor(() => (visibleTerms().length ? visibleTerms() : null), 3000)) ?? [];
+    if (terms.length) break;
+  }
   if (terms.length === 0) {
     out.push({ ...judge(measure('main', 'term', 'any', null, null, [])), skipped: 'no glossary term on screen' });
     return;
@@ -589,7 +604,7 @@ export async function runPopupAudit(deps: AuditDeps, opts: { guideTour?: boolean
       await deps.actions.runGenerate();
     }
     await tipPass(deps, records, 'main');
-    await termPass(records);
+    await termPass(deps, records);
     await hoverPass(deps, records);
     await guidePasses(deps, records);
     if (opts.guideTour) await tourWithGuidePass(deps, records);
