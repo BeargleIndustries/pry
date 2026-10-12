@@ -280,7 +280,7 @@ async function openExpert(deps: AuditDeps) {
   a.openLeftTab('attention');
   // The tour's view request only applies while the tour is open, so press the button.
   const btn = await waitFor(() =>
-    [...document.querySelectorAll<HTMLButtonElement>('button[aria-pressed]')].find((b) => b.textContent?.trim() === 'Expert'),
+    [...document.querySelectorAll<HTMLButtonElement>('button[aria-pressed]')].find((b) => /^Expert\b/.test(b.textContent?.trim() ?? '')),
   );
   if (btn && btn.getAttribute('aria-pressed') !== 'true') btn.click();
   await waitFor(() => document.querySelector('[data-tip="panel-a-heatmap"]'), 10000);
