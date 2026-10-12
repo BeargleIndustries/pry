@@ -301,9 +301,16 @@ describe('predictionsReadout edge cases', () => {
   });
 
   it('"word piece" for a fragment', () => {
-    expect(predictionsReadout([p('orn', 0.7, 1)])).toBe(
+    expect(predictionsReadout([p('orn', 0.7, 1)], ' unic')).toBe(
       'The model\'s top guess for the next word is the word piece "orn" (part of a longer word) (70%).',
     );
+  });
+
+  it('a letter guess after a newline, quote, space or start marker is not a word piece', () => {
+    for (const prev of ['\n', '"', ' "', ' ', '<|endoftext|>', null, undefined]) {
+      const text = predictionsReadout([p('The', 0.6, 1)], prev);
+      expect(text, JSON.stringify(prev)).toBe('The model\'s top guess for the next word is "The" (60%).');
+    }
   });
 
   it('punctuation is quoted as is', () => {

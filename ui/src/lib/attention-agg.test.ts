@@ -6,6 +6,7 @@ import {
   aggregateHead,
   aggregateTo,
   isValidAgg,
+  undefinedCellMessage,
 } from './attention-agg';
 
 /** Build a lower-triangular row-stochastic matrix from raw positive weights. */
@@ -174,5 +175,21 @@ describe('dispatch', () => {
     expect(isValidAgg('to', 'previous')).toBe(false);
     expect(aggregateHead(uniform, 2, 'from', 'mean')).toBeNull();
     expect(aggregateHead(uniform, 2, 'to', 'mean')).not.toBeNull();
+  });
+});
+
+describe('grey square message', () => {
+  it('FROM points at the first word, TO points at the last word', () => {
+    expect(undefinedCellMessage('from')).toBe('Not defined for the first word: it can only look at itself.');
+    expect(undefinedCellMessage('to')).toBe(
+      'Nothing comes after the last word, so no later word looks back at it. Pick an earlier word.',
+    );
+  });
+
+  it('TO on the last word greys every head, so the panel needs the last-word message', () => {
+    const m = [[1], [0.4, 0.6], [0.2, 0.3, 0.5]];
+    const last = m.length - 1;
+    for (const agg of TO_OPTIONS) expect(aggregateHead(m, last, 'to', agg.id)).toBeNull();
+    expect(undefinedCellMessage('to')).not.toContain('first word');
   });
 });

@@ -2,12 +2,21 @@
   import { untrack } from 'svelte';
   import { tutorialState } from '$lib/tutorial/tutorial-store.svelte';
   import type { TourContext, TutorialActions } from '$lib/tutorial/actions';
-  import { tourUi, targetLabels } from '$lib/tutorial/tour-steps';
+  import { LARGE_TARGETS, tourUi, targetLabels } from '$lib/tutorial/tour-steps';
   import Pointer from './Pointer.svelte';
   import { findAnchor } from '$lib/tutorial/anchors';
   import { asyncStepSucceeded, needsModelOffer, TOUR_PRESET_ID } from '$lib/tutorial/step-machine';
   import { MAX_ARROW, placePopup, type Placement, type Point } from '$lib/popup/place';
-  import { focusPoint, placementAttrs, placementChanged, rectOf, viewportSize } from '$lib/popup/measure';
+  import {
+    clearSheetPadding,
+    focusPoint,
+    placementAttrs,
+    placementChanged,
+    rectOf,
+    scrollAboveSheet,
+    viewportSize,
+    type SheetFit,
+  } from '$lib/popup/measure';
   import { occupied, OCCUPIED } from '$lib/popup/occupied.svelte';
 
   /** Narrower than this, the card docks as a bottom sheet (decision 4). */
@@ -118,7 +127,9 @@
       if (!el) return;
       targetMissing = false;
       el.setAttribute('data-tour-active', 'true');
-      el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+      // Instant under the sheet, so the scroll above it (below) isn't undone by an animation.
+      const instant = prefersReducedMotion() || window.innerWidth < SHEET_BELOW;
+      el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: instant ? 'auto' : 'smooth' });
     };
     find();
     const timer = setInterval(find, 250);
@@ -138,6 +149,8 @@
   // the current side no longer fitting.
   let placed = $state<Placement | null>(null);
   let placedFocus = $state<Point | null>(null);
+  /** Bottom sheet: whether the whole target or only its focus point is kept above it. */
+  let sheetFit = $state<SheetFit | null>(null);
 
   $effect(() => {
     if (!tutorialState.open) return;
@@ -145,6 +158,9 @@
     if (!s) return;
     let prev: Placement | null = null; // hysteresis is per step
     let raf = 0;
+    // Bottom sheet: scroll the target above it once per target, size and sheet height.
+    let sheetScrollKey = '';
+    let sheetScrollEl: Element | null = null;
     const loop = () => {
       raf = requestAnimationFrame(loop);
       if (!cardEl) return;
@@ -160,8 +176,23 @@
         previousMode: prev?.mode,
         avoid: occupied.rects([OCCUPIED.tourCard]),
         sheetBelow: SHEET_BELOW,
+        large: s.target !== null && LARGE_TARGETS.includes(s.target),
       });
       prev = next;
+      if (next.mode === 'sheet' && pointedEl && t && focus) {
+        const key = `${Math.round(t.height)}|${Math.round(next.top)}`;
+        if (pointedEl !== sheetScrollEl || key !== sheetScrollKey) {
+          sheetScrollEl = pointedEl;
+          sheetScrollKey = key;
+          sheetFit = scrollAboveSheet(pointedEl, focus.y, next.top);
+          return; // measure again next frame
+        }
+      } else if (sheetScrollEl && next.mode !== 'sheet') {
+        clearSheetPadding();
+        sheetScrollEl = null;
+        sheetScrollKey = '';
+        sheetFit = null;
+      }
       if (placementChanged(placed, next)) {
         placed = next;
         placedFocus = focus;
@@ -169,7 +200,10 @@
     };
     // Started from a frame callback so the effect itself tracks only the step.
     raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearSheetPadding();
+    };
   });
 
   // The card is an occupied area for every other popup while it's up.
@@ -178,11 +212,8 @@
     return occupied.registerElement(OCCUPIED.tourCard, cardEl);
   });
 
-  /** Arrow shown for this placement: always for the sheet, else only when short (rule 6). */
-  const showArrow = $derived(
-    !!placed?.arrowFrom &&
-      (placed.mode === 'sheet' || (!placed.arrowExempt && placed.arrowLen <= MAX_ARROW)),
-  );
+  /** Arrow shown only when short (rule 6), the sheet included; the ring always shows. */
+  const showArrow = $derived(!!placed?.arrowFrom && !placed.arrowExempt && placed.arrowLen <= MAX_ARROW);
 
   function clearHighlights() {
     document
@@ -328,6 +359,8 @@
     data-popup="tour"
     data-step-id={step.id}
     {...placementAttrs(placed, placedFocus)}
+    data-popup-arrow-shown={String(showArrow)}
+    data-popup-sheet-fit={placed?.mode === 'sheet' ? (sheetFit ?? '') : null}
   >
     {#if placed?.caretEdge}
       <span

@@ -106,6 +106,13 @@ def _device_label(device: str) -> str:
 # on the first one's future; the entry is cleared when that load ends.
 _INFLIGHT_LOADS: dict[str, concurrent.futures.Future] = {}
 _INFLIGHT_LOCK = threading.Lock()
+# How long a second /load waits on the first before giving up. Generous: a
+# first download of a big model can take many minutes on a slow link.
+LOAD_WAIT_TIMEOUT_S = 15 * 60
+LOAD_WAIT_TIMEOUT_MESSAGE = (
+    "This model is still loading from an earlier request and it is taking too long. "
+    "Try again in a few minutes, or restart Pry if it stays stuck."
+)
 
 
 def _prefetch_preset(manifest, push) -> None:
@@ -434,8 +441,13 @@ async def load(request: Request) -> Response:
 
             try:
                 if not owner:
-                    with Heartbeat(push, "load_model", 0.5, "Already loading this model…"):
-                        inflight.result()  # re-raises the first load's error
+                    try:
+                        with Heartbeat(push, "load_model", 0.5, "Already loading this model…"):
+                            # Re-raises the first load's error.
+                            inflight.result(timeout=LOAD_WAIT_TIMEOUT_S)
+                    except concurrent.futures.TimeoutError:
+                        push("error", 0.0, LOAD_WAIT_TIMEOUT_MESSAGE)
+                        return
                     push("ready", 1.0, f"Preset '{preset_id}' ready.")
                     return
                 # The heavy libraries take 12-40 s to import (longest on the first

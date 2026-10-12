@@ -392,6 +392,7 @@
     data-popup="tip"
     data-tip-id={activeTip.id}
     {...placementAttrs(position, positionFocus)}
+    data-popup-arrow-shown={String(!!tipArrow)}
   >
     {#if position.caretEdge}
       <span

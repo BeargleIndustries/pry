@@ -23,6 +23,15 @@ export const TO_OPTIONS: AggOption<ToAgg>[] = [
 
 export const DEFAULT_AGG: Aggregation = 'max';
 
+/** Why a grid square is grey: FROM fails on the first word, TO on the last. */
+export const FIRST_WORD_MSG = 'Not defined for the first word: it can only look at itself.';
+export const LAST_WORD_MSG =
+  'Nothing comes after the last word, so no later word looks back at it. Pick an earlier word.';
+
+export function undefinedCellMessage(mode: 'from' | 'to'): string {
+  return mode === 'to' ? LAST_WORD_MSG : FIRST_WORD_MSG;
+}
+
 export function isValidAgg(mode: 'from' | 'to', agg: string): agg is Aggregation {
   return (mode === 'from' ? FROM_OPTIONS : TO_OPTIONS).some((o) => o.id === agg);
 }

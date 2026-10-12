@@ -60,6 +60,8 @@ const rows: Row[] = [
   { id: 'copy:C10 Circuit', file: 'CircuitPanel.svelte', mustContain: ['Lower it and press Find key parts'] },
   { id: 'copy:C10 PanelB', file: 'PanelB.svelte', mustContain: ['concepts inside'], mustNotContain: ['SAE features'] },
   { id: 'copy:C11', file: 'PanelA.svelte', mustContain: ['Type at least two words'] },
+  { id: 'copy:C11 last word', file: 'attention-agg.ts', mustContain: ['Nothing comes after the last word, so no later word looks back at it. Pick an earlier word.', 'Not defined for the first word'] },
+  { id: 'copy:C11 last word PanelA', file: 'PanelA.svelte', mustContain: ['undefinedCellMessage(focusMode)', "undefinedCellMessage('to')"], mustNotContain: ['NOT_DEFINED_MSG'] },
   { id: 'copy:C12', file: 'PanelA.svelte', mustContain: [' layers, '], mustNotContain: ['L · '] },
   { id: 'copy:C13', file: 'PanelA.svelte', mustContain: ['the word doing the looking'], mustNotContain: ['query tokens'] },
   {

@@ -48,6 +48,12 @@ export interface AuditRecord {
   avoidHit: string[];
   arrowLen: number | null;
   arrowExempt: boolean;
+  /** placePopup counted the target as too large to sit beside (inset allowed). */
+  largeTarget: boolean;
+  /** Whether the popup drew its arrow (null: the popup has no arrow to draw). */
+  arrowShown?: boolean | null;
+  /** Point the arrow aims at (inset and sheet). */
+  focus?: Point | null;
   waiting: boolean;
   jumped: boolean;
   skipped?: string;
@@ -142,7 +148,7 @@ function measure(
   const rec: AuditRecord = {
     phase, kind, id, pass: false, mode: null, side: null, inViewport: false, overlapsTarget: false,
     coversFocus: false, overlapsAvoid: false, avoidHit: [], arrowLen: null, arrowExempt: false,
-    waiting: false, jumped: false, failures: [], target,
+    largeTarget: false, waiting: false, jumped: false, failures: [], target,
   };
   const box = rectOf(el);
   if (!el || !box) {
@@ -156,7 +162,11 @@ function measure(
   const len = el.getAttribute('data-popup-arrow-len');
   rec.arrowLen = len ? Number(len) : null;
   rec.arrowExempt = el.getAttribute('data-popup-arrow-exempt') === 'true';
-  const focus = rec.mode === 'inset' ? readFocus(el) : null;
+  rec.largeTarget = el.getAttribute('data-popup-large-target') === 'true';
+  const shown = el.getAttribute('data-popup-arrow-shown');
+  rec.arrowShown = shown === null ? null : shown === 'true';
+  const focus = rec.mode === 'inset' || rec.mode === 'sheet' ? readFocus(el) : null;
+  rec.focus = focus;
   const avoid = occupied.entries().filter(([k]) => !selfIds.includes(k)).map(([, r]) => r);
   const flags = placementFlags(box, vp(), target, focus, avoid);
   Object.assign(rec, flags);
@@ -173,17 +183,36 @@ function judge(rec: AuditRecord, opts: { tour?: boolean; allowFallback?: boolean
   }
   if (!rec.inViewport) f.push('outside the viewport');
   if (rec.overlapsAvoid) f.push(`covers occupied: ${rec.avoidHit.join(', ')}`);
+  // Arrows (tour card and tips): a drawn arrow is never longer than MAX_ARROW.
+  // A longer one may only be hidden (ring kept) in the bottom sheet; the inset
+  // far-corner fallback has no arrow at all (arrowExempt).
+  const arrowed = rec.kind === 'tour' || rec.kind === 'tip';
+  const longArrow = (rec.arrowLen ?? 0) > MAX_ARROW;
+  if (arrowed && longArrow && rec.arrowShown === true) f.push(`drawn arrow ${rec.arrowLen}px > ${MAX_ARROW}`);
   switch (rec.mode) {
     case 'anchored':
       if (rec.overlapsTarget) f.push('anchored popup overlaps its target');
-      if (opts.tour && (rec.arrowLen ?? 0) > MAX_ARROW) f.push(`arrow ${rec.arrowLen}px > ${MAX_ARROW}`);
+      if (arrowed && longArrow && rec.arrowShown !== true) f.push(`arrow ${rec.arrowLen}px > ${MAX_ARROW} (hidden)`);
       break;
     case 'inset':
+      // Inset is only for targets too large to sit beside (user decision).
+      if (!rec.largeTarget) f.push('inset on a small target');
       if (rec.coversFocus) f.push('inset popup covers the focus point');
       if (!rec.arrowExempt && (rec.arrowLen ?? Infinity) > MAX_ARROW) f.push(`inset arrow ${rec.arrowLen}px > ${MAX_ARROW}`);
       break;
     case 'sheet':
       if (window.innerWidth >= 760) f.push('sheet at a wide viewport');
+      if (rec.target && rec.rect) {
+        // The target is scrolled above the sheet: wholly when it fits in the
+        // scroller's visible area there, else with its focus point above it.
+        const fit = card()?.getAttribute('data-popup-sheet-fit');
+        const room = rec.rect.top - 10 - 12;
+        if (fit === 'whole' || (!fit && rec.target.height <= room)) {
+          if (rec.overlapsTarget) f.push('sheet covers its target');
+        } else if (rec.coversFocus) {
+          f.push('sheet covers the focus point of a tall target');
+        }
+      }
       break;
     case 'fallback':
       if (!opts.allowFallback) f.push('fallback placement not allowed here');
@@ -365,7 +394,7 @@ function guideRect(): RectLike | null {
 async function measureTip(tipId: string, target: string, deps: AuditDeps, phase: Phase): Promise<AuditRecord> {
   const blank = (why: string): AuditRecord => ({
     phase, kind: 'tip', id: tipId, pass: false, mode: null, side: null, inViewport: false, overlapsTarget: false,
-    coversFocus: false, overlapsAvoid: false, avoidHit: [], arrowLen: null, arrowExempt: false, waiting: false,
+    coversFocus: false, overlapsAvoid: false, avoidHit: [], arrowLen: null, arrowExempt: false, largeTarget: false, waiting: false,
     jumped: false, skipped: why, failures: [why],
   });
   progress(`${phase} tip ${tipId}`);
@@ -535,7 +564,7 @@ async function tourWithGuidePass(deps: AuditDeps, out: AuditRecord[]) {
   const record = (id: string, ok: boolean, failure: string, notes: string[] = []): AuditRecord => ({
     phase: 'tour-with-guide', kind: 'tour', id, pass: ok, mode: null, side: null, inViewport: true,
     overlapsTarget: false, coversFocus: false, overlapsAvoid: false, avoidHit: [], arrowLen: null,
-    arrowExempt: false, waiting: false, jumped: false, failures: ok ? [] : [failure], notes,
+    arrowExempt: false, largeTarget: false, waiting: false, jumped: false, failures: ok ? [] : [failure], notes,
   });
   await deps.startExperiment('induction');
   const full = await waitFor(() => guideRect(), 10000);
