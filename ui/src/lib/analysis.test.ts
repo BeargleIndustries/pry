@@ -443,6 +443,37 @@ describe('a newer Run or request supersedes one in flight (B1)', () => {
     expect(state.logitLensLoading).toBe(false);
   });
 
+  it('drops a Run result when the model is switched while it is in flight', async () => {
+    const { state, deps } = makeController(false);
+    let active: string | null = 'gpt2-small';
+    const ctl = new AnalysisController(state, { ...deps, getActivePresetId: () => active });
+    vi.stubGlobal('fetch', vi.fn(async () => {
+      // The switcher finishes loading another model before /generate answers.
+      active = 'pythia-70m';
+      ctl.clearForModelSwitch();
+      return new Response(JSON.stringify(fakeResponse()), { status: 200 });
+    }));
+    try {
+      await ctl.generate(RAN);
+      expect(state.response).toBeNull();
+      expect(state.generating).toBe(false);
+      expect(state.error).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('keeps a Run result when the model did not change', async () => {
+    const { ctl, state } = makeController(false);
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(fakeResponse()), { status: 200 })));
+    try {
+      await ctl.generate(RAN);
+      expect(state.response?.prompt).toBe(RAN);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('drops a lens result for a model that was switched away mid-request', async () => {
     const { state, deps } = makeController();
     let active: string | null = 'gpt2-small';

@@ -245,6 +245,7 @@ export class AnalysisController {
     // Head scores belong to the model, not the prompt, so only a switch clears them.
     // Bumping the sequence also releases a request still running for the old model.
     this.headScoresSeq++;
+    this.modelSwitchSeq++;
     this.state.headScoresResponse = null;
     this.state.headScoresLoading = false;
     this.state.response = null;
@@ -258,6 +259,9 @@ export class AnalysisController {
     s.generating = true;
     try {
       await this.deps.ensureLoaded();
+      // A model switch while this Run is in flight makes its result stale.
+      const startPreset = this.deps.getActivePresetId();
+      const startSwitch = this.modelSwitchSeq;
       const resp = await sidecarFetch('/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -273,6 +277,7 @@ export class AnalysisController {
         throw new Error(sidecarErrorMessage(body) ?? `/generate failed: ${resp.status}`);
       }
       const response = (await resp.json()) as GenerateResponse;
+      if (startSwitch !== this.modelSwitchSeq || this.deps.getActivePresetId() !== startPreset) return;
       s.response = response;
       this.clearAnalyses();
       s.focusTokenIndex = response.tokens.length > 0
@@ -475,6 +480,8 @@ export class AnalysisController {
   }
 
   private headScoresSeq = 0;
+  /** Bumped by clearForModelSwitch so a Run started on the old model is dropped. */
+  private modelSwitchSeq = 0;
 
   async headScores() {
     const s = this.state;
