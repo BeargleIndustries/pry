@@ -270,7 +270,7 @@ def test_load_gemma_gated_download_names_license_step(monkeypatch):
 def test_gemma_loads_and_features(no_neuronpedia):
     if not os.environ.get("HF_TOKEN"):
         pytest.skip("HF_TOKEN not set (Gemma is gated: accept the license on huggingface.co first)")
-    from conftest import _hf_cached
+    from tests.conftest import _hf_cached
 
     if not _hf_cached("google/gemma-2-2b"):
         pytest.skip("google/gemma-2-2b not in local HF cache")
