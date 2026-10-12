@@ -277,6 +277,7 @@ def fetch_config(hf_id: str, token: Optional[str]) -> dict:
     from huggingface_hub.utils import (
         EntryNotFoundError,
         GatedRepoError,
+        HfHubHTTPError,
         LocalEntryNotFoundError,
         RepositoryNotFoundError,
     )
@@ -300,6 +301,16 @@ def fetch_config(hf_id: str, token: Optional[str]) -> dict:
         raise CustomModelError(
             f"'{hf_id}' doesn't have a settings file (config.json), so it isn't a model "
             "Pry can load."
+        ) from e
+    except HfHubHTTPError as e:
+        status = getattr(getattr(e, "response", None), "status_code", None)
+        if status == 401:
+            raise CustomModelError(
+                "HuggingFace didn't accept the saved token. Check it in Settings "
+                "(it may have expired or been deleted), then try again."
+            ) from e
+        raise CustomModelError(
+            "HuggingFace had a problem answering just now. Try again in a minute."
         ) from e
     with open(path, encoding="utf-8") as f:
         return json.load(f)

@@ -443,7 +443,7 @@ def run_generate(req: GenerateRequest, loaded: LoadedModel) -> GenerateResponse:
         top_predictions: list[TopPrediction] = []
         try:
             final_logits = _logits[0, -1, :]  # last position logits
-            top_probs = torch.softmax(final_logits, dim=-1)
+            top_probs = torch.softmax(final_logits.float(), dim=-1)
             top_vals, top_ids = torch.topk(top_probs, 10)
             for rank, (prob, tid) in enumerate(
                 zip(top_vals.tolist(), top_ids.tolist()), start=1
@@ -703,7 +703,7 @@ def run_logit_lens(req: LogitLensRequest, loaded: LoadedModel) -> LogitLensRespo
 
         # Get final-layer predictions for each position (ground truth to compare)
         lens_start = time.perf_counter()
-        final_probs = torch.softmax(logits[0], dim=-1)  # [seq, vocab]
+        final_probs = torch.softmax(logits[0].float(), dim=-1)  # [seq, vocab]
         final_preds = torch.argmax(final_probs, dim=-1)  # [seq]
 
         # Build grid: [layer][token_pos]
@@ -724,7 +724,7 @@ def run_logit_lens(req: LogitLensRequest, loaded: LoadedModel) -> LogitLensRespo
             layer_logits = normed @ model.W_U  # [seq, vocab]
             if hasattr(model, "b_U") and model.b_U is not None:
                 layer_logits = layer_logits + model.b_U
-            layer_probs = torch.softmax(layer_logits, dim=-1)  # [seq, vocab]
+            layer_probs = torch.softmax(layer_logits.float(), dim=-1)  # [seq, vocab]
             layer_preds = torch.argmax(layer_probs, dim=-1)  # [seq]
 
             row: list[LogitLensCell] = []
@@ -828,7 +828,7 @@ def run_dla(req: DLARequest, loaded: LoadedModel) -> DLAResponse:
                 result = cache[result_key][0]  # [seq, n_heads, d_model]
                 for head_idx in range(n_heads):
                     head_output = result[target_pos, head_idx, :]  # [d_model]
-                    contribution = float((head_output @ unembed_dir).item())
+                    contribution = float((head_output.float() @ unembed_dir).item())
                     components.append(DLAComponent(
                         name=f"L{layer_idx}.H{head_idx}",
                         type="attention",
@@ -841,7 +841,7 @@ def run_dla(req: DLARequest, loaded: LoadedModel) -> DLAResponse:
             mlp_key = f"blocks.{layer_idx}.hook_mlp_out"
             if mlp_key in cache:
                 mlp_output = cache[mlp_key][0, target_pos, :]  # [d_model]
-                contribution = float((mlp_output @ unembed_dir).item())
+                contribution = float((mlp_output.float() @ unembed_dir).item())
                 components.append(DLAComponent(
                     name=f"MLP.{layer_idx}",
                     type="mlp",
@@ -885,7 +885,7 @@ def _extract_top_predictions(model, logits_2d, position: int = -1, k: int = 10) 
     import torch
 
     final_logits = logits_2d[position, :]  # [vocab]
-    probs = torch.softmax(final_logits, dim=-1)
+    probs = torch.softmax(final_logits.float(), dim=-1)
     top_vals, top_ids = torch.topk(probs, k)
     results = []
     for rank, (prob, tid) in enumerate(zip(top_vals.tolist(), top_ids.tolist()), start=1):
@@ -1177,6 +1177,35 @@ def run_ablate_features(req: AblateFeatureRequest, loaded: LoadedModel) -> Ablat
 # ---------------------------------------------------------------------------
 
 
+def _forward_with_fp32_logit(model, tokens, target_pos: int, token_id: int):
+    """Run ``model(tokens)`` (with any hooks already added) and also return the
+    logit of ``token_id`` at ``target_pos`` computed in float32 from the final
+    normalized residual. For bf16 models (Gemma) the model's own logits are
+    rounded to ~0.125 near 20, too coarse for patching's small differences;
+    for fp32 models this equals the model's logit.
+    """
+    import torch
+
+    grabbed = {}
+
+    def grab(x, hook):
+        grabbed["n"] = x[0, target_pos].detach()
+        return x
+
+    with model.hooks(fwd_hooks=[("ln_final.hook_normalized", grab)]):
+        logits = model(tokens)
+    if "n" not in grabbed:  # no final-norm hook (shouldn't happen): fall back
+        return logits, float(logits[0, target_pos, token_id].float().item())
+    value = grabbed["n"].float() @ model.W_U[:, token_id].float()
+    b_U = getattr(model, "b_U", None)
+    if b_U is not None:
+        value = value + b_U[token_id].float()
+    cap = float(getattr(model.cfg, "output_logits_soft_cap", 0.0) or 0.0)
+    if cap > 0:
+        value = cap * torch.tanh(value / cap)
+    return logits, float(value.item())
+
+
 # Residual patching runs one forward pass per (layer, position); ~12 x 50.
 MAX_RESID_PATCH_RUNS = 600
 
@@ -1264,8 +1293,9 @@ def run_patching(req: PatchRequest, loaded: LoadedModel) -> PatchResponse:
         corrupted_predicted_token = model.to_single_str_token(corrupted_pred_id)
 
         # Baseline logit values for the clean prediction token
-        clean_logit_val = float(clean_logits[0, target_pos, clean_pred_id].item())
-        corrupted_logit_val = float(corrupted_logits[0, target_pos, clean_pred_id].item())
+        with torch.no_grad():
+            _, clean_logit_val = _forward_with_fp32_logit(model, clean_tokens, target_pos, clean_pred_id)
+            _, corrupted_logit_val = _forward_with_fp32_logit(model, corrupted_tokens, target_pos, clean_pred_id)
 
         # -- Patch each component --
         patch_start = time.perf_counter()
@@ -1288,10 +1318,9 @@ def run_patching(req: PatchRequest, loaded: LoadedModel) -> PatchResponse:
                     model.add_hook(hook_name, patch_head_hook)
                     try:
                         with torch.no_grad():
-                            patched_logits = model(corrupted_tokens)
+                            _, patched_logit_val = _forward_with_fp32_logit(model, corrupted_tokens, target_pos, clean_pred_id)
                     finally:
                         model.reset_hooks()
-                    patched_logit_val = float(patched_logits[0, target_pos, clean_pred_id].item())
                     effect = patched_logit_val - corrupted_logit_val
 
                     components.append(PatchComponent(
@@ -1319,10 +1348,9 @@ def run_patching(req: PatchRequest, loaded: LoadedModel) -> PatchResponse:
                 model.add_hook(hook_name, patch_mlp_hook)
                 try:
                     with torch.no_grad():
-                        patched_logits = model(corrupted_tokens)
+                        _, patched_logit_val = _forward_with_fp32_logit(model, corrupted_tokens, target_pos, clean_pred_id)
                 finally:
                     model.reset_hooks()
-                patched_logit_val = float(patched_logits[0, target_pos, clean_pred_id].item())
                 effect = patched_logit_val - corrupted_logit_val
 
                 components.append(PatchComponent(
@@ -1370,10 +1398,9 @@ def run_patching(req: PatchRequest, loaded: LoadedModel) -> PatchResponse:
                     model.add_hook(cache_key, patch_resid_hook)
                     try:
                         with torch.no_grad():
-                            patched_logits = model(corrupted_tokens)
+                            _, patched_logit_val = _forward_with_fp32_logit(model, corrupted_tokens, target_pos, clean_pred_id)
                     finally:
                         model.reset_hooks()
-                    patched_logit_val = float(patched_logits[0, target_pos, clean_pred_id].item())
                     effect = patched_logit_val - corrupted_logit_val
 
                     components.append(PatchComponent(
@@ -1630,7 +1657,7 @@ def run_circuit(req: CircuitRequest, loaded: LoadedModel) -> CircuitResponse:
                 result = cache[result_key][0]  # [seq, n_heads, d_model]
                 for head_idx in range(n_heads):
                     head_output = result[target_pos, head_idx, :]
-                    contribution = float((head_output @ unembed_dir).item())
+                    contribution = float((head_output.float() @ unembed_dir).item())
                     cid = f"L{layer_idx}.H{head_idx}"
                     component_importance[cid] = contribution
 
@@ -1638,7 +1665,7 @@ def run_circuit(req: CircuitRequest, loaded: LoadedModel) -> CircuitResponse:
             mlp_key = f"blocks.{layer_idx}.hook_mlp_out"
             if mlp_key in cache:
                 mlp_output = cache[mlp_key][0, target_pos, :]
-                contribution = float((mlp_output @ unembed_dir).item())
+                contribution = float((mlp_output.float() @ unembed_dir).item())
                 cid = f"MLP.{layer_idx}"
                 component_importance[cid] = contribution
 

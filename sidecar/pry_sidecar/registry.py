@@ -317,14 +317,11 @@ class ModelRegistry:
                 raise RuntimeError(f"required ML deps not available: {e}") from e
 
             device = "cuda" if torch.cuda.is_available() else "cpu"
-            hf_token = os.environ.get("HF_TOKEN")
 
             def load_model(on: str):
-                m = HookedTransformer.from_pretrained(
-                    tl_name,
-                    device=on,
-                    **({"token": hf_token} if hf_token else {}),
-                )
+                # No token= here: TransformerLens passes token=HF_TOKEN to
+                # transformers itself, and a second one is a TypeError.
+                m = HookedTransformer.from_pretrained(tl_name, device=on)
                 m.cfg.use_attn_result = True
                 return m
 

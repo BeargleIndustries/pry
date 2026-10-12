@@ -298,3 +298,30 @@ def test_load_custom_no_sae(client, no_neuronpedia):
         assert health["loaded_preset"] == pid and health["sae_layer"] is None
     finally:
         main.REGISTRY.unload(pid)
+
+
+def test_load_custom_never_passes_its_own_token(monkeypatch):
+    """TransformerLens passes token=HF_TOKEN to transformers itself; a second
+    token= kwarg is a TypeError, so a saved token broke every custom load."""
+    import transformer_lens
+
+    from pry_sidecar.registry import ModelRegistry
+
+    monkeypatch.setenv("HF_TOKEN", "hf_dummy_token_for_test")
+    seen: dict = {}
+
+    class Stop(Exception):
+        pass
+
+    def fake_from_pretrained(name, **kwargs):
+        seen.update(kwargs)
+        raise Stop
+
+    monkeypatch.setattr(transformer_lens.HookedTransformer, "from_pretrained", staticmethod(fake_from_pretrained))
+    reg = ModelRegistry()
+    try:
+        reg.load_custom("custom:gpt2", "gpt2")
+    except Exception:
+        pass
+    assert seen, "from_pretrained was not called"
+    assert "token" not in seen
