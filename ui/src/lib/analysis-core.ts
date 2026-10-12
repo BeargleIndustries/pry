@@ -133,10 +133,38 @@ function errMsg(e: unknown): string {
   return (e as { message?: string })?.message ?? String(e);
 }
 
+/** Analyses that can be superseded by a newer request of the same kind. */
+type AnalysisKind = 'lens' | 'dla' | 'steer' | 'headAblation' | 'featureAblation' | 'patch' | 'circuit';
+
+const LOADING_FLAG = {
+  lens: 'logitLensLoading',
+  dla: 'dlaLoading',
+  steer: 'steerLoading',
+  headAblation: 'headAblateLoading',
+  featureAblation: 'featureAblateLoading',
+  patch: 'patchLoading',
+  circuit: 'circuitLoading',
+} as const satisfies Record<AnalysisKind, keyof AnalysisState>;
+
+function zeroSeqs(): Record<AnalysisKind, number> {
+  return { lens: 0, dla: 0, steer: 0, headAblation: 0, featureAblation: 0, patch: 0, circuit: 0 };
+}
+
 export class AnalysisController {
-  private dlaTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Debounced DLA / Key parts refresh after the focused token changes. */
+  private focusTimer: ReturnType<typeof setTimeout> | null = null;
   /** Focus index the current/in-flight DLA result was requested for. */
   private dlaFocus: number | undefined = undefined;
+  /** Focus index and settings the current/in-flight Key parts result was requested with. */
+  private circuitFocus: number | undefined = undefined;
+  private circuitSource: 'dla' | 'patching' = 'dla';
+  private circuitThreshold: number | undefined = undefined;
+  /**
+   * One sequence number per analysis kind. A new request bumps it, so an
+   * older request still in flight knows it was superseded; clearAnalyses
+   * bumps them all.
+   */
+  private seqs = zeroSeqs();
 
   constructor(
     readonly state: AnalysisState,
@@ -154,10 +182,47 @@ export class AnalysisController {
     return p !== null && p !== textBoxPrompt;
   }
 
+  /**
+   * Run one analysis request of `kind`. A newer request of the same kind
+   * supersedes this one (there is no "already loading" guard), and only the
+   * current request clears the loading flag. Returns the result only while it
+   * still belongs to what is shown: same sequence, same loaded model and, when
+   * `prompt` is given, the same analyzed prompt. Otherwise null.
+   */
+  private async request<T>(
+    kind: AnalysisKind,
+    presetId: string,
+    prompt: string | null,
+    call: () => Promise<T>,
+  ): Promise<{ result: T } | null> {
+    const s = this.state;
+    const seq = ++this.seqs[kind];
+    const isCurrent = () =>
+      seq === this.seqs[kind] &&
+      this.deps.getActivePresetId() === presetId &&
+      (prompt === null || this.analysisPrompt === prompt);
+    s[LOADING_FLAG[kind]] = true;
+    try {
+      await this.deps.ensureLoaded();
+      const result = await call();
+      return isCurrent() ? { result } : null;
+    } catch (e) {
+      if (isCurrent()) s.error = errMsg(e);
+      return null;
+    } finally {
+      if (seq === this.seqs[kind]) s[LOADING_FLAG[kind]] = false;
+    }
+  }
+
   /** Clear every derived analysis result (not the generate response itself). */
   private clearAnalyses() {
     const s = this.state;
-    this.cancelDlaRefresh();
+    this.cancelFocusRefresh();
+    // Release every in-flight request: its result belongs to the old prompt.
+    for (const kind of Object.keys(this.seqs) as AnalysisKind[]) {
+      this.seqs[kind]++;
+      s[LOADING_FLAG[kind]] = false;
+    }
     s.logitLensResponse = null;
     s.dlaResponse = null;
     s.steerResponse = null;
@@ -174,6 +239,8 @@ export class AnalysisController {
   /** Called after a successful model switch: drop everything tied to the old model. */
   clearForModelSwitch() {
     this.state.saeLayer = undefined;
+    // The layer list belongs to the old model; the next load or Run refills it.
+    this.state.availableSaeLayers = [];
     this.clearAnalyses();
     // Head scores belong to the model, not the prompt, so only a switch clears them.
     // Bumping the sequence also releases a request still running for the old model.
@@ -245,6 +312,8 @@ export class AnalysisController {
     s.layerSwitching = true;
     try {
       const result = await switchSaeLayer(presetId, response.prompt, layer);
+      // A newer Run (or a model switch) replaced the response while this ran.
+      if (s.response !== response) return;
       s.response = {
         ...response,
         sae_features: result.sae_features,
@@ -257,48 +326,32 @@ export class AnalysisController {
       s.featureAblateResponse = null;
       s.steeringResetKey++;
     } catch (e) {
-      s.error = errMsg(e);
+      if (s.response === response) s.error = errMsg(e);
     } finally {
       s.layerSwitching = false;
     }
   }
 
   async logitLens() {
-    const s = this.state;
     const presetId = this.deps.getActivePresetId();
     const prompt = this.analysisPrompt;
-    if (s.logitLensLoading || !presetId || prompt === null) return;
-    s.logitLensLoading = true;
-    try {
-      await this.deps.ensureLoaded();
-      s.logitLensResponse = await fetchLogitLens(presetId, prompt);
-    } catch (e) {
-      s.error = errMsg(e);
-    } finally {
-      s.logitLensLoading = false;
-    }
+    if (!presetId || prompt === null) return;
+    const out = await this.request('lens', presetId, prompt, () => fetchLogitLens(presetId, prompt));
+    if (out) this.state.logitLensResponse = out.result;
   }
 
   async dla() {
     const s = this.state;
     const presetId = this.deps.getActivePresetId();
     const prompt = this.analysisPrompt;
-    if (s.dlaLoading || !presetId || prompt === null) return;
-    s.dlaLoading = true;
+    if (!presetId || prompt === null) return;
     const focus = s.focusTokenIndex;
     this.dlaFocus = focus;
-    try {
-      await this.deps.ensureLoaded();
-      const result = await fetchDLA(presetId, prompt, focus);
-      // Drop a result whose prompt was replaced while it was in flight.
-      if (this.analysisPrompt === prompt) s.dlaResponse = result;
-    } catch (e) {
-      s.error = errMsg(e);
-    } finally {
-      s.dlaLoading = false;
-    }
+    const out = await this.request('dla', presetId, prompt, () => fetchDLA(presetId, prompt, focus));
+    if (!out) return;
+    s.dlaResponse = out.result;
     // Focus moved while this request ran: refresh for the new token.
-    if (s.dlaResponse && s.focusTokenIndex !== this.dlaFocus) this.focusChanged();
+    if (s.focusTokenIndex !== this.dlaFocus) this.focusChanged();
   }
 
   /**
@@ -309,20 +362,22 @@ export class AnalysisController {
    */
   focusChanged() {
     const s = this.state;
-    this.cancelDlaRefresh();
-    if (!s.dlaResponse && !s.dlaLoading) return;
-    if (s.focusTokenIndex === this.dlaFocus) return;
-    if (s.dlaLoading) return; // dla() re-checks the focus when it finishes
-    this.dlaTimer = setTimeout(() => {
-      this.dlaTimer = null;
-      void this.dla();
+    this.cancelFocusRefresh();
+    // A request still loading re-checks the focus when it lands.
+    const dla = !!s.dlaResponse && !s.dlaLoading && s.focusTokenIndex !== this.dlaFocus;
+    const circuit = !!s.circuitResponse && !s.circuitLoading && s.focusTokenIndex !== this.circuitFocus;
+    if (!dla && !circuit) return;
+    this.focusTimer = setTimeout(() => {
+      this.focusTimer = null;
+      if (dla) void this.dla();
+      if (circuit) void this.circuit(this.circuitSource, this.circuitThreshold);
     }, DLA_FOCUS_DEBOUNCE_MS);
   }
 
-  private cancelDlaRefresh() {
-    if (this.dlaTimer !== null) {
-      clearTimeout(this.dlaTimer);
-      this.dlaTimer = null;
+  private cancelFocusRefresh() {
+    if (this.focusTimer !== null) {
+      clearTimeout(this.focusTimer);
+      this.focusTimer = null;
     }
   }
 
@@ -348,19 +403,13 @@ export class AnalysisController {
   }
 
   async steer(featureId: number, saeLayerVal: number, alpha: number) {
-    const s = this.state;
     const presetId = this.deps.getActivePresetId();
     const prompt = this.analysisPrompt;
-    if (s.steerLoading || !presetId || prompt === null) return;
-    s.steerLoading = true;
-    try {
-      await this.deps.ensureLoaded();
-      s.steerResponse = await steerGenerate(presetId, prompt, featureId, saeLayerVal, alpha);
-    } catch (e) {
-      s.error = errMsg(e);
-    } finally {
-      s.steerLoading = false;
-    }
+    if (!presetId || prompt === null) return;
+    const out = await this.request('steer', presetId, prompt, () =>
+      steerGenerate(presetId, prompt, featureId, saeLayerVal, alpha),
+    );
+    if (out) this.state.steerResponse = out.result;
   }
 
   toggleHeadAblation(layer: number, head: number) {
@@ -375,16 +424,10 @@ export class AnalysisController {
     const s = this.state;
     const presetId = this.deps.getActivePresetId();
     const prompt = this.analysisPrompt;
-    if (s.headAblateLoading || !presetId || prompt === null || s.headAblations.length === 0) return;
-    s.headAblateLoading = true;
-    try {
-      await this.deps.ensureLoaded();
-      s.headAblateResponse = await ablateHeads(presetId, prompt, s.headAblations);
-    } catch (e) {
-      s.error = errMsg(e);
-    } finally {
-      s.headAblateLoading = false;
-    }
+    if (!presetId || prompt === null || s.headAblations.length === 0) return;
+    const ablations = s.headAblations;
+    const out = await this.request('headAblation', presetId, prompt, () => ablateHeads(presetId, prompt, ablations));
+    if (out) s.headAblateResponse = out.result;
   }
 
   toggleFeatureAblation(featureIndex: number, layer: number) {
@@ -399,32 +442,22 @@ export class AnalysisController {
     const s = this.state;
     const presetId = this.deps.getActivePresetId();
     const prompt = this.analysisPrompt;
-    if (s.featureAblateLoading || !presetId || prompt === null || s.featureAblations.length === 0) return;
-    s.featureAblateLoading = true;
-    try {
-      await this.deps.ensureLoaded();
-      s.featureAblateResponse = await ablateFeatures(presetId, prompt, s.featureAblations);
-    } catch (e) {
-      s.error = errMsg(e);
-    } finally {
-      s.featureAblateLoading = false;
-    }
+    if (!presetId || prompt === null || s.featureAblations.length === 0) return;
+    const ablations = s.featureAblations;
+    const out = await this.request('featureAblation', presetId, prompt, () =>
+      ablateFeatures(presetId, prompt, ablations),
+    );
+    if (out) s.featureAblateResponse = out.result;
   }
 
   /** Patching compares two prompts typed into the patching panel, so it does not need a response. */
   async patching(cleanPrompt: string, corruptedPrompt: string, patchType: 'head' | 'mlp' | 'resid') {
-    const s = this.state;
     const presetId = this.deps.getActivePresetId();
-    if (s.patchLoading || !presetId) return;
-    s.patchLoading = true;
-    try {
-      await this.deps.ensureLoaded();
-      s.patchResponse = await runPatching(presetId, cleanPrompt, corruptedPrompt, patchType);
-    } catch (e) {
-      s.error = errMsg(e);
-    } finally {
-      s.patchLoading = false;
-    }
+    if (!presetId) return;
+    const out = await this.request('patch', presetId, null, () =>
+      runPatching(presetId, cleanPrompt, corruptedPrompt, patchType),
+    );
+    if (out) this.state.patchResponse = out.result;
   }
 
   /**
@@ -464,19 +497,24 @@ export class AnalysisController {
     }
   }
 
+  /**
+   * Key parts for the focused word's next-word guess, the same word Why (DLA)
+   * explains. Refetched when the focus changes, like DLA.
+   */
   async circuit(source: 'dla' | 'patching', threshold?: number) {
     const s = this.state;
     const presetId = this.deps.getActivePresetId();
     const prompt = this.analysisPrompt;
-    if (s.circuitLoading || !presetId || prompt === null) return;
-    s.circuitLoading = true;
-    try {
-      await this.deps.ensureLoaded();
-      s.circuitResponse = await fetchCircuit(presetId, prompt, source, threshold);
-    } catch (e) {
-      s.error = errMsg(e);
-    } finally {
-      s.circuitLoading = false;
-    }
+    if (!presetId || prompt === null) return;
+    const focus = s.focusTokenIndex;
+    this.circuitFocus = focus;
+    this.circuitSource = source;
+    this.circuitThreshold = threshold;
+    const out = await this.request('circuit', presetId, prompt, () =>
+      fetchCircuit(presetId, prompt, source, threshold, focus),
+    );
+    if (!out) return;
+    s.circuitResponse = out.result;
+    if (s.focusTokenIndex !== this.circuitFocus) this.focusChanged();
   }
 }
