@@ -38,6 +38,8 @@
   import { resetAllTips } from '$lib/tips/coordinate';
   import { invoke } from '@tauri-apps/api/core';
   import LoadProgressBanner from '$lib/components/LoadProgressBanner.svelte';
+  import LoadingScreen from '$lib/components/LoadingScreen.svelte';
+  import { startLoad, applyEvent, recordEvent, readHistory, type LoadTrack } from '$lib/load-progress';
   import RuntimeUpdatePrompt from '$lib/components/RuntimeUpdatePrompt.svelte';
   import ModelSwitcher from '$lib/components/ModelSwitcher.svelte';
   import { tutorialState } from '$lib/tutorial/tutorial-store.svelte';
@@ -190,6 +192,22 @@
   let bannerTargetPreset = $state<string | null>(null);
   const bannerVisible = $derived(bannerPhase !== 'idle');
 
+  // Full loading screen: one track per load, fed by every load path. The slim
+  // banner stays for errors and warnings.
+  let loadTrack = $state<LoadTrack | null>(null);
+  const loadingScreenOn = $derived(
+    !!loadTrack && !loadTrack.done && !loadTrack.failed &&
+      (bannerPhase === 'loading' || bannerPhase === 'unloading' || loadState === 'loading'),
+  );
+  function beginLoadTrack(presetId: string) {
+    loadTrack = startLoad(presetId, Date.now(), readHistory(presetId));
+  }
+  function onLoadEvent(ev: LoadProgress) {
+    loadProgress = ev;
+    bannerMessage = ev.message;
+    if (loadTrack) loadTrack = recordEvent(loadTrack, ev, Date.now());
+  }
+
   // ---------------------------------------------------------------------------
   // Responsive layout state
   // ---------------------------------------------------------------------------
@@ -228,14 +246,8 @@
         loadState = "loading";
         loadProgress = null;
         st.error = null;
-        await loadPreset(
-          selectedPreset,
-          (ev) => {
-            loadProgress = ev;
-            bannerMessage = ev.message;
-          },
-          loadAbortController.signal,
-        );
+        beginLoadTrack(selectedPreset);
+        await loadPreset(selectedPreset, onLoadEvent, loadAbortController.signal);
         loadState = "loaded";
         if (activePresetId !== selectedPreset) {
           activePresetId = selectedPreset;
@@ -312,10 +324,8 @@
         bannerError = null;
         loadProgress = null;
         loadState = "loading";
-        loadPreset(target, (ev) => {
-          loadProgress = ev;
-          bannerMessage = ev.message;
-        })
+        beginLoadTrack(target);
+        loadPreset(target, onLoadEvent)
           .then(() => {
             loadState = "loaded";
             bannerPhase = 'idle';
@@ -384,20 +394,25 @@
     bannerTargetPreset = presetId;
     const previousActive = activePresetId;
     try {
+      beginLoadTrack(presetId);
       if (previousActive && previousActive !== presetId) {
         bannerPhase = 'unloading';
         bannerMessage = `Unloading ${displayName(previousActive, allCompat)}…`;
         loadProgress = null;
+        if (loadTrack) {
+          loadTrack = applyEvent(
+            loadTrack,
+            { stage: 'unload', message: `Putting ${displayName(previousActive, allCompat)} away…`, progress: 0 },
+            Date.now(),
+          );
+        }
         await unloadPreset(previousActive);
       }
       bannerPhase = 'loading';
       bannerMessage = `Loading ${displayName(presetId, allCompat)}…`;
       loadProgress = null;
       loadState = 'loading';
-      await loadPreset(presetId, (ev) => {
-        loadProgress = ev;
-        bannerMessage = ev.message;
-      });
+      await loadPreset(presetId, onLoadEvent);
       activePresetId = presetId;
       loadState = 'loaded';
       // Clear ALL analysis state when switching models
@@ -743,6 +758,22 @@
     }
   }
 
+  // An experiment picked on the loading screen opens once the model is ready.
+  // A failed load drops it: the error needs attention first.
+  let queuedExperimentId = $state<string | null>(null);
+  $effect(() => {
+    const id = queuedExperimentId;
+    if (!id) return;
+    if (bannerPhase === 'error') {
+      queuedExperimentId = null;
+      return;
+    }
+    if (loadState !== 'loaded' || bannerPhase !== 'idle' || switchInFlight) return;
+    queuedExperimentId = null;
+    const exp = experiments.find((e) => e.id === id);
+    if (exp) untrack(() => void pickExperiment(exp));
+  });
+
   // ---------------------------------------------------------------------------
   // Lab notebook (T27)
   // ---------------------------------------------------------------------------
@@ -1006,7 +1037,7 @@
        since the parent is overflow-hidden. The banner still renders correctly
        as a flex-shrink-0 child. -->
   <LoadProgressBanner
-    visible={bannerVisible}
+    visible={bannerVisible && !loadingScreenOn}
     phase={bannerPhase === 'idle' ? 'loading' : bannerPhase}
     presetId={bannerTargetPreset ?? activePresetId ? hfIdOf(bannerTargetPreset ?? activePresetId ?? '') : null}
     progress={loadProgress}
@@ -1074,7 +1105,17 @@
   {/if}
 
   <!-- Main workspace -->
-  <div class="flex-1 overflow-hidden">
+  <div class="relative flex-1 overflow-hidden">
+    {#if loadingScreenOn && loadTrack}
+      <LoadingScreen
+        track={loadTrack}
+        modelName={displayName(loadTrack.presetId, allCompat)}
+        {experiments}
+        presetName={(id) => displayName(id, allCompat)}
+        {queuedExperimentId}
+        onQueueExperiment={(id) => (queuedExperimentId = id)}
+      />
+    {/if}
     {#if compareMode}
       <div class="h-full overflow-y-auto p-4">
         <ComparePanel {compare} runDisabled={isRunDisabled} runDisabledReason={runButtonTooltip} />

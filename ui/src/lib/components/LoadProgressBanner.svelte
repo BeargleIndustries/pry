@@ -31,7 +31,7 @@
   }
 
   const bytesLabel = $derived.by(() => {
-    const done = progress?.bytes_downloaded;
+    const done = progress?.bytes_done ?? progress?.bytes_downloaded;
     const total = progress?.bytes_total;
     if (typeof done !== 'number') return '';
     if (typeof total === 'number' && total > 0) return `${fmtMB(done)} / ${fmtMB(total)} MB`;

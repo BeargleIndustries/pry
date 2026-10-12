@@ -53,7 +53,7 @@
   function applyEvent(ev: LoadProgress) {
     message = ev.message;
     progress = ev.progress;
-    bytesDownloaded = ev.bytes_downloaded;
+    bytesDownloaded = ev.bytes_done ?? ev.bytes_downloaded;
     bytesTotal = ev.bytes_total;
 
     // Map server stage → local display phase. The server has finer-grained
