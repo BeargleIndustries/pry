@@ -77,7 +77,6 @@ These tools show real numbers, but each one answers a narrow question. Pry says 
 - Start with GPT-2 small. The tour and the experiments use it.
 - On a computer without a graphics card, GPT-2 small and Pythia-70M run on the CPU. They're slower, but they work.
 - Gemma 2 2B needs an NVIDIA GPU with about 8 GB of memory free (it fits a 12 GB card). Google also asks for two things first, and Pry walks you through both: a free Hugging Face account where you've accepted the Gemma license, and a Hugging Face token saved in Pry.
-  <!-- TODO: the 0.3.4 notes said Gemma hadn't been run end to end on a real machine yet. Confirm whether that's still true before this ships. -->
 - **Add your own.** Type a Hugging Face model name and Pry checks it's a kind TransformerLens supports and tells you whether it'll fit. Most panels work on these. Features and Steering don't, since they need a trained feature dictionary that Pry only has for the built-in models.
 
 ## Requirements
@@ -121,8 +120,7 @@ The notebook's web-page export doesn't load anything from the internet.
 You'll need:
 
 - [Rust](https://rustup.rs/) (stable) and the Tauri CLI: `cargo install tauri-cli --version "^2"`
-- [Node.js](https://nodejs.org/) 22 or newer
-  <!-- TODO: ui/package.json has no "engines" field, so 22+ is the documented floor, not a tested minimum. Confirm. -->
+- [Node.js](https://nodejs.org/) 20 or newer (22 or newer if you want to run the dev-only popup audit in `scripts/dev/`)
 - Windows with the [WebView2 runtime](https://developer.microsoft.com/microsoft-edge/webview2/) (it's already on Windows 11)
 
 You don't need Python installed to build or run the app. On first launch Pry downloads its own Python 3.12 and builds its engine, same as the installed version.
@@ -135,8 +133,6 @@ cargo tauri dev
 ```
 
 `cargo tauri dev` starts the UI dev server on port 5173 and opens the app with live reload.
-<!-- TODO: `cargo tauri dev` wasn't run while writing this README (the debug build was built with `npm run build` + `cargo build --features tauri/custom-protocol` instead). Confirm it works from the repo root on a clean clone. -->
-
 
 **Working on the engine.** The Python side lives in `sidecar/` and needs Python 3.11 or 3.12. [`sidecar/README.md`](sidecar/README.md) has setup and tests.
 
