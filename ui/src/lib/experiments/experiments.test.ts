@@ -131,4 +131,22 @@ describe('applyExperiment', () => {
     expect(none.a.switchModel).not.toHaveBeenCalled();
     expect(none.a.runGenerate).toHaveBeenCalledOnce();
   });
+
+  it('applyExperiment reports a failed model switch', async () => {
+    // The switch "finishes" but the other model is still the loaded one.
+    const { a, calls } = mockActions('pythia-70m');
+    const result = await applyExperiment(byId('logit-lens'), a);
+    expect(result).toEqual({ ok: false, reason: 'model-switch-failed', preset: 'gpt2-small' });
+    expect(calls).toEqual(['switch:gpt2-small']);
+    expect(a.runGenerate).not.toHaveBeenCalled();
+  });
+
+  it('applyExperiment reports success after a switch that worked', async () => {
+    let active: string | null = 'pythia-70m';
+    const { a } = mockActions(null);
+    a.activePresetId = () => active;
+    a.switchModel = vi.fn(async (id: string) => { active = id; });
+    expect(await applyExperiment(byId('logit-lens'), a)).toEqual({ ok: true });
+    expect(a.runGenerate).toHaveBeenCalledOnce();
+  });
 });

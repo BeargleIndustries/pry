@@ -94,7 +94,7 @@ describe('analysis dispatchers use response.prompt, not the text box', () => {
     expect(sidecar.steerGenerate).toHaveBeenCalledWith('gpt2-small', RAN, 42, 6, 5);
     expect(sidecar.ablateHeads).toHaveBeenCalledWith('gpt2-small', RAN, [{ layer: 0, head: 1 }]);
     expect(sidecar.ablateFeatures).toHaveBeenCalledWith('gpt2-small', RAN, [{ feature_index: 7, layer: 6 }]);
-    expect(sidecar.fetchCircuit).toHaveBeenCalledWith('gpt2-small', RAN, 'dla', undefined);
+    expect(sidecar.fetchCircuit).toHaveBeenCalledWith('gpt2-small', RAN, 'dla', undefined, state.focusTokenIndex);
     expect(sidecar.switchSaeLayer).toHaveBeenCalledWith('gpt2-small', RAN, 8);
 
     const allCalls = [
@@ -385,5 +385,177 @@ describe('tokenize (patching token counters)', () => {
     expect(patchLengthStatus(null, 5)).toBeNull();
     expect(patchLengthStatus(14, 14)).toEqual({ same: true, label: 'same length ✓' });
     expect(patchLengthStatus(14, 15)).toEqual({ same: false, label: 'lengths differ: 14 vs 15' });
+  });
+});
+
+/** A sidecar call held open until the test releases it. */
+function deferred<T>() {
+  let resolve!: (v: T) => void;
+  const promise = new Promise<T>((r) => { resolve = r; });
+  return { promise, resolve };
+}
+
+function stubGenerateFetch(prompt: string) {
+  vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(fakeResponse(prompt)))));
+}
+
+describe('a newer Run or request supersedes one in flight (B1)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('drops a stale lens result after Run', async () => {
+    const { ctl, state } = makeController();
+    const old = deferred<unknown>();
+    vi.mocked(sidecar.fetchLogitLens).mockImplementationOnce(() => old.promise as never);
+    const lens = ctl.logitLens();
+    await Promise.resolve();
+    expect(state.logitLensLoading).toBe(true);
+
+    stubGenerateFetch('new prompt');
+    await ctl.generate('new prompt');
+    expect(state.logitLensLoading).toBe(false);
+
+    old.resolve({ kind: 'logit-lens', stale: true });
+    await lens;
+    expect(state.logitLensResponse).toBeNull();
+    expect(state.logitLensLoading).toBe(false);
+    expect(state.response?.prompt).toBe('new prompt');
+  });
+
+  it('a lens request issued after Run while an old one is in flight shows the new result', async () => {
+    const { ctl, state } = makeController();
+    const old = deferred<unknown>();
+    vi.mocked(sidecar.fetchLogitLens).mockImplementationOnce(() => old.promise as never);
+    const oldLens = ctl.logitLens();
+    await Promise.resolve();
+
+    stubGenerateFetch('new prompt');
+    await ctl.generate('new prompt');
+
+    // Not blocked by the old request's loading flag.
+    vi.mocked(sidecar.fetchLogitLens).mockResolvedValueOnce({ kind: 'logit-lens', fresh: true } as never);
+    await ctl.logitLens();
+    expect(sidecar.fetchLogitLens).toHaveBeenLastCalledWith('gpt2-small', 'new prompt');
+    expect(state.logitLensResponse).toMatchObject({ fresh: true });
+
+    old.resolve({ kind: 'logit-lens', stale: true });
+    await oldLens;
+    expect(state.logitLensResponse).toMatchObject({ fresh: true });
+    expect(state.logitLensLoading).toBe(false);
+  });
+
+  it('drops a lens result for a model that was switched away mid-request', async () => {
+    const { state, deps } = makeController();
+    let active: string | null = 'gpt2-small';
+    const ctl = new AnalysisController(state, { ...deps, getActivePresetId: () => active });
+    vi.mocked(sidecar.fetchLogitLens).mockImplementationOnce(async () => {
+      active = 'pythia-70m';
+      return { kind: 'logit-lens' } as never;
+    });
+    await ctl.logitLens();
+    expect(state.logitLensResponse).toBeNull();
+    expect(state.logitLensLoading).toBe(false);
+  });
+
+  type Case = {
+    name: string;
+    fn: keyof typeof sidecar;
+    loading: 'steerLoading' | 'headAblateLoading' | 'featureAblateLoading' | 'circuitLoading';
+    result: 'steerResponse' | 'headAblateResponse' | 'featureAblateResponse' | 'circuitResponse';
+    run: (ctl: AnalysisController) => Promise<void>;
+    prep?: (ctl: AnalysisController) => void;
+  };
+  const cases: Case[] = [
+    { name: 'steer', fn: 'steerGenerate', loading: 'steerLoading', result: 'steerResponse',
+      run: (c) => c.steer(42, 6, 5) },
+    { name: 'headAblation', fn: 'ablateHeads', loading: 'headAblateLoading', result: 'headAblateResponse',
+      prep: (c) => c.toggleHeadAblation(0, 1), run: (c) => c.runHeadAblation() },
+    { name: 'featureAblation', fn: 'ablateFeatures', loading: 'featureAblateLoading', result: 'featureAblateResponse',
+      prep: (c) => c.toggleFeatureAblation(7, 6), run: (c) => c.runFeatureAblation() },
+    { name: 'circuit', fn: 'fetchCircuit', loading: 'circuitLoading', result: 'circuitResponse',
+      run: (c) => c.circuit('dla') },
+  ];
+
+  it.each(cases)('$name: a stale result is dropped and a newer request wins', async (c) => {
+    const { ctl, state } = makeController();
+    const mock = vi.mocked(sidecar[c.fn] as (...a: unknown[]) => Promise<unknown>);
+
+    // 1. A Run while the request is in flight drops its result.
+    const stale = deferred<unknown>();
+    mock.mockImplementationOnce(() => stale.promise);
+    c.prep?.(ctl);
+    const first = c.run(ctl);
+    await Promise.resolve();
+    expect(state[c.loading]).toBe(true);
+    stubGenerateFetch('new prompt');
+    await ctl.generate('new prompt');
+    vi.unstubAllGlobals();
+    expect(state[c.loading]).toBe(false);
+    stale.resolve({ stale: true });
+    await first;
+    expect(state[c.result]).toBeNull();
+
+    // 2. A second request while the first is in flight supersedes it.
+    const slow = deferred<unknown>();
+    mock.mockImplementationOnce(() => slow.promise);
+    c.prep?.(ctl);
+    const older = c.run(ctl);
+    await Promise.resolve();
+    mock.mockResolvedValueOnce({ fresh: true });
+    await c.run(ctl);
+    expect(state[c.result]).toMatchObject({ fresh: true });
+    slow.resolve({ stale: true });
+    await older;
+    expect(state[c.result]).toMatchObject({ fresh: true });
+    expect(state[c.loading]).toBe(false);
+  });
+});
+
+describe('layer switch vs a newer Run (B2)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('layer switch does not overwrite a newer response', async () => {
+    const { ctl, state } = makeController();
+    const pending = deferred<unknown>();
+    vi.mocked(sidecar.switchSaeLayer).mockImplementationOnce(() => pending.promise as never);
+    const sw = ctl.layerSwitch(8);
+    await Promise.resolve();
+    expect(state.layerSwitching).toBe(true);
+
+    stubGenerateFetch('new prompt');
+    await ctl.generate('new prompt');
+    pending.resolve({ preset_id: 'gpt2-small', prompt: RAN, sae_features: [], sae_layer_used: 8, timing_ms: {} });
+    await sw;
+
+    expect(state.response?.prompt).toBe('new prompt');
+    expect(state.response?.sae_layer_used).toBe(6);
+    expect(state.saeLayer).toBe(6);
+    expect(state.layerSwitching).toBe(false);
+  });
+});
+
+describe('Key parts follows the focused word (A4)', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it('sends the focus and refetches when it changes', async () => {
+    const { ctl, state } = makeController();
+    state.focusTokenIndex = 1;
+    await ctl.circuit('dla', 0.5);
+    expect(sidecar.fetchCircuit).toHaveBeenLastCalledWith('gpt2-small', RAN, 'dla', 0.5, 1);
+
+    state.focusTokenIndex = 0;
+    ctl.focusChanged();
+    await vi.advanceTimersByTimeAsync(DLA_FOCUS_DEBOUNCE_MS);
+    expect(sidecar.fetchCircuit).toHaveBeenCalledTimes(2);
+    expect(sidecar.fetchCircuit).toHaveBeenLastCalledWith('gpt2-small', RAN, 'dla', 0.5, 0);
+  });
+});
+
+describe('SAE layer list belongs to the model (B8)', () => {
+  it('a model switch empties the layer list', () => {
+    const { ctl, state } = makeController();
+    state.availableSaeLayers = [0, 6, 11];
+    ctl.clearForModelSwitch();
+    expect(state.availableSaeLayers).toEqual([]);
   });
 });

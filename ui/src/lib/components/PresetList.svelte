@@ -17,6 +17,7 @@
     title = 'Preset Compatibility',
     switchLabel = 'Switch',
     onRemove = undefined,
+    disabled = false,
   }: {
     compatibilities: PresetCompatibility[];
     activePresetId?: string | null;
@@ -25,6 +26,8 @@
     switchLabel?: string;
     /** Custom models (T32): show a Remove button on each row. */
     onRemove?: (presetId: string) => void;
+    /** Switch buttons are off while a model is loading or switching. */
+    disabled?: boolean;
   } = $props();
 
   const TONE: Record<VerdictTone, { glyph: string; cls: string }> = {
@@ -84,7 +87,8 @@
           <button
             type="button"
             onclick={() => onSwitch?.(c.preset_id)}
-            class="rounded-md border border-indigo-700 bg-indigo-900/40 px-2 py-0.5 text-xs text-indigo-200 hover:bg-indigo-800/60"
+            {disabled}
+            class="rounded-md border border-indigo-700 bg-indigo-900/40 px-2 py-0.5 text-xs text-indigo-200 hover:bg-indigo-800/60 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {switchLabel}
           </button>

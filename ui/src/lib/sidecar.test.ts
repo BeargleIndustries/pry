@@ -9,6 +9,8 @@ import {
   ENGINE_NOT_RUNNING,
   _setConnectionRetryForTests,
   health,
+  loadPreset,
+  realWeightsVerified,
   sidecarFetch,
 } from './sidecar';
 
@@ -98,5 +100,39 @@ describe('sidecar client under Tauri', () => {
     const events = listenMock.mock.calls.map((c) => c[0]);
     expect(events).toContain('sidecar:crashed');
     expect(events).toContain('sidecar:restarted');
+  });
+
+  function sse(events: object[]): Response {
+    const body = events.map((e) => `data: ${JSON.stringify(e)}
+
+`).join('');
+    return new Response(body, { status: 200, headers: { 'Content-Type': 'text/event-stream' } });
+  }
+
+  it('loadPreset rejects when the stream ends without ready', async () => {
+    invokeMock.mockResolvedValue({ base_url: 'http://127.0.0.1:50001', token: 'tok' });
+    fetchMock.mockImplementation(async () =>
+      sse([{ stage: 'load_model', message: 'Loading', progress: 0.5 }]),
+    );
+    const seen: string[] = [];
+    await expect(loadPreset('gpt2-small', (ev) => seen.push(ev.stage))).rejects.toThrow('load ended early');
+    expect(seen).toEqual(['load_model']);
+  });
+
+  it('loadPreset resolves on ready', async () => {
+    invokeMock.mockResolvedValue({ base_url: 'http://127.0.0.1:50001', token: 'tok' });
+    fetchMock.mockImplementation(async () =>
+      sse([{ stage: 'load_model', message: 'Loading', progress: 0.5 }, { stage: 'ready', message: 'Ready', progress: 1 }]),
+    );
+    await expect(loadPreset('gpt2-small', () => {})).resolves.toBeUndefined();
+  });
+});
+
+describe('realWeightsVerified', () => {
+  it('treats a missing field as verified and only false as unverified', () => {
+    expect(realWeightsVerified({})).toBe(true);
+    expect(realWeightsVerified(null)).toBe(true);
+    expect(realWeightsVerified({ real_weights_verified: true })).toBe(true);
+    expect(realWeightsVerified({ real_weights_verified: false })).toBe(false);
   });
 });
