@@ -158,16 +158,27 @@ export interface ExperimentActions {
   presetHeadAblations(heads: { layer: number; head: number }[]): void;
 }
 
+/** What `applyExperiment` did: set up, or stopped because the model switch failed. */
+export type ApplyResult = { ok: true } | { ok: false; reason: 'model-switch-failed'; preset: string };
+
 /**
  * Set an experiment up: switch model if a different one is loaded, put the
  * prompt in and run it, then open the panels. Ablations and tabs go after the
  * run, because a new run clears ablation picks and analysis results.
+ *
+ * The page's switch never throws, so the loaded model is checked afterwards.
+ * If it isn't the experiment's model, nothing else is set up.
  */
-export async function applyExperiment(exp: Experiment, a: ExperimentActions): Promise<void> {
+export async function applyExperiment(exp: Experiment, a: ExperimentActions): Promise<ApplyResult> {
   const active = a.activePresetId();
   // With nothing loaded, Run loads the page default (gpt2-small) by itself.
   const runLoadsIt = active === null && exp.preset === DEFAULT_PRESET;
-  if (active !== exp.preset && !runLoadsIt) await a.switchModel(exp.preset);
+  if (active !== exp.preset && !runLoadsIt) {
+    await a.switchModel(exp.preset);
+    if (a.activePresetId() !== exp.preset) {
+      return { ok: false, reason: 'model-switch-failed', preset: exp.preset };
+    }
+  }
   a.setPrompt(exp.prompt);
   if (exp.patching) a.presetPatching(exp.patching);
   await a.runGenerate();
@@ -175,4 +186,5 @@ export async function applyExperiment(exp: Experiment, a: ExperimentActions): Pr
   if (exp.aggregation) a.setAggregation(exp.aggregation);
   if (exp.open.right) a.openRightTab(exp.open.right);
   if (exp.open.left) a.openLeftTab(exp.open.left);
+  return { ok: true };
 }
