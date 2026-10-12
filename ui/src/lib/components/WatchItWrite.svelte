@@ -147,14 +147,17 @@
           bind:value={newTokens}
           class="w-20 rounded border border-zinc-700 bg-zinc-950 px-2 py-1 font-mono"
         />
-        <span class="text-zinc-600">(1–{MAX_NEW_TOKENS}; really word-pieces, called tokens)</span>
+        <span class="text-zinc-600">(1 to {MAX_NEW_TOKENS}; they're really tokens, the word pieces the model reads)</span>
       </label>
 
       {#if temperature > 0 && result?.seed_used != null}
-        <label class="flex items-center gap-2 text-xs text-zinc-400">
-          <input type="checkbox" bind:checked={keepSeed} class="accent-indigo-500" />
-          Reuse the same random draws (seed {result.seed_used}) so you can compare
-        </label>
+        <div class="flex items-center gap-1 text-xs text-zinc-400">
+          <label class="flex items-center gap-2">
+            <input type="checkbox" bind:checked={keepSeed} class="accent-indigo-500" />
+            Reuse the same random draws so you can compare
+          </label>
+          <span>(<Term key="seed">seed</Term> {result.seed_used})</span>
+        </div>
       {/if}
 
       <button

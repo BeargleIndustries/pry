@@ -1,6 +1,9 @@
 <script lang="ts">
   import Term from './Term.svelte';
+  import Readout from './Readout.svelte';
   import type { CircuitResponse, CircuitNode, CircuitEdge } from '$lib/types';
+  import { circuitReadout, explainingLabel } from '$lib/readouts';
+  import { realWeightsVerified } from '$lib/sidecar';
   import { clampCell, handleGridKey, type GridCell } from '$lib/grid-nav';
   import { NEGATIVE_HEX, POSITIVE_HEX, signedColor, signedHex, signedNumber, signGlyph, signOf } from '$lib/signed-color';
   import { edgeColor, edgeGlyph, edgeWidth, EDGE_POSITIVE_COLOR, EDGE_NEGATIVE_COLOR } from '$lib/edge-style';
@@ -12,14 +15,13 @@
     /**
      * The word whose next-word guess these parts explain: the focused word,
      * the same one Why (DLA) explains (`index` is its token index). The
-     * results refetch when the focus changes.
-     * TODO(pry-clarity T4c): render the sentence that uses this
-     * ("Explaining the guess after ·she (word 3)").
+     * results refetch when the focus changes. Shown as "Explaining the guess
+     * after ·she (word 3)".
      */
     targetLabel?: { text: string; index: number } | null;
   }
 
-  let { response, loading = false, onRun }: Props = $props();
+  let { response, loading = false, onRun, targetLabel = null }: Props = $props();
 
   let thresholdInput = $state('');
 
@@ -124,10 +126,10 @@
   }
 
   function nodeLabel(n: CircuitNode): string {
-    const what = n.type === 'mlp' ? `MLP, layer ${n.layer}` : `Attention head, layer ${n.layer} head ${n.head}`;
+    const what = n.type === 'mlp' ? `MLP, layer ${n.layer}` : `Attention head, layer ${n.layer}, head ${n.head}`;
     const s = signOf(n.importance);
-    const dir = s === 'positive' ? 'pushed toward the prediction' : s === 'negative' ? 'pushed against it' : 'no push';
-    return `${what}: importance ${signedNumber(n.importance, 4)}, ${dir}`;
+    const dir = s === 'positive' ? 'pushed toward the guess' : s === 'negative' ? 'pushed against it' : 'no push';
+    return `${what}: direct push ${signedNumber(n.importance, 2)}, ${dir}`;
   }
 
   // Keyboard model (T29): a roving grid. Rows run top to bottom as drawn
@@ -161,7 +163,7 @@
 >
   <div class="flex items-baseline gap-2">
     <h2 class="text-sm font-semibold text-zinc-100">Key parts</h2>
-    <span class="text-xs text-zinc-600">From <Term key="dla">DLA</Term></span>
+    <span class="text-xs text-zinc-600">The parts that pushed the guess most, from Why (<Term key="dla">DLA</Term>)</span>
     {#if loading}
       <span class="ml-auto inline-flex items-center gap-1.5 text-xs text-zinc-500">
         <span class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-zinc-500 border-t-transparent"></span>
@@ -171,7 +173,10 @@
   </div>
 
   <p class="text-xs text-zinc-400">
-    These are the <Term key="head">heads</Term> and <Term key="layer">layers</Term> that pushed the prediction most. Lines show only one kind of connection, the direct value path; other ways parts affect each other (like changing where a head looks) aren't drawn.
+    These are the <Term key="head">heads</Term> and MLPs that pushed the guess most. Researchers call a set of parts
+    like this a <Term key="circuit">circuit</Term>. Lines show only one kind of connection, the
+    <Term key="direct-value-path">direct value path</Term>; other ways parts affect each other (like changing where a
+    head looks) aren't drawn.
   </p>
 
   <!-- Controls -->
@@ -184,6 +189,7 @@
       placeholder="auto"
       class="w-16 rounded border border-zinc-700 bg-zinc-900 px-1.5 py-0.5 text-xs text-zinc-200 placeholder-zinc-600 focus:border-indigo-500 focus:outline-none"
     />
+    <span class="text-[10px] text-zinc-500">The <Term key="threshold">cutoff</Term>: parts that push less than this don't show.</span>
     <button
       type="button"
       onclick={handleRun}
@@ -196,29 +202,35 @@
 
   {#if !response && !loading}
     <div class="flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 py-12">
-      <p class="text-sm text-zinc-600">Run a prompt first, then come back here to see which parts mattered most.</p>
+      <p class="text-sm text-zinc-600">Run a prompt and this tab fills in on its own, showing which parts mattered most.</p>
     </div>
   {:else if response}
+    <Readout text={circuitReadout(response)} />
+
     <!-- Info -->
     <div class="flex flex-wrap items-center gap-2 rounded-md border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-xs">
-      <span class="text-zinc-500">Nodes:</span>
+      <span class="text-zinc-300">{explainingLabel(targetLabel)}</span>
+      <span class="mx-1 text-zinc-700">|</span>
+      <span class="text-zinc-500">Parts:</span>
       <span class="text-zinc-300">{nodes.length}</span>
       <span class="mx-1 text-zinc-700">|</span>
       <span class="text-zinc-500">Lines (direct value path):</span>
       <span class="text-zinc-300">{edges.length}</span>
       <span class="mx-1 text-zinc-700">|</span>
-      <span class="text-zinc-500">Threshold:</span>
-      <span class="text-zinc-300">{response.threshold.toFixed(4)}</span>
+      <span class="text-zinc-500">Showing parts that pushed at least {response.threshold.toFixed(2)}</span>
     </div>
+    {#if !realWeightsVerified(response)}
+      <p class="text-[11px] text-amber-400/80">On Gemma these numbers are still being checked against the real model.</p>
+    {/if}
 
     {#if nodes.length === 0}
       <div class="flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 py-12">
-        <p class="text-sm text-zinc-600">No components exceed the threshold. Try lowering it.</p>
+        <p class="text-sm text-zinc-600">No part is above the threshold. Lower it and press Find key parts.</p>
       </div>
     {:else}
       <!-- Key parts, one row per layer -->
       <p id={descId} class="text-[10px] text-zinc-500">
-        Highest layer at the top. Arrow keys move between parts; Enter shows the details.
+        Each row is a <Term key="layer">layer</Term>, highest at the top. Click a part for its numbers; arrow keys move between parts.
       </p>
       <div class="overflow-auto rounded-md border border-zinc-800 bg-zinc-900/40 p-2">
         <svg
@@ -366,14 +378,14 @@
             <span class="text-zinc-600">|</span>
             <span class={[
               'rounded px-1.5 py-0.5 text-[9px] font-medium',
-              selectedNode.type === 'attention' ? 'bg-indigo-950 text-indigo-400' : 'bg-amber-950 text-amber-400',
+              selectedNode.type === 'attention' ? 'bg-indigo-900/40 text-indigo-400' : 'bg-fuchsia-900/40 text-fuchsia-300',
             ].join(' ')}>
               {selectedNode.type === 'attention' ? 'Attention' : 'MLP'}
             </span>
-            <span>Layer {selectedNode.layer}{selectedNode.head !== null ? `, Head ${selectedNode.head}` : ''}</span>
+            <span>Layer {selectedNode.layer}{selectedNode.head !== null ? `, head ${selectedNode.head}` : ''}</span>
           </div>
           <div class="mt-1 text-zinc-500">
-            Importance: <span class="font-mono" style="color: {signedHex(selectedNode.importance)};">{signedNumber(selectedNode.importance, 4)}</span> logits
+            Direct push: <span class="font-mono" style="color: {signedHex(selectedNode.importance)};">{signedNumber(selectedNode.importance, 2)}</span> on the guess's score
           </div>
           {#if nodeEdges.length > 0}
             <ul class="mt-1 flex flex-col gap-0.5 text-zinc-400" aria-label="Connections of {selectedNode.id}">
@@ -393,8 +405,8 @@
             <span class="text-zinc-500">direct value path</span>
           </div>
           <div class="mt-1 text-zinc-500">
-            Weight: <span class="font-mono" style="color: {edgeColor(selectedEdge.weight)}">{edgeGlyph(selectedEdge.weight)}{Math.abs(selectedEdge.weight).toFixed(4)}</span>
-            {selectedEdge.weight >= 0 ? 'toward' : 'away from'} the predicted word
+            Strength: <span class="font-mono" style="color: {edgeColor(selectedEdge.weight)}">{edgeGlyph(selectedEdge.weight)}{Math.abs(selectedEdge.weight).toFixed(2)}</span>
+            {selectedEdge.weight >= 0 ? 'toward' : 'away from'} the guessed word
           </div>
         </div>
       {/if}
@@ -412,14 +424,14 @@
         <span class="flex items-center gap-1">
           <span class="inline-block h-2 w-4 rounded-sm" style="background-color: {POSITIVE_HEX};" aria-hidden="true"></span>
           <span aria-hidden="true" class="font-mono font-bold">+</span>
-          Blue: pushed toward the prediction
+          Blue: pushed toward the guess
         </span>
         <span class="flex items-center gap-1">
           <span class="inline-block h-2 w-4 rounded-sm" style="background-color: {NEGATIVE_HEX};" aria-hidden="true"></span>
           <span aria-hidden="true" class="font-mono font-bold">−</span>
           Orange: pushed against it
         </span>
-        <span>Node size = importance magnitude</span>
+        <span>Bigger shape, bigger push</span>
         {#if response?.timing_ms}
           <span class="ml-auto text-zinc-700">
             {response.timing_ms.total_ms?.toFixed(0) ?? '?'}ms
@@ -438,7 +450,7 @@
               <span class="inline-block h-0.5 w-4" style="background: {EDGE_NEGATIVE_COLOR}"></span>
               − away from it
             </span>
-            <span>Line width = strength</span>
+            <span>Thicker line, stronger link</span>
           </div>
           <p>Shows how much this part's output, passed straight through the later head's value path, pushes the predicted word. Effects that travel through other parts in between aren't included, and lines only connect the parts shown above the threshold, so big inputs from parts below it are missing.</p>
         </div>

@@ -1,7 +1,8 @@
 <script lang="ts">
   import Term from './Term.svelte';
   import type { DLAResponse, DLAComponent } from '$lib/types';
-  import { dlaReadout } from '$lib/readouts';
+  import { dlaReadout, explainingLabel } from '$lib/readouts';
+  import { realWeightsVerified } from '$lib/sidecar';
   import Readout from './Readout.svelte';
   import { NEGATIVE_HEX, POSITIVE_HEX, signedHex, signedNumber, signOf } from '$lib/signed-color';
 
@@ -31,9 +32,9 @@
   const legendId = `dla-legend-${uid}`;
 
   function rowLabel(c: DLAComponent): string {
-    const what = c.type === 'attention' ? `Attention layer ${c.layer} head ${c.head}` : `MLP layer ${c.layer}`;
+    const what = c.type === 'attention' ? `Layer ${c.layer}, head ${c.head}` : `MLP in layer ${c.layer}`;
     const s = signOf(c.contribution);
-    const dir = s === 'positive' ? 'pushed toward the prediction' : s === 'negative' ? 'pushed against it' : 'no push';
+    const dir = s === 'positive' ? 'pushed toward the guess' : s === 'negative' ? 'pushed against it' : 'no push';
     return `${what}: ${signedNumber(c.contribution, 3)}, ${dir}`;
   }
 
@@ -47,8 +48,8 @@
   data-tip="dla-waterfall"
 >
   <div class="flex items-baseline gap-2">
-    <h2 class="text-sm font-semibold text-zinc-100"><Term key="dla">Direct Logit Attribution</Term></h2>
-    <span class="text-xs text-zinc-600">Per-component credit</span>
+    <h2 class="text-sm font-semibold text-zinc-100">Why (<Term key="dla">DLA</Term>)</h2>
+    <span class="text-xs text-zinc-600">Which parts pushed the guess directly. Help through other parts isn't counted.</span>
     {#if loading}
       <span class="ml-auto inline-flex items-center gap-1.5 text-xs text-zinc-500">
         <span class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-zinc-500 border-t-transparent"></span>
@@ -64,26 +65,25 @@
       <p class="text-sm text-zinc-600">Run a prompt and this tab fills in on its own, showing which parts pushed toward or against the predicted word.</p>
     </div>
   {:else if response}
-    <!-- Target info -->
+    <!-- Which word's guess this explains -->
     <div class="flex flex-wrap items-center gap-2 rounded-md border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-xs">
-      <span class="text-zinc-500">Target token:</span>
-      <span class="font-mono text-zinc-200">"{displayToken(response.target_token)}"</span>
-      <span class="text-zinc-600">(pos {response.target_token_index})</span>
-      <span class="mx-1 text-zinc-700">|</span>
-      <span class="text-zinc-500">Predicted:</span>
-      <span class="font-mono text-indigo-300">"{displayToken(response.predicted_token)}"</span>
+      <span class="text-zinc-500">{explainingLabel({ text: response.target_token, index: response.target_token_index })}:</span>
+      <span class="font-mono text-indigo-300">{displayToken(response.predicted_token)}</span>
     </div>
+    {#if !realWeightsVerified(response)}
+      <p class="text-[11px] text-amber-400/80">On Gemma these numbers are still being checked against the real model.</p>
+    {/if}
 
     {#if visibleComponents.length === 0}
       <div class="flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 py-12">
-        <p class="text-sm text-zinc-600">No component attributions available.</p>
+        <p class="text-sm text-zinc-600">There's nothing to show for this run. Press Run again.</p>
       </div>
     {:else}
       <!-- Waterfall chart. A list, so screen readers can step through it; the
            readout above is its summary. -->
       <ul
         class="flex flex-col gap-0.5"
-        aria-label="Direct logit attribution, largest first"
+        aria-label="Direct pushes on the guess, biggest first"
         aria-describedby="{readoutId} {legendId}"
       >
         {#each visibleComponents as comp, i (comp.name)}
@@ -101,7 +101,7 @@
               class="w-16 shrink-0 truncate font-mono text-xs"
               class:text-zinc-300={comp.type === 'attention'}
               class:text-fuchsia-300={comp.type === 'mlp'}
-              title="{comp.type === 'attention' ? `Attention Layer ${comp.layer} Head ${comp.head}` : `MLP Layer ${comp.layer}`}"
+              title="{comp.type === 'attention' ? `L${comp.layer} H${comp.head}` : `MLP in layer ${comp.layer}`}: direct push {signedNumber(comp.contribution, 3)}"
             >
               {comp.name}
             </span>
@@ -151,12 +151,16 @@
         {/each}
       </ul>
 
+      <p class="text-[10px] text-zinc-500">
+        Each number is how much one part directly raised or lowered the guess's <Term key="logit">score</Term>.
+      </p>
+
       <!-- Legend -->
       <div id={legendId} class="flex flex-wrap items-center gap-4 text-[10px] text-zinc-500">
         <span class="flex items-center gap-1">
           <span class="inline-block h-2 w-4 rounded-sm" style="background-color: {POSITIVE_HEX};" aria-hidden="true"></span>
           <span aria-hidden="true" class="font-mono font-bold">+</span>
-          Positive (blue, bar to the right: pushed toward prediction)
+          Positive (blue, bar to the right: pushed toward the guess)
         </span>
         <span class="flex items-center gap-1">
           <span class="inline-block h-2 w-4 rounded-sm" style="background-color: {NEGATIVE_HEX};" aria-hidden="true"></span>
@@ -165,15 +169,15 @@
         </span>
         <span class="flex items-center gap-1">
           <span class="inline-block h-2 w-2 rounded-sm bg-indigo-900/40"></span>
-          Attn
+          Attn: attention head
         </span>
         <span class="flex items-center gap-1">
           <span class="inline-block h-2 w-2 rounded-sm bg-fuchsia-900/40"></span>
-          MLP
+          <Term key="mlp">MLP</Term>
         </span>
         {#if components.length > 30}
           <span class="ml-auto text-zinc-700">
-            Showing top 30 of {components.length}
+            Showing the 30 biggest of {components.length}
           </span>
         {/if}
         {#if response?.timing_ms}

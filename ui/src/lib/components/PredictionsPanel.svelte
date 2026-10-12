@@ -40,8 +40,8 @@
   data-tip="predictions-panel"
 >
   <div class="flex items-baseline gap-2">
-    <h2 class="text-sm font-semibold text-zinc-100">Top-k Predictions</h2>
-    <span class="text-xs text-zinc-600">Next <Term key="token">token</Term> <Term key="probability">probabilities</Term></span>
+    <h2 class="text-sm font-semibold text-zinc-100">Next-word guesses (top 10)</h2>
+    <span class="text-xs text-zinc-600">With the model's chance for each next <Term key="token">token</Term> (its <Term key="probability">probability</Term>)</span>
     {#if isConfident}
       <span class="ml-auto rounded bg-emerald-900/60 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
         confident
@@ -57,11 +57,11 @@
 
   {#if !response}
     <div class="flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 py-12">
-      <p class="text-sm text-zinc-600">Run a prompt to see next-token predictions.</p>
+      <p class="text-sm text-zinc-600">Run a prompt and this tab fills in on its own.</p>
     </div>
   {:else if predictions.length === 0}
     <div class="flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 py-12">
-      <p class="text-sm text-zinc-600">No predictions available for this run.</p>
+      <p class="text-sm text-zinc-600">There's nothing to show for this run. Press Run again.</p>
     </div>
   {:else}
     <div class="flex flex-col gap-1.5">

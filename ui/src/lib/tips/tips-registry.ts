@@ -84,7 +84,7 @@ export const tipsRegistry: TipDef[] = [
     blurb:
       "Every word this one head looked at, for every word in your prompt. A bright square means the word in that row looked hard at the word in that column.",
     why:
-      "Think of it as a spreadsheet: when the model was working on the word in this row, how much did this head look at the word in this column? Rows are the word doing the looking, columns are the word being looked at. The top-right half is empty because a word can't look ahead. Patterns worth spotting: a line just below the diagonal (the head looks at the word right before), a bright stripe down one column (the head keeps going back to one word), or a few lone bright squares (the head has a narrow, rule-like job). A flat, even pattern means the head isn't really choosing, and that's worth knowing too.",
+      "Each square answers one question: when the model was working on the word in this row, how much did this head look at the word in this column? Rows are the word doing the looking, columns are the word being looked at. The top-right half is empty because a word can't look ahead. Patterns worth spotting: a line just below the diagonal (the head looks at the word right before), a bright stripe down one column (the head keeps going back to one word), or a few lone bright squares (the head has a narrow, rule-like job). A flat, even pattern means the head isn't really choosing.",
   },
   {
     // Tour step 'attention.agg' targets 'panel-a-agg-selector'; string-equality
@@ -230,7 +230,7 @@ export const tipsRegistry: TipDef[] = [
     placement: 'right',
     focus: [0.5, 0.2],
     blurb:
-      "Run two prompts, then swap one piece of the model's insides from one run into the other. The piece that changes the answer is the one that matters.",
+      "Run two prompts, then swap one piece of the model's insides from one run into the other to see which piece changes the answer.",
     why:
       "Researchers use this all the time to track down which parts of a model matter (they call it patching). You pick two prompts the model answers differently, an original prompt and a changed prompt, and run both. Then Pry copies one part's output from the original run into the changed run, one part at a time. If swapping layer 7, head 3 makes the changed prompt answer like the original, that head's part of what causes the difference. Blue squares bring the original answer back, and the number is how much its score went up. Orange squares push it further away. It's like debugging by swapping parts until you find the broken one.",
   },

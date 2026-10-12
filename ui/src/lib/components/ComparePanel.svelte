@@ -103,7 +103,7 @@
       </button>
     </div>
     {#if compare.edited}
-      <p role="status" class="mt-2 text-xs text-amber-400">Prompts edited — press Run both to analyze the new text</p>
+      <p role="status" class="mt-2 text-xs text-amber-400">Prompts edited. Press Run both to see the new text.</p>
     {/if}
     {#if s.error}
       <p role="alert" class="mt-2 text-xs text-red-400">{s.error}</p>
@@ -182,7 +182,7 @@
         {#if ready.a.sae_layer_used == null || ready.b.sae_layer_used == null}
           <p class="text-xs text-zinc-500">{NO_SAE_MESSAGE}</p>
         {:else if !sameLayer}
-          <p class="text-xs text-zinc-500">The two runs used different feature layers, so their features can’t be matched. Run Compare again.</p>
+          <p class="text-xs text-zinc-500">The two runs used different feature layers, so their features can’t be matched. Press Run both again.</p>
         {:else if feats}
           <p class="mb-3 text-xs text-zinc-500">
             Layer {ready.a.sae_layer_used}, top {COMPARE_TOP_K_FEATURES} features per prompt. “Only in A” means it isn’t in B’s top
@@ -225,8 +225,8 @@
             0% = the head spreads its attention exactly the same way; 100% = no overlap at all.
           {:else}
             The prompts have different numbers of <Term key="token">tokens</Term>, so positions don’t line up. Each <Term key="head">head</Term>’s attention is split into
-            three shares — the first token, the words in between, and the word itself — and those shares are compared.
-            This is coarse: it can miss shifts between the words in between.
+            three shares (the first token, the words in between, and the word itself), and those shares are compared.
+            It’s a rough check, so it can miss shifts among the words in between.
           {/if}
           Brighter = more different. Average over all heads: {pct(attn.mean)}.
         </p>

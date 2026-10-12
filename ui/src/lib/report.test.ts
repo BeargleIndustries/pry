@@ -122,6 +122,26 @@ describe('buildReport', () => {
   it('handles an empty notebook', () => {
     expect(buildReport([])).toContain('no saved runs yet');
   });
+
+  it('names the patching run "Swap test"', () => {
+    const withPatch = entry();
+    withPatch.run.patchResponse = {
+      preset_id: 'gpt2-small',
+      clean_prompt: 'John gave a drink to',
+      corrupted_prompt: 'Mary gave a drink to',
+      patch_type: 'heads',
+      target_token_index: 4,
+      clean_predicted_token: ' Mary',
+      corrupted_predicted_token: ' John',
+      components: [
+        { name: 'L9 H9', layer: 9, head: 9, effect: 0.8, clean_logit: 0, corrupted_logit: 0, patched_logit: 0 },
+      ],
+      timing_ms: {},
+    };
+    const out = buildReport([withPatch]);
+    expect(out).toContain('Swap test (heads)');
+    expect(out).not.toContain('Swap &amp; Compare');
+  });
 });
 
 describe('escapeHtml / reportFileName', () => {

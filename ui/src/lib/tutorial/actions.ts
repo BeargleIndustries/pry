@@ -27,7 +27,7 @@ export interface TutorialActions {
   setHeadAblation(on: boolean, heads?: { layer: number; head: number }[]): void;
   runHeadAblation(): Promise<void>;
   headAblationResult(): unknown;
-  /** Fill Swap & Compare's boxes and run it. */
+  /** Fill the Swap test's boxes and run it. */
   runPatching(clean: string, corrupted: string, type: PatchType): Promise<void>;
   patchingResult(): unknown;
   setCompareMode(on: boolean): void;
