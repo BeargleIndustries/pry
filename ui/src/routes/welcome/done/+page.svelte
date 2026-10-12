@@ -1,17 +1,19 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import { Sparkles, PlayCircle, ArrowRight } from 'lucide-svelte';
+  import { Sparkles, PlayCircle, ArrowRight, Copy } from 'lucide-svelte';
 
-  function finish(withTour: boolean) {
+  type Next = 'copying-heads' | 'tour' | 'skip';
+
+  function finish(next: Next) {
     localStorage.setItem('pry:onboarding_done', 'true');
     localStorage.removeItem('pry:onboarding_step');
-    if (withTour) {
+    if (next === 'tour') {
       goto('/?demo=tour');
-    } else {
-      // Skipping: don't auto-start the tour. It's still under the ? icon.
-      localStorage.setItem('pry:tutorial_seen', 'true');
-      goto('/');
+      return;
     }
+    // Not taking the tour now: don't auto-start it. It's still under the ? icon.
+    localStorage.setItem('pry:tutorial_seen', 'true');
+    goto(next === 'copying-heads' ? '/?demo=induction-heads' : '/');
   }
 </script>
 
@@ -37,16 +39,23 @@
       Let's open the black box.
     </p>
 
-    <div class="flex flex-col gap-3 sm:flex-row">
+    <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
       <button
-        onclick={() => finish(true)}
+        onclick={() => finish('copying-heads')}
         class="group inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 font-medium text-white transition hover:bg-indigo-500 hover:shadow-[0_0_24px_-4px_rgba(99,102,241,0.8)]"
+      >
+        <Copy class="h-4 w-4" />
+        Find the copying heads
+      </button>
+      <button
+        onclick={() => finish('tour')}
+        class="group inline-flex items-center justify-center gap-2 rounded-lg bg-zinc-800 px-6 py-3 font-medium text-zinc-200 transition hover:bg-zinc-700"
       >
         <PlayCircle class="h-4 w-4" />
         Start the guided tour
       </button>
       <button
-        onclick={() => finish(false)}
+        onclick={() => finish('skip')}
         class="group inline-flex items-center justify-center gap-2 rounded-lg bg-zinc-800 px-6 py-3 font-medium text-zinc-200 transition hover:bg-zinc-700"
       >
         Just take me in
@@ -55,9 +64,14 @@
     </div>
 
     <p class="mt-6 text-xs text-zinc-500">
-      The tour walks you through two guided demos on GPT-2 small: one on attention (which words
-      the model looks at) and one on features (which concepts light up). You can skip it and come
-      back anytime from the ? icon.
+      <span class="text-zinc-400">Find the copying heads</span> gives the model you just set up a short
+      test: 25 random word-pieces, then the same ones again. Pry then rings the attention heads that,
+      the second time through, look at whatever came next last time. That is one way models copy.
+    </p>
+    <p class="mt-2 text-xs text-zinc-500">
+      <span class="text-zinc-400">The guided tour</span> walks you through two guided demos on GPT-2
+      small: one on attention (which words the model looks at) and one on features (which concepts
+      light up). You can start it anytime from the ? icon.
     </p>
   </div>
 </div>

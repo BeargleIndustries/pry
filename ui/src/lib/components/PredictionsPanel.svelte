@@ -1,5 +1,7 @@
 <script lang="ts">
   import type { GenerateResponse, TopPrediction } from '$lib/types';
+  import { predictionsReadout } from '$lib/readouts';
+  import Readout from './Readout.svelte';
 
   interface Props {
     response: GenerateResponse | null;
@@ -48,6 +50,8 @@
       </span>
     {/if}
   </div>
+
+  <Readout text={predictionsReadout(predictions)} />
 
   {#if !response}
     <div class="flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 py-12">

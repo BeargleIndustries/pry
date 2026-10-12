@@ -1,0 +1,51 @@
+{
+  "preset_id": "gpt2-small",
+  "prompt": "The capital of France is",
+  "tokens": [
+    { "index": 0, "text": "The" },
+    { "index": 1, "text": " capital" },
+    { "index": 2, "text": " of" },
+    { "index": 3, "text": " France" },
+    { "index": 4, "text": " is" }
+  ],
+  "grid": [
+    [
+      { "predicted_token": " first", "probability": 0.02, "matches_final": false },
+      { "predicted_token": " city", "probability": 0.05, "matches_final": false },
+      { "predicted_token": " the", "probability": 0.11, "matches_final": false },
+      { "predicted_token": ",", "probability": 0.04, "matches_final": false },
+      { "predicted_token": " a", "probability": 0.03, "matches_final": false }
+    ],
+    [
+      { "predicted_token": " same", "probability": 0.03, "matches_final": false },
+      { "predicted_token": " of", "probability": 0.09, "matches_final": false },
+      { "predicted_token": " the", "probability": 0.14, "matches_final": true },
+      { "predicted_token": ",", "probability": 0.06, "matches_final": false },
+      { "predicted_token": " not", "probability": 0.04, "matches_final": false }
+    ],
+    [
+      { "predicted_token": " same", "probability": 0.04, "matches_final": false },
+      { "predicted_token": " of", "probability": 0.21, "matches_final": true },
+      { "predicted_token": " the", "probability": 0.19, "matches_final": true },
+      { "predicted_token": " is", "probability": 0.08, "matches_final": false },
+      { "predicted_token": " Paris", "probability": 0.031, "matches_final": true }
+    ],
+    [
+      { "predicted_token": " first", "probability": 0.05, "matches_final": true },
+      { "predicted_token": " of", "probability": 0.35, "matches_final": true },
+      { "predicted_token": " the", "probability": 0.27, "matches_final": true },
+      { "predicted_token": "'s", "probability": 0.12, "matches_final": false },
+      { "predicted_token": " Paris", "probability": 0.12, "matches_final": true }
+    ],
+    [
+      { "predicted_token": " first", "probability": 0.08, "matches_final": true },
+      { "predicted_token": " of", "probability": 0.52, "matches_final": true },
+      { "predicted_token": " the", "probability": 0.33, "matches_final": true },
+      { "predicted_token": " is", "probability": 0.21, "matches_final": true },
+      { "predicted_token": " Paris", "probability": 0.47, "matches_final": true }
+    ]
+  ],
+  "n_layers": 5,
+  "timing_ms": { "total_ms": 63.0 },
+  "status": "ok"
+}

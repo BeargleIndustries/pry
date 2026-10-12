@@ -1,5 +1,7 @@
 <script lang="ts">
   import type { DLAResponse, DLAComponent } from '$lib/types';
+  import { dlaReadout } from '$lib/readouts';
+  import Readout from './Readout.svelte';
 
   interface Props {
     response: DLAResponse | null;
@@ -41,6 +43,8 @@
       </span>
     {/if}
   </div>
+
+  <Readout text={dlaReadout(response)} />
 
   {#if !response && !loading}
     <div class="flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 py-12">

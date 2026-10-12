@@ -12,9 +12,11 @@
     onRun?: (cleanPrompt: string, corruptedPrompt: string, patchType: 'head' | 'mlp' | 'resid') => void;
     /** Token counter (`analysis.tokenize`). Without it the counters are hidden and Run isn't gated. */
     tokenize?: (text: string) => Promise<TokenizeResponse | null>;
+    /** Pair to pre-fill (experiment cards). Applied on mount and whenever a new object is passed. */
+    preset?: { clean: string; corrupted: string; patchType: 'head' | 'mlp' | 'resid' } | null;
   }
 
-  let { response, loading = false, onRun, tokenize }: Props = $props();
+  let { response, loading = false, onRun, tokenize, preset = null }: Props = $props();
 
   // Default pair: indirect object identification (IOI). Same token length in GPT-2.
   const IOI_CLEAN = 'When Mary and John went to the store, John gave a drink to';
@@ -23,6 +25,12 @@
   let cleanPrompt = $state(IOI_CLEAN);
   let corruptedPrompt = $state(IOI_CHANGED);
   let patchType = $state<'head' | 'mlp' | 'resid'>('head');
+  $effect(() => {
+    if (!preset) return;
+    cleanPrompt = preset.clean;
+    corruptedPrompt = preset.corrupted;
+    patchType = preset.patchType;
+  });
 
   // Live token counts, debounced. A sequence number drops stale replies.
   let cleanCount = $state<number | null>(null);
@@ -69,10 +77,15 @@
   const gridLookup = $derived.by(() => {
     const map = new Map<string, PatchComponent>();
     for (const c of components) {
-      map.set(`${c.layer}-${c.head ?? 'mlp'}`, c);
+      map.set(c.position != null ? `${c.layer}-p${c.position}` : `${c.layer}-${c.head ?? 'mlp'}`, c);
     }
     return map;
   });
+
+  // Residual patching: layer (rows) x word position (columns).
+  const residTokens = $derived(
+    shownPatchType === 'resid' && components.some((c) => c.position != null) ? (response?.tokens ?? []) : [],
+  );
 
   let selectedComponent = $state<PatchComponent | null>(null);
 
@@ -216,8 +229,36 @@
           {/each}
         </div>
       </div>
+    {:else if residTokens.length > 0}
+      <!-- Heatmap for residual patching: one square per (layer, word) -->
+      <div class="overflow-x-auto">
+        <div class="text-[10px] text-zinc-600 mb-1">
+          Layer (rows) x word (columns). Each square swaps in the original prompt's information at one word, going into one layer.
+        </div>
+        <div class="inline-grid gap-px" style="grid-template-columns: auto repeat({residTokens.length}, 1fr);">
+          <div class="text-[9px] text-zinc-600 px-1"></div>
+          {#each residTokens as tok, p (p)}
+            <div class="max-w-[3rem] truncate px-0.5 text-center font-mono text-[9px] text-zinc-500" title={tok}>{tok.replace(/^ /, '·')}</div>
+          {/each}
+          {#each Array(nLayers) as _, l}
+            <div class="text-[9px] text-zinc-500 px-1 flex items-center">L{l}</div>
+            {#each residTokens as tok, p (p)}
+              {@const comp = gridLookup.get(`${l}-p${p}`)}
+              {@const effect = comp?.effect ?? 0}
+              <button
+                type="button"
+                onclick={() => { selectedComponent = comp ?? null; }}
+                class="h-5 min-w-5 rounded-sm border border-zinc-800 transition-colors hover:border-zinc-600"
+                style="background-color: {cellColor(effect)};"
+                title="Layer {l}, {JSON.stringify(tok)}: {effect.toFixed(4)}"
+                aria-label="Layer {l}, word {p + 1}: effect {effect.toFixed(3)}"
+              ></button>
+            {/each}
+          {/each}
+        </div>
+      </div>
     {:else}
-      <!-- Bar chart for MLP/resid patching -->
+      <!-- Bar chart for MLP patching -->
       <div class="flex flex-col gap-0.5">
         {#each components.slice(0, 30) as comp, i (comp.name)}
           {@const isPositive = comp.effect >= 0}

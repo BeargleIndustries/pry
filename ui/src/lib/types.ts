@@ -156,6 +156,8 @@ export interface PatchComponent {
   name: string;
   layer: number;
   head: number | null;
+  /** Token position patched (residual patching only). */
+  position?: number | null;
   effect: number;
   clean_logit: number;
   corrupted_logit: number;
@@ -170,6 +172,8 @@ export interface PatchResponse {
   target_token_index: number;
   clean_predicted_token: string;
   corrupted_predicted_token: string;
+  /** Clean prompt's tokens; labels the residual layer x position grid. */
+  tokens?: string[];
   components: PatchComponent[];
   timing_ms: Record<string, number>;
   status?: string;
@@ -202,6 +206,38 @@ export interface CircuitResponse {
   edges: CircuitEdge[];
   /** How edges were computed; "none" means no edges are reported. */
   edges_method?: string;
+  timing_ms: Record<string, number>;
+  status?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Head scores: induction + previous-token heads (T20, POST /head-scores)
+// ---------------------------------------------------------------------------
+
+export interface HeadScore {
+  layer: number;
+  head: number;
+  /** Mean attention (0-1) from each second-copy token to the token that came next after its first copy. */
+  induction: number;
+  /** Mean attention (0-1) from each token to the token just before it. */
+  previous_token: number;
+}
+
+export interface HeadScoresResponse {
+  preset_id: string;
+  n_layers: number;
+  n_heads: number;
+  /** Length of each copy in the test sequence. */
+  repeat_len: number;
+  /** The test sequence (no BOS): repeat_len random tokens, then the same again. */
+  sequence_tokens: string[];
+  previous_token_source: 'repeated_sequence' | 'prompt';
+  /** Every head, layer-major. */
+  scores: HeadScore[];
+  /** Highest first. */
+  top_induction: HeadScore[];
+  /** Highest first. */
+  top_previous_token: HeadScore[];
   timing_ms: Record<string, number>;
   status?: string;
 }

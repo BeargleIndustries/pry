@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0
+
+### New
+- **Find the copying heads.** A new view in Attention runs a repeated random word sequence through the model and rings the heads that copy "what came next last time" (induction heads) and the ones that look at the previous word. On GPT-2 small it finds the heads researchers have reported (5.1, 5.5, 6.9, 7.2, 7.10). The setup screen offers it as a first stop.
+- **Plain-language readouts.** Predictions, Logit Lens, Why (DLA), Attention and Features each open with a sentence or two saying what the chart shows, like "The model's top guess is ' Paris' (62%)." Screen readers announce them.
+- **Experiments.** A gallery of eight short guided experiments (name-swapping, knocking out heads, the logit lens, fact recall, "greater than", he/she, features and steering). Each sets everything up, says what to look for, and links the research it comes from.
+
+### Fixed
+- Swap & Compare's **Residual** view showed 100% at every layer, which said nothing. It now swaps one layer at one word at a time and shows a layer × word grid, so you can see where in the sentence the deciding information sits at each depth.
+- The Attention readout follows the From/To toggle.
+
 ## 0.2.0
 
 ### New

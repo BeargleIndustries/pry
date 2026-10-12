@@ -1,5 +1,7 @@
 <script lang="ts">
   import type { LogitLensResponse } from '$lib/types';
+  import { logitLensReadout } from '$lib/readouts';
+  import Readout from './Readout.svelte';
 
   interface Props {
     response: LogitLensResponse | null;
@@ -66,6 +68,8 @@
       </span>
     {/if}
   </div>
+
+  <Readout text={logitLensReadout(response)} />
 
   {#if !response && !loading}
     <div class="flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 py-12">

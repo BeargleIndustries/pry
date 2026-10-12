@@ -1,6 +1,8 @@
 <script lang="ts">
   import type { GenerateResponse, TokenFeatures, AblateResponse, PresetDisplay } from '$lib/types';
   import FeatureCard from './FeatureCard.svelte';
+  import Readout from './Readout.svelte';
+  import { featuresReadout } from '$lib/readouts';
 
   interface Props {
     response: GenerateResponse | null;
@@ -83,6 +85,12 @@
     return response.tokens.find((t) => t.index === resolvedFocusIndex) ?? null;
   });
 
+  // Plain-language readout (T21); a focused word with no feature entry reads as "none active".
+  const readout = $derived.by(() => {
+    if (!response || response.sae_features.length === 0 || !focusedToken) return null;
+    return featuresReadout(activeFeatures ?? { token_index: focusedToken.index, top_k: [] }, focusedToken.text);
+  });
+
 
   function handleTokenClick(index: number) {
     internalFocusIndex = index;
@@ -155,6 +163,8 @@
       </div>
     {/if}
   </div>
+
+  <Readout text={readout} />
 
   <!-- Ablation results -->
   {#if ablateResponse && ablationMode}

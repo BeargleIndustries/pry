@@ -19,6 +19,7 @@ vi.mock('./sidecar', () => ({
   ablateFeatures: vi.fn(async () => ({ kind: 'ablate-features' })),
   runPatching: vi.fn(async () => ({ kind: 'patch' })),
   fetchCircuit: vi.fn(async () => ({ kind: 'circuit' })),
+  fetchHeadScores: vi.fn(async (presetId: string) => ({ kind: 'head-scores', preset_id: presetId })),
 }));
 
 import * as sidecar from './sidecar';
@@ -170,6 +171,77 @@ describe('dispatch without a response', () => {
     expect(state.error).toBeNull();
     expect(state.logitLensLoading || state.dlaLoading || state.steerLoading || state.circuitLoading).toBe(false);
     expect(ctl.isPromptEdited(EDITED)).toBe(false);
+  });
+});
+
+describe('copying heads (head scores)', () => {
+  it('works before the first Run and fetches only once', async () => {
+    const { ctl, state, deps } = makeController(false);
+    await ctl.showHeadScores();
+    expect(state.headScoresMode).toBe(true);
+    expect(deps.ensureLoaded).toHaveBeenCalledTimes(1);
+    expect(sidecar.fetchHeadScores).toHaveBeenCalledWith('gpt2-small');
+    expect(state.headScoresResponse).toMatchObject({ kind: 'head-scores' });
+
+    ctl.hideHeadScores();
+    await ctl.showHeadScores();
+    expect(state.headScoresMode).toBe(true);
+    expect(sidecar.fetchHeadScores).toHaveBeenCalledTimes(1);
+    expect(state.headScoresLoading).toBe(false);
+  });
+
+  it('survives a new Run but not a model switch', async () => {
+    const { ctl, state } = makeController();
+    await ctl.headScores();
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(fakeResponse('new')))));
+    await ctl.generate('new');
+    vi.unstubAllGlobals();
+    expect(state.response?.prompt).toBe('new');
+    expect(state.headScoresResponse).not.toBeNull();
+
+    ctl.clearForModelSwitch();
+    expect(state.headScoresResponse).toBeNull();
+  });
+
+  it('drops a result for a model that was switched away mid-request', async () => {
+    const { state, deps } = makeController();
+    let active: string | null = 'gpt2-small';
+    const ctl = new AnalysisController(state, { ...deps, getActivePresetId: () => active });
+    vi.mocked(sidecar.fetchHeadScores).mockImplementationOnce(async () => {
+      active = 'pythia-70m';
+      return { kind: 'head-scores' } as never;
+    });
+    await ctl.headScores();
+    expect(state.headScoresResponse).toBeNull();
+  });
+
+  it('a model switch releases a running request so the new model can score at once', async () => {
+    const { ctl, state } = makeController();
+    let finishOld: (v: unknown) => void = () => {};
+    vi.mocked(sidecar.fetchHeadScores).mockImplementationOnce(
+      () => new Promise((resolve) => { finishOld = resolve as (v: unknown) => void; }) as never,
+    );
+    const old = ctl.headScores();
+    await Promise.resolve();
+    ctl.clearForModelSwitch();
+    expect(state.headScoresLoading).toBe(false);
+
+    vi.mocked(sidecar.fetchHeadScores).mockResolvedValueOnce({ kind: 'head-scores', fresh: true } as never);
+    await ctl.headScores();
+    expect(state.headScoresResponse).toMatchObject({ fresh: true });
+
+    finishOld({ kind: 'head-scores', stale: true });
+    await old;
+    expect(state.headScoresResponse).toMatchObject({ fresh: true });
+    expect(state.headScoresLoading).toBe(false);
+  });
+
+  it('reports errors in the shared error slot', async () => {
+    const { ctl, state } = makeController();
+    vi.mocked(sidecar.fetchHeadScores).mockRejectedValueOnce(new Error('boom'));
+    await ctl.headScores();
+    expect(state.error).toBe('boom');
+    expect(state.headScoresLoading).toBe(false);
   });
 });
 
