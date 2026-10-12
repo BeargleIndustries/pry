@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import concurrent.futures
 import json
 import threading
 import time
@@ -148,3 +149,18 @@ def test_failed_load_does_not_block_next_load(load_client, monkeypatch):
     second = _events(load_client.post("/load", json={"preset_id": "gpt2-small"}))
     assert second[-1]["stage"] == "ready"
     assert calls["n"] == 2
+
+
+def test_second_load_gives_up_waiting_with_a_plain_message(load_client, monkeypatch):
+    monkeypatch.setattr(main, "REGISTRY", _QuietLoadRegistry())
+    monkeypatch.setattr(main, "_prefetch_preset", lambda manifest, push: pytest.fail("waiter must not prefetch"))
+    monkeypatch.setattr(main, "LOAD_WAIT_TIMEOUT_S", 0.2)
+    # A first load that never finishes.
+    stuck: concurrent.futures.Future = concurrent.futures.Future()
+    monkeypatch.setitem(main._INFLIGHT_LOADS, "gpt2-small", stuck)
+
+    events = _events(load_client.post("/load", json={"preset_id": "gpt2-small"}))
+    assert events[-1]["stage"] == "error"
+    assert events[-1]["message"] == main.LOAD_WAIT_TIMEOUT_MESSAGE
+    # The waiter does not own the entry, so the stuck load stays registered.
+    assert main._INFLIGHT_LOADS.get("gpt2-small") is stuck
