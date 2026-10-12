@@ -82,8 +82,16 @@ pub fn bundled_constraints(variant: CudaVariant) -> &'static str {
     }
 }
 
+/// Hash of the variant's constraints with line endings normalized to LF. A git
+/// checkout with core.autocrlf turns the bundled file into CRLF, which must
+/// not look like changed pins (that would offer every GPU user a re-download).
 pub fn bundled_constraints_sha256(variant: CudaVariant) -> String {
-    format!("{:x}", Sha256::digest(bundled_constraints(variant).as_bytes()))
+    constraints_sha256(bundled_constraints(variant))
+}
+
+/// SHA-256 of constraints text with CRLF normalized to LF.
+fn constraints_sha256(text: &str) -> String {
+    format!("{:x}", Sha256::digest(text.replace("\r\n", "\n").as_bytes()))
 }
 
 /// Write the variant's constraints into `venv_dir\constraints.txt` and return
@@ -1072,6 +1080,21 @@ mod tests {
 
     fn gpu(variant: CudaVariant, needs_cu128: bool) -> GpuProbe {
         GpuProbe { variant, needs_cu128 }
+    }
+
+    #[test]
+    fn constraints_hash_ignores_line_endings() {
+        // Installs record the LF hash; a CRLF checkout must produce the same one.
+        let lf = "torch==2.5.1+cu124\nnumpy==1.26.4\n";
+        let crlf = "torch==2.5.1+cu124\r\nnumpy==1.26.4\r\n";
+        assert_eq!(constraints_sha256(crlf), constraints_sha256(lf));
+        // And the bundled file's hash never depends on how it was checked out.
+        let bundled = bundled_constraints(CudaVariant::Cu124);
+        assert_eq!(
+            bundled_constraints_sha256(CudaVariant::Cu124),
+            constraints_sha256(&bundled.replace("\r\n", "\n")),
+        );
+        assert!(!bundled_constraints_sha256(CudaVariant::Cu124).contains('\r'));
     }
 
     #[test]
