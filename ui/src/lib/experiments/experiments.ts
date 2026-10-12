@@ -18,7 +18,7 @@ const LEFT_TAB_LABELS: Record<LeftTab, string> = {
   attention: 'Attention',
   'logit-lens': 'Logit Lens',
   dla: 'Why (DLA)',
-  patching: 'Swap & Compare',
+  patching: 'Swap test',
   circuit: 'Key parts',
 };
 const RIGHT_TAB_LABELS: Record<RightTab, string> = {
@@ -50,7 +50,7 @@ export interface Experiment {
   open: { left?: LeftTab; right?: RightTab };
   /** Attention grid aggregation to select (Attention tab). */
   aggregation?: Aggregation;
-  /** Pre-filled Swap & Compare pair. Must tokenize to the same length (pytest checks GPT-2). */
+  /** Pre-filled Swap test pair. Must tokenize to the same length (pytest checks GPT-2). */
   patching?: { clean: string; corrupted: string; patchType: PatchType };
   /** Heads to pre-select for knockout in the Attention tab. */
   ablateHeads?: { layer: number; head: number }[];
@@ -207,7 +207,7 @@ export interface ResetActions {
 
 /**
  * "Back to normal": turn head ablation off, leave the copying-heads view,
- * clear the Swap & Compare pair and close the guide. The prompt is kept.
+ * clear the Swap test pair and close the guide. The prompt is kept.
  */
 export function resetExperiment(a: ResetActions): void {
   a.clearHeadAblations();
