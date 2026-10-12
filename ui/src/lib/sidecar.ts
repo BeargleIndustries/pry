@@ -160,6 +160,14 @@ export function _setConnectionRetryForTests(attempts: number, delayMs: number): 
 // Re-export shared types so callers can import from either sidecar or types
 export type { FeatureHit, TokenFeatures, TokenInfo, AttentionLayer, GenerateResponse, SAEFeaturesResponse, LogitLensResponse, DLAResponse, SteerResponse, AblateResponse, PatchResponse, CircuitResponse } from './types';
 
+/**
+ * Whether a DLA or circuit result was checked against the real model weights.
+ * A missing field (older engine) counts as verified.
+ */
+export function realWeightsVerified(r: { real_weights_verified?: boolean } | null | undefined): boolean {
+  return r?.real_weights_verified !== false;
+}
+
 /** @deprecated Use TokenFeatures from ./types */
 export type SaeFeatureRow = import('./types').TokenFeatures;
 
@@ -227,7 +235,8 @@ export async function getActivePreset(): Promise<string | null> {
  *
  * Streams progress events to `onProgress` and resolves on stages
  * `ready` or `already_loaded`. Rejects with the error message on
- * `stage === 'error'`, or with an AbortError if the signal fires.
+ * `stage === 'error'`, with 'load ended early' if the stream closes before
+ * either, or with an AbortError if the signal fires.
  *
  * Single source of truth for the SSE parser — consumed by both
  * welcome/downloading and the main app auto-load/switch flow.
@@ -277,6 +286,8 @@ export async function loadPreset(
         }
       }
     }
+    // The stream closed without `ready` or `error`: the model isn't loaded.
+    throw new SidecarError('load ended early');
   } finally {
     try {
       reader.releaseLock();
@@ -457,6 +468,7 @@ export async function fetchCircuit(
   prompt: string,
   source: 'dla' | 'patching' = 'dla',
   threshold?: number,
+  targetTokenIndex?: number,
 ): Promise<import('./types').CircuitResponse> {
   return request('/circuit', {
     method: 'POST',
@@ -466,6 +478,7 @@ export async function fetchCircuit(
       prompt,
       source,
       ...(threshold !== undefined ? { threshold } : {}),
+      ...(targetTokenIndex !== undefined ? { target_token_index: targetTokenIndex } : {}),
     }),
   });
 }

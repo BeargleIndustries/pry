@@ -668,8 +668,12 @@ pub async fn runtime_update(app: AppHandle) -> Result<(), RuntimeUpdateError> {
     let start_error = match outcome {
         layout::CommitOutcome::Committed(handle) => {
             tracing::info!("sidecar relaunched from {rel} on {}", handle.base_url);
+            let base_url = handle.base_url.clone();
             *guard = Some(handle);
+            drop(guard);
             emit.stage(BootstrapStage::Ready, "engine updated");
+            // New engine, empty registry: the UI must reload the model (code:B6).
+            crate::emit_restarted(&app, &base_url);
             return Ok(());
         }
         layout::CommitOutcome::RollbackFailed { error, rollback_error } => {
@@ -693,7 +697,10 @@ pub async fn runtime_update(app: AppHandle) -> Result<(), RuntimeUpdateError> {
     match crate::sidecar::launch_with_app(Some(app.clone())).await {
         Ok(handle) => {
             tracing::info!("previous engine relaunched on {}", handle.base_url);
+            let base_url = handle.base_url.clone();
             *guard = Some(handle);
+            drop(guard);
+            crate::emit_restarted(&app, &base_url);
             Err(fail(
                 "rolled_back",
                 format!("The engine update didn't finish ({start_error})."),

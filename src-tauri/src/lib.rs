@@ -70,8 +70,6 @@ async fn restart_sidecar_engine(
     app: &tauri::AppHandle,
     only_if_running: bool,
 ) -> Result<Option<String>, String> {
-    use tauri::Emitter;
-
     // Clone the Arc out before awaiting (State isn't held across awaits).
     let state_arc: SidecarState = app.state::<SidecarState>().inner().clone();
 
@@ -106,11 +104,24 @@ async fn restart_sidecar_engine(
     *guard = Some(handle);
     drop(guard);
 
-    if let Err(e) = app.emit("sidecar:restarted", serde_json::json!({ "base_url": base_url })) {
-        tracing::warn!("failed to emit sidecar:restarted: {e}");
-    }
+    emit_restarted(app, &base_url);
     bootstrap::spawn_post_launch_tasks(app.clone(), true);
     Ok(Some(base_url))
+}
+
+fn restarted_payload(base_url: &str) -> serde_json::Value {
+    serde_json::json!({ "base_url": base_url })
+}
+
+/// Tell the UI a new sidecar is running (new token, empty engine), so it
+/// refetches its connection and reloads the model. Every relaunch path calls
+/// this: restart, and both engine-update relaunches (code:B6).
+pub(crate) fn emit_restarted(app: &tauri::AppHandle, base_url: &str) {
+    use tauri::Emitter;
+
+    if let Err(e) = app.emit("sidecar:restarted", restarted_payload(base_url)) {
+        tracing::warn!("failed to emit sidecar:restarted: {e}");
+    }
 }
 
 /// Stop the sidecar before the app updater runs the installer. On Windows the
@@ -375,4 +386,18 @@ pub fn run() {
                 });
             }
         });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn restarted_payload_carries_base_url() {
+        // The UI reads `base_url` from `sidecar:restarted` to refetch its connection.
+        assert_eq!(
+            restarted_payload("http://127.0.0.1:8765"),
+            serde_json::json!({ "base_url": "http://127.0.0.1:8765" })
+        );
+    }
 }

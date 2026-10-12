@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { TutorialState } from './tutorial-store.svelte';
+import { TutorialState, guideOccupiedSource } from './tutorial-store.svelte';
+import { occupied, OCCUPIED } from '../popup/occupied.svelte';
 import type { TourChapter } from './tour-steps';
 import { TOUR_PROGRESS_KEY, TOUR_SEEN_KEY } from './tour-progress';
 
@@ -140,5 +141,46 @@ describe('TutorialState', () => {
     expect(t.attentionRequest).toEqual({ view: 'lines' });
     t.close();
     expect(t.attentionRequest).toBeNull();
+  });
+});
+
+describe('tour and experiment guide', () => {
+  const FULL = { left: 16, top: 400, width: 360, height: 380 };
+  const HEADER = { left: 16, top: 744, width: 360, height: 36 };
+
+  it('opening the tour collapses the guide', () => {
+    const t = new TutorialState(chapters);
+    const off = occupied.register(
+      OCCUPIED.guide,
+      guideOccupiedSource(() => t.guideCollapsed, () => FULL, () => HEADER),
+    );
+    try {
+      const guideRect = () => occupied.entries().find(([id]) => id === OCCUPIED.guide)?.[1];
+      expect(t.guideCollapsed).toBe(false);
+      expect(guideRect()?.height).toBe(FULL.height);
+
+      t.start();
+      expect(t.guideCollapsed).toBe(true);
+      expect(guideRect()?.height).toBe(HEADER.height);
+
+      t.close();
+      expect(t.guideCollapsed).toBe(false);
+      expect(guideRect()?.height).toBe(FULL.height);
+    } finally {
+      off();
+    }
+  });
+
+  it('starting an experiment ends the tour', () => {
+    const t = new TutorialState(chapters);
+    t.start();
+    t.next();
+    t.endForExperiment();
+    expect(t.open).toBe(false);
+    // Ending it this way keeps the place, like closing it.
+    expect(saved()).toMatchObject({ chapterId: 'one', step: 1 });
+    // No tour open: nothing to end, nothing breaks.
+    t.endForExperiment();
+    expect(t.open).toBe(false);
   });
 });

@@ -4,6 +4,9 @@
 
 import { tourChapters, type TourChapter, type TourStep } from './tour-steps';
 import { markTipsSeenForStep } from '../tips/coordinate';
+
+/** Same shape as the popup code's RectLike (kept local so this file has no popup import). */
+type RectLike = { left: number; top: number; width: number; height: number };
 import { initialStepMachine, stepReducer, type StepEvent } from './step-machine';
 import {
   clearProgress,
@@ -188,6 +191,30 @@ export class TutorialState {
   requestAttentionView(view: 'lines' | 'expert') {
     this.attentionRequest = { view };
   }
+
+  // Tour/guide exclusion: the tour and an experiment guide are never open
+  // together. While the tour is open the guide shrinks to its header bar, and
+  // it opens up again when the tour closes.
+  get guideCollapsed(): boolean {
+    return this.open;
+  }
+
+  /** Starting an experiment ends the tour. */
+  endForExperiment() {
+    this.close();
+  }
+}
+
+/**
+ * What the experiment guide registers in `occupied`: its header bar while
+ * collapsed, the whole guide otherwise.
+ */
+export function guideOccupiedSource(
+  collapsed: () => boolean,
+  full: () => RectLike | null,
+  header: () => RectLike | null,
+): () => RectLike | null {
+  return () => (collapsed() ? header() : full());
 }
 
 export const tutorialState = new TutorialState();

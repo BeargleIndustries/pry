@@ -417,13 +417,15 @@ export function rectDelta(a: RectLike | null, b: RectLike | null): number {
 }
 
 /**
- * A popup jumped if its side or mode changed, or it moved more than 24px
- * while its target moved less than 4px. Moves that follow the target don't count.
+ * A popup jumped if, while its target held still (moved < 4px), its side or
+ * mode changed or it moved more than 24px. Changes that follow the target
+ * (results arriving and a panel growing from small to large, say) don't count.
  */
 export function jumped(before: PlacedSnapshot, after: PlacedSnapshot): boolean {
+  if (rectDelta(before.target, after.target) >= 4) return false;
   if (before.side !== after.side || before.mode !== after.mode) return true;
   const moved = Math.hypot(after.box.left - before.box.left, after.box.top - before.box.top);
-  return moved > 24 && rectDelta(before.target, after.target) < 4;
+  return moved > 24;
 }
 
 // ---------------------------------------------------------------------------

@@ -9,6 +9,14 @@
     response: CircuitResponse | null;
     loading?: boolean;
     onRun?: (threshold?: number) => void;
+    /**
+     * The word whose next-word guess these parts explain: the focused word,
+     * the same one Why (DLA) explains (`index` is its token index). The
+     * results refetch when the focus changes.
+     * TODO(pry-clarity T4c): render the sentence that uses this
+     * ("Explaining the guess after ·she (word 3)").
+     */
+    targetLabel?: { text: string; index: number } | null;
   }
 
   let { response, loading = false, onRun }: Props = $props();

@@ -15,6 +15,7 @@ import { tutorialState } from '$lib/tutorial/tutorial-store.svelte';
 import { tourChapters, type TourStep } from '$lib/tutorial/tour-steps';
 import type { TourContext, TutorialActions } from '$lib/tutorial/actions';
 import { tipsRegistry } from '$lib/tips/tips-registry';
+import { anchorState } from '$lib/tutorial/anchors';
 import { jumped, MAX_ARROW, placementFlags, type PlaceMode, type Point, type RectLike, type Side } from './place';
 import { rectOf } from './measure';
 import { occupied, OCCUPIED } from './occupied.svelte';
@@ -270,6 +271,21 @@ async function tourPass(deps: AuditDeps, out: AuditRecord[]) {
   tutorialState.close();
 }
 
+/** The plain Attention panel in its Expert (grid) view, as a user would open it. */
+async function openExpert(deps: AuditDeps) {
+  const a = deps.actions;
+  a.setCompareMode(false);
+  a.hideCopyingHeads();
+  a.setHeadAblation(false);
+  a.openLeftTab('attention');
+  // The tour's view request only applies while the tour is open, so press the button.
+  const btn = await waitFor(() =>
+    [...document.querySelectorAll<HTMLButtonElement>('button[aria-pressed]')].find((b) => b.textContent?.trim() === 'Expert'),
+  );
+  if (btn && btn.getAttribute('aria-pressed') !== 'true') btn.click();
+  await waitFor(() => document.querySelector('[data-tip="panel-a-heatmap"]'), 10000);
+}
+
 /** Put the screen in the state a tip's target needs. */
 async function setupFor(tipId: string, deps: AuditDeps): Promise<() => void> {
   const a = deps.actions;
@@ -279,10 +295,7 @@ async function setupFor(tipId: string, deps: AuditDeps): Promise<() => void> {
     a.setHeadAblation(false);
     a.openLeftTab('attention');
   };
-  const expert = () => {
-    plainAttention();
-    tutorialState.requestAttentionView('expert');
-  };
+  const expert = () => openExpert(deps);
   a.setCompareMode(false);
   switch (tipId) {
     case 'panel-a-heatmap':
@@ -291,10 +304,10 @@ async function setupFor(tipId: string, deps: AuditDeps): Promise<() => void> {
     case 'panel-a-to-selector':
     case 'ablation-head-toggle':
     case 'panel-a-copying-heads':
-      expert();
+      await expert();
       break;
     case 'panel-a-head-detail': {
-      expert();
+      await expert();
       const cell = await waitFor(() => document.querySelector<SVGElement>('[data-tip="panel-a-heatmap"] [role="gridcell"]'));
       cell?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       return () => {
@@ -367,8 +380,18 @@ async function measureTip(tipId: string, target: string, deps: AuditDeps, phase:
     await settle(() => el);
     const force = popupDevHooks.forceTip;
     if (!force) return blank('forceTip hook missing');
-    const res = await force(tipId);
+    let res = await force(tipId);
     const t = rectOf(el);
+    const tipEl = () => document.querySelector(`[data-popup="tip"][data-tip-id="${CSS.escape(tipId)}"]`);
+    if (res.shown) {
+      await settle(tipEl);
+      // The tip released itself while settling: its target became unusable
+      // (e.g. the guide covers it), which is the waiting case.
+      if (!tipEl()) {
+        const state = anchorState(el);
+        res = { id: tipId, shown: false, waiting: state === 'covered', reason: `released: target ${state}` };
+      }
+    }
     if (!res.shown) {
       const rec = blank(`not shown: ${res.reason ?? 'unknown'}`);
       if (res.waiting) {
@@ -386,8 +409,6 @@ async function measureTip(tipId: string, target: string, deps: AuditDeps, phase:
       }
       return rec;
     }
-    const tipEl = () => document.querySelector(`[data-popup="tip"][data-tip-id="${CSS.escape(tipId)}"]`);
-    await settle(tipEl);
     const rec = measure(phase, 'tip', tipId, tipEl(), rectOf(el), [OCCUPIED.tip]);
     return judge(rec);
   } finally {
@@ -431,12 +452,12 @@ async function termPass(out: AuditRecord[]) {
 }
 
 async function hoverPass(deps: AuditDeps, out: AuditRecord[]) {
-  const grids: [string, () => void, string][] = [
-    ['expert', () => { deps.actions.setCompareMode(false); deps.actions.hideCopyingHeads(); deps.actions.setHeadAblation(false); deps.actions.openLeftTab('attention'); tutorialState.requestAttentionView('expert'); }, '[data-tip="panel-a-heatmap"] [role="gridcell"]'],
+  const grids: [string, () => unknown, string][] = [
+    ['expert', () => openExpert(deps), '[data-tip="panel-a-heatmap"] [role="gridcell"]'],
     ['logit-lens', () => deps.actions.openLeftTab('logit-lens'), '[data-tip="logit-lens-heatmap"] [role="gridcell"]'],
   ];
   for (const [name, open, sel] of grids) {
-    open();
+    await open();
     const cells = await waitFor(() => {
       const c = [...document.querySelectorAll<HTMLElement>(sel)];
       return c.length ? c : null;
@@ -485,24 +506,48 @@ async function guidePasses(deps: AuditDeps, out: AuditRecord[]) {
   if (waiting.size) await tipPass(deps, out, 'guide-closed', waiting);
 }
 
-/** Tour with an experiment running (arch:R2-3). Collapse/end-tour are T2's; recorded as notes. */
+/**
+ * Tour with an experiment running (arch:R2-3): opening the tour collapses the
+ * guide to its header, the card never covers that header, and starting an
+ * experiment ends the tour.
+ */
 async function tourWithGuidePass(deps: AuditDeps, out: AuditRecord[]) {
+  const record = (id: string, ok: boolean, failure: string, notes: string[] = []): AuditRecord => ({
+    phase: 'tour-with-guide', kind: 'tour', id, pass: ok, mode: null, side: null, inViewport: true,
+    overlapsTarget: false, coversFocus: false, overlapsAvoid: false, avoidHit: [], arrowLen: null,
+    arrowExempt: false, waiting: false, jumped: false, failures: ok ? [] : [failure], notes,
+  });
   await deps.startExperiment('induction');
-  await waitFor(() => guideRect(), 10000);
+  const full = await waitFor(() => guideRect(), 10000);
+  if (!full) {
+    out.push({ ...record('guide', false, 'experiment guide never opened'), skipped: 'experiment guide never opened' });
+    return;
+  }
   tutorialState.start();
   tutorialState.modelOfferDismissed = true;
-  const step = tutorialState.currentStep;
-  if (step) {
+  const collapsed = await waitFor(() => {
+    const g = guideRect();
+    return g && g.height < full.height - 1 ? g : null;
+  }, 5000);
+  out.push(record('guide-collapses', !!collapsed, 'guide did not collapse to its header when the tour opened', [
+    `guide ${Math.round(full.height)}px -> ${collapsed ? Math.round(collapsed.height) : '?'}px`,
+  ]));
+  // The first few steps: header targets, a run button, a large panel.
+  for (let i = 0; i < 5; i++) {
+    const step = tutorialState.currentStep;
+    if (!step) break;
+    progress(`tour-with-guide ${step.id}`);
     await waitFor(() => card()?.getAttribute('data-step-id') === step.id, 5000);
     if (step.target) await waitFor(() => activeTarget(), 10000);
     await settle(card);
-    const rec = judge(measure('tour-with-guide', 'tour', step.id, card(), rectOf(activeTarget()), [OCCUPIED.tourCard]), { tour: true });
-    const notes: string[] = [];
-    const guide = document.querySelector('aside[aria-label="Experiment guide"]');
-    notes.push(`guide height while tour open: ${rectOf(guide)?.height ?? 'none'} (collapse-on-tour is T2's)`);
-    rec.notes = notes;
-    out.push(rec);
+    out.push(judge(measure('tour-with-guide', 'tour', step.id, card(), rectOf(activeTarget()), [OCCUPIED.tourCard]), { tour: true }));
+    tutorialState.next();
+    await frame();
   }
+  // Starting an experiment ends the tour.
+  await deps.startExperiment('induction');
+  const ended = await waitFor(() => !tutorialState.open, 5000);
+  out.push(record('experiment-ends-tour', !!ended, 'starting an experiment left the tour open'));
   tutorialState.close();
   deps.closeExperiment();
   await waitFor(() => !guideRect(), 5000);

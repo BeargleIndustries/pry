@@ -98,21 +98,22 @@ describe('FROM mode', () => {
 });
 
 describe('TO mode', () => {
-  it('average received uses only causal queries q >= fi', () => {
-    const expected0 = (1 + 1 / 2 + 1 / 3 + 1 / 4 + 1 / 5 + 1 / 6) / 6;
+  it('TO mode excludes self-attention', () => {
+    // Column 0: later queries 1..5 only, not the word's own row.
+    const expected0 = (1 / 2 + 1 / 3 + 1 / 4 + 1 / 5 + 1 / 6) / 5;
     expect(aggregateTo(uniform, 0, 'mean')).toBeCloseTo(expected0, 9);
-    // Column 4: queries 4,5 only, not diluted by queries 0..3 (masked zeros).
-    expect(aggregateTo(uniform, 4, 'mean')).toBeCloseTo((1 / 5 + 1 / 6) / 2, 9);
-  });
-
-  it('strongest is the max over q >= fi', () => {
-    expect(aggregateTo(uniform, 3, 'max')).toBeCloseTo(1 / 4, 9);
-    expect(aggregateTo(firstHead, 0, 'max')).toBeCloseTo(1, 9);
+    // Column 4: query 5 only, not diluted by queries 0..3 or its own row.
+    expect(aggregateTo(uniform, 4, 'mean')).toBeCloseTo(1 / 6, 9);
+    expect(aggregateTo(uniform, 3, 'max')).toBeCloseTo(1 / 5, 9);
+    // selfHead puts most weight on the diagonal; that must not count.
+    expect(aggregateTo(selfHead, 2, 'max')!).toBeLessThan(selfHead[2][2]);
+    // The first word attends only to itself (1.0); later words see far less.
+    expect(aggregateTo(uniform, 0, 'max')).toBeCloseTo(1 / 2, 9);
   });
 
   it('options differ between heads', () => {
     for (const o of TO_OPTIONS) {
-      const a = aggregateTo(selfHead, 2, o.id)!;
+      const a = aggregateTo(prevHead, 2, o.id)!;
       const b = aggregateTo(firstHead, 2, o.id)!;
       expect(Math.abs(a - b), o.id).toBeGreaterThan(1e-4);
     }
@@ -126,26 +127,32 @@ describe('TO mode', () => {
     ];
     const uneven = [
       [1, 0, 0],
-      [0.5, 0.5, 0],
-      [0.5, 0.25, 0.25],
+      [0.9, 0.1, 0],
+      [0.1, 0.45, 0.45],
     ];
     expect(aggregateTo(flat, 0, 'spread')).toBeCloseTo(1, 9);
     expect(aggregateTo(uneven, 0, 'spread')!).toBeLessThan(1);
   });
 
-  it('single query (last token): spread is null, max/mean defined', () => {
+  it('TO mode on the last word returns null', () => {
     const last = N - 1;
-    expect(aggregateTo(uniform, last, 'spread')).toBeNull();
-    expect(aggregateTo(uniform, last, 'max')).toBeCloseTo(1 / N, 9);
-    expect(aggregateTo(uniform, last, 'mean')).toBeCloseTo(1 / N, 9);
+    for (const o of TO_OPTIONS) expect(aggregateTo(uniform, last, o.id), o.id).toBeNull();
+  });
+
+  it('second-to-last word: one later query, so spread is null and max/mean are defined', () => {
+    const fi = N - 2;
+    expect(aggregateTo(uniform, fi, 'spread')).toBeNull();
+    expect(aggregateTo(uniform, fi, 'max')).toBeCloseTo(1 / N, 9);
+    expect(aggregateTo(uniform, fi, 'mean')).toBeCloseTo(1 / N, 9);
   });
 
   it('all-zero column gives null spread, not NaN', () => {
     expect(
       aggregateTo(
         [
-          [0, 0],
-          [0, 0],
+          [0, 0, 0],
+          [0, 0, 0],
+          [0, 0, 0],
         ],
         0,
         'spread',

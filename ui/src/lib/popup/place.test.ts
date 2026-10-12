@@ -195,8 +195,11 @@ describe('placePopup', () => {
     expect(jumped(a, { ...a, mode: 'inset' })).toBe(true);
     expect(jumped(a, { ...a, box: rect(200, 140, 300, 100) })).toBe(true);
     expect(jumped(a, { ...a, box: rect(210, 110, 300, 100) })).toBe(false);
-    // The target grew/moved (results arriving): the card following it is fine.
+    // The target grew/moved (results arriving): the card following it is fine,
+    // even when that takes it to another side or into inset mode.
     expect(jumped(a, { ...a, box: rect(200, 300, 300, 100), target: rect(100, 300, 50, 50) })).toBe(false);
+    expect(jumped(a, { ...a, side: 'bottom', target: rect(100, 100, 50, 400) })).toBe(false);
+    expect(jumped(a, { ...a, mode: 'inset', target: rect(0, 0, 1200, 700) })).toBe(false);
   });
 
   it('› anchored never overlaps target', () => {
