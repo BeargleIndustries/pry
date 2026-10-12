@@ -98,6 +98,7 @@
     aria-expanded={open}
     title="Engine status"
     data-testid="engine-status-chip"
+    data-tour="engine-chip"
   >
     <span
       class="h-1.5 w-1.5 rounded-full {offline ? 'bg-red-500' : h ? 'bg-emerald-400' : 'bg-zinc-500'}"

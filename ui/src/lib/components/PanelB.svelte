@@ -130,7 +130,7 @@
           {/if}
         </div>
       {:else}
-        <span class="ml-auto text-xs text-zinc-600">
+        <span class="ml-auto text-xs text-zinc-600" data-tour="panel-b-layer-selector">
           layer {response.sae_layer_used}
         </span>
       {/if}

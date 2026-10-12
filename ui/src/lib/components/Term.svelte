@@ -98,6 +98,7 @@
   <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
   <span
     bind:this={anchor}
+    data-tour="glossary-term"
     tabindex="0"
     aria-describedby={tipId}
     class="cursor-help underline decoration-dotted decoration-zinc-500 underline-offset-2 focus:outline-none focus-visible:rounded-sm focus-visible:ring-1 focus-visible:ring-indigo-400"

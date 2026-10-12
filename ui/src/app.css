@@ -21,6 +21,11 @@
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25);
   transition: outline-color 150ms ease, box-shadow 150ms ease;
 }
+@media (prefers-reduced-motion: reduce) {
+  [data-tour-active="true"] {
+    transition: none;
+  }
+}
 
 /* shadcn-svelte CSS variable tokens — uncomment and populate in Phase 2/3 */
 /* :root {

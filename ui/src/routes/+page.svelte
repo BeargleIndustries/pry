@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy, untrack } from 'svelte';
-  import { CircleHelp, Settings, Download, FlaskConical, GitCompareArrows, BookOpen, BookmarkPlus } from 'lucide-svelte';
+  import { Settings, Download, FlaskConical, GitCompareArrows, BookOpen, BookmarkPlus } from 'lucide-svelte';
   import PryLogo from '$lib/components/icons/PryLogo.svelte';
   import { health, loadPreset, unloadPreset, listModels } from '$lib/sidecar';
   import { withoutEngineMemory } from '$lib/hardware-adjust';
@@ -35,7 +35,8 @@
   import SettingsDrawer from '$lib/components/SettingsDrawer.svelte';
   import DrivenTutorial from '$lib/components/DrivenTutorial.svelte';
   import FirstTimeTip from '$lib/components/FirstTimeTip.svelte';
-  import { resetAllTips } from '$lib/tips/coordinate';
+  import TourMenu from '$lib/components/TourMenu.svelte';
+  import TourSettings from '$lib/components/TourSettings.svelte';
   import { invoke } from '@tauri-apps/api/core';
   import LoadProgressBanner from '$lib/components/LoadProgressBanner.svelte';
   import RuntimeUpdatePrompt from '$lib/components/RuntimeUpdatePrompt.svelte';
@@ -624,70 +625,47 @@
     invoke('open_devtools').catch(() => {});
   }
 
-  function resetOnboardingTips() {
-    if (typeof localStorage === 'undefined') return;
-    const keys: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith('pry:tip_seen:')) keys.push(k);
-    }
-    for (const k of keys) localStorage.removeItem(k);
-    resetAllTips();
-  }
-
+  // The guided tour's moves (see $lib/tutorial/tour-steps.ts).
   const tutorialActions: TutorialActions = {
-    setPrompt: (t) => {
-      prompt = t;
-    },
-    runGenerate: async () => {
-      await handleGenerate();
-    },
-    setActiveTab: (tab) => {
-      // In split mode both panels are already visible — no-op
-      if (!isWide) {
-        activeTab = tab;
-      }
-    },
-    setFocusTokenIndex: (i) => {
-      st.focusTokenIndex = i;
-    },
-    setPanelAAggregation: (agg) => {
-      panelAAggregation = agg;
-    },
+    setPrompt: (t) => { prompt = t; },
+    runGenerate: () => handleGenerate(),
+    response: () => st.response,
+    openLeftTab: (tab) => experimentActions.openLeftTab(tab),
+    openRightTab: (tab) => experimentActions.openRightTab(tab),
+    setFocusTokenIndex: (i) => { st.focusTokenIndex = i; },
+    setPanelAAggregation: (agg) => { panelAAggregation = agg; },
     findTokenIndex: (pred) => st.response?.tokens.find(pred)?.index,
-    switchSaeLayer: async (layer: number) => {
-      await handleLayerSwitch(layer);
+    switchSaeLayer: (layer) => handleLayerSwitch(layer),
+    currentSaeLayer: () => st.saeLayer ?? null,
+    showCopyingHeads: () => { void analysis.showHeadScores(); },
+    hideCopyingHeads: () => analysis.hideHeadScores(),
+    setHeadAblation: (on, heads) => {
+      if (heads) st.headAblations = heads.map((h) => ({ ...h }));
+      st.headAblationMode = on;
     },
-    setLeftTab: (tab) => { leftActiveTab = tab; },
-    setRightTab: (tab) => { rightActiveTab = tab; },
+    runHeadAblation: () => handleHeadAblation(),
+    headAblationResult: () => st.headAblateResponse,
+    runPatching: (clean, corrupted, patchType) => {
+      patchingPreset = { clean, corrupted, patchType };
+      return handlePatching(clean, corrupted, patchType);
+    },
+    patchingResult: () => st.patchResponse,
+    setCompareMode: (on) => { compareMode = on; },
+    setComparePrompts: (a, b) => { compare.state.promptA = a; compare.state.promptB = b; },
+    runCompare: () => compare.run(),
+    compareResult: () => compare.state,
     activePresetId: () => activePresetId,
-    switchModel: (id: string) => handleSwitch(id),
+    switchModel: (id) => handleSwitch(id),
     exit: () => {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('pry:tutorial_seen', 'true');
-      }
+      try { localStorage.setItem('pry:tutorial_seen', 'true'); } catch { /* unavailable */ }
       tutorialState.close();
     },
   };
 
-  let tourMenuOpen = $state(false);
-
-  function openTutorial() {
-    tutorialState.start();
-    tourMenuOpen = false;
-  }
-
-  function openAdvancedTutorial() {
-    tutorialState.startAdvanced();
-    tourMenuOpen = false;
-  }
-
-  // Escape closes the tour menu and the hardware card (T29). Their backdrops
-  // close on click too; this is the keyboard way out.
+  // Escape closes the hardware card (T29). Its backdrop closes on click too;
+  // this is the keyboard way out.
   function onWindowKeydown(e: KeyboardEvent) {
-    if (e.key !== 'Escape') return;
-    if (tradingCardOpen) tradingCardOpen = false;
-    else if (tourMenuOpen) tourMenuOpen = false;
+    if (e.key === 'Escape' && tradingCardOpen) tradingCardOpen = false;
   }
 
   // Put the cursor in the prompt box once, when the app first opens. This
@@ -905,6 +883,7 @@
         onclick={() => openNotebook(true)}
         aria-label="Save to notebook"
         title="Save this run to your lab notebook"
+        data-tour="notebook-button"
         disabled={!st.response}
         class="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 disabled:opacity-30 disabled:cursor-not-allowed"
       >
@@ -938,29 +917,7 @@
         <GitCompareArrows class="h-4 w-4" />
         Compare
       </button>
-      <div class="relative">
-        <button onclick={() => { tourMenuOpen = !tourMenuOpen; }} aria-label="Open tutorial" data-tour="header-help"
-          aria-expanded={tourMenuOpen}
-          class="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100">
-          <CircleHelp class="h-4 w-4" />
-        </button>
-        {#if tourMenuOpen}
-          <!-- Click-outside catcher; Escape closes the menu via onWindowKeydown. -->
-          <div role="presentation" class="fixed inset-0 z-40" onclick={() => { tourMenuOpen = false; }}></div>
-          <div class="absolute right-0 top-full z-50 mt-1 w-40 rounded-md border border-zinc-700 bg-zinc-900 py-1 shadow-xl">
-            <button
-              type="button"
-              onclick={openTutorial}
-              class="w-full px-3 py-1.5 text-left text-xs text-zinc-300 hover:bg-zinc-800"
-            >Basic Tour</button>
-            <button
-              type="button"
-              onclick={openAdvancedTutorial}
-              class="w-full px-3 py-1.5 text-left text-xs text-zinc-300 hover:bg-zinc-800"
-            >Advanced Tour</button>
-          </div>
-        {/if}
-      </div>
+      <TourMenu />
       <button onclick={openSettings} aria-label="Open settings"
         class="relative rounded-md p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100">
         <Settings class="h-4 w-4" />
@@ -1064,7 +1021,7 @@
 
   <!-- Shared token strip — below error/banner, above panels -->
   {#if st.response && !compareMode}
-    <div class="flex-shrink-0 border-b border-zinc-800 bg-zinc-900/50 px-4">
+    <div class="flex-shrink-0 border-b border-zinc-800 bg-zinc-900/50 px-4" data-tour="token-strip">
       <SharedTokenStrip
         tokens={st.response.tokens}
         focusTokenIndex={st.focusTokenIndex}
@@ -1439,21 +1396,13 @@
         >{devtoolsAutoopen ? 'On' : 'Off'}</button>
       </div>
 
-      <div class="flex items-center justify-between gap-3">
-        <div class="min-w-0">
-          <p class="text-sm text-zinc-300">Reset onboarding tips</p>
-          <p class="text-xs text-zinc-500">Re-show first-time tooltips on next mount.</p>
-        </div>
-        <button
-          onclick={resetOnboardingTips}
-          class="shrink-0 rounded-md border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-zinc-300 hover:border-indigo-600 hover:text-indigo-300"
-        >Reset</button>
-      </div>
     </div>
+
+    <TourSettings onTourStarted={() => (settingsOpen = false)} />
   </SettingsDrawer>
 
   <!-- Driven tutorial -->
-  <DrivenTutorial generating={st.generating} response={st.response} {loadState} {bannerVisible} saeLayerSwitching={st.layerSwitching} error={st.error} actions={tutorialActions} />
+  <DrivenTutorial generating={st.generating} {loadState} {bannerVisible} saeLayerSwitching={st.layerSwitching} error={st.error} actions={tutorialActions} />
 
   <ExperimentGallery
     open={experimentsOpen}
