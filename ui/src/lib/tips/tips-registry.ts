@@ -7,7 +7,7 @@
 // The target-string fallback in `coordinate.ts` also flips a tip's flag when
 // the current tutorial step's `target` attribute exactly matches this tip's
 // `data-tip` id, so tutorial targets named after a `data-tip` id (e.g.
-// `panel-a-heatmap`, `panel-a-agg-selector`, `panel-b-token-strip`) will auto-
+// `panel-a-heatmap`, `panel-a-agg-selector`) will auto-
 // suppress the matching tip without needing an explicit `tutorialStepId`.
 
 import { CUSTOM_MODELS_ENABLED } from '../flags';
@@ -25,7 +25,10 @@ export interface TipDef {
   blurb: string;
   /** Optional expanded paragraph shown when the user clicks "why?". */
   why: string | null;
+  /** Preferred side of the target; placePopup flips or insets when it doesn't fit. */
   placement: TipPlacement;
+  /** Point the arrow aims at, as a fraction [fx, fy] of the target rect. Default [0.5, 0.5]. */
+  focus?: [number, number];
   /**
    * If set, tip is auto-marked seen when the tutorial advances past this step
    * id. Values here must match an id in `drivenSteps`.
@@ -52,6 +55,7 @@ export const tipsRegistry: TipDef[] = [
     title: 'Attention grid',
     target: '[data-tip="panel-a-heatmap"]',
     placement: 'right',
+    focus: [0.5, 0.4],
     blurb:
       "Attention is how the model decides which earlier words to focus on when predicting the next one. Each cell here is one attention head at one layer (in GPT-2 small that's 12 layers \u00d7 12 heads, so 144 heads all doing slightly different things). Rows are layers, columns are heads, and brightness is how much attention this cell paid to the currently-focused token.",
     why:
@@ -78,26 +82,6 @@ export const tipsRegistry: TipDef[] = [
       "Different questions about the same attention data. The heatmap re-colors based on which one you're asking.",
     why:
       "Every cell in the grid has to boil a whole attention pattern down to one number for coloring. In FROM mode, Strongest look scores how hard this head locked onto one earlier word. Spread scores whether it focused on one word or scattered across lots of them. Looks back is how far back in the sentence it looked, on average. Previous word is how much it looked at the word right before, which lights up heads that track the previous word. TO mode flips the direction (how the later words looked back at this one) and adds Average received: how much attention this word got, on average, from the words after it. The first word has nothing earlier to look at, so some of these don't apply to it and its cells show grey.",
-  },
-  {
-    id: 'panel-a-token-strip',
-    title: 'Word chips',
-    target: '[data-tip="panel-a-token-strip"]',
-    placement: 'bottom',
-    blurb:
-      "Click any token here to refocus the heatmap on it. Whichever word is selected becomes the 'query,' and every cell in the grid re-colors to show how that one word was being computed.",
-    why: null,
-  },
-  {
-    // Tutorial step 2.4 targets 'panel-b-token-strip'; string-equality
-    // fallback marks this tip seen on step advance.
-    id: 'panel-b-token-strip',
-    title: 'Word chips',
-    target: '[data-tip="panel-b-token-strip"]',
-    placement: 'bottom',
-    blurb:
-      "Same word strip as the Attention tab, different job. Click a word and the Features tab shows the internal concepts (called SAE features) that lit up for that specific word.",
-    why: null,
   },
   {
     id: 'panel-b-feature-row',
@@ -142,7 +126,8 @@ export const tipsRegistry: TipDef[] = [
     id: 'predictions-panel',
     title: 'Predictions',
     target: '[data-tip="predictions-panel"]',
-    placement: 'top',
+    placement: 'left',
+    focus: [0.5, 0.2],
     blurb:
       "The model's top 10 guesses for the next word, ranked by probability. The bar shows how likely it thinks each one is.",
     why:
@@ -162,7 +147,8 @@ export const tipsRegistry: TipDef[] = [
     id: 'logit-lens-heatmap',
     title: 'Logit Lens',
     target: '[data-tip="logit-lens-heatmap"]',
-    placement: 'bottom',
+    placement: 'right',
+    focus: [0.5, 0.5],
     blurb:
       "What the model would predict at every layer if you forced it to answer early. You're watching it make up its mind in slow motion.",
     why:
@@ -172,7 +158,8 @@ export const tipsRegistry: TipDef[] = [
     id: 'dla-waterfall',
     title: 'Why (DLA) chart',
     target: '[data-tip="dla-waterfall"]',
-    placement: 'left',
+    placement: 'right',
+    focus: [0.5, 0.3],
     blurb:
       "Each bar is one part of the model. Blue means it pushed toward the predicted word, orange means it pushed against. The tallest bars are the parts that mattered most.",
     why:
@@ -191,7 +178,8 @@ export const tipsRegistry: TipDef[] = [
     id: 'steering-panel',
     title: 'Steering',
     target: '[data-tip="steering-panel"]',
-    placement: 'top',
+    placement: 'left',
+    focus: [0.5, 0.2],
     blurb:
       "Pick a feature, slide the dial to turn it up or down, hit Run. You just rewired part of the model. Compare the outputs to see what changed.",
     why:
@@ -221,7 +209,8 @@ export const tipsRegistry: TipDef[] = [
     id: 'patching-panel',
     title: 'Swap & Compare',
     target: '[data-tip="patching-panel"]',
-    placement: 'bottom',
+    placement: 'right',
+    focus: [0.5, 0.2],
     blurb:
       "Run two prompts, then swap one piece of the model's internal state between them. The piece that changes the answer is the one that matters.",
     why:
@@ -231,7 +220,8 @@ export const tipsRegistry: TipDef[] = [
     id: 'circuit-graph',
     title: 'Key parts map',
     target: '[data-tip="circuit-graph"]',
-    placement: 'left',
+    placement: 'right',
+    focus: [0.5, 0.4],
     blurb:
       "These are the heads and layers that pushed the prediction most. Lines show one kind of connection between them: the direct value path.",
     why:
@@ -282,7 +272,8 @@ export const tipsRegistry: TipDef[] = [
     id: 'compare-panel',
     title: 'Compare',
     target: '[data-tip="compare-panel"]',
-    placement: 'bottom',
+    placement: 'top',
+    focus: [0.5, 0.25],
     blurb:
       "Type two prompts that differ by a word or two, then press Compare to see how the predictions, features and attention change.",
     why:
@@ -292,7 +283,8 @@ export const tipsRegistry: TipDef[] = [
     id: 'watch-it-write',
     title: 'Watch it write',
     target: '[data-tip="watch-it-write"]',
-    placement: 'top',
+    placement: 'left',
+    focus: [0.5, 0.3],
     blurb:
       "Let the model keep writing one word-piece at a time, and see which other guesses it nearly picked at each step.",
     why:

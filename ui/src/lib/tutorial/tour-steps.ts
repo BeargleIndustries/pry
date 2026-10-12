@@ -26,11 +26,38 @@ export interface StepRun {
   skipIf?(ctx: TourContext): boolean;
 }
 
+export type PopupSide = 'top' | 'bottom' | 'left' | 'right';
+
+/**
+ * Anchors too big for the tour card to sit beside at common window sizes.
+ * Steps that target one of these must declare `focus` (checked in
+ * tour-steps.test.ts), so the card can sit inside the target next to it.
+ */
+export const LARGE_TARGETS: readonly string[] = [
+  'predictions-panel',
+  'patching-panel',
+  'compare-panel',
+  'steering-panel',
+  'panel-a-lines',
+  'panel-a-heatmap',
+  'logit-lens-heatmap',
+  'dla-waterfall',
+  'circuit-graph',
+  'copying-heads-view',
+  'watch-it-write',
+  'panel-b-features-list',
+  'ablation-results',
+];
+
 export interface TourStep {
   id: string;
   blurb: string;
   why: string | null;
   target: string | null;
+  /** Preferred side of the target for the card (placePopup flips it when it doesn't fit). */
+  placement?: PopupSide;
+  /** Point the arrow aims at, as a fraction [fx, fy] of the target rect. Default [0.5, 0.5]. */
+  focus?: [number, number];
   compare?: boolean;
   enter?(ctx: TourContext): void;
   run?: StepRun;
@@ -179,6 +206,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'basics.welcome',
         target: 'header-help',
+        placement: 'bottom',
         blurb:
           "Welcome to Pry! It's a microscope for a language model. You type a sentence, the model guesses the next word, and Pry shows you what went on inside while it guessed.",
         why:
@@ -187,6 +215,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'basics.prompt',
         target: 'prompt-input',
+        placement: 'bottom',
         enter: (ctx) => ctx.setPrompt(CAT),
         blurb:
           'First, a prompt. I typed "The cat sat on the" into the box. You already know how that one ends, so let\'s see if the model does.',
@@ -196,6 +225,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'basics.run',
         target: 'run-button',
+        placement: 'bottom',
         enter: (ctx) => ctx.setPrompt(CAT),
         run: runPrompt(CAT),
         blurb:
@@ -206,6 +236,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'basics.tokens',
         target: 'token-strip',
+        placement: 'bottom',
         blurb:
           "See the chips above the panels? Those are tokens, the word pieces the model reads. A dot means the piece starts with a space. Click a chip to focus on it.",
         why:
@@ -214,6 +245,8 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'basics.predictions',
         target: 'predictions-panel',
+        placement: 'left',
+        focus: [0.5, 0.2],
         enter: (ctx) => ctx.openRightTab('predictions'),
         blurb:
           "Here are the model's top guesses for the next word, each with its chance. The sentence in the shaded box says the same thing in plain words, and most panels have one.",
@@ -223,6 +256,8 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'basics.lines',
         target: 'panel-a-lines',
+        placement: 'right',
+        focus: [0.3, 0.3],
         enter: (ctx) => showAttention(ctx, 'lines'),
         blurb:
           "Over here is Attention, in the Lines view. Each word on the left draws lines to the earlier words it looked at. Darker line, harder look.",
@@ -232,6 +267,8 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'basics.focus',
         target: 'panel-a-lines',
+        placement: 'right',
+        focus: [0.3, 0.3],
         enter: (ctx) => {
           showAttention(ctx, 'lines');
           focusWord(ctx, 'cat');
@@ -244,6 +281,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'basics.glossary',
         target: 'glossary-term',
+        placement: 'bottom',
         blurb:
           'Spot a word with a dotted underline? Hover over it, or Tab to it, and you get a one-line definition. Attention head, logit and feature all have one.',
         why:
@@ -259,6 +297,8 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'attention.grid',
         target: 'panel-a-heatmap',
+        placement: 'right',
+        focus: [0.5, 0.4],
         enter: (ctx) => showAttention(ctx, 'expert'),
         blurb:
           "Now the Expert view, a grid with every attention head in it: 12 layers top to bottom, 12 heads across. Each square's one head.",
@@ -268,6 +308,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'attention.agg',
         target: 'panel-a-agg-selector',
+        placement: 'bottom',
         enter: (ctx) => {
           showAttention(ctx, 'expert');
           ctx.setPanelAAggregation('previous');
@@ -280,6 +321,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'attention.from-to',
         target: 'panel-a-from-selector',
+        placement: 'bottom',
         enter: (ctx) => showAttention(ctx, 'expert'),
         blurb:
           'FROM and TO flip the question around. FROM asks where this word looked. TO asks which later words looked back at it.',
@@ -289,6 +331,8 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'attention.copying',
         target: 'copying-heads-view',
+        placement: 'right',
+        focus: [0.5, 0.3],
         enter: (ctx) => {
           ctx.setHeadAblation(false);
           ctx.openLeftTab('attention');
@@ -309,6 +353,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'guesses.run',
         target: 'run-button',
+        placement: 'bottom',
         enter: (ctx) => ctx.setPrompt(JORDAN),
         run: runPrompt(JORDAN),
         blurb:
@@ -319,6 +364,8 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'guesses.predictions',
         target: 'predictions-panel',
+        placement: 'left',
+        focus: [0.5, 0.2],
         enter: (ctx) => ctx.openRightTab('predictions'),
         blurb:
           'Did basketball make the top spot? The readout gives you its chance in plain words, and a "confident" tag shows up when the top guess has better than even odds.',
@@ -328,6 +375,8 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'guesses.write',
         target: 'watch-it-write',
+        placement: 'left',
+        focus: [0.5, 0.3],
         enter: (ctx) => ctx.openRightTab('predictions'),
         blurb:
           'Down here is Watch it write. Press Write it and the model keeps going one word at a time, showing the word it picked and the runner-up at each step.',
@@ -337,6 +386,8 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'guesses.lens',
         target: 'logit-lens-heatmap',
+        placement: 'right',
+        focus: [0.5, 0.5],
         enter: (ctx) => ctx.openLeftTab('logit-lens'),
         blurb:
           "Over on the left, the Logit Lens. Each row is a layer, and it shows what the model would guess if you stopped it there. Look for the row where basketball shows up.",
@@ -353,6 +404,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'responsible.run',
         target: 'run-button',
+        placement: 'bottom',
         enter: (ctx) => ctx.setPrompt(IOI),
         run: runPrompt(IOI),
         blurb:
@@ -363,6 +415,8 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'responsible.dla',
         target: 'dla-waterfall',
+        placement: 'right',
+        focus: [0.5, 0.3],
         enter: (ctx) => ctx.openLeftTab('dla'),
         blurb:
           'Why (DLA) hands out credit and blame. Blue bars pushed toward the predicted word and orange bars pushed against it. Bigger bar, bigger push.',
@@ -372,6 +426,8 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'responsible.parts',
         target: 'circuit-graph',
+        placement: 'right',
+        focus: [0.5, 0.4],
         enter: (ctx) => ctx.openLeftTab('circuit'),
         blurb:
           'Key parts maps out the biggest pushers, highest layer on top. The lines between them show one kind of link, which Pry calls the direct value path.',
@@ -388,6 +444,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'poke.knockout',
         target: 'ablation-head-toggle',
+        placement: 'bottom',
         enter: (ctx) => {
           ctx.hideCopyingHeads();
           ctx.openLeftTab('attention');
@@ -406,6 +463,8 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'poke.knockout-result',
         target: 'ablation-results',
+        placement: 'right',
+        focus: [0.5, 0.3],
         enter: (ctx) => {
           ctx.hideCopyingHeads();
           ctx.openLeftTab('attention');
@@ -419,6 +478,8 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'poke.swap',
         target: 'patching-panel',
+        placement: 'right',
+        focus: [0.5, 0.2],
         enter: (ctx) => {
           ctx.setHeadAblation(false);
           ctx.openLeftTab('patching');
@@ -436,6 +497,8 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'poke.swap-result',
         target: 'patching-panel',
+        placement: 'right',
+        focus: [0.5, 0.5],
         enter: (ctx) => ctx.openLeftTab('patching'),
         blurb:
           "Check out the Residual view, a grid of layers by words. Each square swaps one layer at one word, and the strong squares show where the name that matters is sitting, and when.",
@@ -452,6 +515,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'concepts.run',
         target: 'run-button',
+        placement: 'bottom',
         enter: (ctx) => ctx.setPrompt(NURSE),
         run: runPrompt(NURSE),
         blurb:
@@ -462,6 +526,8 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'concepts.features',
         target: 'panel-b-features-list',
+        placement: 'left',
+        focus: [0.5, 0.2],
         enter: (ctx) => {
           ctx.openRightTab('features');
           focusWord(ctx, 'she');
@@ -474,6 +540,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'concepts.history',
         target: 'feature-histogram',
+        placement: 'left',
         enter: (ctx) => ctx.openRightTab('features'),
         blurb:
           "Under each feature there's a tiny chart across your words, showing how hard it fired on each one. A hatched bar means it wasn't in that word's top five.",
@@ -483,6 +550,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'concepts.layer',
         target: 'panel-b-layer-selector',
+        placement: 'bottom',
         enter: (ctx) => ctx.openRightTab('features'),
         run: {
           label: 'Switch to layer 2',
@@ -498,6 +566,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'concepts.knockout',
         target: 'ablation-feature-toggle',
+        placement: 'left',
         enter: (ctx) => ctx.openRightTab('features'),
         blurb:
           'You can knock out features too. Turn on Ablation here, tick the features to switch off, and press Run Ablated. If the guesses shift, those features mattered.',
@@ -507,6 +576,8 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'concepts.steer',
         target: 'steering-panel',
+        placement: 'left',
+        focus: [0.5, 0.2],
         enter: (ctx) => ctx.openRightTab('steering'),
         blurb:
           'Steering is a volume knob for a concept. Pick a feature, drag the strength, press Run Steered, and compare the original and steered text side by side.',
@@ -516,6 +587,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'concepts.find',
         target: 'concept-search',
+        placement: 'left',
         enter: (ctx) => ctx.openRightTab('steering'),
         blurb:
           'Want a concept that isn\'t in your prompt? Type it into Find a concept, like "the ocean", and Pry searches Neuronpedia for matching features to steer with.',
@@ -532,6 +604,8 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'compare.run',
         target: 'compare-panel',
+        placement: 'top',
+        focus: [0.5, 0.25],
         compare: true,
         enter: (ctx) => ctx.setComparePrompts(COMPARE_A, COMPARE_B),
         run: {
@@ -551,6 +625,8 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'compare.read',
         target: 'compare-panel',
+        placement: 'top',
+        focus: [0.5, 0.25],
         compare: true,
         blurb:
           'Check the next-word changes. Did "he" or "she" move? Keep in mind a difference shows what changed along with the word. It doesn\'t prove what caused what.',
@@ -567,6 +643,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'lab.experiments',
         target: 'experiments-button',
+        placement: 'bottom',
         blurb:
           'Experiments opens eight guided experiments, like "Who gets the drink?" and "Can it count years?". Each one sets everything up and tells you what to look for.',
         why:
@@ -575,6 +652,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'lab.notebook',
         target: 'notebook-button',
+        placement: 'bottom',
         blurb:
           "Found something cool? The bookmark button saves this run to your lab notebook with a note, and Notebook opens everything you've saved.",
         why:
@@ -583,6 +661,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'lab.export',
         target: 'export-button',
+        placement: 'bottom',
         blurb:
           "The download button saves this run's raw numbers as a JSON file, through a normal Save dialog. Handy if you want to dig in with your own code.",
         why:
@@ -598,6 +677,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'models.switcher',
         target: 'model-switcher',
+        placement: 'bottom',
         blurb:
           "This menu switches models, and each one gets a badge for how well it fits your computer. Gemma 2 2B needs a graphics card. The tour sticks with GPT-2 small.",
         why:
@@ -606,6 +686,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'models.engine',
         target: 'engine-chip',
+        placement: 'bottom',
         blurb:
           "This chip shows the engine: whether it's running on your graphics card (GPU) or main processor (CPU), and which model's loaded. Click it for details and a Restart button.",
         why:
@@ -614,6 +695,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'models.done',
         target: 'header-help',
+        placement: 'bottom',
         blurb:
           "You made it through the tour! The ? button gets you back anytime, to start over, pick up where you left off, or jump to a chapter. Settings can restart it too.",
         why:
