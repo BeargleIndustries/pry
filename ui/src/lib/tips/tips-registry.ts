@@ -124,7 +124,7 @@ export const tipsRegistry: TipDef[] = [
       "Pick how deep into the model to look. Deeper layers tend to hold more abstract concepts. Switching layers re-runs the feature detector at that depth.",
     why:
       "The model has a stack of layers (12 in GPT-2 small), each one building a richer picture. Early layers tend to catch surface features, things like word shape, grammar, part of speech. Later layers catch meaning, relationships, and the kind of abstract role-playing you saw with 'she' and 'nurse.' Switching layers here loads the feature detector (SAE) for the new depth and runs the model on your prompt again, which takes a few seconds. Try jumping between an early layer and a late one on the same token to see the difference.",
-    tutorialStepId: '2.5b',
+    tutorialStepId: 'concepts.layer',
   },
   {
     id: 'predictions-panel',
