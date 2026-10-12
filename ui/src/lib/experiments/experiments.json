@@ -33,7 +33,7 @@
         ]
       },
       "next": {
-        "reset": "Press Back to normal to clear the swap pair and close this guide. It won't touch your prompt.",
+        "reset": "Press Back to normal to close this guide. It won't touch your prompt, and Swap test keeps its two prompts so you can try your own.",
         "try": "Next, try Knock out the name movers to switch those heads off and see if the answer survives.",
         "tryId": "ioi-knockout"
       },
@@ -184,8 +184,8 @@
         ]
       },
       "next": {
-        "reset": "Press Back to normal to clear the swap pair and close this guide. It won't touch your prompt.",
-        "try": "Next, switch Patch type to Residual and press Run swap test again to see which word carries the fact."
+        "reset": "Press Back to normal to close this guide. It won't touch your prompt, and Swap test keeps its two prompts so you can try your own.",
+        "try": "Next, switch Swap from MLPs to Residual and press Run swap test again to see which word carries the fact."
       },
       "expect": " basketball",
       "expectCorrupted": " football"
@@ -210,7 +210,7 @@
         "Check Predictions first. The model should lean toward two-digit endings bigger than 32. It won't be perfect.",
         "The changed sentence starts in 1701, which tells the model almost nothing, because nearly any later year fits. Press Run swap test in Swap test.",
         "The bar at the top says what each sentence predicts. Each bar below copies one layer's MLP from the 1732 sentence and shows how much that raises the score for the original answer.",
-        "The biggest blue bars should sit in the last few layers (8 to 11), the layers the researchers found push up years bigger than the start. Earlier layers shouldn't do much."
+        "The biggest blue bar should sit in the last few layers (8 to 11), the layers the researchers found push up years bigger than the start. Layer 0 also scores high, because copying it at every word basically puts 1732 back in. A few layers push the other way."
       ],
       "found": {
         "summary": "Hanna et al. studied this exact setup in GPT-2 small. They found a few attention heads that move the start year to the end of the sentence, and MLP layers near the end of the network (roughly layers 8 to 11) that push up the years bigger than the start. They used the same model but a more targeted kind of patching than Pry's. Pry tracks only the single year the model picked, while Hanna et al. added up the chance of every bigger year, so expect rougher results than theirs.",
@@ -222,7 +222,7 @@
         ]
       },
       "next": {
-        "reset": "Press Back to normal to clear the swap pair and close this guide. It won't touch your prompt.",
+        "reset": "Press Back to normal to close this guide. It won't touch your prompt, and Swap test keeps its two prompts so you can try your own.",
         "try": "Next, change 1732 to 1785 in the Original prompt box, press Run swap test, and see if it's the same layers that light up."
       }
     },
@@ -276,7 +276,7 @@
       "lookFor": [
         "The Features tab lists the concepts the feature dictionary (SAE) found on each word. Click ·ocean or ·beach in the word chips (the dot means the word starts with a space) and read the labels.",
         "Another AI wrote the labels by reading examples, and labels written by an AI can be wrong. Some fit nicely and some don't make much sense.",
-        "Note the # number of a feature you liked. Open Steering, pick that # in the Feature menu, drag Steering strength to about 10 to 15, and press Run Steered.",
+        "Note the # number of a feature you liked. Open Steering, pick that # in the Feature menu, drag Steering strength to about 20, and press Run Steered.",
         "Pry highlights the words that changed. Does the text drift toward that concept? If nothing moves, try a bit more strength or a different feature."
       ],
       "found": {
