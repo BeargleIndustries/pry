@@ -3,8 +3,7 @@
 ## 0.3.5
 
 ### Fixed
-- The model menu in the header was cut off on the left, so model names didn't show (only the fit badges did).
-- Existing GPU installs were offered a 3.5 GB engine re-download they didn't need, when Pry was built from a checkout with Windows line endings.
+- The model menu in the header got cut off on the left, so you saw the fit badges but not the model names.
 - Pry no longer reopens on a custom model you've removed.
 
 ## 0.3.4
@@ -16,6 +15,7 @@
 ### Fixed
 - The model picker's memory check counted the operating system twice when it had a live reading of graphics memory, and also counted the model Pry already had loaded (which a switch unloads first). Models now get the verdict their real free memory supports.
 - Loading any model that needs a Hugging Face login failed with an error inside Pry. The token was passed twice to one loader and in a form another loader doesn't accept.
+- If you build Pry yourself on Windows, it no longer offers a 3.5 GB engine download you don't need. Windows-style line endings changed the fingerprint of one bundled file, so Pry thought its engine was out of date.
 
 ## 0.3.3
 

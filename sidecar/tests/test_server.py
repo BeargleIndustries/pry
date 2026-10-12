@@ -237,7 +237,7 @@ def test_load_progress_ordering(client, no_auth_env, monkeypatch):
     assert "Checking feature map files…" not in messages
     preparing = messages.index("Loading the feature dictionary…")
     assert stages[preparing] == "load_sae"
-    assert messages.index("Reading the model's weights…") < preparing
+    assert messages.index("Loading the model into memory…") < preparing
     # Long steps carry how long they've been running.
     assert all("elapsed_s" in e for e in events if e["stage"] == "warmup")
     assert any(m.startswith("Features ready") for m in messages[preparing + 1:])

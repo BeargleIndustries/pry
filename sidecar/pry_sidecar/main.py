@@ -409,7 +409,7 @@ async def load(request: Request) -> Response:
 
         def read_weights() -> None:
             weights_beat.append(
-                Heartbeat(push, "load_model", 0.58, "Reading the model's weights…").start()
+                Heartbeat(push, "load_model", 0.58, "Loading the model into memory…").start()
             )
 
         def worker() -> None:
