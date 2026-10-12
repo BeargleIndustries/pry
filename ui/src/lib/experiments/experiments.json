@@ -18,9 +18,10 @@
         "patchType": "head"
       },
       "lookFor": [
-        "Check Predictions first: GPT-2 small should favor \" Mary\", the person who didn't do the giving.",
-        "In Swap & Compare, press Run Patching. Pry copies each attention head, one at a time, from the original sentence into the swapped one and measures how much of the \" Mary\" answer comes back.",
-        "Most squares stay pale. A small number of heads, mostly in the later layers, carry most of the effect."
+        "Check Predictions first. GPT-2 small should favor ·Mary (the dot means the word starts with a space), the person who didn't do the giving.",
+        "In Swap test, press Run Patching. Pry copies one attention head at a time from the original sentence into the changed one, and measures how much each swap raises the score for ·Mary. A bigger blue number means more of the answer came back.",
+        "Each square's one head: rows are layers 0 to 11, columns are heads 0 to 11. Blue squares bring ·Mary back, orange ones push it further away, and pale ones don't do much. Click a square to see its numbers.",
+        "Expect most squares to stay pale. A small number of heads, mostly in the later layers, carry most of the effect."
       ],
       "found": {
         "summary": "Wang et al. traced this exact kind of sentence in GPT-2 small and described a circuit of about two dozen attention heads. Some find the repeated name, some suppress it, and a group they called \"name mover\" heads (in layers 9 and 10) copy the other name to the output. They also say it isn't the whole story of how the model does it.",
@@ -41,7 +42,7 @@
     {
       "id": "ioi-knockout",
       "title": "Knock out the name movers",
-      "hook": "Switch off three heads from the paper and see if the model notices.",
+      "hook": "Knock out (switch off) three heads from the paper and see if the model notices.",
       "why": "The paper found these three heads do most of the name moving, and that when they're knocked out, other \"backup\" heads partly take over.",
       "preset": "gpt2-small",
       "prompt": "When Mary and John went to the store, John gave a drink to",
@@ -64,12 +65,12 @@
         }
       ],
       "lookFor": [
-        "Pry's already picked heads 9.9, 9.6 and 10.0 for you in the Attention tab. Press \"Run Ablated (3)\" there.",
-        "Compare Original top-5 with Ablated top-5. Does \" Mary\" lose ground, and by how much?",
+        "Pry's already knocked out three heads in the Attention tab: layer 9, head 9; layer 9, head 6; and layer 10, head 0. They show as red squares with an x in Expert view (the grid).",
+        "Press Run Ablated (3) above the grid, then compare Original top-5 with Ablated top-5. Does ·Mary (the dot means the word starts with a space) lose ground, and by how much?",
         "Don't be surprised if the answer survives. Big networks often have spare parts."
       ],
       "found": {
-        "summary": "In the same study, Wang et al. identified 9.9, 9.6 and 10.0 as the main name mover heads. When they knocked them out, other heads they called \"backup name movers\" partly took over, so the drop was smaller than you might expect. Pry switches heads off by setting their output to zero, while Wang et al. mostly replaced it with an average, so treat your numbers as a rough echo, not a replication.",
+        "summary": "In the same study, Wang et al. identified these three (layer 9, head 9; layer 9, head 6; layer 10, head 0) as the main name mover heads. When they knocked them out, other heads they called \"backup name movers\" partly took over, so the drop was smaller than you might expect. Pry switches heads off by setting their output to zero, while Wang et al. mostly replaced it with an average, so treat your numbers as a rough echo, not a replication.",
         "citations": [
           {
             "label": "Wang et al. 2022, Interpretability in the Wild: a Circuit for Indirect Object Identification in GPT-2 small",
@@ -96,9 +97,9 @@
         "right": "predictions"
       },
       "lookFor": [
-        "The model's never seen this phrase, so the only way to guess the last word is to look back at the first copy. Check Predictions for \" Qu\" (the start of Quorn).",
-        "Press Find copying heads at the top of the Attention panel. Pry tests every head on a repeated random sequence and rings the ones that copy, such as layer 5 head 1 and layer 5 head 5.",
-        "Press Back to your prompt, then pick layer 5, head 1 (or head 5) with the Layer and Head menus above the lines, or click it in Expert view. On the second copy, the last word's attention points at \" Qu\", the word that came after \"from\" the first time."
+        "The model's never seen this phrase, so the only way to guess the last word is to look back at the first copy. Check Predictions for ·Qu, the start of Quorn (the dot means the word starts with a space).",
+        "Press Find copying heads at the top of the Attention panel. Pry tests every head on a repeated random sequence and rings the ones that copy, such as layer 5, head 1 and layer 5, head 5.",
+        "Press Back to your prompt. Then pick layer 5, head 1 (or head 5) with the Layer and Head menus above the lines, or click that square in Expert view to see its whole pattern. On the second copy, the last word looks back at ·Qu, the word that came after ·from the first time."
       ],
       "found": {
         "summary": "Olsson et al. named these \"induction heads\": heads that find an earlier copy of the current word and attend to the word that came after it, so it can be copied forward. They found them in many models, and argue (with strongest evidence in small models) that they're an important part of how models learn from their context.",
@@ -127,8 +128,9 @@
         "right": "predictions"
       },
       "lookFor": [
-        "Each row is a layer, showing what the model would say if it had to answer right there.",
-        "The early rows guess filler words like \" the\". Around layer 7 a sport shows up, but it's \" baseball\". From layer 8 on, \" basketball\" takes the top spot.",
+        "Each row's a layer (layer 0 at the bottom) and each column is a word. Read the last column, under ·of (the dot means the word starts with a space). That's what the model would guess next if it had to stop at that layer.",
+        "Indigo cells already match the final answer, and brighter means more sure. Gray cells guess something else.",
+        "The early rows guess filler words like ·the. Around layer 7 a sport shows up, but it's ·baseball. From layer 8 on, ·basketball takes the top spot.",
         "The model's most sure around layer 9 and a little less sure at the very end. The last layers often soften a confident guess."
       ],
       "found": {
@@ -146,7 +148,7 @@
       },
       "next": {
         "reset": "There's nothing to undo here. Press Back to normal to close this guide.",
-        "try": "Next, try your own fact, like \"The Eiffel Tower is in the city of\", and find the layer where the answer shows up."
+        "try": "Next, type your own fact in the Prompt box, like \"The Eiffel Tower is in the city of\", press Run, and find the layer where the answer shows up."
       },
       "expect": " basketball"
     },
@@ -167,9 +169,10 @@
         "patchType": "mlp"
       },
       "lookFor": [
-        "This one patches MLP layers (the model's \"feed-forward\" blocks) instead of attention heads. Press Run Patching in Swap & Compare.",
-        "The original sentence makes the model say \" basketball\", the swapped one \" football\". Each bar shows how much of the \" basketball\" answer comes back when that one layer is copied from the Michael Jordan sentence.",
-        "The first MLP (layer 0) brings back most of it. It's often described as acting like an extension of the word lookup. Layer 2 also brings back a good chunk, and the last layer pushes the other way."
+        "This one swaps MLP layers instead of attention heads. An MLP is the part of each layer that works on each word by itself, where many facts seem to be stored. Press Run Patching in Swap test.",
+        "The original sentence makes the model say ·basketball (the dot means the word starts with a space), and the changed one says ·football. Each bar copies one layer's MLP from the Michael Jordan sentence and shows how much that raises the score for ·basketball. Blue bars help, orange bars push the other way.",
+        "Expect the layer 0 bar to win by a mile. Layer 2 also brings back a good chunk, and the last layer pushes the other way.",
+        "That big layer 0 bar is expected. Pry copies a layer at every word at once, and layer 0's MLP acts a lot like part of the word lookup, so copying it basically puts Michael Jordan back into the sentence. It doesn't mean the fact lives there. The researchers below restored one spot at a time, at the last word of the name, in bigger models, and that's how they found the middle layers."
       ],
       "found": {
         "summary": "Meng et al. used a similar \"restore one piece\" trick (they called it causal tracing) on larger GPT models and found that MLP layers in the middle of the network, at the last word of the subject, mattered most for recalling facts. Pry patches each layer at every position at once and uses a much smaller model, so expect a blurrier picture than theirs.",
@@ -204,12 +207,13 @@
         "patchType": "mlp"
       },
       "lookFor": [
-        "Predictions should lean toward two-digit endings bigger than 32. It won't be perfect.",
-        "The swapped sentence starts in 1701, which tells the model almost nothing, because any later year fits. Press Run Patching in Swap & Compare.",
-        "Which MLP layers bring back the original answer? Watch the later layers in particular."
+        "Check Predictions first. The model should lean toward two-digit endings bigger than 32. It won't be perfect.",
+        "The changed sentence starts in 1701, which tells the model almost nothing, because nearly any later year fits. Press Run Patching in Swap test.",
+        "The bar at the top says what each sentence predicts. Each bar below copies one layer's MLP from the 1732 sentence and shows how much that raises the score for the original answer.",
+        "What to expect: the biggest blue bars should sit in the last few layers (8 to 11), the layers the researchers found push up years bigger than the start. Earlier layers shouldn't do much."
       ],
       "found": {
-        "summary": "Hanna et al. studied this exact setup in GPT-2 small. They found a few attention heads that move the start year to the end of the sentence, and MLP layers near the end of the network (roughly layers 8 to 11) that push up the years bigger than the start. They used the same model but a more targeted kind of patching than Pry's, so your picture may be blurrier.",
+        "summary": "Hanna et al. studied this exact setup in GPT-2 small. They found a few attention heads that move the start year to the end of the sentence, and MLP layers near the end of the network (roughly layers 8 to 11) that push up the years bigger than the start. They used the same model but a more targeted kind of patching than Pry's, so your picture may be blurrier. Pry tracks only the single year the model picked, while Hanna et al. added up the chance of every bigger year, so expect a rougher picture.",
         "citations": [
           {
             "label": "Hanna et al. 2023, How does GPT-2 compute greater-than?",
@@ -219,7 +223,7 @@
       },
       "next": {
         "reset": "Press Back to normal to clear the swap pair and close this guide. It won't touch your prompt.",
-        "try": "Next, change 1732 to 1785 in both prompts and see if it's the same layers that light up."
+        "try": "Next, change 1732 to 1785 in the Original prompt box, press Run Patching, and see if it's the same layers that light up."
       }
     },
     {
@@ -234,9 +238,10 @@
         "right": "predictions"
       },
       "lookFor": [
-        "In Predictions, compare how likely \" she\" and \" he\" are. Then change \"nurse\" to \"doctor\" in the prompt box and press Run again.",
-        "Why (DLA) shows which layers and heads pushed directly toward the top guess. The biggest bars pushed hardest.",
-        "DLA only counts direct pushes on the answer. A part that helps by setting up later parts won't show up here."
+        "In Predictions, see how likely ·she and ·he are (the dot means the word starts with a space).",
+        "Why (DLA) only explains the top guess, so it can't compare two words. Blue bars pushed toward it and orange bars pushed against it. The biggest bars pushed hardest.",
+        "DLA only counts direct pushes on the answer. A part that helps by setting up later parts won't show up here.",
+        "To compare with doctor, press Compare at the top, put \"The doctor said that\" next to \"The nurse said that\", and press Run both. Then check how ·she and ·he moved."
       ],
       "found": {
         "summary": "Vig et al. studied gender bias in GPT-2 with prompts like this one, using causal methods. They found the effect was concentrated in a small part of the network, such as a handful of attention heads. The trick behind the Why tab, splitting the answer into each part's direct contribution, comes from Elhage et al.'s 2021 paper on reading transformers.",
@@ -252,8 +257,8 @@
         ]
       },
       "next": {
-        "reset": "There's nothing to undo here. Press Back to normal to close this guide.",
-        "try": "Next, press Compare at the top and try other jobs, like \"The engineer said that\"."
+        "reset": "There's nothing to undo here. Press Back to normal to close this guide, and press Compare again to leave Compare mode.",
+        "try": "Next, stay in Compare and try other jobs, like \"The engineer said that\"."
       },
       "expect": " she"
     },
@@ -269,9 +274,10 @@
         "right": "features"
       },
       "lookFor": [
-        "The Features tab lists the concepts that were active on each word. Click \" ocean\" or \" beach\" in the word chips and read the labels.",
-        "The labels are best guesses written from examples, so some fit nicely and some don't make much sense.",
-        "Then open Steering, pick one of those features, turn it up, and run. Does the continuation drift toward that concept?"
+        "The Features tab lists the concepts the feature dictionary (SAE) found on each word. Click ·ocean or ·beach in the word chips (the dot means the word starts with a space) and read the labels.",
+        "Another AI wrote the labels by reading examples, and labels written by an AI can be wrong. Some fit nicely and some don't make much sense.",
+        "Note the # number of a feature you liked. Open Steering, pick that # in the Feature menu, drag Steering strength to about 10 to 15, and press Run Steered.",
+        "Pry highlights the words that changed. Does the text drift toward that concept? If nothing moves, try a bit more strength or a different feature."
       ],
       "found": {
         "summary": "Bricken et al. showed that a sparse autoencoder can split a model's activity into many \"features\", many of which match a single human-readable idea. Templeton et al. scaled this up to a production model and showed that turning a feature up can steer what the model says (their \"Golden Gate Bridge\" demo). The features in Pry come from openly released sparse autoencoders for GPT-2 small, not from those papers.",
