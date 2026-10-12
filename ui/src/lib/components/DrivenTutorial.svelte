@@ -1,23 +1,24 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import { tutorialState } from '$lib/tutorial/tutorial-store.svelte';
-  import type { TutorialActions } from '$lib/tutorial/actions';
-  import type { GenerateResponse } from '$lib/types';
+  import type { TourContext, TutorialActions } from '$lib/tutorial/actions';
+  import { tourUi, targetLabels } from '$lib/tutorial/tour-steps';
+  import Pointer from './Pointer.svelte';
+  import { findAnchor } from '$lib/tutorial/anchors';
   import { asyncStepSucceeded, needsModelOffer, TOUR_PRESET_ID } from '$lib/tutorial/step-machine';
 
   interface Props {
     generating: boolean;
-    response: GenerateResponse | null;
     loadState: 'idle' | 'loading' | 'loaded' | 'error';
     actions: TutorialActions;
     bannerVisible?: boolean;
     saeLayerSwitching?: boolean;
-    /** Analysis error (st.error), shown when a tutorial Run fails. */
+    /** Analysis error (st.error), shown when a tour step's work fails. */
     error?: string | null;
   }
 
   let {
     generating,
-    response,
     loadState,
     actions,
     bannerVisible = false,
@@ -25,24 +26,38 @@
     error = null,
   }: Props = $props();
 
+  const ctx: TourContext = $derived({
+    ...actions,
+    setAttentionView: (view) => tutorialState.requestAttentionView(view),
+  });
+
   let completing = $state(false);
+  let chaptersOpen = $state(false);
+  let cardEl: HTMLDivElement | null = $state(null);
+  /** The element the current step points at, once it's on screen. */
+  let pointedEl: HTMLElement | null = $state(null);
+  /** True once the target has been missing for a moment (not just mounting). */
+  let targetMissing = $state(false);
 
   const step = $derived(tutorialState.currentStep);
-  const stepNumber = $derived(tutorialState.stepIndex + 1);
-  const totalSteps = $derived(tutorialState.totalSteps);
-  const isFinal = $derived(tutorialState.stepIndex >= totalSteps - 1);
+  const chapter = $derived(tutorialState.currentChapter);
+  const chapters = $derived(tutorialState.chapterList);
+  const isFinal = $derived(tutorialState.isFinal);
   const failed = $derived(tutorialState.machine.status === 'failed');
+
+  const prefersReducedMotion = () =>
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // ---- GPT-2 small pin: the tour copy is written for GPT-2 small ----
   let switchingModel = $state(false);
   let modelSwitchError = $state<string | null>(null);
-  const activeModel = $derived(actions.activePresetId?.() ?? null);
+  const activeModel = $derived(actions.activePresetId());
   const showModelOffer = $derived(
     tutorialState.open && needsModelOffer(activeModel, tutorialState.modelOfferDismissed),
   );
 
   async function switchToTourModel() {
-    if (!actions.switchModel || switchingModel) return;
+    if (switchingModel) return;
     switchingModel = true;
     modelSwitchError = null;
     try {
@@ -51,9 +66,7 @@
       console.warn('tutorial model switch error', e);
     }
     switchingModel = false;
-    if (actions.activePresetId?.() !== TOUR_PRESET_ID) {
-      modelSwitchError = "Couldn't load GPT-2 small. You can retry, or continue on the current model.";
-    }
+    if (actions.activePresetId() !== TOUR_PRESET_ID) modelSwitchError = tourUi.modelOfferFailed;
   }
 
   function dismissModelOffer() {
@@ -61,24 +74,105 @@
     modelSwitchError = null;
   }
 
-  // ---- Async steps (Run / layer switch) ----
-  // The action is awaited to completion (generate and layer switch both
-  // resolve after the request settles and never throw), then success is read
-  // off the response: a new response means it worked; anything else is a
-  // failure that clears `running` and offers Try again / Skip.
+  // ---- Step setup: runs when a step appears (Next, Back, chapter jump) ----
+  $effect(() => {
+    if (!tutorialState.open) return;
+    // Track only the position; the step's own reads must not re-run it.
+    void tutorialState.chapterIndex;
+    void tutorialState.stepIndex;
+    untrack(() => {
+      const s = tutorialState.currentStep;
+      if (!s) return;
+      try {
+        ctx.setCompareMode(!!s.compare);
+        s.enter?.(ctx);
+      } catch (e) {
+        console.warn('tour step setup error', e);
+      }
+    });
+  });
+
+  // ---- Highlight: find the step's anchor, re-find it if it re-renders ----
+  // Anchors can appear late (a tab mounting, a result arriving), so this
+  // checks a few times a second while the step is up.
+  $effect(() => {
+    if (!tutorialState.open) return;
+    const target = step?.target ?? null;
+    clearHighlights();
+    pointedEl = null;
+    targetMissing = false;
+    if (!target) return;
+    const missingTimer = setTimeout(() => (targetMissing = pointedEl === null), 1200);
+    let el: HTMLElement | null = null;
+    const find = () => {
+      if (el?.isConnected && el.getClientRects().length > 0) return;
+      el?.removeAttribute('data-tour-active');
+      el = findAnchor(target);
+      pointedEl = el;
+      if (!el) return;
+      targetMissing = false;
+      el.setAttribute('data-tour-active', 'true');
+      el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+    };
+    find();
+    const timer = setInterval(find, 250);
+    return () => {
+      clearInterval(timer);
+      clearTimeout(missingTimer);
+      el?.removeAttribute('data-tour-active');
+      pointedEl = null;
+    };
+  });
+
+  function clearHighlights() {
+    document
+      .querySelectorAll<HTMLElement>('[data-tour-active="true"]')
+      .forEach((el) => el.removeAttribute('data-tour-active'));
+  }
+
+  $effect(() => {
+    if (tutorialState.open) return;
+    clearHighlights();
+    chaptersOpen = false;
+  });
+
+  // Escape closes the chapter menu first, then the tour.
+  $effect(() => {
+    if (!tutorialState.open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      if (chaptersOpen) chaptersOpen = false;
+      else handleClose();
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
+
+  // ---- Async steps ----
+  // The work is awaited (the page's actions resolve after the request settles
+  // and don't throw), then success is read off the step's result: a new value
+  // means it worked; anything else clears `running` and offers Try again / Skip.
   async function runAsyncStep() {
     const current = step;
-    if (!current) return;
-    const indexAtStart = tutorialState.stepIndex;
-    const before = response;
+    const run = current?.run;
+    if (!run) return;
+    const at = { c: tutorialState.chapterIndex, s: tutorialState.stepIndex };
+    const before = run.result(ctx);
     try {
-      await current.action(actions);
+      await run.act(ctx);
     } catch (e) {
-      console.warn('tutorial async action error', e);
+      console.warn('tour step error', e);
     }
     // The user closed the tour, skipped, or moved on while it ran.
-    if (!tutorialState.open || tutorialState.stepIndex !== indexAtStart || !tutorialState.awaitingAsync) return;
-    if (asyncStepSucceeded(before, response)) {
+    if (
+      !tutorialState.open ||
+      tutorialState.chapterIndex !== at.c ||
+      tutorialState.stepIndex !== at.s ||
+      !tutorialState.awaitingAsync
+    )
+      return;
+    if (asyncStepSucceeded(before, run.result(ctx))) {
       tutorialState.dispatch({ type: 'succeeded' });
       tutorialState.next();
     } else {
@@ -97,172 +191,182 @@
     tutorialState.next();
   }
 
-  // Highlight effect — data-tour-active attribute toggle, survives Svelte
-  // reconciliation because data-* attrs aren't part of component class tracking.
-  $effect(() => {
-    if (!tutorialState.open) return;
-    const target = step?.target ?? null;
-    // Clear any stale highlights first
-    document
-      .querySelectorAll<HTMLElement>('[data-tour-active="true"]')
-      .forEach((el) => el.removeAttribute('data-tour-active'));
-    if (!target) return;
-    const el = document.querySelector<HTMLElement>(`[data-tour="${target}"]`);
-    if (el) el.setAttribute('data-tour-active', 'true');
-    return () => {
-      if (el) el.removeAttribute('data-tour-active');
-    };
-  });
-
-  // Clear highlights on close/unmount
-  $effect(() => {
-    if (tutorialState.open) return;
-    document
-      .querySelectorAll<HTMLElement>('[data-tour-active="true"]')
-      .forEach((el) => el.removeAttribute('data-tour-active'));
-  });
-
-  // Escape to close
-  $effect(() => {
-    if (!tutorialState.open) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        handleClose();
-      }
-    }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  });
+  const busy = $derived(tutorialState.awaitingAsync || failed || switchingModel || completing);
 
   async function handleNext() {
-    if (!step || tutorialState.awaitingAsync || failed || switchingModel || completing) return;
+    if (!step || busy) return;
     if (isFinal) {
-      // Run final action (which calls exit()) then show toast briefly
       completing = true;
-      try {
-        await step.action(actions);
-      } catch (e) {
-        console.warn('tutorial final step error', e);
-      }
       setTimeout(() => {
         completing = false;
-        tutorialState.close();
-      }, 3000);
+        tutorialState.finish();
+        actions.exit();
+      }, 2500);
       return;
     }
-    if (step.awaitGenerate || step.awaitLayerSwitch) {
+    if (step.run && !step.run.skipIf?.(ctx)) {
       tutorialState.dispatch({ type: 'run' });
       await runAsyncStep();
       return;
-    }
-    try {
-      await step.action(actions);
-    } catch (e) {
-      console.warn('tutorial action error', e);
     }
     tutorialState.next();
   }
 
   function handleBack() {
-    if (tutorialState.awaitingAsync || switchingModel) return;
+    if (tutorialState.awaitingAsync || switchingModel || completing) return;
     tutorialState.back();
   }
 
   function handleClose() {
+    if (completing) {
+      completing = false;
+      tutorialState.finish();
+    }
     actions.exit();
-    completing = false;
   }
 
-  function toggleWhy() {
-    tutorialState.whyExpanded = !tutorialState.whyExpanded;
+  function jumpTo(index: number) {
+    if (tutorialState.awaitingAsync || switchingModel || completing) return;
+    chaptersOpen = false;
+    tutorialState.goToChapter(index);
   }
+
+  const nextLabel = $derived(
+    isFinal ? tourUi.done : step?.run && !step.run.skipIf?.(ctx) ? step.run.label : tourUi.next,
+  );
 
   const asyncHint = $derived.by(() => {
     if (bannerVisible) return null;
     if (!tutorialState.awaitingAsync) return null;
-    if (loadState === 'loading') return 'Loading model…';
-    if (generating) return 'Running…';
-    if (saeLayerSwitching) return 'Switching layer…';
-    return 'Working…';
+    if (loadState === 'loading') return tourUi.busy.loading;
+    if (generating) return tourUi.busy.running;
+    if (saeLayerSwitching) return tourUi.busy.layer;
+    return tourUi.busy.working;
   });
 </script>
 
-{#if tutorialState.open && step}
+{#if tutorialState.open && step && chapter}
+  {#if pointedEl}
+    <Pointer target={pointedEl} from={cardEl} z={49} />
+  {/if}
   <div
-    class="fixed bottom-4 right-4 z-50 w-[380px] max-w-[calc(100vw-2rem)] rounded-lg border border-zinc-700 bg-zinc-900/95 shadow-2xl backdrop-blur"
+    bind:this={cardEl}
+    class="fixed bottom-4 right-4 z-50 w-[400px] max-w-[calc(100vw-2rem)] rounded-lg border border-zinc-700 bg-zinc-900/95 shadow-2xl backdrop-blur"
     role="dialog"
-    aria-label="Tutorial"
+    aria-label={tourUi.cardLabel}
+    data-testid="tour-card"
   >
     <!-- Header -->
-    <div class="flex items-center justify-between border-b border-zinc-800 px-4 py-2">
-      <div class="flex items-baseline gap-2">
-        <span class="text-xs font-semibold uppercase tracking-widest text-indigo-400">Tutorial</span>
-        <span class="text-[10px] text-zinc-500">Step {stepNumber} of {totalSteps}</span>
+    <div class="flex items-start justify-between gap-2 border-b border-zinc-800 px-4 py-2">
+      <div class="min-w-0">
+        <p class="text-[10px] font-semibold uppercase tracking-widest text-indigo-400">
+          {tourUi.chapterOf(tutorialState.chapterIndex + 1, chapters.length)} · {tourUi.stepOf(tutorialState.stepIndex + 1, chapter.steps.length)}
+        </p>
+        <p class="truncate text-sm font-medium text-zinc-100">{chapter.title}</p>
       </div>
-      <button
-        type="button"
-        onclick={handleClose}
-        aria-label="Close tutorial"
-        class="rounded p-1 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
-      >
-        <svg class="h-3.5 w-3.5" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M1 1l12 12M13 1L1 13" stroke-linecap="round" />
-        </svg>
-      </button>
+      <div class="flex flex-shrink-0 items-center gap-1">
+        <button
+          type="button"
+          onclick={() => (chaptersOpen = !chaptersOpen)}
+          aria-expanded={chaptersOpen}
+          aria-controls="tour-chapter-list"
+          disabled={tutorialState.awaitingAsync || switchingModel || completing}
+          class="rounded border border-zinc-700 px-2 py-0.5 text-[11px] text-zinc-300 hover:bg-zinc-800 disabled:opacity-40"
+        >
+          {tourUi.chaptersButton}
+        </button>
+        <button
+          type="button"
+          onclick={handleClose}
+          aria-label="{tourUi.exit} {tourUi.cardLabel.toLowerCase()}"
+          class="rounded p-1 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
+        >
+          <svg class="h-3.5 w-3.5" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M1 1l12 12M13 1L1 13" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
     </div>
 
+    {#if chaptersOpen}
+      <ol id="tour-chapter-list" class="max-h-72 overflow-y-auto border-b border-zinc-800 py-1" aria-label={tourUi.chaptersButton}>
+        {#each chapters as c, i (c.id)}
+          <li>
+            <button
+              type="button"
+              onclick={() => jumpTo(i)}
+              aria-current={i === tutorialState.chapterIndex ? 'step' : undefined}
+              class="flex w-full items-start gap-2 px-4 py-1.5 text-left hover:bg-zinc-800 {i === tutorialState.chapterIndex ? 'bg-zinc-800/60' : ''}"
+            >
+              <span class="w-4 flex-shrink-0 pt-px text-right text-[11px] tabular-nums text-zinc-500">{i + 1}</span>
+              <span class="min-w-0 flex-1">
+                <span class="block text-xs text-zinc-200">
+                  {c.title}
+                  {#if tutorialState.isCompleted(c.id)}
+                    <span class="ml-1 text-emerald-400" aria-label={tourUi.menuDone}>✓</span>
+                  {/if}
+                </span>
+                <span class="block text-[11px] leading-snug text-zinc-500">{c.summary}</span>
+              </span>
+            </button>
+          </li>
+        {/each}
+      </ol>
+    {/if}
+
     <!-- Body -->
-    <div class="px-4 py-3">
+    <div class="px-4 py-3" aria-live="polite">
       {#if completing}
-        <p class="py-4 text-center text-sm text-indigo-300">
-          Tutorial complete — click ? to relaunch
-        </p>
+        <p class="py-4 text-center text-sm text-indigo-300">{tourUi.complete}</p>
       {:else}
         {#if showModelOffer || switchingModel || modelSwitchError}
           <div class="mb-3 rounded border border-amber-900/60 bg-amber-950/30 px-2.5 py-2">
             {#if switchingModel}
-              <p class="text-[11px] text-amber-200">Loading GPT-2 small…</p>
+              <p class="text-[11px] text-amber-200">{tourUi.modelLoading}</p>
             {:else}
               <p class="text-[11px] leading-relaxed text-amber-200">
-                {modelSwitchError ??
-                  `This tour is written for GPT-2 small, and you have ${activeModel} loaded. The steps will still run, but the numbers and examples won't match.`}
+                {modelSwitchError ?? tourUi.modelOffer(activeModel ?? '')}
               </p>
               <div class="mt-2 flex gap-2">
-                {#if actions.switchModel}
-                  <button
-                    type="button"
-                    onclick={switchToTourModel}
-                    class="rounded bg-amber-500 px-2.5 py-1 text-xs font-medium text-zinc-950 hover:bg-amber-400"
-                  >
-                    {modelSwitchError ? 'Retry' : 'Switch to GPT-2 small'}
-                  </button>
-                {/if}
+                <button
+                  type="button"
+                  onclick={switchToTourModel}
+                  class="rounded bg-amber-500 px-2.5 py-1 text-xs font-medium text-zinc-950 hover:bg-amber-400"
+                >
+                  {modelSwitchError ? tourUi.retry : tourUi.switchModel}
+                </button>
                 <button
                   type="button"
                   onclick={dismissModelOffer}
                   class="rounded border border-zinc-700 bg-zinc-800 px-2.5 py-1 text-xs text-zinc-300 hover:bg-zinc-700"
                 >
-                  Continue anyway
+                  {tourUi.continueAnyway}
                 </button>
               </div>
             {/if}
           </div>
         {/if}
 
+        {#if step.target}
+          <p class="mb-1.5 text-[11px] text-indigo-300" data-testid="tour-look-at">
+            <span class="font-semibold uppercase tracking-widest">{tourUi.lookAt}</span>
+            {targetLabels[step.target] ?? step.target}{#if targetMissing}<span class="text-zinc-500"> · {tourUi.notOnScreen}</span>{/if}
+          </p>
+        {/if}
         <p class="text-sm leading-relaxed text-zinc-200">{step.blurb}</p>
 
         {#if step.why}
           <button
             type="button"
-            onclick={toggleWhy}
+            onclick={() => (tutorialState.whyExpanded = !tutorialState.whyExpanded)}
+            aria-expanded={tutorialState.whyExpanded}
             class="mt-2 flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-indigo-400 hover:text-indigo-300"
           >
-            <span>{tutorialState.whyExpanded ? '▼' : '▶'}</span>
-            <span>Why should I care?</span>
+            <span aria-hidden="true">{tutorialState.whyExpanded ? '▼' : '▶'}</span>
+            <span>{tourUi.why}</span>
           </button>
           {#if tutorialState.whyExpanded}
-            <div class="mt-2 rounded border border-zinc-800 bg-zinc-950 p-3 text-xs leading-relaxed text-zinc-400">
+            <div class="mt-2 max-h-56 overflow-y-auto rounded border border-zinc-800 bg-zinc-950 p-3 text-xs leading-relaxed text-zinc-400">
               {step.why}
             </div>
           {/if}
@@ -277,14 +381,14 @@
                 onclick={handleRetry}
                 class="rounded bg-indigo-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-indigo-400"
               >
-                Try again
+                {tourUi.tryAgain}
               </button>
               <button
                 type="button"
                 onclick={handleSkipStep}
                 class="rounded border border-zinc-700 bg-zinc-800 px-2.5 py-1 text-xs text-zinc-300 hover:bg-zinc-700"
               >
-                Skip
+                {tourUi.skip}
               </button>
             </div>
           </div>
@@ -292,7 +396,7 @@
 
         {#if asyncHint}
           <div class="mt-3 flex items-center gap-2 rounded border border-indigo-900/50 bg-indigo-950/30 px-2.5 py-1.5">
-            <span class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-indigo-400 border-t-transparent"></span>
+            <span class="inline-block h-3 w-3 rounded-full border-2 border-indigo-400 border-t-transparent motion-safe:animate-spin"></span>
             <span class="text-[11px] text-indigo-300">{asyncHint}</span>
           </div>
         {/if}
@@ -302,29 +406,25 @@
     <!-- Footer -->
     {#if !completing}
       <div class="flex items-center justify-between gap-2 border-t border-zinc-800 px-4 py-2">
-        <button
-          type="button"
-          onclick={handleClose}
-          class="text-[11px] text-zinc-500 hover:text-zinc-300"
-        >
-          Skip
+        <button type="button" onclick={handleClose} class="text-[11px] text-zinc-500 hover:text-zinc-300">
+          {tourUi.exit}
         </button>
         <div class="flex items-center gap-2">
           <button
             type="button"
             onclick={handleBack}
-            disabled={tutorialState.stepIndex === 0 || tutorialState.awaitingAsync || switchingModel}
+            disabled={tutorialState.isFirst || tutorialState.awaitingAsync || switchingModel}
             class="rounded border border-zinc-700 bg-zinc-800 px-2.5 py-1 text-xs text-zinc-300 hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Back
+            {tourUi.back}
           </button>
           <button
             type="button"
             onclick={handleNext}
-            disabled={tutorialState.awaitingAsync || failed || switchingModel}
+            disabled={busy}
             class="rounded bg-indigo-500 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isFinal ? 'Done' : 'Next'}
+            {nextLabel}
           </button>
         </div>
       </div>

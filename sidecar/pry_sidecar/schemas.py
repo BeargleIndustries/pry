@@ -70,13 +70,19 @@ class GenerateRequest(BaseModel):
 class LoadProgressEvent(BaseModel):
     # M1 fix: add "already_loaded" so the frontend can distinguish "just finished
     # loading" from "was already in memory" and skip the progress animation.
-    stage: Literal["download_model", "download_sae", "load_model", "load_sae", "ready", "already_loaded", "error"]
+    stage: Literal[
+        "warmup", "check_files", "download_model", "download_sae",
+        "load_model", "to_device", "load_sae", "ready", "already_loaded", "error",
+    ]
     progress: float = Field(ge=0.0, le=1.0)
     message: str
     # Byte progress, only on download_model / download_sae events that are
     # actually fetching files (omitted from the JSON otherwise).
     bytes_downloaded: int | None = None
     bytes_total: int | None = None
+    # Seconds since this stage started, on heartbeat events of long steps
+    # (warmup, load_model) that report no progress of their own.
+    elapsed_s: float | None = None
 
 
 class TokenizeRequest(BaseModel):

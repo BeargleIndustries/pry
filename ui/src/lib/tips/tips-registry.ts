@@ -17,6 +17,8 @@ export type TipPlacement = 'top' | 'bottom' | 'left' | 'right';
 export interface TipDef {
   /** Unique stable id; becomes localStorage key suffix. */
   id: string;
+  /** Names the thing the tip is about, shown as the tip's heading. */
+  title: string;
   /** querySelector for the anchor element. */
   target: string;
   /** Short one-liner shown by default. */
@@ -33,6 +35,7 @@ export interface TipDef {
 
 const CUSTOM_MODEL_VERDICT_TIP: TipDef = {
   id: 'custom-model-verdict',
+  title: 'Fit verdict',
   target: '[data-tip="custom-model-verdict"]',
   placement: 'bottom',
   blurb:
@@ -46,35 +49,39 @@ export const tipsRegistry: TipDef[] = [
     // Tutorial steps 1.4 and 1.5 target 'panel-a-heatmap'; string-equality
     // fallback in coordinate.ts marks this tip seen on step advance.
     id: 'panel-a-heatmap',
+    title: 'Attention grid',
     target: '[data-tip="panel-a-heatmap"]',
     placement: 'right',
     blurb:
       "Attention is how the model decides which earlier words to focus on when predicting the next one. Each cell here is one attention head at one layer (in GPT-2 small that's 12 layers \u00d7 12 heads, so 144 heads all doing slightly different things). Rows are layers, columns are heads, and brightness is how much attention this cell paid to the currently-focused token.",
     why:
-      "The heatmap is a survey, not the content of attention itself. What it shows is this: for whichever token you clicked up in the token strip, how hard did each (layer, head) pair engage with earlier words in the sentence? A bright cell means this head was doing real work on this token. A dim cell means it basically phoned it in. You can switch the dropdown next to FROM/TO to control how Pry squishes a whole attention distribution down to one cell value. Click any cell to open the single-head view and see the full token-by-token matrix underneath.",
+      "The grid is a summary, not the attention itself. For whichever word you clicked in the word chips, each square scores how one head at one layer looked at the earlier words. A bright square scored high on whatever the Agg menu is measuring, and a dim one barely registered. The Agg menu picks how Pry squishes a whole attention pattern down to one number. Click any cell to open the single-head view and see the full token-by-token matrix underneath.",
   },
   {
     id: 'panel-a-head-detail',
+    title: 'One head, up close',
     target: '[data-tip="panel-a-head-detail"]',
     placement: 'top',
     blurb:
       "This shows, for one specific reader inside the model, exactly which words it was paying attention to when processing each word. Rows are positions being computed, columns are positions being looked at. A bright cell means that row-word was paying hard attention to that column-word.",
     why:
-      "Think of it as a spreadsheet of 'when the model was working on the word in this row, how much did it look at the word in this column?' Technically it's a query \u00d7 key matrix — the row is the query token (asking), the column is the key token (being looked at). The upper-right half of the grid is mostly dark because of causal masking (each token can only attend to itself and earlier tokens, never later ones). Patterns worth looking for: a diagonal line (head is copying the previous token), a vertical stripe on one column (head routes everything back to one specific source word), or a few isolated bright cells (head has a narrow, rule-like job). A flat uniform grid means the head isn't really making a choice, which is also information.",
+      "Think of it as a spreadsheet of 'when the model was working on the word in this row, how much did it look at the word in this column?' Technically it's a query \u00d7 key matrix: the row is the query token (asking), the column is the key token (being looked at). The upper-right half of the grid is mostly dark because of causal masking (each token can only attend to itself and earlier tokens, never later ones). Patterns worth looking for: a diagonal line (head is copying the previous token), a vertical stripe on one column (head routes everything back to one specific source word), or a few isolated bright cells (head has a narrow, rule-like job). A flat uniform grid means the head isn't really making a choice, which is also information.",
   },
   {
     // Tutorial step 1.6 targets 'panel-a-agg-selector'; string-equality
     // fallback marks this tip seen on step advance.
     id: 'panel-a-agg-selector',
+    title: 'Agg menu',
     target: '[data-tip="panel-a-agg-selector"]',
     placement: 'bottom',
     blurb:
       "Different questions about the same attention data. The heatmap re-colors based on which one you're asking.",
     why:
-      "Every cell in the grid has to boil a whole attention pattern down to one number for coloring. In FROM mode: Strongest look asks 'how hard did this head lock onto one earlier word?' Spread asks 'did it focus on one word or scatter across many?' Looks back asks 'how far back in the sentence did it look, on average?' Previous word asks 'how much did it look at the word right before?', which lights up heads that track the previous word. TO mode flips the direction (how the later words looked back at this one) and adds Average received: how much attention this word got, on average, from the words after it. The first word has nothing earlier to look at, so some of these don't apply to it and its cells show grey.",
+      "Every cell in the grid has to boil a whole attention pattern down to one number for coloring. In FROM mode, Strongest look scores how hard this head locked onto one earlier word. Spread scores whether it focused on one word or scattered across lots of them. Looks back is how far back in the sentence it looked, on average. Previous word is how much it looked at the word right before, which lights up heads that track the previous word. TO mode flips the direction (how the later words looked back at this one) and adds Average received: how much attention this word got, on average, from the words after it. The first word has nothing earlier to look at, so some of these don't apply to it and its cells show grey.",
   },
   {
     id: 'panel-a-token-strip',
+    title: 'Word chips',
     target: '[data-tip="panel-a-token-strip"]',
     placement: 'bottom',
     blurb:
@@ -85,6 +92,7 @@ export const tipsRegistry: TipDef[] = [
     // Tutorial step 2.4 targets 'panel-b-token-strip'; string-equality
     // fallback marks this tip seen on step advance.
     id: 'panel-b-token-strip',
+    title: 'Word chips',
     target: '[data-tip="panel-b-token-strip"]',
     placement: 'bottom',
     blurb:
@@ -93,15 +101,17 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'panel-b-feature-row',
+    title: 'A feature',
     target: '[data-tip="panel-b-feature-row"]',
     placement: 'left',
     blurb:
       "Each row is one internal concept (called an SAE feature) that lit up for the selected word. The bar shows how strongly it activated, and the label is the human-readable name Neuronpedia gave it.",
     why:
-      "The labels are auto-generated from the training examples where the feature fires hardest (via Neuronpedia), which means they're a best guess, not a guarantee. Always peek at the example text underneath before trusting a label, because sometimes the auto-label catches one pattern while the feature is actually doing two or three things at once. An SAE is basically a pattern detector trained to name the concepts that are active inside the model at each step.",
+      "The labels are auto-generated from the training examples where the feature fires hardest (via Neuronpedia), which means they're a best guess, not a guarantee. Always peek at the example text underneath before trusting a label, because sometimes the auto-label catches one pattern while the feature covers two or three things at once. An SAE is basically a pattern detector trained to name the concepts that are active inside the model at each step.",
   },
   {
     id: 'panel-a-from-selector',
+    title: 'FROM button',
     target: '[data-tip="panel-a-from-selector"]',
     placement: 'bottom',
     blurb:
@@ -110,6 +120,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'panel-a-to-selector',
+    title: 'TO button',
     target: '[data-tip="panel-a-to-selector"]',
     placement: 'bottom',
     blurb:
@@ -118,16 +129,18 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'panel-b-layer-selector',
+    title: 'Layer menu',
     target: '[data-tip="panel-b-layer-selector"]',
     placement: 'bottom',
     blurb:
       "Pick how deep into the model to look. Deeper layers tend to hold more abstract concepts. Switching layers re-runs the feature detector at that depth.",
     why:
-      "The model has a stack of layers (12 in GPT-2 small), each one building a richer picture. Early layers tend to catch surface features, things like word shape, grammar, part of speech. Later layers catch meaning, relationships, and the kind of abstract role-playing you saw with 'she' and 'nurse.' Switching layers here loads the feature detector (SAE) for the new depth and runs the model on your prompt again, which takes a few seconds. Try jumping between an early layer and a late one on the same token to see the difference.",
-    tutorialStepId: '2.5b',
+      "The model has a stack of layers (12 in GPT-2 small), each one building a richer picture. Early layers tend to catch surface features, things like word shape, grammar, part of speech. Later layers catch meaning, relationships, and who's who in a sentence, like whether 'she' means the nurse. Switching layers here loads the feature detector (SAE) for the new depth and runs the model on your prompt again, which takes a few seconds. Try jumping between an early layer and a late one on the same token to see the difference.",
+    tutorialStepId: 'concepts.layer',
   },
   {
     id: 'predictions-panel',
+    title: 'Predictions',
     target: '[data-tip="predictions-panel"]',
     placement: 'top',
     blurb:
@@ -137,24 +150,27 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'feature-histogram',
+    title: 'Feature history chart',
     target: '[data-tip="feature-histogram"]',
     placement: 'right',
     blurb:
       "A tiny chart showing how strongly this feature fired across every token in the sentence. Tall bar means that token activated it hard.",
     why:
-      "Most features don't fire evenly across a sentence. A 'past-tense verb' feature lights up on 'sat' and basically ignores everything else. A 'function word' feature might glow faintly on every 'the' and 'on.' This chart gives you that at a glance without clicking through every token. If a bar is empty, it means the feature fell below the top-k cutoff for that token, not necessarily that it was zero. The pattern of which tokens activate a feature is often more informative than the activation value on any single token.",
+      "Most features don't fire evenly across a sentence. A 'past-tense verb' feature lights up on 'sat' and basically ignores everything else. A 'function word' feature might glow faintly on every 'the' and 'on.' This chart gives you that at a glance without clicking through every token. A hatched bar means the feature wasn't in that word's top five, so Pry didn't keep its exact strength. It doesn't mean zero. The pattern of which tokens activate a feature is often more informative than the activation value on any single token.",
   },
   {
     id: 'logit-lens-heatmap',
+    title: 'Logit Lens',
     target: '[data-tip="logit-lens-heatmap"]',
     placement: 'bottom',
     blurb:
       "What the model would predict at every layer if you forced it to answer early. You're watching it make up its mind in slow motion.",
     why:
-      "Each layer refines the prediction. At the first layer, the model barely knows what it's looking at. By the last layer, it's settled on an answer. The logit lens takes the intermediate state at each layer and asks 'if you had to predict right now, what would you say?' The brighter a cell, the more that layer's guess matches the final answer. Interesting patterns: if the correct prediction appears early (layer 2-3) and stays stable, the model 'knew' from the start. If it changes its mind partway up, the layers just before the change were doing real work, and that's usually the part worth studying.",
+      "Each layer refines the prediction. At the first layer, the model barely knows what it's looking at. By the last layer, it's settled on an answer. The logit lens takes the intermediate state at each layer and asks 'if you had to predict right now, what would you say?' The brighter a cell, the more that layer's guess matches the final answer. Interesting patterns: if the correct prediction appears early (layer 2-3) and stays stable, the model 'knew' from the start. If it changes its mind partway up, the layers just before the change are where the answer got decided, and that's usually the part worth studying.",
   },
   {
     id: 'dla-waterfall',
+    title: 'Why (DLA) chart',
     target: '[data-tip="dla-waterfall"]',
     placement: 'left',
     blurb:
@@ -164,6 +180,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'export-button',
+    title: 'Download button',
     target: '[data-tip="export-button"]',
     placement: 'bottom',
     blurb:
@@ -172,42 +189,47 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'steering-panel',
+    title: 'Steering',
     target: '[data-tip="steering-panel"]',
     placement: 'top',
     blurb:
       "Pick a feature, slide the dial to turn it up or down, hit Run. You just rewired part of the model. Compare the outputs to see what changed.",
     why:
-      "This is the part where interpretability stops being observation and becomes experimentation. When you steer a feature, Pry adds that feature's direction to the model's internal state at one layer, scaled by the strength you pick. Push a 'nurse' feature with a positive strength and see whether the model starts writing more nurse-related text, or use a negative strength and see whether the nurse association fades. If the output changes the way you'd expect, that's causal evidence that the feature does what the label says. If it doesn't change, the feature might be correlated with the concept but not causally driving it. That distinction matters a lot for safety work.",
+      "Up to now you've been looking, and steering lets you test. When you steer a feature, Pry adds that feature's direction to the model's internal state at one layer, scaled by the strength you pick. Push a 'nurse' feature with a positive strength and see whether the model starts writing more nurse-related text, or use a negative strength and see whether the nurse association fades. If the output changes the way you'd expect, that's causal evidence that the feature does what the label says. If it doesn't change, the feature might be correlated with the concept but not causally driving it. That distinction matters a lot for safety work.",
   },
   {
     id: 'ablation-head-toggle',
+    title: 'Ablation button',
     target: '[data-tip="ablation-head-toggle"]',
     placement: 'right',
     blurb:
       "Toggle ablation mode on, then click cells in the grid to select which heads to remove. A 'Run Ablated' button appears once you've selected at least one. It re-runs the model without those heads so you can see if the prediction changes.",
     why:
-      "There are 144 attention heads in GPT-2 small (12 layers times 12 heads), and most of them do basically nothing on any given input. Ablation is how you find the ones that matter. Zeroing out a head means replacing its output with zeros, so the rest of the model has to produce its answer without that head's contribution. A big prediction shift means the head was load-bearing. No shift means it was redundant, at least for this input. Researchers do this systematically to map which heads form the 'circuit' responsible for a specific behavior.",
+      "There are 144 attention heads in GPT-2 small (12 layers times 12 heads), and most of them do basically nothing on any given input. Ablation is how you find the ones that matter. Zeroing out a head means replacing its output with zeros, so the rest of the model has to produce its answer without that head's contribution. A big prediction shift means the model needed that head. No shift means it was redundant, at least for this input. Researchers do this systematically to map which heads form the 'circuit' responsible for a specific behavior.",
   },
   {
     id: 'ablation-feature-toggle',
+    title: 'Ablation button',
     target: '[data-tip="ablation-feature-toggle"]',
     placement: 'right',
     blurb:
       "Toggle this to mark the feature for removal. Hit Run Ablated to see what the model predicts without it. If the answer shifts, this feature was actually driving behavior, not just showing up.",
     why:
-      "Feature labels come from Neuronpedia and they're based on what inputs activate the feature most. But correlation isn't causation. Just because a feature labeled 'nurse' fires on the word 'nurse' doesn't mean it's causing the model to think about nurses. It might just be along for the ride. Ablation settles it. Zero the feature out, re-run, and if the model's behavior changes in a nurse-relevant way, the feature was genuinely contributing, not just watching. One caveat: the SAE's reconstruction isn't perfect, so zeroing a feature also introduces a small amount of noise. The impact you see is the feature's real contribution plus a little bit of reconstruction error.",
+      "Feature labels come from Neuronpedia and they're based on what inputs activate the feature most. Correlation isn't causation, though. Just because a feature labeled 'nurse' fires on the word 'nurse' doesn't mean it's causing the model to think about nurses. It might just be along for the ride. Ablation settles it. Zero the feature out, re-run, and if the model's behavior changes in a nurse-relevant way, the feature was genuinely contributing, not just watching. One caveat: the SAE's reconstruction isn't perfect, so zeroing a feature also introduces a small amount of noise. The impact you see is the feature's real contribution plus a little bit of reconstruction error.",
   },
   {
     id: 'patching-panel',
+    title: 'Swap & Compare',
     target: '[data-tip="patching-panel"]',
     placement: 'bottom',
     blurb:
       "Run two prompts, then swap one piece of the model's internal state between them. The piece that changes the answer is the one that matters.",
     why:
-      "This is a standard way researchers track down which parts of a model matter. You pick two prompts that the model handles differently (an 'original' prompt and a 'changed' prompt, which researchers call 'clean' and 'corrupted'), run both, then copy one part's internal state from the original run into the changed run, one part at a time. If swapping head 7.3's output from the original into the changed run makes the changed prompt behave like the original, that head helps cause the difference. It's sort of like debugging by swapping parts until you find the one that was broken. The heatmap shows the effect of swapping each part, so you can spot the ones that matter at a glance.",
+      "Researchers use this all the time to track down which parts of a model matter. You pick two prompts that the model handles differently (an 'original' prompt and a 'changed' prompt, which researchers call 'clean' and 'corrupted'), run both, then copy one part's internal state from the original run into the changed run, one part at a time. If swapping head 7.3's output from the original into the changed run makes the changed prompt behave like the original, that head helps cause the difference. It's sort of like debugging by swapping parts until you find the one that was broken. The heatmap shows the effect of swapping each part, so you can spot the ones that matter at a glance.",
   },
   {
     id: 'circuit-graph',
+    title: 'Key parts map',
     target: '[data-tip="circuit-graph"]',
     placement: 'left',
     blurb:
@@ -219,6 +241,7 @@ export const tipsRegistry: TipDef[] = [
   ...(CUSTOM_MODELS_ENABLED ? [CUSTOM_MODEL_VERDICT_TIP] : []),
   {
     id: 'neuronpedia-link',
+    title: 'Neuronpedia link',
     target: '[data-tip="neuronpedia-link"]',
     placement: 'top',
     blurb:
@@ -229,6 +252,7 @@ export const tipsRegistry: TipDef[] = [
   // Tips for 0.3.x features (T20, T22, T24, T25, T26), registered in T30.
   {
     id: 'panel-a-copying-heads',
+    title: 'Copying heads',
     target: '[data-tip="panel-a-copying-heads"]',
     placement: 'bottom',
     blurb:
@@ -238,14 +262,16 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'panel-a-copying-sequence',
+    title: 'The repeated words',
     target: '[data-tip="panel-a-copying-sequence"]',
     placement: 'bottom',
     blurb:
-      "This is the test: random word-pieces, then the same ones again. The second time through, a copying head can guess each next one.",
+      "The test: random word-pieces, then the same ones again. The second time through, a copying head can guess each next one.",
     why: null,
   },
   {
     id: 'experiments-button',
+    title: 'Experiments',
     target: '[data-tip="experiments-button"]',
     placement: 'bottom',
     blurb:
@@ -254,6 +280,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'compare-panel',
+    title: 'Compare',
     target: '[data-tip="compare-panel"]',
     placement: 'bottom',
     blurb:
@@ -263,6 +290,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'watch-it-write',
+    title: 'Watch it write',
     target: '[data-tip="watch-it-write"]',
     placement: 'top',
     blurb:
@@ -272,6 +300,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'concept-search',
+    title: 'Find a concept',
     target: '[data-tip="concept-search"]',
     placement: 'bottom',
     blurb:

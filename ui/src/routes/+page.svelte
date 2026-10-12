@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy, untrack } from 'svelte';
-  import { CircleHelp, Settings, Download, FlaskConical, GitCompareArrows, BookOpen, BookmarkPlus } from 'lucide-svelte';
+  import { Settings, Download, FlaskConical, GitCompareArrows, BookOpen, BookmarkPlus } from 'lucide-svelte';
   import PryLogo from '$lib/components/icons/PryLogo.svelte';
   import { health, loadPreset, unloadPreset, listModels } from '$lib/sidecar';
   import { withoutEngineMemory } from '$lib/hardware-adjust';
@@ -35,9 +35,12 @@
   import SettingsDrawer from '$lib/components/SettingsDrawer.svelte';
   import DrivenTutorial from '$lib/components/DrivenTutorial.svelte';
   import FirstTimeTip from '$lib/components/FirstTimeTip.svelte';
-  import { resetAllTips } from '$lib/tips/coordinate';
+  import TourMenu from '$lib/components/TourMenu.svelte';
+  import TourSettings from '$lib/components/TourSettings.svelte';
   import { invoke } from '@tauri-apps/api/core';
   import LoadProgressBanner from '$lib/components/LoadProgressBanner.svelte';
+  import LoadingScreen from '$lib/components/LoadingScreen.svelte';
+  import { startLoad, applyEvent, recordEvent, readHistory, type LoadTrack } from '$lib/load-progress';
   import RuntimeUpdatePrompt from '$lib/components/RuntimeUpdatePrompt.svelte';
   import ModelSwitcher from '$lib/components/ModelSwitcher.svelte';
   import { tutorialState } from '$lib/tutorial/tutorial-store.svelte';
@@ -190,6 +193,22 @@
   let bannerTargetPreset = $state<string | null>(null);
   const bannerVisible = $derived(bannerPhase !== 'idle');
 
+  // Full loading screen: one track per load, fed by every load path. The slim
+  // banner stays for errors and warnings.
+  let loadTrack = $state<LoadTrack | null>(null);
+  const loadingScreenOn = $derived(
+    !!loadTrack && !loadTrack.done && !loadTrack.failed &&
+      (bannerPhase === 'loading' || bannerPhase === 'unloading' || loadState === 'loading'),
+  );
+  function beginLoadTrack(presetId: string) {
+    loadTrack = startLoad(presetId, Date.now(), readHistory(presetId));
+  }
+  function onLoadEvent(ev: LoadProgress) {
+    loadProgress = ev;
+    bannerMessage = ev.message;
+    if (loadTrack) loadTrack = recordEvent(loadTrack, ev, Date.now());
+  }
+
   // ---------------------------------------------------------------------------
   // Responsive layout state
   // ---------------------------------------------------------------------------
@@ -228,14 +247,8 @@
         loadState = "loading";
         loadProgress = null;
         st.error = null;
-        await loadPreset(
-          selectedPreset,
-          (ev) => {
-            loadProgress = ev;
-            bannerMessage = ev.message;
-          },
-          loadAbortController.signal,
-        );
+        beginLoadTrack(selectedPreset);
+        await loadPreset(selectedPreset, onLoadEvent, loadAbortController.signal);
         loadState = "loaded";
         if (activePresetId !== selectedPreset) {
           activePresetId = selectedPreset;
@@ -312,10 +325,8 @@
         bannerError = null;
         loadProgress = null;
         loadState = "loading";
-        loadPreset(target, (ev) => {
-          loadProgress = ev;
-          bannerMessage = ev.message;
-        })
+        beginLoadTrack(target);
+        loadPreset(target, onLoadEvent)
           .then(() => {
             loadState = "loaded";
             bannerPhase = 'idle';
@@ -384,20 +395,25 @@
     bannerTargetPreset = presetId;
     const previousActive = activePresetId;
     try {
+      beginLoadTrack(presetId);
       if (previousActive && previousActive !== presetId) {
         bannerPhase = 'unloading';
         bannerMessage = `Unloading ${displayName(previousActive, allCompat)}…`;
         loadProgress = null;
+        if (loadTrack) {
+          loadTrack = applyEvent(
+            loadTrack,
+            { stage: 'unload', message: `Putting ${displayName(previousActive, allCompat)} away…`, progress: 0 },
+            Date.now(),
+          );
+        }
         await unloadPreset(previousActive);
       }
       bannerPhase = 'loading';
       bannerMessage = `Loading ${displayName(presetId, allCompat)}…`;
       loadProgress = null;
       loadState = 'loading';
-      await loadPreset(presetId, (ev) => {
-        loadProgress = ev;
-        bannerMessage = ev.message;
-      });
+      await loadPreset(presetId, onLoadEvent);
       activePresetId = presetId;
       loadState = 'loaded';
       // Clear ALL analysis state when switching models
@@ -624,70 +640,47 @@
     invoke('open_devtools').catch(() => {});
   }
 
-  function resetOnboardingTips() {
-    if (typeof localStorage === 'undefined') return;
-    const keys: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith('pry:tip_seen:')) keys.push(k);
-    }
-    for (const k of keys) localStorage.removeItem(k);
-    resetAllTips();
-  }
-
+  // The guided tour's moves (see $lib/tutorial/tour-steps.ts).
   const tutorialActions: TutorialActions = {
-    setPrompt: (t) => {
-      prompt = t;
-    },
-    runGenerate: async () => {
-      await handleGenerate();
-    },
-    setActiveTab: (tab) => {
-      // In split mode both panels are already visible — no-op
-      if (!isWide) {
-        activeTab = tab;
-      }
-    },
-    setFocusTokenIndex: (i) => {
-      st.focusTokenIndex = i;
-    },
-    setPanelAAggregation: (agg) => {
-      panelAAggregation = agg;
-    },
+    setPrompt: (t) => { prompt = t; },
+    runGenerate: () => handleGenerate(),
+    response: () => st.response,
+    openLeftTab: (tab) => experimentActions.openLeftTab(tab),
+    openRightTab: (tab) => experimentActions.openRightTab(tab),
+    setFocusTokenIndex: (i) => { st.focusTokenIndex = i; },
+    setPanelAAggregation: (agg) => { panelAAggregation = agg; },
     findTokenIndex: (pred) => st.response?.tokens.find(pred)?.index,
-    switchSaeLayer: async (layer: number) => {
-      await handleLayerSwitch(layer);
+    switchSaeLayer: (layer) => handleLayerSwitch(layer),
+    currentSaeLayer: () => st.saeLayer ?? null,
+    showCopyingHeads: () => { void analysis.showHeadScores(); },
+    hideCopyingHeads: () => analysis.hideHeadScores(),
+    setHeadAblation: (on, heads) => {
+      if (heads) st.headAblations = heads.map((h) => ({ ...h }));
+      st.headAblationMode = on;
     },
-    setLeftTab: (tab) => { leftActiveTab = tab; },
-    setRightTab: (tab) => { rightActiveTab = tab; },
+    runHeadAblation: () => handleHeadAblation(),
+    headAblationResult: () => st.headAblateResponse,
+    runPatching: (clean, corrupted, patchType) => {
+      patchingPreset = { clean, corrupted, patchType };
+      return handlePatching(clean, corrupted, patchType);
+    },
+    patchingResult: () => st.patchResponse,
+    setCompareMode: (on) => { compareMode = on; },
+    setComparePrompts: (a, b) => { compare.state.promptA = a; compare.state.promptB = b; },
+    runCompare: () => compare.run(),
+    compareResult: () => compare.state,
     activePresetId: () => activePresetId,
-    switchModel: (id: string) => handleSwitch(id),
+    switchModel: (id) => handleSwitch(id),
     exit: () => {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('pry:tutorial_seen', 'true');
-      }
+      try { localStorage.setItem('pry:tutorial_seen', 'true'); } catch { /* unavailable */ }
       tutorialState.close();
     },
   };
 
-  let tourMenuOpen = $state(false);
-
-  function openTutorial() {
-    tutorialState.start();
-    tourMenuOpen = false;
-  }
-
-  function openAdvancedTutorial() {
-    tutorialState.startAdvanced();
-    tourMenuOpen = false;
-  }
-
-  // Escape closes the tour menu and the hardware card (T29). Their backdrops
-  // close on click too; this is the keyboard way out.
+  // Escape closes the hardware card (T29). Its backdrop closes on click too;
+  // this is the keyboard way out.
   function onWindowKeydown(e: KeyboardEvent) {
-    if (e.key !== 'Escape') return;
-    if (tradingCardOpen) tradingCardOpen = false;
-    else if (tourMenuOpen) tourMenuOpen = false;
+    if (e.key === 'Escape' && tradingCardOpen) tradingCardOpen = false;
   }
 
   // Put the cursor in the prompt box once, when the app first opens. This
@@ -742,6 +735,22 @@
       experimentBusy = false;
     }
   }
+
+  // An experiment picked on the loading screen opens once the model is ready.
+  // A failed load drops it: the error needs attention first.
+  let queuedExperimentId = $state<string | null>(null);
+  $effect(() => {
+    const id = queuedExperimentId;
+    if (!id) return;
+    if (bannerPhase === 'error') {
+      queuedExperimentId = null;
+      return;
+    }
+    if (loadState !== 'loaded' || bannerPhase !== 'idle' || switchInFlight) return;
+    queuedExperimentId = null;
+    const exp = experiments.find((e) => e.id === id);
+    if (exp) untrack(() => void pickExperiment(exp));
+  });
 
   // ---------------------------------------------------------------------------
   // Lab notebook (T27)
@@ -905,6 +914,7 @@
         onclick={() => openNotebook(true)}
         aria-label="Save to notebook"
         title="Save this run to your lab notebook"
+        data-tour="notebook-button"
         disabled={!st.response}
         class="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 disabled:opacity-30 disabled:cursor-not-allowed"
       >
@@ -938,29 +948,7 @@
         <GitCompareArrows class="h-4 w-4" />
         Compare
       </button>
-      <div class="relative">
-        <button onclick={() => { tourMenuOpen = !tourMenuOpen; }} aria-label="Open tutorial" data-tour="header-help"
-          aria-expanded={tourMenuOpen}
-          class="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100">
-          <CircleHelp class="h-4 w-4" />
-        </button>
-        {#if tourMenuOpen}
-          <!-- Click-outside catcher; Escape closes the menu via onWindowKeydown. -->
-          <div role="presentation" class="fixed inset-0 z-40" onclick={() => { tourMenuOpen = false; }}></div>
-          <div class="absolute right-0 top-full z-50 mt-1 w-40 rounded-md border border-zinc-700 bg-zinc-900 py-1 shadow-xl">
-            <button
-              type="button"
-              onclick={openTutorial}
-              class="w-full px-3 py-1.5 text-left text-xs text-zinc-300 hover:bg-zinc-800"
-            >Basic Tour</button>
-            <button
-              type="button"
-              onclick={openAdvancedTutorial}
-              class="w-full px-3 py-1.5 text-left text-xs text-zinc-300 hover:bg-zinc-800"
-            >Advanced Tour</button>
-          </div>
-        {/if}
-      </div>
+      <TourMenu />
       <button onclick={openSettings} aria-label="Open settings"
         class="relative rounded-md p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100">
         <Settings class="h-4 w-4" />
@@ -1006,7 +994,7 @@
        since the parent is overflow-hidden. The banner still renders correctly
        as a flex-shrink-0 child. -->
   <LoadProgressBanner
-    visible={bannerVisible}
+    visible={bannerVisible && !loadingScreenOn}
     phase={bannerPhase === 'idle' ? 'loading' : bannerPhase}
     presetId={bannerTargetPreset ?? activePresetId ? hfIdOf(bannerTargetPreset ?? activePresetId ?? '') : null}
     progress={loadProgress}
@@ -1064,7 +1052,7 @@
 
   <!-- Shared token strip — below error/banner, above panels -->
   {#if st.response && !compareMode}
-    <div class="flex-shrink-0 border-b border-zinc-800 bg-zinc-900/50 px-4">
+    <div class="flex-shrink-0 border-b border-zinc-800 bg-zinc-900/50 px-4" data-tour="token-strip">
       <SharedTokenStrip
         tokens={st.response.tokens}
         focusTokenIndex={st.focusTokenIndex}
@@ -1074,7 +1062,17 @@
   {/if}
 
   <!-- Main workspace -->
-  <div class="flex-1 overflow-hidden">
+  <div class="relative flex-1 overflow-hidden">
+    {#if loadingScreenOn && loadTrack}
+      <LoadingScreen
+        track={loadTrack}
+        modelName={displayName(loadTrack.presetId, allCompat)}
+        {experiments}
+        presetName={(id) => displayName(id, allCompat)}
+        {queuedExperimentId}
+        onQueueExperiment={(id) => (queuedExperimentId = id)}
+      />
+    {/if}
     {#if compareMode}
       <div class="h-full overflow-y-auto p-4">
         <ComparePanel {compare} runDisabled={isRunDisabled} runDisabledReason={runButtonTooltip} />
@@ -1439,21 +1437,13 @@
         >{devtoolsAutoopen ? 'On' : 'Off'}</button>
       </div>
 
-      <div class="flex items-center justify-between gap-3">
-        <div class="min-w-0">
-          <p class="text-sm text-zinc-300">Reset onboarding tips</p>
-          <p class="text-xs text-zinc-500">Re-show first-time tooltips on next mount.</p>
-        </div>
-        <button
-          onclick={resetOnboardingTips}
-          class="shrink-0 rounded-md border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-zinc-300 hover:border-indigo-600 hover:text-indigo-300"
-        >Reset</button>
-      </div>
     </div>
+
+    <TourSettings onTourStarted={() => (settingsOpen = false)} />
   </SettingsDrawer>
 
   <!-- Driven tutorial -->
-  <DrivenTutorial generating={st.generating} response={st.response} {loadState} {bannerVisible} saeLayerSwitching={st.layerSwitching} error={st.error} actions={tutorialActions} />
+  <DrivenTutorial generating={st.generating} {loadState} {bannerVisible} saeLayerSwitching={st.layerSwitching} error={st.error} actions={tutorialActions} />
 
   <ExperimentGallery
     open={experimentsOpen}

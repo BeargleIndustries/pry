@@ -437,9 +437,14 @@
   // ---------------------------------------------------------------------------
 
   let view = $state<'lines' | 'expert'>('lines');
-  // Ablation picks heads on the grid, and the guided tour talks about the grid,
-  // so both show the Expert view while they are on.
-  const forcedExpert = $derived(ablationMode || tutorialState.open);
+  // The guided tour picks the view for the step it's on (Lines first, then the
+  // grid when it explains heads). The user can still switch afterwards.
+  $effect(() => {
+    const req = tutorialState.open ? tutorialState.attentionRequest : null;
+    if (req) view = req.view;
+  });
+  // Ablation picks heads on the grid, so it shows the Expert view while on.
+  const forcedExpert = $derived(ablationMode);
   const showExpert = $derived(view === 'expert' || forcedExpert);
   // If forcing the Expert view removed the focused control (the Lines button or
   // a lines-view word), keep keyboard users in place on the Expert view button.
@@ -586,7 +591,7 @@
     <!-- -----------------------------------------------------------------------
          Copying heads (induction heads), T20
          ----------------------------------------------------------------------- -->
-    <div>
+    <div data-tour="copying-heads-view">
       <h3 class="mb-2 text-sm font-semibold text-zinc-200"><Term key="induction-head">Copying heads</Term></h3>
       <p class="mb-3 text-xs leading-relaxed text-zinc-400">
         A model can't guess random words. But if the same random words come round a second time, it
@@ -786,7 +791,7 @@
       {#if isStartMarker(tokens[0]?.text ?? '')}
         <p class="mt-2 text-[11px] leading-relaxed text-zinc-500">
           The first token, {displayToken(tokens[0].text)}, is the model's
-          <Term key="attention-sink">start-of-text marker</Term>, not a word you typed. It is often bright.
+          <Term key="attention-sink">start-of-text marker</Term>, not a word you typed. It's often bright.
         </p>
       {/if}
     </div>
@@ -835,9 +840,7 @@
           disabled={forcedExpert}
           aria-pressed={!showExpert}
           title={forcedExpert
-            ? ablationMode
-              ? 'Turn ablation off to see the lines view. Ablation picks heads on the grid.'
-              : 'The tour uses the Expert view.'
+            ? 'Turn ablation off to see the lines view. Ablation picks heads on the grid.'
             : 'Lines from each word to the earlier words it looks at.'}
           class={[
             'rounded px-3 py-1 text-xs transition-all disabled:cursor-not-allowed disabled:opacity-50',
@@ -932,7 +935,7 @@
 
     <!-- Ablation results -->
     {#if ablateResponse && ablationMode}
-      <div class="mb-4 rounded-lg border border-red-800/50 bg-red-950/20 p-3">
+      <div class="mb-4 rounded-lg border border-red-800/50 bg-red-950/20 p-3" data-tour="ablation-results">
         <h4 class="mb-2 text-xs font-semibold text-red-400">Ablation results</h4>
         <div class="grid grid-cols-2 gap-3">
           <div>

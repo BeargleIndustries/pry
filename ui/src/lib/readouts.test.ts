@@ -82,6 +82,49 @@ describe('logitLensReadout', () => {
     );
   });
 
+  // Real last-token column from gpt2-small, "Michael Jordan played the sport of".
+  // Layers 8 and 11 are both 42%, with a 93% peak between them. This used to
+  // read "grows from 42% there to 42%".
+  function jordanLens(): LogitLensResponse {
+    const col: [string, number][] = [
+      [' the', 0.6687], [' the', 0.7944], [' the', 0.62], [' the', 0.46], [' the', 0.4229],
+      [' course', 0.5757], [' course', 0.2721], [' baseball', 0.2756],
+      [' basketball', 0.4222], [' basketball', 0.932], [' basketball', 0.8336], [' basketball', 0.4221],
+    ];
+    return {
+      preset_id: 'gpt2-small',
+      prompt: 'Michael Jordan played the sport of',
+      tokens: [{ index: 0, text: 'of' }] as LogitLensResponse['tokens'],
+      grid: col.map(([t, p]) => [{ predicted_token: t, probability: p, matches_final: t === ' basketball' }]),
+      n_layers: 12,
+      timing_ms: {},
+    };
+  }
+
+  it('regression: a mid-stack peak is reported, not "grows from 42% to 42%"', () => {
+    const text = logitLensReadout(jordanLens());
+    expect(text).toBe(
+      'The final answer, "·basketball", first becomes the top guess at layer 8 (layers run 0 to 11). ' +
+        'Its chance peaks at 93% at layer 9, then ends at 42% at the last layer.',
+    );
+    expect(text).not.toMatch(/grows from (\d+%) there to \1/);
+  });
+
+  it('equal ends with no peak never say "grows from X to X"', () => {
+    const r = jordanLens();
+    r.grid[9][0].probability = 0.42;
+    r.grid[10][0].probability = 0.42;
+    expect(logitLensReadout(r)).toMatch(/Its chance is about 42% there and at the last layer\.$/);
+  });
+
+  it('a chance that drops is described as falling', () => {
+    const r = jordanLens();
+    r.grid[8][0].probability = 0.9;
+    r.grid[9][0].probability = 0.7;
+    r.grid[10][0].probability = 0.5;
+    expect(logitLensReadout(r)).toMatch(/Its chance falls from 90% there to 42% at the last layer\.$/);
+  });
+
   it('returns null without data', () => {
     expect(logitLensReadout(null)).toBeNull();
     expect(logitLensReadout({ ...logitLens, n_layers: 0, grid: [] })).toBeNull();

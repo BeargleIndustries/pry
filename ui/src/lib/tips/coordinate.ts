@@ -26,10 +26,19 @@ export function markTipsSeenForStep(
   }
 }
 
+/** Forget every "tip seen" flag, including ones for tips no longer in the registry. */
 export function resetAllTips(): void {
-  if (typeof localStorage === 'undefined') return;
-  for (const tip of tipsRegistry) {
-    localStorage.removeItem(`${STORAGE_PREFIX}${tip.id}`);
+  try {
+    if (typeof localStorage === 'undefined') return;
+    const keys: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(STORAGE_PREFIX)) keys.push(k);
+    }
+    for (const tip of tipsRegistry) keys.push(`${STORAGE_PREFIX}${tip.id}`);
+    for (const k of keys) localStorage.removeItem(k);
+  } catch {
+    /* storage unavailable */
   }
 }
 

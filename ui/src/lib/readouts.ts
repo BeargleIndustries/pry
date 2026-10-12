@@ -88,9 +88,35 @@ export function logitLensReadout(response: LogitLensResponse | null): string | n
   if (settled !== first) {
     text += ` It drops back out, then stays on top from layer ${settled} onward.`;
   } else if (first !== lastLayer) {
-    text += ` Its chance grows from ${pct(column[first].probability)} there to ${pct(finalCell.probability)} at the last layer.`;
+    text += ' ' + chanceTrend(column, first, lastLayer);
   }
   return text;
+}
+
+/**
+ * How the answer's chance moves from the layer it first tops to the last layer.
+ * The path is not always a climb: it can peak mid-stack and fall back, and the
+ * two ends can round to the same percentage.
+ */
+function chanceTrend(column: LogitLensResponse['grid'][number], first: number, lastLayer: number): string {
+  const start = column[first].probability;
+  const end = column[lastLayer].probability;
+  const rounded = (p: number) => Math.round(p * 100);
+
+  let peakLayer = first;
+  for (let l = first + 1; l < lastLayer; l++) {
+    if (column[l].probability > column[peakLayer].probability) peakLayer = l;
+  }
+  const peak = column[peakLayer].probability;
+  if (peakLayer !== first && rounded(peak) > Math.max(rounded(start), rounded(end))) {
+    return `Its chance peaks at ${pct(peak)} at layer ${peakLayer}, then ends at ${pct(end)} at the last layer.`;
+  }
+  if (rounded(start) === rounded(end)) {
+    return `Its chance is about ${pct(end)} there and at the last layer.`;
+  }
+  return end > start
+    ? `Its chance grows from ${pct(start)} there to ${pct(end)} at the last layer.`
+    : `Its chance falls from ${pct(start)} there to ${pct(end)} at the last layer.`;
 }
 
 // ---------------------------------------------------------------------------
@@ -180,7 +206,7 @@ export function attentionReadout(
   const [top, next] = ranked;
   let text = `${where} looks mostly at ${name(top.k)} (${pct(top.weight)} of its attention).`;
   if (top.k === 0 && isStartMarker(tokens[0]?.text ?? '')) {
-    text += ' That is the start-of-text marker, where many heads park their attention when nothing else stands out.';
+    text += " That's the start-of-text marker, where lots of heads park their attention when nothing else stands out.";
   }
   if (next && next.weight >= 0.1) text += ` Next: ${name(next.k)} (${pct(next.weight)}).`;
   return text;

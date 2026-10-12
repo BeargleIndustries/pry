@@ -1,10 +1,22 @@
 # Changelog
 
+## 0.3.6
+
+### New
+- **Loading screen.** Loading a model can take a minute, mostly while Pry starts up its math libraries (the first load after a restart is the slow one). Pry now shows which step it's on, how long it's been, and about how long is left, going by how long that model took last time. While you wait, you can flip through tips, experiments to try once it's ready, and glossary words.
+- **New guided tour.** One path through the whole app in nine short chapters, from the basics to models and the engine. Jump to any chapter, pick up where you left off, or start over from the ? button or Settings. The tour runs each example for you and draws an arrow to whatever it's talking about.
+- **Tips point at what they mean.** Each first-time tip names the thing it's about, with an arrow and a ring around it. Tips wait until that thing is on screen and usable, so you won't get one next to a greyed-out button anymore.
+
+### Fixed
+- The progress bar could sit at 40% for over a minute and then jump. It now keeps moving and never goes backwards.
+- The Features layer menu was missing after the first Run on a new install.
+- The Logit Lens summary could say a chance grows "from 42% to 42%". It now says when the chance peaks partway up the layers.
+- Tips and experiment guides got a rewrite, with plainer words, and they describe the panels as they work now.
+
 ## 0.3.5
 
 ### Fixed
-- The model menu in the header was cut off on the left, so model names didn't show (only the fit badges did).
-- Existing GPU installs were offered a 3.5 GB engine re-download they didn't need, when Pry was built from a checkout with Windows line endings.
+- The model menu in the header got cut off on the left, so you saw the fit badges but not the model names.
 - Pry no longer reopens on a custom model you've removed.
 
 ## 0.3.4
@@ -16,6 +28,7 @@
 ### Fixed
 - The model picker's memory check counted the operating system twice when it had a live reading of graphics memory, and also counted the model Pry already had loaded (which a switch unloads first). Models now get the verdict their real free memory supports.
 - Loading any model that needs a Hugging Face login failed with an error inside Pry. The token was passed twice to one loader and in a form another loader doesn't accept.
+- If you build Pry yourself on Windows, it no longer offers a 3.5 GB engine download you don't need. Windows-style line endings changed the fingerprint of one bundled file, so Pry thought its engine was out of date.
 
 ## 0.3.3
 

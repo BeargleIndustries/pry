@@ -180,8 +180,11 @@ export interface ModelList {
 }
 
 export type LoadStage =
+  | 'warmup'
+  | 'check_files'
   | 'download_model'
   | 'load_model'
+  | 'to_device'
   | 'download_sae'
   | 'load_sae'
   | 'ready'
@@ -190,9 +193,14 @@ export type LoadStage =
 
 export interface LoadProgress {
   preset_id?: string;
-  stage: LoadStage;
+  /** A known LoadStage; older or newer engines may send other names. */
+  stage: LoadStage | (string & {});
   message: string;
   progress: number;
+  /** Seconds spent in the current stage so far (sent on heartbeat events). */
+  elapsed_s?: number;
+  bytes_done?: number;
+  /** Older engines name the byte count this way. */
   bytes_downloaded?: number;
   bytes_total?: number;
 }

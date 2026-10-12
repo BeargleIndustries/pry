@@ -10,17 +10,7 @@
   text-rendering: optimizeLegibility;
 }
 
-/* Tutorial highlight — applied to elements with [data-tour="..."] while the
-   tutorial is pointing at them. Uses an attribute selector so Svelte's
-   reconciler doesn't wipe the effect. */
-[data-tour-active="true"] {
-  position: relative;
-  outline: 2px solid rgb(99 102 241); /* indigo-500 */
-  outline-offset: 2px;
-  border-radius: 0.375rem;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25);
-  transition: outline-color 150ms ease, box-shadow 150ms ease;
-}
+/* Tour and tip highlights are drawn by lib/components/Pointer.svelte. */
 
 /* shadcn-svelte CSS variable tokens — uncomment and populate in Phase 2/3 */
 /* :root {

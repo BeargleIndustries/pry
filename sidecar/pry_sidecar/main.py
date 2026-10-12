@@ -41,6 +41,7 @@ from pry_sidecar import __version__
 from pry_sidecar import custom_models
 from pry_sidecar.custom_models import NO_SAE_MESSAGE, is_custom_id
 from pry_sidecar.presets import PRESETS
+from pry_sidecar.load_stages import Heartbeat, warm_imports
 from pry_sidecar.registry import REGISTRY
 from pry_sidecar.schemas import (
     AblateFeatureRequest,
@@ -127,7 +128,7 @@ def _prefetch_preset(manifest, push) -> None:
 
         prefetch.download_files(repo_id, missing, on_bytes, token=token)
 
-    push("download_model", 0.02, f"Checking model files for {manifest.display.name}…")
+    push("check_files", 0.30, "Checking the model's files…")
     try:
         model_files = prefetch.select_model_files(
             prefetch.list_repo_files(manifest.model.hf_id, token=token)
@@ -135,17 +136,17 @@ def _prefetch_preset(manifest, push) -> None:
     except Exception as exc:
         logger.warning("model pre-fetch skipped for %s: %s", manifest.model.hf_id, exc)
     else:
-        fetch("download_model", 0.02, 0.40, "Model", manifest.model.hf_id, model_files)
+        fetch("download_model", 0.30, 0.40, "Model", manifest.model.hf_id, model_files)
 
     sae_id = manifest.sae_id(manifest.sae.layer)
-    push("download_sae", 0.40, "Checking feature map files…")
+    push("check_files", 0.40, "Checking the feature dictionary's files…")
     try:
         repo_id, folder = prefetch.sae_repo_and_folder(manifest.sae.release, sae_id)
         sae_files = prefetch.list_repo_files(repo_id, token=token, folder=folder)
     except Exception as exc:
         logger.warning("SAE pre-fetch skipped for %s@%s: %s", manifest.sae.release, sae_id, exc)
     else:
-        fetch("download_sae", 0.40, 0.55, "Feature map", repo_id, sae_files)
+        fetch("download_sae", 0.40, 0.55, "Feature dictionary", repo_id, sae_files)
 
 
 def _prefetch_custom(hf_id: str, push) -> str:
@@ -156,7 +157,7 @@ def _prefetch_custom(hf_id: str, push) -> str:
     """
     from pry_sidecar import prefetch
 
-    push("download_model", 0.02, f"Checking model files for {hf_id}…")
+    push("check_files", 0.30, f"Checking the files for {hf_id}…")
     tl_name = custom_models.tl_official_name(hf_id)
     if tl_name is None:
         raise RuntimeError(
@@ -177,7 +178,7 @@ def _prefetch_custom(hf_id: str, push) -> str:
         frac = done / total if total else 1.0
         push(
             "download_model",
-            0.02 + 0.53 * frac,
+            0.30 + 0.25 * frac,
             f"Downloading model… {done / 1e6:.0f} of {total / 1e6:.0f} MB",
             done,
             total,
@@ -352,6 +353,7 @@ async def load(request: Request) -> Response:
         message: str,
         bytes_downloaded: int | None = None,
         bytes_total: int | None = None,
+        elapsed_s: float | None = None,
     ) -> bytes:
         data = LoadProgressEvent(
             stage=stage,  # type: ignore[arg-type]
@@ -359,6 +361,7 @@ async def load(request: Request) -> Response:
             message=message,
             bytes_downloaded=bytes_downloaded,
             bytes_total=bytes_total,
+            elapsed_s=elapsed_s,
         ).model_dump_json(exclude_none=True)
         return f"data: {data}\n\n".encode("utf-8")
 
@@ -377,43 +380,62 @@ async def load(request: Request) -> Response:
             message: str,
             bytes_downloaded: int | None = None,
             bytes_total: int | None = None,
+            elapsed_s: float | None = None,
         ) -> None:
             loop.call_soon_threadsafe(
-                queue.put_nowait, (stage, progress, message, bytes_downloaded, bytes_total)
+                queue.put_nowait, (stage, progress, message, bytes_downloaded, bytes_total, elapsed_s)
             )
+
+        weights_beat: list[Heartbeat] = []
+
+        def stop_weights_beat() -> None:
+            while weights_beat:
+                weights_beat.pop().stop()
 
         def on_stage(event: str, device: str) -> None:
             if event == "cpu_fallback":
                 push("load_model", 0.6, CPU_FALLBACK_MESSAGE)
             elif event == "model_loaded":
+                stop_weights_beat()
                 push("load_model", 0.8, f"Model loaded ({_device_label(device)}).")
-                push("load_sae", 0.82, "Preparing features…")
+                push("load_sae", 0.82, "Loading the feature dictionary…")
 
         def custom_on_stage(event: str, device: str) -> None:
             if event == "cpu_fallback":
                 push("load_model", 0.6, CPU_FALLBACK_MESSAGE)
             elif event == "model_loaded":
+                stop_weights_beat()
                 push("load_model", 0.95, f"Model loaded ({_device_label(device)}).")
+
+        def read_weights() -> None:
+            weights_beat.append(
+                Heartbeat(push, "load_model", 0.58, "Loading the model into memory…").start()
+            )
 
         def worker() -> None:
             from pry_sidecar.registry import hf_token_for, license_gate_error
 
             try:
+                # The heavy libraries take 12-40 s to import (longest on the first
+                # load after a reboot); make that its own, honestly named stage.
+                with Heartbeat(push, "warmup", 0.05, "Starting the math libraries…"):
+                    warm_imports()
                 if manifest is None:
                     # T32 custom model: no SAE, so no feature-map download or stage.
                     tl_name = _prefetch_custom(custom_hf, push)
-                    push("load_model", 0.58, "Loading model weights…")
+                    read_weights()
                     REGISTRY.load_custom(preset_id, tl_name, on_stage=custom_on_stage)
                     push("ready", 1.0, f"{custom_hf} ready (no feature dictionary).")
                     return
                 # Gated preset without a token: say so before any download.
                 hf_token_for(manifest)
                 _prefetch_preset(manifest, push)
-                push("load_model", 0.58, "Loading model weights…")
+                read_weights()
                 loaded = REGISTRY.load(preset_id, manifest, on_stage=on_stage)
                 push("load_sae", 0.97, f"Features ready (layer {loaded.sae_layer}).")
                 push("ready", 1.0, f"Preset '{preset_id}' ready.")
             except Exception as exc:
+                stop_weights_beat()
                 logger.exception("load failed for preset %r", preset_id)
                 gate = license_gate_error(manifest, exc) if manifest is not None else None
                 push("error", 0.0, str(gate) if gate else f"Load failed: {exc}")
