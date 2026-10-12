@@ -287,7 +287,16 @@
           }
         } catch { /* sidecar may not be up yet; fall through */ }
 
-        const target = sidecarActive ?? stored ?? null;
+        let target = sidecarActive ?? stored ?? null;
+        // A remembered custom model that has since been removed: start on the
+        // default model instead of quietly reloading it.
+        if (target?.startsWith('custom:') && !sidecarLoaded.includes(target)) {
+          const saved = await listCustomModels().catch(() => null);
+          if (saved && !saved.some((m) => `custom:${m.id}` === target)) {
+            try { localStorage.removeItem('pry:active_preset'); } catch { /* unavailable */ }
+            target = 'gpt2-small';
+          }
+        }
         if (!target) return;
         activePresetId = target;
 
