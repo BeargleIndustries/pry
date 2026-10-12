@@ -16,6 +16,7 @@ import {
   runPatching,
   fetchCircuit,
   fetchHeadScores,
+  listModels,
 } from './sidecar';
 import { sidecarErrorMessage } from './sidecar-errors';
 import type {
@@ -211,11 +212,28 @@ export class AnalysisController {
         ? response.tokens[response.tokens.length - 1].index
         : undefined;
       s.saeLayer = response.sae_layer_used ?? undefined;
+      await this.fillSaeLayers(response.preset_id);
     } catch (e) {
       s.error = errMsg(e);
       s.response = null;
     } finally {
       s.generating = false;
+    }
+  }
+
+  /**
+   * Fill the Features layer menu if it is still empty. Only a model switch and
+   * a mount that already knew the model used to fill it, so a fresh profile
+   * (first load through ensureLoaded or auto-load) never got the list.
+   */
+  private async fillSaeLayers(presetId: string) {
+    if (this.state.availableSaeLayers.length > 0) return;
+    try {
+      const models = await listModels();
+      const info = models.available?.find((p) => p.id === presetId);
+      this.state.availableSaeLayers = info?.available_sae_layers ?? [];
+    } catch {
+      // Best-effort: the plain layer label still shows.
     }
   }
 
