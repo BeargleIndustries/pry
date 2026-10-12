@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.5
+
+### Fixed
+- The model menu in the header was cut off on the left, so model names didn't show (only the fit badges did).
+- Existing GPU installs were offered a 3.5 GB engine re-download they didn't need, when Pry was built from a checkout with Windows line endings.
+- Pry no longer reopens on a custom model you've removed.
+
 ## 0.3.4
 
 ### New
