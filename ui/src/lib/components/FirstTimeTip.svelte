@@ -21,19 +21,24 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
   import { tutorialState } from '$lib/tutorial/tutorial-store.svelte';
-  import { tipsRegistry, type TipDef, type TipPlacement } from '$lib/tips/tips-registry';
+  import { tipsRegistry, type TipDef } from '$lib/tips/tips-registry';
   import { markTipSeen, isTipSeen } from '$lib/tips/coordinate';
+  import { anchorState } from '$lib/tutorial/anchors';
+  import { MAX_ARROW, placePopup, type Placement, type Point } from '$lib/popup/place';
+  import { focusPoint, placementAttrs, rectOf, viewportSize } from '$lib/popup/measure';
+  import { occupied, OCCUPIED } from '$lib/popup/occupied.svelte';
+  import { POPUP_AUDIT, popupDevHooks, type ForcedTipReport } from '$lib/popup/dev';
   import Pointer from './Pointer.svelte';
 
   const TIP_MAX_W = 320; // matches max-w-xs (~20rem)
   const TIP_EST_H = 120;
-  const EDGE_PAD = 8;
-  const GAP = 10;
 
   let activeTip: TipDef | null = $state(null);
-  let position: { top: number; left: number; arrow: TipPlacement; caret: number } | null =
-    $state(null);
+  let position = $state<Placement | null>(null);
+  let positionFocus = $state<Point | null>(null);
   let whyExpanded = $state(false);
+  /** Dev-only (popup audit): the active tip was forced and must not be marked seen. */
+  let forced = false;
 
   let targetEl: HTMLElement | null = $state(null);
   let tipEl: HTMLDivElement | null = $state(null);
@@ -49,13 +54,15 @@
   }
 
   function pickNextTip(): void {
+    if (typeof document === 'undefined') return;
     if (activeTip) return;
     if (tutorialState.open) return;
     if (document.querySelector('.loading-screen')) return; // wait until the model has loaded
-    if (typeof document === 'undefined') return;
     for (const tip of tipsRegistry) {
       if (isTipSeen(tip.id)) continue;
       const el = document.querySelector(tip.target) as HTMLElement | null;
+      // A target that's hidden, disabled or covered (a dialog, the experiment
+      // guide) waits; the tip shows once it's usable again.
       if (!el || !usable(el)) continue;
       activateTip(tip, el);
       return;
@@ -64,20 +71,7 @@
 
   /** A tip only makes sense next to something on screen that you can use. */
   function usable(el: HTMLElement): boolean {
-    if (el.getClientRects().length === 0) return false;
-    if (el.closest('[inert], [aria-hidden="true"]')) return false;
-    const control = el.matches('button, input, select, textarea')
-      ? el
-      : null;
-    if (control && (control as HTMLButtonElement).disabled) return false;
-    if (el.getAttribute('aria-disabled') === 'true') return false;
-    // Not covered by something else, like the loading screen or a dialog.
-    const r = el.getBoundingClientRect();
-    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-    if (!hit) return false;
-    const ours = tipEl?.contains(hit) ?? false; // the tip itself can overlap its target
-    if (!ours && !(el === hit || el.contains(hit) || hit.contains(el))) return false;
-    return true;
+    return anchorState(el, tipEl) === 'usable';
   }
 
   /** Hide the current tip without marking it seen; it comes back later. */
@@ -101,8 +95,10 @@
     }
     activeTip = null;
     position = null;
+    positionFocus = null;
     targetEl = null;
     prevAriaDescribedBy = null;
+    forced = false;
   }
 
   function schedulePick(): void {
@@ -113,80 +109,51 @@
     }, 50);
   }
 
-  function computePosition(
-    target: HTMLElement,
-    placement: TipPlacement,
-    tipW: number,
-    tipH: number,
-  ): { top: number; left: number; arrow: TipPlacement; caret: number } {
-    const r = target.getBoundingClientRect();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-
-    function place(p: TipPlacement): { top: number; left: number } {
-      switch (p) {
-        case 'top':
-          return { top: r.top - tipH - GAP, left: r.left + r.width / 2 - tipW / 2 };
-        case 'bottom':
-          return { top: r.bottom + GAP, left: r.left + r.width / 2 - tipW / 2 };
-        case 'left':
-          return { top: r.top + r.height / 2 - tipH / 2, left: r.left - tipW - GAP };
-        case 'right':
-          return { top: r.top + r.height / 2 - tipH / 2, left: r.right + GAP };
-      }
-    }
-
-    function fits(pos: { top: number; left: number }): boolean {
-      return (
-        pos.top >= EDGE_PAD &&
-        pos.left >= EDGE_PAD &&
-        pos.top + tipH <= vh - EDGE_PAD &&
-        pos.left + tipW <= vw - EDGE_PAD
-      );
-    }
-
-    const opposite: Record<TipPlacement, TipPlacement> = {
-      top: 'bottom',
-      bottom: 'top',
-      left: 'right',
-      right: 'left',
-    };
-
-    let chosen: TipPlacement = placement;
-    let pos = place(chosen);
-    if (!fits(pos)) {
-      chosen = opposite[placement];
-      pos = place(chosen);
-    }
-    if (!fits(pos)) {
-      // Fall back to bottom-center with X clamp.
-      chosen = 'bottom';
-      pos = {
-        top: Math.min(r.bottom + GAP, vh - tipH - EDGE_PAD),
-        left: r.left + r.width / 2 - tipW / 2,
-      };
-    }
-
-    // Clamp to viewport.
-    pos.left = Math.max(EDGE_PAD, Math.min(pos.left, vw - tipW - EDGE_PAD));
-    pos.top = Math.max(EDGE_PAD, Math.min(pos.top, vh - tipH - EDGE_PAD));
-
-    // Caret sits on the tip's edge facing the target, lined up with its centre.
-    const vertical = chosen === 'top' || chosen === 'bottom';
-    const caret = vertical
-      ? Math.max(14, Math.min(r.left + r.width / 2 - pos.left, tipW - 14))
-      : Math.max(14, Math.min(r.top + r.height / 2 - pos.top, tipH - 14));
-
-    return { top: pos.top, left: pos.left, arrow: chosen, caret };
-  }
-
+  /** Place the tip with placePopup. A target that can't be pointed at makes the tip wait. */
   async function recomputePosition(): Promise<void> {
     if (!activeTip || !targetEl) return;
     await tick();
-    const tipW = tipEl?.offsetWidth ?? TIP_MAX_W;
-    const tipH = tipEl?.offsetHeight ?? TIP_EST_H;
-    position = computePosition(targetEl, activeTip.placement, tipW, tipH);
+    if (!activeTip || !targetEl) return;
+    const t = rectOf(targetEl);
+    const focus = t ? focusPoint(t, activeTip.focus) : null;
+    const next = placePopup({
+      target: t,
+      focus: focus ?? undefined,
+      size: { w: tipEl?.offsetWidth || TIP_MAX_W, h: tipEl?.offsetHeight || TIP_EST_H },
+      viewport: viewportSize(),
+      preferred: activeTip.placement,
+      previousSide: position?.side,
+      previousMode: position?.mode,
+      avoid: occupied.rects([OCCUPIED.tip]),
+    });
+    if (next.mode === 'fallback') {
+      // Nowhere to point: hide without marking seen; it comes back later.
+      release();
+      schedulePick();
+      return;
+    }
+    position = next;
+    positionFocus = focus;
   }
+
+  /** Arrow for the tip: only when it's short and not the far-corner fallback. */
+  const tipArrow = $derived(
+    position?.arrowFrom && !position.arrowExempt && position.arrowLen <= MAX_ARROW ? position : null,
+  );
+
+  // The tip is an occupied area for other popups while it's up.
+  $effect(() => {
+    if (!tipEl) return;
+    const el = tipEl;
+    // Re-place when the tip's own size changes (first render, "why?" opening).
+    const ro = new ResizeObserver(() => void recomputePosition());
+    ro.observe(el);
+    const unregister = occupied.registerElement(OCCUPIED.tip, el);
+    return () => {
+      ro.disconnect();
+      unregister();
+    };
+  });
 
   function activateTip(tip: TipDef, el: HTMLElement): void {
     activeTip = tip;
@@ -228,7 +195,8 @@
   function dismiss(): void {
     if (!activeTip) return;
     const tip = activeTip;
-    markTipSeen(tip.id);
+    if (!forced) markTipSeen(tip.id);
+    forced = false;
 
     if (targetEl) {
       if (prevAriaDescribedBy !== null) {
@@ -256,6 +224,7 @@
 
     activeTip = null;
     position = null;
+    positionFocus = null;
     targetEl = null;
     prevAriaDescribedBy = null;
 
@@ -288,6 +257,29 @@
   function toggleWhy(): void {
     whyExpanded = !whyExpanded;
     void recomputePosition();
+  }
+
+  /** Dev-only: force `id` on screen (bypasses seen-state, never persists). */
+  async function forceTip(id: string): Promise<ForcedTipReport> {
+    const tip = tipsRegistry.find((t) => t.id === id);
+    if (!tip) return { id, shown: false, waiting: false, reason: 'not in registry' };
+    if (activeTip) release();
+    await tick();
+    const el = document.querySelector(tip.target) as HTMLElement | null;
+    if (!el) return { id, shown: false, waiting: false, reason: 'target not in DOM' };
+    const state = anchorState(el, null);
+    if (state !== 'usable') return { id, shown: false, waiting: state === 'covered', reason: `target ${state}` };
+    forced = true;
+    activateTip(tip, el);
+    // Let it render, measure itself and settle.
+    for (let i = 0; i < 4; i++) {
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+      await recomputePosition();
+    }
+    if (activeTip?.id !== id || !position) {
+      return { id, shown: false, waiting: true, reason: 'no placement (target unusable)' };
+    }
+    return { id, shown: true, waiting: false };
   }
 
   // Suppress tips whenever the tutorial is open; re-scan when it closes.
@@ -341,7 +333,20 @@
 
     schedulePick();
 
+    // Dev-only (popup audit): show one tip on demand, without reading or
+    // writing its seen flag. Dropped from release builds.
+    if (POPUP_AUDIT) {
+      popupDevHooks.forceTip = forceTip;
+      popupDevHooks.clearForcedTip = () => {
+        if (forced) release();
+      };
+    }
+
     return () => {
+      if (POPUP_AUDIT) {
+        delete popupDevHooks.forceTip;
+        delete popupDevHooks.clearForcedTip;
+      }
       if (pickDebounce) clearTimeout(pickDebounce);
       mutationObserver?.disconnect();
       mutationObserver = null;
@@ -360,7 +365,13 @@
 </script>
 
 {#if activeTip && position}
-  <Pointer target={targetEl} z={59} />
+  <Pointer
+    target={targetEl}
+    arrowFrom={tipArrow?.arrowFrom}
+    arrowTo={tipArrow?.arrowTo}
+    focusRing={position.mode === 'inset' && !position.arrowExempt}
+    z={59}
+  />
   <div
     bind:this={tipEl}
     role="dialog"
@@ -370,12 +381,17 @@
     class="fixed z-[60] max-w-xs rounded-lg border border-indigo-700/60 bg-zinc-900 p-3 shadow-xl"
     style:top={`${position.top}px`}
     style:left={`${position.left}px`}
+    data-popup="tip"
+    data-tip-id={activeTip.id}
+    {...placementAttrs(position, positionFocus)}
   >
-    <span
-      class="pry-tip-caret pry-tip-caret-{position.arrow}"
-      style:--caret={`${position.caret}px`}
-      aria-hidden="true"
-    ></span>
+    {#if position.caretEdge}
+      <span
+        class="pry-tip-caret pry-tip-caret-{position.caretEdge}"
+        style:--caret={`${position.caret}px`}
+        aria-hidden="true"
+      ></span>
+    {/if}
     <div class="flex items-start gap-2">
       <div class="flex-1">
         <p
@@ -424,9 +440,9 @@
     border: 1px solid rgba(67, 56, 202, 0.6); /* indigo-700/60 */
     transform: rotate(45deg);
   }
-  /* Tip below the target: caret on the top edge, pointing up. */
-  .pry-tip-caret-bottom { top: -7px; left: calc(var(--caret) - 6px); border-right: none; border-bottom: none; }
-  .pry-tip-caret-top { bottom: -7px; left: calc(var(--caret) - 6px); border-left: none; border-top: none; }
-  .pry-tip-caret-right { left: -7px; top: calc(var(--caret) - 6px); border-right: none; border-top: none; }
-  .pry-tip-caret-left { right: -7px; top: calc(var(--caret) - 6px); border-left: none; border-bottom: none; }
+  /* Named by the tip edge that carries the caret (the edge facing the target). */
+  .pry-tip-caret-top { top: -7px; left: calc(var(--caret) - 6px); border-right: none; border-bottom: none; }
+  .pry-tip-caret-bottom { bottom: -7px; left: calc(var(--caret) - 6px); border-left: none; border-top: none; }
+  .pry-tip-caret-left { left: -7px; top: calc(var(--caret) - 6px); border-right: none; border-top: none; }
+  .pry-tip-caret-right { right: -7px; top: calc(var(--caret) - 6px); border-left: none; border-bottom: none; }
 </style>

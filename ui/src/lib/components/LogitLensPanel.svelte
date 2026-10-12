@@ -4,6 +4,10 @@
   import { logitLensReadout } from '$lib/readouts';
   import Readout from './Readout.svelte';
   import { clampCell, handleGridKey, type GridCell } from '$lib/grid-nav';
+  import { untrack } from 'svelte';
+  import { placePopup, type Placement, type RectLike } from '$lib/popup/place';
+  import { placementAttrs, viewportSize } from '$lib/popup/measure';
+  import { occupied } from '$lib/popup/occupied.svelte';
 
   interface Props {
     response: LogitLensResponse | null;
@@ -16,24 +20,47 @@
   const grid = $derived(response?.grid ?? []);
   const nLayers = $derived(response?.n_layers ?? 0);
 
-  // Tooltip state
+  // Tooltip state: anchored to the hovered (or focused) cell via placePopup.
   let tipLayer = $state<number | null>(null);
   let tipPos = $state<number | null>(null);
-  let tipX = $state(0);
-  let tipY = $state(0);
+  let tipCell = $state<RectLike | null>(null);
+  let tipEl: HTMLDivElement | null = $state(null);
+  let tipPlaced = $state<Placement | null>(null);
 
   function onCellEnter(layer: number, pos: number, e: MouseEvent) {
     tipLayer = layer;
     tipPos = pos;
-    const rect = (e.target as HTMLElement).getBoundingClientRect();
-    tipX = rect.right + 8;
-    tipY = rect.top;
+    tipCell = (e.currentTarget as HTMLElement).getBoundingClientRect();
   }
 
   function onCellLeave() {
     tipLayer = null;
     tipPos = null;
+    tipCell = null;
   }
+
+  $effect(() => {
+    if (!tipEl || !tipCell) {
+      tipPlaced = null;
+      return;
+    }
+    const el = tipEl;
+    const target = tipCell;
+    untrack(() => {
+      const p = placePopup({
+        target,
+        size: { w: el.offsetWidth, h: el.offsetHeight },
+        viewport: viewportSize(),
+        preferred: 'top',
+        previousSide: tipPlaced?.side,
+        previousMode: tipPlaced?.mode,
+        gap: 6,
+        edgePad: 8,
+        avoid: occupied.rects(),
+      });
+      tipPlaced = p.mode === 'fallback' ? null : p;
+    });
+  });
 
   // Keyboard model (T29): roving tabindex, rows top to bottom as drawn (last
   // layer first), columns are word positions. Focus shows the hover tooltip.
@@ -53,11 +80,9 @@
 
   function onCellFocus(row: number, layer: number, pos: number, e: FocusEvent) {
     gridCurrent = { row, col: pos };
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     tipLayer = layer;
     tipPos = pos;
-    tipX = rect.right + 8;
-    tipY = rect.top;
+    tipCell = (e.currentTarget as HTMLElement).getBoundingClientRect();
   }
 
   function cellLabel(layer: number, pos: number): string {
@@ -202,8 +227,13 @@
       {@const cell = grid[tipLayer]?.[tipPos]}
       {#if cell}
         <div
+          bind:this={tipEl}
           class="pointer-events-none fixed z-50 rounded border border-zinc-600 bg-zinc-800 px-2.5 py-1.5 text-xs shadow-lg"
-          style="left: {tipX}px; top: {tipY}px;"
+          style:left="{tipPlaced?.left ?? 0}px"
+          style:top="{tipPlaced?.top ?? 0}px"
+          style:visibility={tipPlaced ? 'visible' : 'hidden'}
+          data-popup="hover"
+          {...placementAttrs(tipPlaced, null)}
         >
           <div class="text-zinc-300">
             Layer {tipLayer} / Token {tipPos}

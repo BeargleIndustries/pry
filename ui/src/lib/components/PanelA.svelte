@@ -34,7 +34,10 @@
     linesHeight,
   } from '$lib/attention-lines';
   import { tutorialState } from '$lib/tutorial/tutorial-store.svelte';
-  import { tick } from 'svelte';
+  import { tick, untrack } from 'svelte';
+  import { placePopup, type Placement, type RectLike } from '$lib/popup/place';
+  import { placementAttrs, viewportSize } from '$lib/popup/measure';
+  import { occupied } from '$lib/popup/occupied.svelte';
 
   // ---------------------------------------------------------------------------
   // Props
@@ -208,20 +211,45 @@
 
   let tooltipLayer = $state<number | null>(null);
   let tooltipHead = $state<number | null>(null);
-  let tooltipX = $state(0);
-  let tooltipY = $state(0);
+  /** The hovered/focused cell; the tooltip is anchored to it via placePopup. */
+  let tooltipCell = $state<RectLike | null>(null);
+  let tooltipEl: HTMLDivElement | null = $state(null);
+  let tooltipPlaced = $state<Placement | null>(null);
 
   function onCellMouseEnter(l: number, h: number, e: MouseEvent) {
     tooltipLayer = l;
     tooltipHead = h;
-    tooltipX = (e.target as SVGElement).getBoundingClientRect().x;
-    tooltipY = (e.target as SVGElement).getBoundingClientRect().y;
+    tooltipCell = (e.currentTarget as SVGElement).getBoundingClientRect();
   }
 
   function onCellMouseLeave() {
     tooltipLayer = null;
     tooltipHead = null;
+    tooltipCell = null;
   }
+
+  $effect(() => {
+    if (!tooltipEl || !tooltipCell) {
+      tooltipPlaced = null;
+      return;
+    }
+    const el = tooltipEl;
+    const target = tooltipCell;
+    untrack(() => {
+      const p = placePopup({
+        target,
+        size: { w: el.offsetWidth, h: el.offsetHeight },
+        viewport: viewportSize(),
+        preferred: 'top',
+        previousSide: tooltipPlaced?.side,
+        previousMode: tooltipPlaced?.mode,
+        gap: 6,
+        edgePad: 8,
+        avoid: occupied.rects(),
+      });
+      tooltipPlaced = p.mode === 'fallback' ? null : p;
+    });
+  });
 
   // Clear tooltip if the window loses focus or user scrolls (coords go stale).
   $effect(() => {
@@ -288,11 +316,9 @@
   function onCellFocus(l: number, h: number, e: FocusEvent) {
     gridCurrent = { row: l, col: h };
     gridFocused = true;
-    const r = (e.currentTarget as SVGElement).getBoundingClientRect();
     tooltipLayer = l;
     tooltipHead = h;
-    tooltipX = r.x;
-    tooltipY = r.y;
+    tooltipCell = (e.currentTarget as SVGElement).getBoundingClientRect();
   }
 
   function onCellBlur() {
@@ -1302,8 +1328,13 @@
         {#if tooltipLayer !== null && tooltipHead !== null}
           {@const tv = rawGrid[tooltipLayer]?.[tooltipHead] ?? null}
           <div
+            bind:this={tooltipEl}
             class="pointer-events-none fixed z-50 rounded border border-zinc-600 bg-zinc-800 px-2.5 py-1.5 text-xs shadow-lg"
-            style="left: {tooltipX + 40}px; top: {tooltipY - 8}px;"
+            style:left="{tooltipPlaced?.left ?? 0}px"
+            style:top="{tooltipPlaced?.top ?? 0}px"
+            style:visibility={tooltipPlaced ? 'visible' : 'hidden'}
+            data-popup="hover"
+            {...placementAttrs(tooltipPlaced, null)}
           >
             <span class="text-zinc-300">L{tooltipLayer} H{tooltipHead}</span>
             <span class="mx-1.5 text-zinc-600">·</span>

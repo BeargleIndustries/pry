@@ -15,3 +15,33 @@ export function findAnchor(target: string, root: ParentNode = document): HTMLEle
   }
   return null;
 }
+
+export type AnchorState = 'usable' | 'hidden' | 'disabled' | 'covered';
+
+/**
+ * Whether a popup can point at `el` right now: on screen, not inert or
+ * disabled, and not covered by something else (the loading screen, a dialog,
+ * the experiment guide). `ignore` is a popup that may overlap its own target.
+ */
+export function anchorState(el: HTMLElement, ignore: Element | null = null): AnchorState {
+  if (typeof document === 'undefined') return 'hidden';
+  if (!el.isConnected || el.getClientRects().length === 0) return 'hidden';
+  if (el.closest('[inert], [aria-hidden="true"]')) return 'hidden';
+  if (el.matches('button, input, select, textarea') && (el as HTMLButtonElement).disabled) return 'disabled';
+  if (el.getAttribute('aria-disabled') === 'true') return 'disabled';
+  const r = el.getBoundingClientRect();
+  const x = r.left + r.width / 2;
+  const y = r.top + r.height / 2;
+  if (x < 0 || y < 0 || x > window.innerWidth || y > window.innerHeight) return 'hidden';
+  const hit = document.elementFromPoint(x, y);
+  if (!hit) return 'hidden';
+  if (ignore?.contains(hit)) return 'usable';
+  // Popups and the pointer overlay never count as covering a target.
+  if (hit.closest('[data-popup]')) return 'usable';
+  if (el === hit || el.contains(hit) || hit.contains(el)) return 'usable';
+  return 'covered';
+}
+
+export function anchorUsable(el: HTMLElement, ignore: Element | null = null): boolean {
+  return anchorState(el, ignore) === 'usable';
+}
