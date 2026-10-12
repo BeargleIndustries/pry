@@ -18,7 +18,7 @@ export const CUSTOM_MODEL_WORKS: readonly string[] = [
   'Logit lens (how the guess changes layer by layer)',
   'Why (DLA): which parts pushed the prediction',
   'Turning attention heads off (head ablation)',
-  'Swap & Compare (activation patching) and Key parts',
+  'Swap test (activation patching) and Key parts',
   'Comparing two prompts, and watching it write',
 ];
 

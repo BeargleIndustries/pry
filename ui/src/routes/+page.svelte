@@ -698,17 +698,17 @@
     {
       id: 'logit-lens',
       label: 'Logit Lens',
-      title: 'Watch the model change its mind layer by layer — each row shows what it would predict if forced to answer at that depth.',
+      title: 'Watch the model change its mind layer by layer. Each row shows what it would guess if it had to answer at that layer.',
     },
     {
       id: 'dla',
       label: 'Why (DLA)',
-      title: 'Direct Logit Attribution — which parts of the model pushed toward or against the predicted word.',
+      title: "Which parts of the model pushed directly toward or against its guess. Help that goes through other parts isn't counted.",
     },
     {
       id: 'patching',
-      label: 'Swap & Compare',
-      title: 'Activation Patching — swap part of the model\'s internal state from one prompt into another to see what changes.',
+      label: 'Swap test',
+      title: 'Run two prompts one word apart, then swap pieces of one run into the other to see which pieces carry the answer.',
     },
     {
       id: 'circuit',
@@ -717,9 +717,9 @@
     },
   ];
   const rightTabs: TabDef[] = [
-    { id: 'features', label: 'Features', title: 'Internal concepts the model activated for each word — what it "knew" while processing your prompt.' },
+    { id: 'features', label: 'Features', title: 'Concepts the model lit up for each word: what it "knew" while reading your prompt.' },
     { id: 'predictions', label: 'Predictions', title: "What the model thinks the next word should be, and how likely it thinks each guess is." },
-    { id: 'steering', label: 'Steering', title: "Turn a feature up or down and re-run — see how the model's answer shifts." },
+    { id: 'steering', label: 'Steering', title: "Turn a feature up or down and run again to see how the model's answer shifts." },
   ];
   let leftActiveTab = $state('attention');
   let rightActiveTab = $state('features');
@@ -791,7 +791,7 @@
           class="flex-1 rounded border border-zinc-700 bg-zinc-950 px-3 py-1 text-sm text-zinc-100 placeholder-zinc-600 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
         />
         {#if promptEdited}
-          <span role="status" class="flex-shrink-0 whitespace-nowrap text-xs text-amber-400">Prompt edited — press Run to analyze the new text</span>
+          <span role="status" class="flex-shrink-0 whitespace-nowrap text-xs text-amber-400">Prompt edited. Press Run to see the new results.</span>
         {/if}
         <button
           onclick={handleGenerate}
@@ -896,7 +896,7 @@
         </button>
       </div>
       {#if promptEdited}
-        <p role="status" class="mt-1 text-xs text-amber-400">Prompt edited — press Run to analyze the new text</p>
+        <p role="status" class="mt-1 text-xs text-amber-400">Prompt edited. Press Run to see the new results.</p>
       {/if}
     </div>
   {/if}
@@ -965,12 +965,15 @@
 
   <!-- Shared token strip — below error/banner, above panels -->
   {#if st.response && !compareMode}
-    <div class="flex-shrink-0 border-b border-zinc-800 bg-zinc-900/50 px-4" data-tour="token-strip">
-      <SharedTokenStrip
-        tokens={st.response.tokens}
-        focusTokenIndex={st.focusTokenIndex}
-        onTokenFocus={(i) => (st.focusTokenIndex = i)}
-      />
+    <div class="flex flex-shrink-0 items-center gap-2 border-b border-zinc-800 bg-zinc-900/50 px-4" data-tour="token-strip">
+      <span class="flex-shrink-0 text-[11px] text-zinc-500">Words (tokens):</span>
+      <div class="min-w-0 flex-1">
+        <SharedTokenStrip
+          tokens={st.response.tokens}
+          focusTokenIndex={st.focusTokenIndex}
+          onTokenFocus={(i) => (st.focusTokenIndex = i)}
+        />
+      </div>
     </div>
   {/if}
 
@@ -1303,7 +1306,7 @@
         onclick={() => (customModelDialogOpen = true)}
         class="rounded-md border border-dashed border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-500 hover:border-indigo-600 hover:text-indigo-400"
       >
-        + Add a model from HuggingFace
+        + Add a model from Hugging Face
       </button>
     </div>
 
