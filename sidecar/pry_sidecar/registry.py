@@ -26,8 +26,8 @@ class LoadedModel:
         self,
         preset_id: str,
         model: object,  # HookedTransformer
-        sae: object,  # sae_lens.SAE
-        sae_layer: int,
+        sae: object,  # sae_lens.SAE; None for custom models (T32)
+        sae_layer: Optional[int],  # None for custom models (no SAE)
         device: str,
     ) -> None:
         self.preset_id = preset_id
@@ -205,6 +205,74 @@ class ModelRegistry:
                 sae=sae,
                 sae_layer=sae_layer,
                 device=device,
+            )
+            self._loaded[preset_id] = loaded
+            self._last_loaded = preset_id
+            return loaded
+
+    # -- custom models (T32) -------------------------------------------------
+    # Kept apart from load() on purpose: no manifest, no SAE, no license gate.
+
+    def load_custom(
+        self,
+        preset_id: str,
+        tl_name: str,
+        on_stage: Optional[Callable[[str, str], None]] = None,
+    ) -> LoadedModel:
+        """Load a user-added model (``custom:<hf_id>``) without an SAE.
+
+        Same per-id lock, CUDA-OOM CPU fallback and ``on_stage`` events as
+        ``load()``. Passes the user's HF token (if any) so gated repos the
+        user has accepted can download.
+        """
+        if preset_id in self._loaded:
+            return self._loaded[preset_id]
+
+        lock = self._get_lock(preset_id)
+        with lock:
+            if preset_id in self._loaded:
+                return self._loaded[preset_id]
+            try:
+                import torch
+                from transformer_lens import HookedTransformer
+            except ImportError as e:
+                raise RuntimeError(f"required ML deps not available: {e}") from e
+
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            hf_token = os.environ.get("HF_TOKEN")
+
+            def load_model(on: str):
+                m = HookedTransformer.from_pretrained(
+                    tl_name,
+                    device=on,
+                    **({"token": hf_token} if hf_token else {}),
+                )
+                m.cfg.use_attn_result = True
+                return m
+
+            try:
+                try:
+                    model = load_model(device)
+                except torch.cuda.OutOfMemoryError as e:
+                    if device != "cuda":
+                        raise
+                    logger.warning(
+                        "CUDA out of memory loading custom model %r (%s); retrying on CPU",
+                        tl_name, e,
+                    )
+                    gc.collect()
+                    torch.cuda.empty_cache()
+                    device = "cpu"
+                    if on_stage is not None:
+                        on_stage("cpu_fallback", device)
+                    model = load_model(device)
+            except Exception as e:
+                raise RuntimeError(f"failed to load model {tl_name}: {e}") from e
+            if on_stage is not None:
+                on_stage("model_loaded", device)
+
+            loaded = LoadedModel(
+                preset_id=preset_id, model=model, sae=None, sae_layer=None, device=device,
             )
             self._loaded[preset_id] = loaded
             self._last_loaded = preset_id

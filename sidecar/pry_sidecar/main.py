@@ -38,6 +38,8 @@ if not logger.handlers:
     logger.setLevel(logging.INFO)
 
 from pry_sidecar import __version__
+from pry_sidecar import custom_models
+from pry_sidecar.custom_models import NO_SAE_MESSAGE, is_custom_id
 from pry_sidecar.presets import PRESETS
 from pry_sidecar.registry import REGISTRY
 from pry_sidecar.schemas import (
@@ -45,6 +47,7 @@ from pry_sidecar.schemas import (
     AblateHeadRequest,
     ActivatingSnippet,
     CircuitRequest,
+    CustomValidateRequest,
     DLARequest,
     FeatureResponse,
     GenerateRequest,
@@ -70,6 +73,11 @@ def _json(data: dict, status: int = 200) -> JSONResponse:
 
 def _error(msg: str, status: int = 400) -> JSONResponse:
     return JSONResponse(content={"error": msg}, status_code=status)
+
+
+def _known_preset(preset_id: str) -> bool:
+    """A preset from presets.json, or a user-added ``custom:<hf_id>`` model (T32)."""
+    return preset_id in PRESETS or is_custom_id(preset_id)
 
 
 def _hf_downloaded(hf_id: str) -> bool:
@@ -138,6 +146,45 @@ def _prefetch_preset(manifest, push) -> None:
         logger.warning("SAE pre-fetch skipped for %s@%s: %s", manifest.sae.release, sae_id, exc)
     else:
         fetch("download_sae", 0.40, 0.55, "Feature map", repo_id, sae_files)
+
+
+def _prefetch_custom(hf_id: str, push) -> str:
+    """Resolve a custom model's TransformerLens name and pre-fetch its files (T32).
+
+    Returns the name to pass to ``HookedTransformer.from_pretrained``. Raises
+    RuntimeError with a plain message when TransformerLens can't load it.
+    """
+    from pry_sidecar import prefetch
+
+    push("download_model", 0.02, f"Checking model files for {hf_id}…")
+    tl_name = custom_models.tl_official_name(hf_id)
+    if tl_name is None:
+        raise RuntimeError(
+            f"{hf_id} isn't on TransformerLens' list of models it can load, so Pry can't open it."
+        )
+    token = custom_models.hf_token()
+    try:
+        files = prefetch.select_model_files(prefetch.list_repo_files(tl_name, token=token))
+    except Exception as exc:
+        logger.warning("model pre-fetch skipped for %s: %s", tl_name, exc)
+        return tl_name
+    missing = prefetch.missing_files(tl_name, files)
+    if not missing:
+        push("download_model", 0.55, "Model already downloaded.")
+        return tl_name
+
+    def on_bytes(done: int, total: int) -> None:
+        frac = done / total if total else 1.0
+        push(
+            "download_model",
+            0.02 + 0.53 * frac,
+            f"Downloading model… {done / 1e6:.0f} of {total / 1e6:.0f} MB",
+            done,
+            total,
+        )
+
+    prefetch.download_files(tl_name, missing, on_bytes, token=token)
+    return tl_name
 
 
 def _check_layer(loaded, layer: int) -> str | None:
@@ -260,13 +307,28 @@ async def load(request: Request) -> Response:
             status_code=500,
         )
 
-    if req.preset_id not in PRESETS:
-        return JSONResponse(
-            {"error": "validation_error", "detail": f"Unknown preset: {req.preset_id!r}"},
-            status_code=400,
-        )
-
-    manifest = PRESETS[req.preset_id]
+    # T32: a user-added model, given as {custom: {hf_id}} or "custom:<hf_id>".
+    custom_hf: str | None = None
+    if req.custom is not None:
+        custom_hf = req.custom.hf_id.strip()
+    elif is_custom_id(req.preset_id):
+        custom_hf = custom_models.hf_id_of(req.preset_id)
+    if custom_hf is not None:
+        if not custom_models.is_valid_hf_id(custom_hf):
+            return JSONResponse(
+                {"error": "validation_error", "detail": f"Not a HuggingFace model name: {custom_hf!r}"},
+                status_code=400,
+            )
+        preset_id = custom_models.custom_preset_id(custom_hf)
+        manifest = None
+    else:
+        preset_id = req.preset_id
+        if preset_id not in PRESETS:
+            return JSONResponse(
+                {"error": "validation_error", "detail": f"Unknown preset: {preset_id!r}"},
+                status_code=400,
+            )
+        manifest = PRESETS[preset_id]
 
     # Raw SSE via Starlette's StreamingResponse, with no SSE helper library.
     # The earlier attempts to use EventSourceResponse (both the
@@ -293,8 +355,8 @@ async def load(request: Request) -> Response:
 
     async def byte_stream():
         # Fast-path: preset already loaded.
-        if REGISTRY.is_loaded(req.preset_id):
-            yield sse_line("already_loaded", 1.0, f"Preset '{req.preset_id}' already loaded.")
+        if REGISTRY.is_loaded(preset_id):
+            yield sse_line("already_loaded", 1.0, f"Preset '{preset_id}' already loaded.")
             return
 
         loop = asyncio.get_running_loop()
@@ -318,15 +380,28 @@ async def load(request: Request) -> Response:
                 push("load_model", 0.8, f"Model loaded ({_device_label(device)}).")
                 push("load_sae", 0.82, "Preparing features…")
 
+        def custom_on_stage(event: str, device: str) -> None:
+            if event == "cpu_fallback":
+                push("load_model", 0.6, CPU_FALLBACK_MESSAGE)
+            elif event == "model_loaded":
+                push("load_model", 0.95, f"Model loaded ({_device_label(device)}).")
+
         def worker() -> None:
             try:
+                if manifest is None:
+                    # T32 custom model: no SAE, so no feature-map download or stage.
+                    tl_name = _prefetch_custom(custom_hf, push)
+                    push("load_model", 0.58, "Loading model weights…")
+                    REGISTRY.load_custom(preset_id, tl_name, on_stage=custom_on_stage)
+                    push("ready", 1.0, f"{custom_hf} ready (no feature dictionary).")
+                    return
                 _prefetch_preset(manifest, push)
                 push("load_model", 0.58, "Loading model weights…")
-                loaded = REGISTRY.load(req.preset_id, manifest, on_stage=on_stage)
+                loaded = REGISTRY.load(preset_id, manifest, on_stage=on_stage)
                 push("load_sae", 0.97, f"Features ready (layer {loaded.sae_layer}).")
-                push("ready", 1.0, f"Preset '{req.preset_id}' ready.")
+                push("ready", 1.0, f"Preset '{preset_id}' ready.")
             except Exception as exc:
-                logger.exception("load failed for preset %r", req.preset_id)
+                logger.exception("load failed for preset %r", preset_id)
                 push("error", 0.0, f"Load failed: {exc}")
             finally:
                 loop.call_soon_threadsafe(queue.put_nowait, None)  # sentinel
@@ -367,6 +442,31 @@ async def load(request: Request) -> Response:
     )
 
 
+async def custom_validate(request: Request) -> JSONResponse:
+    """POST /custom-models/validate — can Pry load this HuggingFace model? (T32)
+
+    Checks TransformerLens' model list, fetches the repo's config.json (with
+    the user's HF token, if set) and checks its architecture, then estimates
+    its size. 200 with ``supported`` true/false; 422 with ``error`` (plain
+    language) and ``gated`` when the repo can't be checked at all.
+    """
+    try:
+        req = CustomValidateRequest.model_validate_json(await request.body())
+    except ValidationError as e:
+        return JSONResponse({"error": "validation_error", "detail": e.errors()}, status_code=400)
+
+    try:
+        result = await asyncio.to_thread(
+            custom_models.validate, req.hf_id, custom_models.hf_token()
+        )
+    except custom_models.CustomModelError as e:
+        return _json({"error": str(e), "gated": e.gated}, status=422)
+    except Exception as e:
+        logger.exception("custom model validation failed for %r", req.hf_id)
+        return _json({"error": f"Couldn't check this model: {e}", "gated": False}, status=422)
+    return _json(result)
+
+
 async def unload(request: Request) -> JSONResponse:
     """POST /unload — free a preset's model + SAE from memory.
 
@@ -389,7 +489,7 @@ async def unload(request: Request) -> JSONResponse:
             status_code=500,
         )
 
-    if req.preset_id not in PRESETS:
+    if not _known_preset(req.preset_id):
         return JSONResponse(
             {"error": "validation_error", "detail": f"Unknown preset: {req.preset_id!r}"},
             status_code=400,
@@ -426,7 +526,7 @@ async def generate(request: Request) -> JSONResponse:
             status_code=500,
         )
 
-    if req.preset_id not in PRESETS:
+    if not _known_preset(req.preset_id):
         return _error(f"Unknown preset: {req.preset_id!r}", status=400)
 
     # H1 fix: fetch LoadedModel once here and pass it directly to run_generate,
@@ -437,7 +537,8 @@ async def generate(request: Request) -> JSONResponse:
     if loaded is None:
         return _error(f"preset {req.preset_id!r} not loaded; POST /load first", status=409)
 
-    if req.sae_layer is not None:
+    # A custom model has no SAE, so its sae_layer is ignored.
+    if req.sae_layer is not None and not is_custom_id(req.preset_id):
         err = _check_layer(loaded, req.sae_layer)
         if err:
             return _error(err, status=400)
@@ -475,7 +576,9 @@ async def sae_features(request: Request) -> JSONResponse:
             status_code=500,
         )
 
-    if req.preset_id not in PRESETS:
+    if is_custom_id(req.preset_id):
+        return _error(NO_SAE_MESSAGE, status=409)
+    if not _known_preset(req.preset_id):
         return _error(f"Unknown preset: {req.preset_id!r}", status=400)
 
     manifest = PRESETS[req.preset_id]
@@ -521,7 +624,7 @@ async def logit_lens(request: Request) -> JSONResponse:
             status_code=500,
         )
 
-    if req.preset_id not in PRESETS:
+    if not _known_preset(req.preset_id):
         return _error(f"Unknown preset: {req.preset_id!r}", status=400)
 
     loaded = REGISTRY.get(req.preset_id)
@@ -557,7 +660,7 @@ async def dla(request: Request) -> JSONResponse:
             status_code=500,
         )
 
-    if req.preset_id not in PRESETS:
+    if not _known_preset(req.preset_id):
         return _error(f"Unknown preset: {req.preset_id!r}", status=400)
 
     loaded = REGISTRY.get(req.preset_id)
@@ -596,7 +699,9 @@ async def steer(request: Request) -> JSONResponse:
             status_code=500,
         )
 
-    if req.preset_id not in PRESETS:
+    if is_custom_id(req.preset_id):
+        return _error(NO_SAE_MESSAGE, status=409)
+    if not _known_preset(req.preset_id):
         return _error(f"Unknown preset: {req.preset_id!r}", status=400)
 
     loaded = REGISTRY.get(req.preset_id)
@@ -639,7 +744,7 @@ async def ablate_head(request: Request) -> JSONResponse:
             status_code=500,
         )
 
-    if req.preset_id not in PRESETS:
+    if not _known_preset(req.preset_id):
         return _error(f"Unknown preset: {req.preset_id!r}", status=400)
 
     loaded = REGISTRY.get(req.preset_id)
@@ -686,7 +791,9 @@ async def ablate_feature(request: Request) -> JSONResponse:
             status_code=500,
         )
 
-    if req.preset_id not in PRESETS:
+    if is_custom_id(req.preset_id):
+        return _error(NO_SAE_MESSAGE, status=409)
+    if not _known_preset(req.preset_id):
         return _error(f"Unknown preset: {req.preset_id!r}", status=400)
 
     loaded = REGISTRY.get(req.preset_id)
@@ -730,7 +837,7 @@ async def patch(request: Request) -> JSONResponse:
             status_code=500,
         )
 
-    if req.preset_id not in PRESETS:
+    if not _known_preset(req.preset_id):
         return _error(f"Unknown preset: {req.preset_id!r}", status=400)
 
     loaded = REGISTRY.get(req.preset_id)
@@ -763,7 +870,7 @@ async def tokenize(request: Request) -> JSONResponse:
             status_code=400,
         )
 
-    if req.preset_id not in PRESETS:
+    if not _known_preset(req.preset_id):
         return _error(f"Unknown preset: {req.preset_id!r}", status=400)
 
     loaded = REGISTRY.get(req.preset_id)
@@ -800,7 +907,7 @@ async def head_scores(request: Request) -> JSONResponse:
             status_code=500,
         )
 
-    if req.preset_id not in PRESETS:
+    if not _known_preset(req.preset_id):
         return _error(f"Unknown preset: {req.preset_id!r}", status=400)
 
     loaded = REGISTRY.get(req.preset_id)
@@ -839,7 +946,7 @@ async def circuit(request: Request) -> JSONResponse:
             status_code=500,
         )
 
-    if req.preset_id not in PRESETS:
+    if not _known_preset(req.preset_id):
         return _error(f"Unknown preset: {req.preset_id!r}", status=400)
 
     loaded = REGISTRY.get(req.preset_id)
@@ -881,6 +988,8 @@ async def feature_info(request: Request) -> JSONResponse:
     preset_id = REGISTRY.last_loaded
     if preset_id is None or not REGISTRY.is_loaded(preset_id):
         return _error("no preset loaded; POST /load first", status=409)
+    if is_custom_id(preset_id):
+        return _error(NO_SAE_MESSAGE, status=409)
     manifest = PRESETS[preset_id]
     # N1 fix: skip is_loaded() pre-check to avoid TOCTOU — just get() directly
     # and fall back to manifest layer if the model was concurrently unloaded.
@@ -951,6 +1060,8 @@ async def concept_search(request: Request) -> JSONResponse:
         return _error(msg.removeprefix("Value error, "), status=400)
 
     preset_id = req.preset_id or REGISTRY.last_loaded
+    if is_custom_id(preset_id):
+        return _error(NO_SAE_MESSAGE, status=409)
     if preset_id is None or preset_id not in PRESETS:
         return _error("No model is loaded yet. Load a model, then search.", status=409)
     loaded = REGISTRY.get(preset_id)
@@ -989,6 +1100,7 @@ routes = [
     Route("/models", models, methods=["GET"]),
     Route("/load", load, methods=["POST"]),
     Route("/unload", unload, methods=["POST"]),
+    Route("/custom-models/validate", custom_validate, methods=["POST"]),
     Route("/generate", generate, methods=["POST"]),
     Route("/sae-features", sae_features, methods=["POST"]),
     Route("/logit-lens", logit_lens, methods=["POST"]),
