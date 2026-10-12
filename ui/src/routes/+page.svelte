@@ -6,6 +6,7 @@
   import { withoutEngineMemory } from '$lib/hardware-adjust';
   import type { LoadProgress, PresetInfo } from '$lib/sidecar';
   import { createAnalysis } from '$lib/analysis.svelte';
+  import { createLoadController } from '$lib/load-controller.svelte';
   import {
     cachedHardwareReport,
     probeHardware,
@@ -152,7 +153,6 @@
     void runProbe();
   });
   let loadProgress = $state<LoadProgress | null>(null);
-  let pendingLoad = $state<Promise<void> | null>(null);
   // Bumped whenever the engine state changes, so the status chip re-reads /health.
   let healthKey = $state(0);
   $effect(() => {
@@ -185,8 +185,6 @@
   });
   let compareMode = $state(false);
 
-  let loadAbortController: AbortController | null = null;
-
   // Load/unload banner state
   let bannerPhase = $state<'idle' | 'unloading' | 'loading' | 'warning' | 'error'>('idle');
   let bannerMessage = $state<string | null>(null);
@@ -206,8 +204,6 @@
     loadTrack = startLoad(presetId, Date.now(), readHistory(presetId));
   }
   function onLoadEvent(ev: LoadProgress) {
-    loadProgress = ev;
-    bannerMessage = ev.message;
     if (loadTrack) loadTrack = recordEvent(loadTrack, ev, Date.now());
   }
 
@@ -240,113 +236,73 @@
   // Load flow (shared helper)
   // ---------------------------------------------------------------------------
 
-  async function ensureLoaded() {
-    if (loadState === "loaded") return;
-    if (pendingLoad) return pendingLoad;
-    pendingLoad = (async () => {
-      loadAbortController = new AbortController();
-      try {
-        loadState = "loading";
-        loadProgress = null;
-        st.error = null;
-        beginLoadTrack(selectedPreset);
-        await loadPreset(selectedPreset, onLoadEvent, loadAbortController.signal);
-        loadState = "loaded";
-        if (activePresetId !== selectedPreset) {
-          activePresetId = selectedPreset;
-          try { localStorage.setItem('pry:active_preset', selectedPreset); } catch { /* ignore */ }
-        }
-      } catch (e: any) {
-        if (e?.name === "AbortError") return;
-        loadState = "error";
-        st.error = e?.message ?? String(e);
-        throw e;
-      } finally {
-        pendingLoad = null;
-        loadAbortController = null;
-      }
-    })();
-    return pendingLoad;
+  // Load state and flows live in the load controller (unit-tested). It reads
+  // and writes the page's own state variables, so the template is unchanged.
+  const load = createLoadController(
+    {
+      loadPreset,
+      unloadPreset,
+      listModels,
+      listCustomPresetIds: () => listCustomModels().then((list) => list.map((m) => `custom:${m.id}`)),
+      storage: () => (typeof localStorage === 'undefined' ? null : localStorage),
+      displayName: (id) => displayName(id, allCompat),
+      analysis: {
+        clearForModelSwitch: () => analysis.clearForModelSwitch(),
+        setAvailableSaeLayers: (layers) => { st.availableSaeLayers = layers; },
+        setError: (message) => { st.error = message; },
+      },
+      clearCompare: () => compare.clear(),
+      onLoadStart: beginLoadTrack,
+      onUnloadStart: (id) => {
+        if (!loadTrack) return;
+        loadTrack = applyEvent(
+          loadTrack,
+          { stage: 'unload', message: `Putting ${displayName(id, allCompat)} away…`, progress: 0 },
+          Date.now(),
+        );
+      },
+      onLoadEvent,
+      gate: {
+        needsSteps: (id) => isGated(id) && !gatePassed(id),
+        open: (id) => { gateFor = { presetId: id, missing: null }; },
+        close: () => { gateFor = null; },
+        openOnError: openGateOnError,
+        markPassed: (id) => {
+          try { if (isGated(id)) localStorage.setItem(gatePassedKey(id), '1'); } catch { /* ignore */ }
+        },
+      },
+    },
+    {
+      get activePresetId() { return activePresetId; },
+      set activePresetId(v) { activePresetId = v; },
+      get loadState() { return loadState; },
+      set loadState(v) { loadState = v; },
+      get loadProgress() { return loadProgress; },
+      set loadProgress(v) { loadProgress = v; },
+      get bannerPhase() { return bannerPhase; },
+      set bannerPhase(v) { bannerPhase = v; },
+      get bannerMessage() { return bannerMessage; },
+      set bannerMessage(v) { bannerMessage = v; },
+      get bannerError() { return bannerError; },
+      set bannerError(v) { bannerError = v; },
+      get bannerTargetPreset() { return bannerTargetPreset; },
+      set bannerTargetPreset(v) { bannerTargetPreset = v; },
+      get switchInFlight() { return switchInFlight; },
+      set switchInFlight(v) { switchInFlight = v; },
+      get sidecarPresets() { return sidecarPresets; },
+      set sidecarPresets(v) { sidecarPresets = v; },
+    },
+  );
+
+  function ensureLoaded() {
+    return load.ensureLoaded();
   }
 
-  onDestroy(() => {
-    loadAbortController?.abort();
-    loadAbortController = null;
-  });
+  onDestroy(() => load.abort());
 
-  // ---------------------------------------------------------------------------
-  // Auto-load persisted active preset
-  // ---------------------------------------------------------------------------
-
+  // Auto-load the persisted active preset (or the engine's) at startup.
   function autoLoadActivePreset() {
-    (async () => {
-      try {
-        let stored: string | null = null;
-        try {
-          stored = localStorage.getItem('pry:active_preset')
-            ?? localStorage.getItem('pry:onboarding_preset');
-        } catch { /* localStorage may be unavailable */ }
-
-        let sidecarActive: string | null = null;
-        let sidecarLoaded: string[] = [];
-        try {
-          const models = await listModels();
-          sidecarActive = models.active ?? null;
-          sidecarLoaded = models.loaded ?? [];
-          sidecarPresets = models.available ?? [];
-          // Populate available SAE layers from the active or stored preset
-          const targetId = sidecarActive ?? stored ?? null;
-          if (targetId) {
-            const presetInfo = (models.available as any[])?.find((p: any) => p.id === targetId);
-            st.availableSaeLayers = presetInfo?.available_sae_layers ?? [];
-          }
-        } catch { /* sidecar may not be up yet; fall through */ }
-
-        let target = sidecarActive ?? stored ?? null;
-        // A remembered custom model that has since been removed: start on the
-        // default model instead of quietly reloading it.
-        if (target?.startsWith('custom:') && !sidecarLoaded.includes(target)) {
-          const saved = await listCustomModels().catch(() => null);
-          if (saved && !saved.some((m) => `custom:${m.id}` === target)) {
-            try { localStorage.removeItem('pry:active_preset'); } catch { /* unavailable */ }
-            target = 'gpt2-small';
-          }
-        }
-        if (!target) return;
-        activePresetId = target;
-
-        if (sidecarLoaded.includes(target)) {
-          loadState = "loaded";
-          return;
-        }
-
-        // Fire-and-forget auto-load with banner updates
-        bannerPhase = 'loading';
-        bannerTargetPreset = target;
-        bannerMessage = `Loading ${displayName(target, allCompat)}…`;
-        bannerError = null;
-        loadProgress = null;
-        loadState = "loading";
-        beginLoadTrack(target);
-        loadPreset(target, onLoadEvent)
-          .then(() => {
-            loadState = "loaded";
-            bannerPhase = 'idle';
-            bannerMessage = null;
-            bannerError = null;
-            bannerTargetPreset = null;
-            try { localStorage.setItem('pry:active_preset', target); } catch { /* ignore */ }
-          })
-          .catch((err) => {
-            loadState = "error";
-            bannerPhase = 'error';
-            bannerError = err instanceof Error ? err.message : String(err);
-            openGateOnError(target, bannerError);
-          });
-      } catch {
-        // swallow — auto-load is best-effort
-      }
-    })().catch(() => { /* unhandled-rejection guard */ });
+    void load.autoLoad();
   }
 
   onMount(autoLoadActivePreset);
@@ -354,12 +310,8 @@
   // The engine came back (crash restart, manual restart): its memory is empty,
   // so reload whatever was active.
   function handleEngineRestarted() {
-    loadAbortController?.abort();
-    loadAbortController = null;
-    pendingLoad = null;
-    loadState = 'idle';
     healthKey++;
-    autoLoadActivePreset();
+    void load.engineRestarted();
   }
 
   // ---------------------------------------------------------------------------
@@ -384,66 +336,8 @@
     if (missing) gateFor = { presetId, missing };
   }
 
-  async function handleSwitch(presetId: string, pastGate = false) {
-    if (switchInFlight) return;
-    if (presetId === activePresetId && loadState === 'loaded') return;
-    if (!pastGate && isGated(presetId) && !gatePassed(presetId)) {
-      gateFor = { presetId, missing: null };
-      return;
-    }
-    gateFor = null;
-    switchInFlight = true;
-    bannerError = null;
-    bannerTargetPreset = presetId;
-    const previousActive = activePresetId;
-    try {
-      beginLoadTrack(presetId);
-      if (previousActive && previousActive !== presetId) {
-        bannerPhase = 'unloading';
-        bannerMessage = `Unloading ${displayName(previousActive, allCompat)}…`;
-        loadProgress = null;
-        if (loadTrack) {
-          loadTrack = applyEvent(
-            loadTrack,
-            { stage: 'unload', message: `Putting ${displayName(previousActive, allCompat)} away…`, progress: 0 },
-            Date.now(),
-          );
-        }
-        await unloadPreset(previousActive);
-      }
-      bannerPhase = 'loading';
-      bannerMessage = `Loading ${displayName(presetId, allCompat)}…`;
-      loadProgress = null;
-      loadState = 'loading';
-      await loadPreset(presetId, onLoadEvent);
-      activePresetId = presetId;
-      loadState = 'loaded';
-      // Clear ALL analysis state when switching models
-      analysis.clearForModelSwitch();
-      compare.clear();
-      try {
-        localStorage.setItem('pry:active_preset', presetId);
-        if (isGated(presetId)) localStorage.setItem(gatePassedKey(presetId), '1');
-      } catch { /* ignore */ }
-      // Repopulate available layers for the new preset
-      try {
-        const models = await listModels();
-        sidecarPresets = models.available ?? [];
-        const presetInfo = models.available?.find((p: any) => p.id === presetId);
-        st.availableSaeLayers = presetInfo?.available_sae_layers ?? [];
-      } catch { /* best-effort */ }
-      bannerPhase = 'idle';
-      bannerMessage = null;
-      bannerTargetPreset = null;
-    } catch (err) {
-      activePresetId = null;
-      loadState = 'error';
-      bannerPhase = 'error';
-      bannerError = err instanceof Error ? err.message : String(err);
-      openGateOnError(presetId, bannerError);
-    } finally {
-      switchInFlight = false;
-    }
+  function handleSwitch(presetId: string, pastGate = false) {
+    return load.switchTo(presetId, pastGate);
   }
 
   // ---------------------------------------------------------------------------
@@ -466,6 +360,10 @@
   const handlePatching = (cleanPrompt: string, corruptedPrompt: string, patchType: 'head' | 'mlp' | 'resid') =>
     analysis.patching(cleanPrompt, corruptedPrompt, patchType);
   const handleCircuit = (threshold?: number) => analysis.circuit('dla', threshold);
+  // The word Key parts explains: the focused word, as in Why (DLA).
+  const circuitTarget = $derived(
+    st.response?.tokens.find((t) => t.index === st.focusTokenIndex) ?? null,
+  );
 
   // What the JSON export and the lab notebook save for the current run.
   function currentRunData() {
@@ -490,14 +388,7 @@
     });
   }
 
-  const isRunDisabled = $derived(
-    st.generating ||
-    loadState === "loading" ||
-    bannerPhase === 'unloading' ||
-    bannerPhase === 'loading' ||
-    switchInFlight ||
-    activePresetId === null,
-  );
+  const isRunDisabled = $derived(st.generating || st.layerSwitching || load.runBlocked);
 
   const runButtonTooltip = $derived(
     activePresetId === null
@@ -512,11 +403,8 @@
     if (st.generating || retrying) return;
     retrying = true;
     try {
-      loadAbortController?.abort();
-      loadAbortController = null;
+      load.reset();
       st.error = null;
-      loadState = "idle";
-      pendingLoad = null;
       await handleGenerate();
     } finally {
       retrying = false;
@@ -862,7 +750,7 @@
     <ModelSwitcher
       compatibilities={allCompat}
       {activePresetId}
-      disabled={switchInFlight}
+      disabled={load.switcherDisabled}
       onSwitch={handleSwitch}
     />
     <EngineStatusChip compatibilities={allCompat} refreshKey={healthKey} />
@@ -1131,6 +1019,7 @@
                     response={st.circuitResponse}
                     loading={st.circuitLoading}
                     onRun={handleCircuit}
+                    targetLabel={circuitTarget}
                   />
                 {/if}
               </div>
@@ -1263,6 +1152,7 @@
                     response={st.circuitResponse}
                     loading={st.circuitLoading}
                     onRun={handleCircuit}
+                    targetLabel={circuitTarget}
                   />
                 {/if}
               {/snippet}
@@ -1372,7 +1262,7 @@
         {/each}
       </div>
     {:else if presets}
-      <PresetList compatibilities={presets} {activePresetId} onSwitch={handleSwitch} />
+      <PresetList compatibilities={presets} {activePresetId} disabled={load.switcherDisabled} onSwitch={handleSwitch} />
     {/if}
     {#if presetsError}
       <div class="mb-4 rounded-md border border-red-800 bg-red-950/40 px-4 py-3 flex items-center justify-between gap-3">
@@ -1402,6 +1292,7 @@
         switchLabel="Load"
         compatibilities={customCompat}
         {activePresetId}
+        disabled={load.switcherDisabled}
         onSwitch={handleSwitch}
         onRemove={handleCustomModelRemove}
       />
