@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.6
+
+### New
+- **Loading screen.** Loading a model can take a minute, mostly while Pry starts up its math libraries (the first load after a restart is the slow one). Pry now shows which step it's on, how long it's been, and about how long is left, going by how long that model took last time. While you wait, you can flip through tips, experiments to try once it's ready, and glossary words.
+- **New guided tour.** One path through the whole app in nine short chapters, from the basics to models and the engine. Jump to any chapter, pick up where you left off, or start over from the ? button or Settings. The tour runs each example for you and draws an arrow to whatever it's talking about.
+- **Tips point at what they mean.** Each first-time tip names the thing it's about, with an arrow and a ring around it. Tips wait until that thing is on screen and usable, so you won't get one next to a greyed-out button anymore.
+
+### Fixed
+- The progress bar could sit at 40% for over a minute and then jump. It now keeps moving and never goes backwards.
+- The Features layer menu was missing after the first Run on a new install.
+- The Logit Lens summary could say a chance grows "from 42% to 42%". It now says when the chance peaks partway up the layers.
+- Tips and experiment guides got a rewrite, with plainer words, and they describe the panels as they work now.
+
 ## 0.3.5
 
 ### Fixed
