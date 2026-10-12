@@ -42,6 +42,8 @@
   import LoadingScreen from '$lib/components/LoadingScreen.svelte';
   import { startLoad, applyEvent, recordEvent, readHistory, type LoadTrack } from '$lib/load-progress';
   import RuntimeUpdatePrompt from '$lib/components/RuntimeUpdatePrompt.svelte';
+  import UpdateCard from '$lib/components/UpdateCard.svelte';
+  import UpdateSettings from '$lib/components/UpdateSettings.svelte';
   import ModelSwitcher from '$lib/components/ModelSwitcher.svelte';
   import { tutorialState } from '$lib/tutorial/tutorial-store.svelte';
   import type { TutorialActions } from '$lib/tutorial/actions';
@@ -1030,6 +1032,7 @@
   {/if}
   <EngineCrashBanner onRestarted={handleEngineRestarted} />
   <RuntimeUpdatePrompt />
+  <UpdateCard variant="banner" />
 
   <!-- Error card — full width, compact -->
   {#if st.error}
@@ -1407,6 +1410,8 @@
       <p class="mb-4 text-xs text-red-400">Couldn't read your custom models: {customModelsError}</p>
     {/if}
     {/if}
+
+    <UpdateSettings />
 
     <!-- Developer section -->
     <div class="mt-8 border-t border-zinc-800 pt-5">

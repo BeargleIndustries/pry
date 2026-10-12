@@ -18,6 +18,8 @@
     "dialog:allow-save",
     "dialog:allow-open",
     "shell:allow-open",
+    "updater:default",
+    "process:allow-restart",
     "fs:default",
     {
       "identifier": "fs:allow-write-file",
