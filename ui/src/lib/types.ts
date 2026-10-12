@@ -303,4 +303,6 @@ export interface SidecarHealth {
   loaded_preset?: string | null;
   sae_layer?: number | null;
   hf_token_present?: boolean;
+  /** GPU memory the engine holds for the loaded model (MB); freed on a model switch. */
+  vram_reserved_mb?: number | null;
 }

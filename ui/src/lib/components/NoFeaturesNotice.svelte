@@ -12,7 +12,7 @@
 </script>
 
 <div class="rounded-md border border-zinc-800 bg-zinc-900/60 px-4 py-3" role="status">
-  <p class="text-sm text-zinc-300">{panel} isn't available for this model.</p>
+  <p class="text-sm text-zinc-300">Not available for this model: {panel}.</p>
   <p class="mt-1 text-xs text-zinc-500">{NO_SAE_MESSAGE}</p>
   <p class="mt-2 text-xs text-zinc-500">
     Attention, Predictions, Logit Lens, Why (DLA), Swap &amp; Compare and Key parts all work. To see features,

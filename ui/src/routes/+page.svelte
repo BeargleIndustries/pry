@@ -3,6 +3,7 @@
   import { CircleHelp, Settings, Download, FlaskConical, GitCompareArrows, BookOpen, BookmarkPlus } from 'lucide-svelte';
   import PryLogo from '$lib/components/icons/PryLogo.svelte';
   import { health, loadPreset, unloadPreset, listModels } from '$lib/sidecar';
+  import { withoutEngineMemory } from '$lib/hardware-adjust';
   import type { LoadProgress, PresetInfo } from '$lib/sidecar';
   import { createAnalysis } from '$lib/analysis.svelte';
   import {
@@ -76,7 +77,9 @@
   async function loadPresets(hw: HardwareReport) {
     presetsLoading = true;
     try {
-      presets = await evaluatePresets(hw);
+      // Judge other models as if the current one were unloaded (switching does that first).
+      const reserved = await health().then((h) => h.vram_reserved_mb ?? null, () => null);
+      presets = await evaluatePresets(withoutEngineMemory(hw, reserved));
       presetsError = null;
     } catch (e) {
       presets = null;

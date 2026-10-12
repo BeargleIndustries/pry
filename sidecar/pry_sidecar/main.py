@@ -247,6 +247,14 @@ async def health(request: Request) -> JSONResponse:
         except Exception:
             gpu_name = None
     cuda = getattr(getattr(torch, "version", None), "cuda", None) if torch is not None else None
+    # GPU memory this engine holds (freed when the app switches models), so the
+    # model picker can judge other models as if the current one were unloaded.
+    vram_reserved_mb = None
+    if device == "cuda" and torch is not None:
+        try:
+            vram_reserved_mb = int(torch.cuda.memory_reserved() // (1024 * 1024))
+        except Exception:
+            vram_reserved_mb = None
 
     return _json({
         "status": "ok",
@@ -258,6 +266,7 @@ async def health(request: Request) -> JSONResponse:
         "loaded_preset": preset_id if loaded is not None else None,
         "sae_layer": loaded.sae_layer if loaded is not None else None,
         "hf_token_present": bool(os.environ.get("HF_TOKEN")),
+        "vram_reserved_mb": vram_reserved_mb,
     })
 
 
