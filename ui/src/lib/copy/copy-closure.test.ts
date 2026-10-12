@@ -87,7 +87,7 @@ export const ROWS: Row[] = [
     id: 'copy:E13',
     lane: 'T4a',
     checks: [
-      { test: { file: EXP_TEST, name: 'no quoted token with a leading space' } },
+      { test: { file: 'lib/experiments/experiments-copy.test.ts', name: 'copy:E13 no quoted token with a leading space, and the dot is explained' } },
       { file: EXP, has: ['the dot means the word starts with a space'] },
     ],
   },
@@ -113,7 +113,7 @@ export const ROWS: Row[] = [
   {
     id: 'copy:T8',
     lane: 'T4a',
-    checks: [{ test: { file: 'lib/tutorial/tour-steps.test.ts', name: 'every chapter\'s last step has a "Next up:" pointer' } }],
+    checks: [{ test: { file: 'lib/tutorial/tour-copy.test.ts', name: 'copy:T8 every chapter\'s last step has a "Next up:" pointer' } }],
   },
 
   // --- Tips and loading cards (T4b; P1 also T3 and T4e; P9 also T4c)
@@ -353,7 +353,7 @@ export const EXTRA_ROWS: Row[] = [
   {
     id: 'tour:models.done',
     lane: 'T4a',
-    checks: [{ test: { file: 'lib/tutorial/tour-steps.test.ts', name: 'models.done points at the experiment gallery' } }],
+    checks: [{ test: { file: 'lib/tutorial/tour-copy.test.ts', name: 'models.done points at the experiment gallery' } }],
   },
   { id: 'tips:why', lane: 'T4b', checks: [{ test: { file: 'lib/tips/tips-registry.test.ts', name: 'every tip has a non-empty why' } }] },
   {
