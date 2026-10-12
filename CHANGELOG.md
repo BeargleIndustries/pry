@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.7
+
+### New
+- **Updates from inside Pry.** When Pry starts, it checks for a newer version while your model loads. If there is one, a click downloads it, installs it and reopens Pry, and your models, notebook and settings are kept. Every update is signed, and Pry won't install one whose signature doesn't match. You can turn the check off, or run it yourself, in Settings. After this one, new versions come through Pry itself, so you won't have to download them by hand.
+
+### Fixed
+- First-time tips wait until loading is done, instead of popping up while the loading screen is still showing.
+
 ## 0.3.6
 
 ### New
