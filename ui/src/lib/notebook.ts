@@ -130,7 +130,7 @@ function computeReadouts(run: BuildEntryInput['run']): EntryReadouts {
   const attentionCovers = r.attention.some((l) => l.heads.some((m) => m.length > lastPos));
   const lastFeatures = r.sae_features.find((f) => f.token_index === lastTok?.index) ?? null;
   return {
-    predictions: predictionsReadout(r.top_predictions),
+    predictions: predictionsReadout(r.top_predictions, lastTok?.text ?? null),
     attention: lastPos >= 0 && attentionCovers ? attentionReadout(r, lastPos) : null,
     logitLens: logitLensReadout(run.logitLensResponse),
     dla: dlaReadout(run.dlaResponse),

@@ -76,26 +76,40 @@ export function explainingLabel(target: { text: string; index: number } | null |
 // Predictions
 // ---------------------------------------------------------------------------
 
+/**
+ * A guess that starts with a letter only continues a word when the text so
+ * far ends in a word piece with no trailing space (not a space, newline, quote
+ * or start marker).
+ */
+function continuesWord(prevToken: string | null | undefined): boolean {
+  if (!prevToken || isStartMarker(prevToken)) return false;
+  return /[A-Za-z0-9]$/.test(prevToken);
+}
+
 /** A next-word guess in plain words: special tokens and word pieces are named for what they are. */
-function guessPhrase(token: string): string {
+function guessPhrase(token: string, prevToken: string | null | undefined): string {
   if (isStartMarker(token)) return 'the end of the text';
   if (/^\n+$/.test(token)) return 'a line break';
-  if (/^[A-Za-z]/.test(token) && token.length > 0) {
+  if (/^[A-Za-z]/.test(token) && continuesWord(prevToken)) {
     return `the word piece ${quoteToken(token)} (part of a longer word)`;
   }
   return quoteToken(token);
 }
 
-export function predictionsReadout(predictions: TopPrediction[] | undefined | null): string | null {
+/** `prevToken` is the prompt's last token, used to tell a word piece from a new word. */
+export function predictionsReadout(
+  predictions: TopPrediction[] | undefined | null,
+  prevToken?: string | null,
+): string | null {
   if (!predictions || predictions.length === 0) return null;
   const sorted = [...predictions].sort((a, b) => a.rank - b.rank);
   const [top, next] = sorted;
   const what = /^[ A-Za-z]/.test(top.token) && !isStartMarker(top.token) ? 'the next word' : 'what comes next';
   if (next && next.probability > 0 && pct(next.probability) === pct(top.probability)) {
-    return `The model's top guess for ${what} is a near tie between ${guessPhrase(top.token)} and ${guessPhrase(next.token)} (${pct(top.probability)} each).`;
+    return `The model's top guess for ${what} is a near tie between ${guessPhrase(top.token, prevToken)} and ${guessPhrase(next.token, prevToken)} (${pct(top.probability)} each).`;
   }
-  let text = `The model's top guess for ${what} is ${guessPhrase(top.token)} (${pct(top.probability)}).`;
-  if (next && next.probability > 0) text += ` Next most likely: ${guessPhrase(next.token)} (${pct(next.probability)}).`;
+  let text = `The model's top guess for ${what} is ${guessPhrase(top.token, prevToken)} (${pct(top.probability)}).`;
+  if (next && next.probability > 0) text += ` Next most likely: ${guessPhrase(next.token, prevToken)} (${pct(next.probability)}).`;
   return text;
 }
 

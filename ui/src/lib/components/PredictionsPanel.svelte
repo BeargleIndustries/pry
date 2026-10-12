@@ -53,7 +53,7 @@
     {/if}
   </div>
 
-  <Readout text={predictionsReadout(predictions)} />
+  <Readout text={predictionsReadout(predictions, response?.tokens.at(-1)?.text ?? null)} />
 
   {#if !response}
     <div class="flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 py-12">
