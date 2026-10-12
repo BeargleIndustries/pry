@@ -230,10 +230,16 @@ def test_load_progress_ordering(client, no_auth_env, monkeypatch):
     assert byte_events[-1]["bytes_downloaded"] == byte_events[-1]["bytes_total"] == 4100
 
     first = {s: stages.index(s) for s in dict.fromkeys(stages)}
+    # The heavy imports are their own first stage, then honest file checks.
+    assert stages[0] == "warmup" and messages[0] == "Starting the math libraries…"
+    assert first["warmup"] < first["check_files"] < first["download_model"]
     assert first["download_model"] < first["download_sae"] < first["load_model"] < first["load_sae"]
-    preparing = messages.index("Preparing features…")
+    assert "Checking feature map files…" not in messages
+    preparing = messages.index("Loading the feature dictionary…")
     assert stages[preparing] == "load_sae"
-    assert messages.index("Loading model weights…") < preparing
+    assert messages.index("Reading the model's weights…") < preparing
+    # Long steps carry how long they've been running.
+    assert all("elapsed_s" in e for e in events if e["stage"] == "warmup")
     assert any(m.startswith("Features ready") for m in messages[preparing + 1:])
     assert stages[-1] == "ready"
 
