@@ -22,7 +22,12 @@ interface Pin {
 export const PINS: Pin[] = [
   { caveat: 'DLA direct only', where: 'tip:dla-waterfall', phrase: 'Only direct pushes count', lane: 'T4b' },
   { caveat: 'DLA direct only', where: 'lib/components/DLAPanel.svelte', phrase: "Help through other parts isn't counted", lane: 'T4c', isNew: true },
-  { caveat: 'DLA direct only', where: 'routes/+page.svelte#dla-tab', phrase: 'directly', lane: 'T4e' },
+  {
+    caveat: 'DLA direct only',
+    where: 'routes/+page.svelte#dla-tab',
+    phrase: "Which parts of the model pushed directly toward or against its guess. Help that goes through other parts isn't counted.",
+    lane: 'T4e',
+  },
   { caveat: 'DLA direct only', where: 'lib/readouts.ts', phrase: 'most directly', lane: 'T4c' },
 
   { caveat: 'Edges = direct value path', where: 'lib/components/CircuitPanel.svelte', phrase: 'direct value path', lane: 'T4c' },
