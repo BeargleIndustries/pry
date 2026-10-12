@@ -7,7 +7,7 @@ export const UPDATE_COPY = {
   title: (version: string) => `Pry ${version} is ready`,
   currentVersion: (version: string) => `You have ${version}.`,
   notesLabel: "What's new",
-  keepsYourStuff: 'Your models, notebook and settings stay as they are. This updates the app only; the engine stays as is.',
+  keepsYourStuff: "Your models, notebook and settings are kept, and it's a small download.",
   updateButton: 'Update and restart',
   laterButton: 'Later',
   skipButton: 'Skip this version',
@@ -18,7 +18,7 @@ export const UPDATE_COPY = {
   downloading: 'Downloading the update',
   downloadProgress: (doneMb: string, totalMb: string | null) =>
     totalMb ? `${doneMb} of ${totalMb} MB` : `${doneMb} MB`,
-  stoppingEngine: 'Closing the engine so the update can install',
+  stoppingEngine: 'Stopping the engine so the update can install…',
   installing: 'Installing. Pry will close and open again on the new version.',
   progressLabel: 'Update download progress',
 
@@ -37,11 +37,11 @@ export const UPDATE_COPY = {
   autoCheckOn: 'On',
   autoCheckOff: 'Off',
   checkNowButton: 'Check now',
-  checking: 'Checking...',
+  checking: 'Checking…',
   upToDate: (version: string) => `You're on the newest version, ${version}.`,
   available: (version: string) => `Pry ${version} is available.`,
   showUpdate: 'Show update',
   couldNotReach: "Couldn't reach GitHub. Check your connection and try again.",
-  privacyNote: 'Checking contacts github.com and sends nothing but the request itself.',
+  privacyNote: 'Checking asks github.com for the newest version number. GitHub sees the request, like any web page visit, and nothing about your work gets sent.',
   skippedNote: (version: string) => `You skipped ${version}.`,
 } as const;
