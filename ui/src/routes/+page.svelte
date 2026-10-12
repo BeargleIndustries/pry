@@ -74,11 +74,13 @@
   let presetsLoading = $state(false);
   let presetsError = $state<string | null>(null);
 
-  async function loadPresets(hw: HardwareReport) {
+  // `live`: the report was just probed, so its GPU use includes the engine's
+  // current model and that model's memory can be discounted (switching
+  // unloads it first). A cached report predates the load, so it's used as-is.
+  async function loadPresets(hw: HardwareReport, live = false) {
     presetsLoading = true;
     try {
-      // Judge other models as if the current one were unloaded (switching does that first).
-      const reserved = await health().then((h) => h.vram_reserved_mb ?? null, () => null);
+      const reserved = live ? await health().then((h) => h.vram_reserved_mb ?? null, () => null) : null;
       presets = await evaluatePresets(withoutEngineMemory(hw, reserved));
       presetsError = null;
     } catch (e) {
@@ -95,7 +97,7 @@
     try {
       const report = await probeHardware();
       hardware = report;
-      void loadPresets(report);
+      void loadPresets(report, true);
     } catch (err) {
       hardwareError = err instanceof Error ? err.message : String(err);
     } finally {
@@ -136,6 +138,14 @@
   let activePresetId = $state<string | null>(null);
   const selectedPreset = $derived(activePresetId ?? 'gpt2-small');
   let loadState = $state<"idle" | "loading" | "loaded" | "error">("idle");
+  // Re-judge the other models once a model is resident: a fresh probe sees its
+  // GPU memory, which loadPresets then discounts.
+  let probedFor: string | null = null;
+  $effect(() => {
+    if (loadState !== 'loaded' || !activePresetId || activePresetId === probedFor) return;
+    probedFor = activePresetId;
+    void runProbe();
+  });
   let loadProgress = $state<LoadProgress | null>(null);
   let pendingLoad = $state<Promise<void> | null>(null);
   // Bumped whenever the engine state changes, so the status chip re-reads /health.

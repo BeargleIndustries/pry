@@ -4,7 +4,10 @@
 //! tell the UI which presets will fit, which are tight, and which won't run.
 //!
 //! VRAM math (per plan §7 Phase 5a):
-//!   usable_vram = total - 1500 MB (OS/driver overhead) - vram_used_mb (NVML only)
+//!   usable_vram = total - vram_used_mb - 500 MB safety margin   (live NVML reading)
+//!   usable_vram = total - 1500 MB (OS/driver overhead estimate)    (no live reading)
+//! The live reading already includes the OS, the driver and other apps, so the
+//! 1500 MB estimate only stands in for it when there is no reading.
 //!   headroom    = usable_vram - preset.vram_estimate_mb
 //!
 //! Verdict thresholds:
@@ -121,12 +124,12 @@ pub fn evaluate_preset(
 
     // VRAM math
     const OS_DRIVER_OVERHEAD_MB: u64 = 1500;
-    let live_used = hw.vram_used_mb.unwrap_or(0);
-
-    let usable_vram = hw
-        .vram_total_mb
-        .saturating_sub(OS_DRIVER_OVERHEAD_MB)
-        .saturating_sub(live_used);
+    const LIVE_SAFETY_MARGIN_MB: u64 = 500;
+    let reserved = match hw.vram_used_mb {
+        Some(used) => used.saturating_add(LIVE_SAFETY_MARGIN_MB),
+        None => OS_DRIVER_OVERHEAD_MB,
+    };
+    let usable_vram = hw.vram_total_mb.saturating_sub(reserved);
 
     let headroom_mb = usable_vram as i64 - vram_estimate_mb as i64;
 
@@ -250,23 +253,23 @@ mod tests {
         }
     }
 
-    // usable = 12288 - 1500 - 500 = 10288 MB
-    // headroom vs gpt2-small (1800 MB) = 10288 - 1800 = 8488 → Comfortable
+    // usable = 12288 - 500 used - 500 margin = 11288 MB
+    // headroom vs gpt2-small (1800 MB) = 11288 - 1800 = 9488 → Comfortable
     #[test]
     fn test_gpt2_small_comfortable() {
         let hw = fake_4070_super();
         let result = evaluate_preset("gpt2-small", 1800, None, true, false, &hw);
         assert_eq!(result.verdict, Compatibility::Comfortable);
-        assert_eq!(result.headroom_mb, 8488);
+        assert_eq!(result.headroom_mb, 9488);
     }
 
-    // headroom vs a mid-size preset (6000 MB) = 10288 - 6000 = 4288 → Comfortable
+    // headroom vs a mid-size preset (6000 MB) = 11288 - 6000 = 5288 → Comfortable
     #[test]
     fn test_mid_size_preset_comfortable() {
         let hw = fake_4070_super();
         let result = evaluate_preset("mid-size-preset", 6000, None, true, false, &hw);
         assert_eq!(result.verdict, Compatibility::Comfortable);
-        assert_eq!(result.headroom_mb, 4288);
+        assert_eq!(result.headroom_mb, 5288);
     }
 
     // Gemma-2-2B: enabled=false → Insufficient regardless of VRAM
@@ -278,18 +281,18 @@ mod tests {
         assert!(result.notes.iter().any(|n| n.contains("Coming soon")));
     }
 
-    // If gemma-2-2b were enabled: usable=10288, estimate=8000, headroom=2288 → Comfortable
+    // If gemma-2-2b were enabled: usable=11288, estimate=8000, headroom=3288 → Comfortable
     #[test]
     fn test_gemma_2_2b_enabled_comfortable_hypothetical() {
         let hw = fake_4070_super();
         let result = evaluate_preset("gemma-2-2b", 8000, Some("huggingface_gemma"), true, false, &hw);
         assert_eq!(result.verdict, Compatibility::Comfortable);
-        assert_eq!(result.headroom_mb, 2288);
+        assert_eq!(result.headroom_mb, 3288);
         // License gate note is present
         assert!(result.notes.iter().any(|n| n.contains("HuggingFace")));
     }
 
-    // Gemma-2-9B: usable=10288, estimate=18000, headroom=-7712 → Insufficient
+    // Gemma-2-9B: usable=11288, estimate=18000, headroom=-6712 → Insufficient
     #[test]
     fn test_gemma_2_9b_insufficient() {
         let hw = fake_4070_super();
@@ -344,7 +347,7 @@ mod tests {
     }
 
     // GPU too small for the preset: cpu_ok preset falls back to CpuOk
-    // 2048 MB card, 0 used → usable 548; gpt2-small 1800 → headroom -1252
+    // 2048 MB card, 0 used → usable 1548; gpt2-small 1800 → headroom -252
     #[test]
     fn test_small_gpu_falls_back_to_cpu_ok() {
         let mut hw = fake_4070_super();
@@ -352,7 +355,7 @@ mod tests {
         hw.vram_used_mb = Some(0);
         let result = evaluate_preset("gpt2-small", 1800, None, true, true, &hw);
         assert_eq!(result.verdict, Compatibility::CpuOk);
-        assert_eq!(result.headroom_mb, -1252);
+        assert_eq!(result.headroom_mb, -252);
         let not_cpu_ok = evaluate_preset("gpt2-small", 1800, None, true, false, &hw);
         assert_eq!(not_cpu_ok.verdict, Compatibility::Insufficient);
     }
@@ -411,14 +414,14 @@ mod tests {
     }
 
     // Tight: fake a GPU with just barely enough VRAM
-    // GPU: 8000 MB total, 500 used → usable = 8000 - 1500 - 500 = 6000
-    // preset estimate = 5000 → headroom = 1000 → Tight
+    // GPU: 8000 MB total, 500 used → usable = 8000 - 500 - 500 margin = 7000
+    // preset estimate = 6000 → headroom = 1000 → Tight
     #[test]
     fn test_tight_verdict() {
         let mut hw = fake_4070_super();
         hw.vram_total_mb = 8000;
         hw.vram_used_mb = Some(500);
-        let result = evaluate_preset("some-preset", 5000, None, true, false, &hw);
+        let result = evaluate_preset("some-preset", 6000, None, true, false, &hw);
         assert_eq!(result.verdict, Compatibility::Tight);
         assert_eq!(result.headroom_mb, 1000);
     }
@@ -456,6 +459,18 @@ mod tests {
         );
     }
 
+    // A live reading already includes the OS, driver and other apps, so the
+    // 1500 MB overhead estimate isn't subtracted on top of it. 12 GB card with
+    // 3.8 GB in use elsewhere: usable = 12288 - 3800 - 500 = 7988.
+    #[test]
+    fn test_live_reading_not_double_counted_with_os_overhead() {
+        let mut hw = fake_4070_super();
+        hw.vram_used_mb = Some(3800);
+        let compat = evaluate_preset("gemma-2-2b", 7500, None, true, false, &hw);
+        assert_eq!(compat.headroom_mb, 488);
+        assert_eq!(compat.verdict, Compatibility::Tight);
+    }
+
     // CPU-only with the fake_cpu_only helper already covers multiple presets,
     // but this test explicitly checks the note text and headroom sign.
     #[test]
@@ -471,13 +486,13 @@ mod tests {
     }
 
     // Exact 2000 MB headroom is the Comfortable boundary (headroom >= 2000).
-    // total=12288, used=Some(0) → usable = 12288 - 1500 - 0 = 10788
-    // estimate = 8788 → headroom = 2000 → Comfortable (not Tight)
+    // total=12288, used=Some(0) → usable = 12288 - 0 - 500 margin = 11788
+    // estimate = 9788 → headroom = 2000 → Comfortable (not Tight)
     #[test]
     fn test_exact_2000_mb_headroom_is_comfortable() {
         let mut hw = fake_4070_super();
         hw.vram_used_mb = Some(0);
-        let compat = evaluate_preset("boundary-preset", 8788, None, true, false, &hw);
+        let compat = evaluate_preset("boundary-preset", 9788, None, true, false, &hw);
         assert_eq!(
             compat.verdict, Compatibility::Comfortable,
             "headroom of exactly 2000 MB should be Comfortable, got {:?} (headroom={})",
@@ -487,12 +502,12 @@ mod tests {
     }
 
     // 1999 MB headroom — just below the Comfortable threshold → Tight.
-    // total=12288, used=Some(0) → usable=10788; estimate=8789 → headroom=1999
+    // total=12288, used=Some(0) → usable=11788; estimate=9789 → headroom=1999
     #[test]
     fn test_1999_mb_headroom_is_tight() {
         let mut hw = fake_4070_super();
         hw.vram_used_mb = Some(0);
-        let compat = evaluate_preset("boundary-preset", 8789, None, true, false, &hw);
+        let compat = evaluate_preset("boundary-preset", 9789, None, true, false, &hw);
         assert_eq!(
             compat.verdict, Compatibility::Tight,
             "headroom of 1999 MB should be Tight, got {:?} (headroom={})",

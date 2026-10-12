@@ -7,6 +7,7 @@
 - **Add your own models from Hugging Face.** Type a model name and Pry checks it's a kind TransformerLens supports, estimates its size, and gives the same "fits / tight / too big" verdict as the built-in models. Added models are remembered. Most panels work on them: attention, copying heads, predictions, logit lens, Why (DLA), knockouts, Swap & Compare, Key parts, Compare and Watch it write. Features and Steering need a trained feature dictionary that Pry only has for the built-in models, and those panels say so.
 
 ### Fixed
+- The model picker's memory check counted the operating system twice when it had a live reading of graphics memory, and also counted the model Pry already had loaded (which a switch unloads first). Models now get the verdict their real free memory supports.
 - Loading any model that needs a Hugging Face login failed with an error inside Pry. The token was passed twice to one loader and in a form another loader doesn't accept.
 
 ## 0.3.3
