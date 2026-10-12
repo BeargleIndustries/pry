@@ -55,6 +55,8 @@ export const tipsRegistry: TipDef[] = [
     title: 'Word chips',
     target: '[data-tour="token-strip"]',
     placement: 'bottom',
+    // The strip spans the window; the chips start at its left end.
+    focus: [0.2, 0.5],
     blurb:
       "Each chip is a token (a word piece), one chunk of text the model reads. A dot means the piece starts with a space. Click a chip to point every panel at that word.",
     why:

@@ -237,6 +237,7 @@ export const tourChapters: TourChapter[] = [
         id: 'basics.tokens',
         target: 'token-strip',
         placement: 'bottom',
+        focus: [0.2, 0.5],
         blurb:
           "See the chips above the panels? Those are tokens, the word pieces the model reads. A dot means the piece starts with a space. Click a chip to focus on it.",
         why:

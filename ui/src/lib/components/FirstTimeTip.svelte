@@ -110,7 +110,7 @@
   }
 
   /** Place the tip with placePopup. A target that can't be pointed at makes the tip wait. */
-  async function recomputePosition(): Promise<void> {
+  async function placeTip(): Promise<void> {
     if (!activeTip || !targetEl) return;
     await tick();
     if (!activeTip || !targetEl) return;
@@ -146,7 +146,7 @@
     if (!tipEl) return;
     const el = tipEl;
     // Re-place when the tip's own size changes (first render, "why?" opening).
-    const ro = new ResizeObserver(() => void recomputePosition());
+    const ro = new ResizeObserver(() => void placeTip());
     ro.observe(el);
     const unregister = occupied.registerElement(OCCUPIED.tip, el);
     return () => {
@@ -164,7 +164,7 @@
     el.setAttribute('aria-describedby', `pry-tip-${tip.id}`);
 
     resizeObserver = new ResizeObserver(() => {
-      void recomputePosition();
+      void placeTip();
     });
     resizeObserver.observe(el);
 
@@ -189,7 +189,7 @@
     window.addEventListener('keydown', onKeydown);
     window.addEventListener('mousedown', onMouseDown, true);
 
-    void recomputePosition();
+    void placeTip();
   }
 
   function dismiss(): void {
@@ -233,11 +233,11 @@
   }
 
   function onWindowResize(): void {
-    void recomputePosition();
+    void placeTip();
   }
 
   function onWindowScroll(): void {
-    void recomputePosition();
+    void placeTip();
   }
 
   function onKeydown(e: KeyboardEvent): void {
@@ -256,7 +256,7 @@
 
   function toggleWhy(): void {
     whyExpanded = !whyExpanded;
-    void recomputePosition();
+    void placeTip();
   }
 
   /** Dev-only: force `id` on screen (bypasses seen-state, never persists). */
@@ -274,7 +274,7 @@
     // Let it render, measure itself and settle.
     for (let i = 0; i < 4; i++) {
       await new Promise((r) => requestAnimationFrame(() => r(null)));
-      await recomputePosition();
+      await placeTip();
     }
     if (activeTip?.id !== id || !position) {
       return { id, shown: false, waiting: true, reason: 'no placement (target unusable)' };

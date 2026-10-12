@@ -1,8 +1,7 @@
 // occupied: screen areas no popup may cover (the experiment guide, the update
 // banner, the tour card while a tip is up...). Surfaces register a way to
 // measure themselves; popups read `rects()` when they place, so the store
-// never holds stale geometry. `version` bumps on (un)register so placement
-// effects re-run.
+// never holds stale geometry.
 
 import type { RectLike } from './place';
 
@@ -16,18 +15,16 @@ function measure(el: Element | null): RectLike | null {
 }
 
 class Occupied {
+  // Deliberately not reactive: surfaces register from inside effects, and a
+  // reactive counter read-and-written there would loop. Popups re-measure on
+  // their own (every frame, or on scroll/resize/size changes).
   private sources = new Map<string, Source>();
-  version = $state(0);
 
   /** Register a surface. Returns an unregister function. */
   register(id: string, source: Source): () => void {
     this.sources.set(id, source);
-    this.version++;
     return () => {
-      if (this.sources.get(id) === source) {
-        this.sources.delete(id);
-        this.version++;
-      }
+      if (this.sources.get(id) === source) this.sources.delete(id);
     };
   }
 

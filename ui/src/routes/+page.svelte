@@ -35,6 +35,8 @@
   import SettingsDrawer from '$lib/components/SettingsDrawer.svelte';
   import DrivenTutorial from '$lib/components/DrivenTutorial.svelte';
   import FirstTimeTip from '$lib/components/FirstTimeTip.svelte';
+  import { occupied, OCCUPIED } from '$lib/popup/occupied.svelte';
+  import { POPUP_AUDIT } from '$lib/popup/dev';
   import TourMenu from '$lib/components/TourMenu.svelte';
   import TourSettings from '$lib/components/TourSettings.svelte';
   import { invoke } from '@tauri-apps/api/core';
@@ -618,7 +620,46 @@
       return;
     }
     const forced = params.get('tutorial') === '1' || demo === 'tour';
-    if (!seen || forced) tutorialState.start();
+    // §P-popups: the popup audit drives the tour itself.
+    if ((!seen || forced) && !popupAuditRequested()) tutorialState.start();
+  });
+
+  // ---------------------------------------------------------------------------
+  // §P-popups: areas popups must not cover, and the dev-only popup audit
+  // ---------------------------------------------------------------------------
+  function popupAuditRequested(): boolean {
+    return POPUP_AUDIT && $page.url.searchParams.get('popupAudit') === '1';
+  }
+
+  onMount(() => {
+    // TODO(pry-clarity T2): the experiment guide registers its own rect with
+    // `occupied` (and its collapsed header while the tour is open); until then
+    // it's tracked by selector here.
+    const offGuide = occupied.registerSelector(OCCUPIED.guide, 'aside[aria-label="Experiment guide"]');
+    const offBanner = occupied.registerSelector(OCCUPIED.updateBanner, '[data-testid="update-banner"]');
+    if (popupAuditRequested()) {
+      const params = $page.url.searchParams;
+      void import('$lib/popup/audit').then(({ runPopupAudit }) =>
+        runPopupAudit(
+          {
+            actions: tutorialActions,
+            loadState: () => loadState,
+            ensureModel: () => handleSwitch('gpt2-small'),
+            startExperiment: async (id) => {
+              const exp = experiments.find((e) => e.id === id);
+              if (exp) await pickExperiment(exp);
+            },
+            closeExperiment: () => (activeExperiment = null),
+            setCustomModelDialog: (open) => (customModelDialogOpen = open),
+          },
+          { guideTour: params.get('guideTour') === '1' },
+        ),
+      );
+    }
+    return () => {
+      offGuide();
+      offBanner();
+    };
   });
 
   // Developer: auto-open devtools if the user opted in via the drawer toggle.
