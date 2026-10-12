@@ -1477,11 +1477,11 @@ def final_ln_logit_direction(model, cache, predicted_id: int, target_pos: int):
 
 # Post-norm models (Gemma 2: cfg.use_normalization_before_and_after) send the
 # summed head output through ln1_post before the residual stream. DLA, Key
-# parts and edges map head outputs through it (attn_post_norm), but those
-# numbers haven't yet been checked against real Gemma weights
-# (tests/test_gemma.py::test_real_gemma_sums). Until then responses for these
-# models carry real_weights_verified=False.
-POST_NORM_VERIFIED = False
+# parts and edges map head outputs through it (attn_post_norm). Set True once
+# tests/test_gemma.py::test_real_gemma_sums passed on the real gemma-2-2b
+# (2026-10-12, CPU: DLA sum 54.0906 vs logit 54.0909). While False, responses
+# for these models carry real_weights_verified=False.
+POST_NORM_VERIFIED = True
 
 
 def uses_attn_post_norm(model) -> bool:
