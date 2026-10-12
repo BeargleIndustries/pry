@@ -301,14 +301,17 @@ _GPT2_U2B = _gpt2_unicode_to_byte()
 def decode_bpe_bytes(text: str) -> str:
     """Undo GPT-2 byte-level BPE markers (``Ġ`` = space, ``Ċ`` = newline,
     ``âĢĻ`` = ``’``). Only applies when the text contains mapping-range
-    characters (U+0100-U+0143) and every character is in the table, so plain
+    characters (U+0100-U+0143), so plain
     text and other tokenizers pass through unchanged. Newlines become ``⏎``
     and tabs/CRs become spaces so the snippet stays on one line."""
     if not any("\u0100" <= c <= "\u0143" for c in text):
         return text
-    if any(c not in _GPT2_U2B for c in text):
-        return text
-    decoded = bytes(_GPT2_U2B[c] for c in text).decode("utf-8", errors="replace")
+    # Neuronpedia mixes marker tokens with tokens that already carry real
+    # spaces, so characters outside the table keep their own UTF-8 bytes.
+    raw = b"".join(
+        bytes([_GPT2_U2B[c]]) if c in _GPT2_U2B else c.encode("utf-8") for c in text
+    )
+    decoded = raw.decode("utf-8", errors="replace")
     return decoded.replace("\r\n", "\n").replace("\n", "\u23ce").replace("\t", " ").replace("\r", " ")
 
 

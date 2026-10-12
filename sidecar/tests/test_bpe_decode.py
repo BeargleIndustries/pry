@@ -46,3 +46,12 @@ def test_snippet_rendered():
             inference.fetch_top_activating_snippets, "__wrapped__"
         ) else inference.fetch_top_activating_snippets("m", "r", 1)
     assert out == ("⏎Several people don’t",)
+
+
+def test_real_neuronpedia_mix():
+    # Neuronpedia tokens already carry real spaces next to marker tokens.
+    from pry_sidecar.inference import decode_bpe_bytes
+
+    assert decode_bpe_bytes("".join(["Ċ", "Several", " unions", " had"])) == "⏎Several unions had"
+    assert decode_bpe_bytes("kindergartenâĢĿ and") == "kindergarten” and"
+    assert decode_bpe_bytes("him.''ĊĊThey") == "him.''⏎⏎They"
