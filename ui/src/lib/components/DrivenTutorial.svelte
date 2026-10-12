@@ -6,7 +6,7 @@
   import Pointer from './Pointer.svelte';
   import { findAnchor } from '$lib/tutorial/anchors';
   import { asyncStepSucceeded, needsModelOffer, TOUR_PRESET_ID } from '$lib/tutorial/step-machine';
-  import { MAX_ARROW, placePopup, type Placement, type Point } from '$lib/popup/place';
+  import { arrowShown, DEFAULT_SHEET_BELOW, placePopup, type Placement, type Point } from '$lib/popup/place';
   import {
     clearSheetPadding,
     focusPoint,
@@ -18,9 +18,6 @@
     type SheetFit,
   } from '$lib/popup/measure';
   import { occupied, OCCUPIED } from '$lib/popup/occupied.svelte';
-
-  /** Narrower than this, the card docks as a bottom sheet (decision 4). */
-  const SHEET_BELOW = 760;
 
   interface Props {
     generating: boolean;
@@ -128,7 +125,7 @@
       targetMissing = false;
       el.setAttribute('data-tour-active', 'true');
       // Instant under the sheet, so the scroll above it (below) isn't undone by an animation.
-      const instant = prefersReducedMotion() || window.innerWidth < SHEET_BELOW;
+      const instant = prefersReducedMotion() || window.innerWidth < DEFAULT_SHEET_BELOW;
       el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: instant ? 'auto' : 'smooth' });
     };
     find();
@@ -175,7 +172,7 @@
         previousSide: prev?.side,
         previousMode: prev?.mode,
         avoid: occupied.rects([OCCUPIED.tourCard]),
-        sheetBelow: SHEET_BELOW,
+        sheetBelow: DEFAULT_SHEET_BELOW,
         large: s.target !== null && LARGE_TARGETS.includes(s.target),
       });
       prev = next;
@@ -213,7 +210,7 @@
   });
 
   /** Arrow shown only when short (rule 6), the sheet included; the ring always shows. */
-  const showArrow = $derived(!!placed?.arrowFrom && !placed.arrowExempt && placed.arrowLen <= MAX_ARROW);
+  const showArrow = $derived(arrowShown(placed));
 
   function clearHighlights() {
     document
@@ -322,9 +319,11 @@
     tutorialState.goToChapter(index);
   }
 
-  const nextLabel = $derived(
-    isFinal ? tourUi.done : step?.run && !step.run.skipIf?.(ctx) ? step.run.label : tourUi.next,
-  );
+  const nextLabel = $derived.by(() => {
+    if (isFinal) return tourUi.done;
+    if (step?.run && !step.run.skipIf?.(ctx)) return step.run.label;
+    return tourUi.next;
+  });
 
   const asyncHint = $derived.by(() => {
     if (bannerVisible) return null;

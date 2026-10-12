@@ -16,7 +16,18 @@ import { tourChapters, type TourStep } from '$lib/tutorial/tour-steps';
 import type { TourContext, TutorialActions } from '$lib/tutorial/actions';
 import { tipsRegistry } from '$lib/tips/tips-registry';
 import { anchorState } from '$lib/tutorial/anchors';
-import { jumped, MAX_ARROW, placementFlags, type PlaceMode, type Point, type RectLike, type Side } from './place';
+import {
+  DEFAULT_EDGE_PAD,
+  DEFAULT_GAP,
+  DEFAULT_SHEET_BELOW,
+  jumped,
+  MAX_ARROW,
+  placementFlags,
+  type PlaceMode,
+  type Point,
+  type RectLike,
+  type Side,
+} from './place';
 import { rectOf } from './measure';
 import { occupied, OCCUPIED } from './occupied.svelte';
 import { popupDevHooks } from './dev';
@@ -201,12 +212,12 @@ function judge(rec: AuditRecord, opts: { tour?: boolean; allowFallback?: boolean
       if (!rec.arrowExempt && (rec.arrowLen ?? Infinity) > MAX_ARROW) f.push(`inset arrow ${rec.arrowLen}px > ${MAX_ARROW}`);
       break;
     case 'sheet':
-      if (window.innerWidth >= 760) f.push('sheet at a wide viewport');
+      if (window.innerWidth >= DEFAULT_SHEET_BELOW) f.push('sheet at a wide viewport');
       if (rec.target && rec.rect) {
         // The target is scrolled above the sheet: wholly when it fits in the
         // scroller's visible area there, else with its focus point above it.
         const fit = card()?.getAttribute('data-popup-sheet-fit');
-        const room = rec.rect.top - 10 - 12;
+        const room = rec.rect.top - DEFAULT_GAP - DEFAULT_EDGE_PAD;
         if (fit === 'whole' || (!fit && rec.target.height <= room)) {
           if (rec.overlapsTarget) f.push('sheet covers its target');
         } else if (rec.coversFocus) {

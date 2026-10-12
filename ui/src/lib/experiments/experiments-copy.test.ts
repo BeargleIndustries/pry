@@ -1,6 +1,6 @@
 // Lane T4a closure checks for the experiment guide copy (copy:E5-E16, E18,
-// cav:feature-labels-exp, the Swap test rename). T4e folds these into
-// copy-closure.test.ts.
+// cav:feature-labels-exp, the Swap test rename). copy-closure.test.ts refers to
+// some of these tests by name.
 import { describe, expect, it } from 'vitest';
 import raw from './experiments.json';
 
@@ -58,9 +58,5 @@ describe('experiment copy closure (T4a)', () => {
       expect(e.next.try, e.id).toMatch(/^Next/);
       expect(`${e.next.reset} ${e.next.try}`, e.id).toContain("Back to normal");
     }
-  });
-
-  it('uses no em dashes', () => {
-    expect(all.filter((s) => s.includes('—'))).toEqual([]);
   });
 });

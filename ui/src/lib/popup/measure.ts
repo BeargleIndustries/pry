@@ -1,7 +1,7 @@
 // DOM side of placePopup: measuring targets and popups, and writing the
 // result onto the popup element as data attributes the popup audit reads.
 
-import type { Placement, Point, RectLike } from './place';
+import { DEFAULT_EDGE_PAD, DEFAULT_GAP, type Placement, type Point, type RectLike } from './place';
 
 export function rectOf(el: Element | null | undefined): RectLike | null {
   if (!el || !el.isConnected || el.getClientRects().length === 0) return null;
@@ -67,7 +67,13 @@ export function clearSheetPadding(): void {
  * stays short. "Fits" counts only the scroller's visible area (a fixed header
  * above it can't be scrolled past). Returns which rule applied, for the audit.
  */
-export function scrollAboveSheet(el: Element, focusY: number, sheetTop: number, gap = 10, pad = 12): SheetFit {
+export function scrollAboveSheet(
+  el: Element,
+  focusY: number,
+  sheetTop: number,
+  gap = DEFAULT_GAP,
+  pad = DEFAULT_EDGE_PAD,
+): SheetFit {
   const r = el.getBoundingClientRect();
   const limit = sheetTop - gap;
   let top = pad;

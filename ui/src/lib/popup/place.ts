@@ -97,6 +97,7 @@ export interface Placement {
 
 export const DEFAULT_GAP = 10;
 export const DEFAULT_EDGE_PAD = 12;
+/** Narrower than this, the tour card docks as a bottom sheet (decision 4). */
 export const DEFAULT_SHEET_BELOW = 760;
 /** Radius of the ring drawn around the focus point in inset mode. */
 export const FOCUS_RING_R = 14;
@@ -105,6 +106,11 @@ export const MAX_ARROW = 160;
 export const CARET_INSET = 14;
 /** Pad the Pointer ring adds around the target. */
 export const RING_PAD = 4;
+
+/** Whether a popup draws its arrow: only when short, and never for the inset far-corner fallback. */
+export function arrowShown(p: Placement | null): boolean {
+  return !!p?.arrowFrom && !p.arrowExempt && p.arrowLen <= MAX_ARROW;
+}
 
 // ---------------------------------------------------------------------------
 // Geometry helpers

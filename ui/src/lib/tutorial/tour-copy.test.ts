@@ -1,6 +1,6 @@
 // Lane T4a closure checks for the tour copy (copy:T1-T8, the Swap test rename,
-// and the last step pointing at Experiments). T4e folds these into
-// copy-closure.test.ts.
+// and the last step pointing at Experiments). copy-closure.test.ts refers to
+// some of these tests by name.
 import { describe, expect, it } from 'vitest';
 import { targetLabels, tourChapters } from './tour-steps';
 

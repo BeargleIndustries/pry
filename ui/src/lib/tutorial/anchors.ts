@@ -1,5 +1,5 @@
 // Tour step targets name an element marked `data-tour="..."` or, to reuse the
-// first-time tips' anchors, `data-tip="..."`. anchors.test.ts checks that every
+// first-time tips' anchors, `data-tip="..."`. tour-steps.test.ts checks that every
 // target is present somewhere in the UI source.
 
 export function anchorSelector(target: string): string {

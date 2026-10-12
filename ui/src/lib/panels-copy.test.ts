@@ -1,7 +1,7 @@
 // Lane-local closure rows for T4c (pry-clarity 2026-10-12): panels, readouts,
-// glossary, errors. T4e folds these rows into the shared copy-closure test,
-// where `mustNotContain` runs on visible strings only. Until then this file
-// checks `mustNotContain` against the file with comments stripped.
+// glossary, errors. They overlap the shared copy-closure test, which checks
+// visible strings only; these check `mustNotContain` against the whole file
+// with comments stripped.
 import { describe, expect, it } from 'vitest';
 
 const sources = import.meta.glob(['/src/lib/components/*.svelte', '/src/lib/*.ts'], {

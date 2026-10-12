@@ -23,8 +23,8 @@
   import { tutorialState } from '$lib/tutorial/tutorial-store.svelte';
   import { tipsRegistry, type TipDef } from '$lib/tips/tips-registry';
   import { markTipSeen, isTipSeen } from '$lib/tips/coordinate';
-  import { anchorState } from '$lib/tutorial/anchors';
-  import { MAX_ARROW, placePopup, type Placement, type Point } from '$lib/popup/place';
+  import { anchorState, anchorUsable } from '$lib/tutorial/anchors';
+  import { arrowShown, placePopup, type Placement, type Point } from '$lib/popup/place';
   import { focusPoint, placementAttrs, rectOf, viewportSize } from '$lib/popup/measure';
   import { occupied, OCCUPIED } from '$lib/popup/occupied.svelte';
   import { POPUP_AUDIT, popupDevHooks, type ForcedTipReport } from '$lib/popup/dev';
@@ -51,10 +51,6 @@
   let mutationObserver: MutationObserver | null = null;
   let pickDebounce: ReturnType<typeof setTimeout> | null = null;
 
-  function tipStorageKey(id: string) {
-    return `pry:tip_seen:${id}`;
-  }
-
   function pickNextTip(): void {
     if (typeof document === 'undefined') return;
     if (activeTip) return;
@@ -65,29 +61,29 @@
       const el = document.querySelector(tip.target) as HTMLElement | null;
       // A target that's hidden, disabled or covered (a dialog, the experiment
       // guide) waits; the tip shows once it's usable again.
-      if (!el || !usable(el)) continue;
+      if (!el || !anchorUsable(el, tipEl)) continue;
       activateTip(tip, el);
       return;
     }
   }
 
-  /** A tip only makes sense next to something on screen that you can use. */
-  function usable(el: HTMLElement): boolean {
-    return anchorState(el, tipEl) === 'usable';
-  }
-
-  /** Hide the current tip without marking it seen; it comes back later. */
-  function release(): void {
+  /** Stop watching the active tip's target and the window. */
+  function unwatch(): void {
     resizeObserver?.disconnect();
     resizeObserver = null;
     intersectionObserver?.disconnect();
     intersectionObserver = null;
-    window.removeEventListener('resize', onWindowResize);
-    window.removeEventListener('scroll', onWindowScroll, {
+    window.removeEventListener('resize', onViewportChange);
+    window.removeEventListener('scroll', onViewportChange, {
       capture: true,
     } as AddEventListenerOptions);
     window.removeEventListener('keydown', onKeydown);
     window.removeEventListener('mousedown', onMouseDown, true);
+  }
+
+  /** Hide the current tip without marking it seen; it comes back later. */
+  function release(): void {
+    unwatch();
     if (targetEl) {
       if (prevAriaDescribedBy !== null) {
         targetEl.setAttribute('aria-describedby', prevAriaDescribedBy);
@@ -145,7 +141,7 @@
 
   /** Arrow for the tip: only when it's short and not the far-corner fallback. */
   const tipArrow = $derived(
-    position?.arrowFrom && !position.arrowExempt && position.arrowLen <= MAX_ARROW ? position : null,
+    arrowShown(position) ? position : null,
   );
 
   // The tip is an occupied area for other popups while it's up.
@@ -188,8 +184,8 @@
     );
     intersectionObserver.observe(el);
 
-    window.addEventListener('resize', onWindowResize, { passive: true });
-    window.addEventListener('scroll', onWindowScroll, {
+    window.addEventListener('resize', onViewportChange, { passive: true });
+    window.addEventListener('scroll', onViewportChange, {
       passive: true,
       capture: true,
     });
@@ -199,51 +195,22 @@
     void placeTip();
   }
 
+  /** Close the current tip and mark it seen (unless forced by the audit). */
   function dismiss(): void {
     if (!activeTip) return;
-    const tip = activeTip;
-    if (!forced) markTipSeen(tip.id);
-    forced = false;
-
-    if (targetEl) {
-      if (prevAriaDescribedBy !== null) {
-        targetEl.setAttribute('aria-describedby', prevAriaDescribedBy);
-      } else {
-        targetEl.removeAttribute('aria-describedby');
-      }
-      try {
-        targetEl.focus({ preventScroll: true });
-      } catch {
-        /* ignore — not all targets are focusable */
-      }
+    if (!forced) markTipSeen(activeTip.id);
+    const el = targetEl;
+    release();
+    try {
+      el?.focus({ preventScroll: true });
+    } catch {
+      /* ignore — not all targets are focusable */
     }
-
-    resizeObserver?.disconnect();
-    resizeObserver = null;
-    intersectionObserver?.disconnect();
-    intersectionObserver = null;
-    window.removeEventListener('resize', onWindowResize);
-    window.removeEventListener('scroll', onWindowScroll, {
-      capture: true,
-    } as AddEventListenerOptions);
-    window.removeEventListener('keydown', onKeydown);
-    window.removeEventListener('mousedown', onMouseDown, true);
-
-    activeTip = null;
-    position = null;
-    positionFocus = null;
-    targetEl = null;
-    prevAriaDescribedBy = null;
-
     // Pick the next eligible tip.
     schedulePick();
   }
 
-  function onWindowResize(): void {
-    void placeTip();
-  }
-
-  function onWindowScroll(): void {
+  function onViewportChange(): void {
     void placeTip();
   }
 
@@ -303,7 +270,7 @@
   onMount(() => {
     mutationObserver = new MutationObserver((mutations) => {
       // Something now covers the active tip's target (dialog), or loading started.
-      if (activeTip && targetEl && (!usable(targetEl) || document.querySelector('.loading-screen'))) {
+      if (activeTip && targetEl && (!anchorUsable(targetEl, tipEl) || document.querySelector('.loading-screen'))) {
         release();
         schedulePick();
         return;
@@ -357,16 +324,7 @@
       if (pickDebounce) clearTimeout(pickDebounce);
       mutationObserver?.disconnect();
       mutationObserver = null;
-      resizeObserver?.disconnect();
-      resizeObserver = null;
-      intersectionObserver?.disconnect();
-      intersectionObserver = null;
-      window.removeEventListener('resize', onWindowResize);
-      window.removeEventListener('scroll', onWindowScroll, {
-        capture: true,
-      } as AddEventListenerOptions);
-      window.removeEventListener('keydown', onKeydown);
-      window.removeEventListener('mousedown', onMouseDown, true);
+      unwatch();
     };
   });
 </script>
