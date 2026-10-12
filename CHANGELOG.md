@@ -4,6 +4,7 @@
 
 ### New
 - **Key parts now draws real connections.** Lines between parts show one precisely defined kind of link, the *direct value path*: how much one part's output, read by a later attention head, pushes the predicted word up (blue, +) or down (orange, −). Other ways parts affect each other (like changing where a head looks, or effects routed through later layers) aren't drawn, and the panel says so. On the Mary/John sentence it picks out the heads researchers call name movers.
+- **Why (DLA) and Key parts now show numbers in logits.** Each part's score is its direct push on the predicted word's score, measured after the model's final normalization step, the same way research tools compute it. The numbers are smaller than before (the old ones skipped that step) and can now be compared with the connection lines.
 - **Lab notebook.** Save a run with your own note, come back to it later, and export one entry or the whole notebook as a single web page you can share. The page works offline and loads nothing from the internet. Everything stays on your computer.
 
 ## 0.3.2

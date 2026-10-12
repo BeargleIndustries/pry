@@ -158,9 +158,9 @@ export const tipsRegistry: TipDef[] = [
     target: '[data-tip="dla-waterfall"]',
     placement: 'left',
     blurb:
-      "Each bar is one part of the model. Blue means it pushed toward the predicted word, red means it pushed against. The tallest bars are the parts that mattered most.",
+      "Each bar is one part of the model. Blue means it pushed toward the predicted word, orange means it pushed against. The tallest bars are the parts that mattered most.",
     why:
-      "When the model predicts 'mat' after 'The cat sat on the,' every attention head and every processing layer (MLP) contributed something to that decision. Some pushed toward 'mat' (positive logit contribution, blue). Some pushed against it (negative, red). Some did basically nothing (short bar). This waterfall shows you all of them ranked by impact. The tall blue bars are the components that most wanted the model to say 'mat.' The tall red bars are the ones that wanted something else. Researchers use this as a first pass at finding which heads matter for a prediction. It's a simplified estimate, so the bars won't add up exactly to the model's final score.",
+      "When the model predicts 'mat' after 'The cat sat on the,' every attention head and every processing layer (MLP) contributed something to that decision. Some pushed toward 'mat' (positive logit contribution, blue). Some pushed against it (negative, orange). Some did basically nothing (short bar). This waterfall shows you all of them ranked by impact. The tall blue bars are the components that most wanted the model to say 'mat.' The tall orange bars are the ones that wanted something else. Researchers use this as a first pass at finding which heads matter for a prediction. It's a simplified estimate, so the bars won't add up exactly to the model's final score.",
   },
   {
     id: 'export-button',
@@ -213,7 +213,7 @@ export const tipsRegistry: TipDef[] = [
     blurb:
       "These are the heads and layers that pushed the prediction most. Lines show one kind of connection between them: the direct value path.",
     why:
-      "Each dot is one attention head or one processing layer (MLP), placed on its layer. Bigger dots pushed the prediction harder. Blue heads pushed toward the predicted word, red ones pushed against it, and processing layers are amber. The scores come from the same estimate as the Why (DLA) tab, and only parts above the threshold are shown. A line from an earlier part to a later head shows how much the earlier part's output, copied straight through that head, pushes the predicted word: blue lines push toward it, orange lines push away, and thicker lines push harder. It leaves out other ways parts affect each other, such as changing where a head looks, so treat it as a partial map. Swap & Compare can test a connection directly.",
+      "Each circle is one attention head and each square one processing layer (MLP), placed on its layer. Bigger shapes pushed the prediction harder. Blue ones pushed toward the predicted word, orange ones pushed against it. The scores come from the same estimate as the Why (DLA) tab, and only parts above the threshold are shown. A line from an earlier part to a later head shows how much the earlier part's output, copied straight through that head, pushes the predicted word: blue lines push toward it, orange lines push away, and thicker lines push harder. It leaves out other ways parts affect each other, such as changing where a head looks, and it only connects the parts shown, so treat it as a partial map. Swap & Compare can test single parts directly, not connections.",
   },
   // Only registered when custom models are switched on (contract §7).
   ...(CUSTOM_MODELS_ENABLED ? [CUSTOM_MODEL_VERDICT_TIP] : []),

@@ -82,6 +82,14 @@
   const maxAbsEdge = $derived(Math.max(...edges.map((e) => Math.abs(e.weight)), 1e-9));
   const edgeKey = (e: CircuitEdge) => `${e.source}->${e.target}`;
   let activeEdge = $state<string | null>(null);
+  // Edges touching the selected part, strongest first (listed in words in its detail box).
+  const nodeEdges = $derived(
+    selectedNode
+      ? edges
+          .filter((e) => e.source === selectedNode!.id || e.target === selectedNode!.id)
+          .sort((a, b) => Math.abs(b.weight) - Math.abs(a.weight))
+      : [],
+  );
   let selectedEdge = $state<CircuitEdge | null>(null);
 
   function edgeLabel(e: CircuitEdge): string {
@@ -235,17 +243,15 @@
             {#if a && b}
               {@const key = edgeKey(edge)}
               {@const shown = activeEdge === key || (selectedEdge !== null && edgeKey(selectedEdge) === key)}
+              <!-- Mouse shortcut only: keyboard and screen-reader users get each
+                   part's connections in words in its detail box. -->
+              <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
               <g
-                class="cursor-pointer focus:outline-none"
-                role="button"
-                tabindex={0}
-                aria-label={edgeLabel(edge)}
+                class="cursor-pointer"
+                aria-hidden="true"
                 onclick={() => { selectedEdge = edge; }}
-                onkeydown={(ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); selectedEdge = edge; } }}
                 onmouseenter={() => { activeEdge = key; }}
                 onmouseleave={() => { if (activeEdge === key) activeEdge = null; }}
-                onfocus={() => { activeEdge = key; }}
-                onblur={() => { if (activeEdge === key) activeEdge = null; }}
               >
                 <title>{edgeLabel(edge)}</title>
                 <!-- wide transparent hit area -->
@@ -359,8 +365,15 @@
             <span>Layer {selectedNode.layer}{selectedNode.head !== null ? `, Head ${selectedNode.head}` : ''}</span>
           </div>
           <div class="mt-1 text-zinc-500">
-            Importance: <span class="font-mono" style="color: {signedHex(selectedNode.importance)};">{signedNumber(selectedNode.importance, 4)}</span>
+            Importance: <span class="font-mono" style="color: {signedHex(selectedNode.importance)};">{signedNumber(selectedNode.importance, 4)}</span> logits
           </div>
+          {#if nodeEdges.length > 0}
+            <ul class="mt-1 flex flex-col gap-0.5 text-zinc-400" aria-label="Connections of {selectedNode.id}">
+              {#each nodeEdges as e (edgeKey(e))}
+                <li>{edgeLabel(e)}</li>
+              {/each}
+            </ul>
+          {/if}
         </div>
       {/if}
 
@@ -419,7 +432,7 @@
             </span>
             <span>Line width = strength</span>
           </div>
-          <p>Shows how much this part's output, passed straight through the later head's value path, pushes the predicted word. Effects that travel through later layers aren't included.</p>
+          <p>Shows how much this part's output, passed straight through the later head's value path, pushes the predicted word. Effects that travel through other parts in between aren't included, and lines only connect the parts shown above the threshold, so big inputs from parts below it are missing.</p>
         </div>
       {/if}
     {/if}

@@ -92,6 +92,8 @@ export interface NotebookEntry {
 export interface Notebook {
   schemaVersion: number;
   entries: NotebookEntry[];
+  /** Entries this version couldn't read. Kept as-is and written back, never dropped. */
+  unreadable?: unknown[];
 }
 
 export function emptyNotebook(): Notebook {
@@ -190,7 +192,9 @@ export function deleteEntry(nb: Notebook, id: string): Notebook {
 }
 
 export function serializeNotebook(nb: Notebook): string {
-  return JSON.stringify({ schemaVersion: NOTEBOOK_SCHEMA_VERSION, entries: nb.entries }, null, 2);
+  // Unreadable entries go back at the end so a later Pry can still read them.
+  const entries: unknown[] = [...nb.entries, ...(nb.unreadable ?? [])];
+  return JSON.stringify({ schemaVersion: NOTEBOOK_SCHEMA_VERSION, entries }, null, 2);
 }
 
 export class NotebookParseError extends Error {
@@ -239,8 +243,10 @@ export function parseNotebook(text: string): Notebook {
       `The notebook was saved by a newer version of Pry (format ${version}). Update Pry to open it.`,
     );
   }
-  const entries = Array.isArray(raw.entries) ? raw.entries.filter(looksLikeEntry) : [];
-  return { schemaVersion: NOTEBOOK_SCHEMA_VERSION, entries };
+  const all: unknown[] = Array.isArray(raw.entries) ? raw.entries : [];
+  const entries = all.filter(looksLikeEntry);
+  const unreadable = all.filter((e) => !looksLikeEntry(e));
+  return { schemaVersion: NOTEBOOK_SCHEMA_VERSION, entries, ...(unreadable.length ? { unreadable } : {}) };
 }
 
 export function newEntryId(now: Date = new Date()): string {

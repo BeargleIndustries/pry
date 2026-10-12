@@ -133,3 +133,15 @@ describe('serialize / parse', () => {
     expect(parseNotebook(text).entries).toEqual([good]);
   });
 });
+
+describe('entries this version cannot read', () => {
+  it('are kept and written back, never dropped', () => {
+    const weird = { id: 'from-the-future', shape: 'unknown' };
+    const text = JSON.stringify({ schemaVersion: 1, entries: [weird] });
+    const nb = parseNotebook(text);
+    expect(nb.entries).toEqual([]);
+    expect(nb.unreadable).toEqual([weird]);
+    const again = JSON.parse(serializeNotebook(nb));
+    expect(again.entries).toContainEqual(weird);
+  });
+});

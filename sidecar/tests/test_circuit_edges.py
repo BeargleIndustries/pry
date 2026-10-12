@@ -174,3 +174,77 @@ def test_ioi_edges_direct_value_path(gpt2_client):
         assert e["source"] in node_ids and e["target"] in node_ids
         assert e["target"].startswith("L")  # value path only enters heads
     print("top edges:", [(e["source"], e["target"], round(e["weight"], 4)) for e in edges[:5]])
+
+
+IOI = "When Mary and John went to the store, John gave a drink to"
+
+
+@pytest.mark.inference
+def test_gpt2_edges_match_forward_pass_with_folded_layernorm(gpt2_loaded):
+    """On real GPT-2 (folded LNPre, unsplit qkv): removing S's output from T's
+    value input only, with T's pattern and every LN scale frozen, changes T's
+    direct contribution to the predicted logit by exactly the edge weight."""
+    import torch
+    from pry_sidecar.inference import direct_value_path_edges
+
+    m = gpt2_loaded.model
+    tok = m.to_tokens(IOI)
+    t = tok.shape[1] - 1
+    with torch.no_grad():
+        logits, cache = m.run_with_cache(tok)
+    pred = int(logits[0, t].argmax())
+    s_f = cache["ln_final.hook_scale"][0, t, 0]
+
+    for sid, tid in [("MLP.7", "L9.H9"), ("MLP.7", "L10.H7"), ("L8.H6", "L9.H9")]:
+        edge = direct_value_path_edges(m, cache, t, pred, [sid], [tid])[(sid, tid)]
+        lt, ht = (int(x) for x in tid[1:].split(".H"))
+        if sid.startswith("MLP"):
+            s_out = cache[f"blocks.{sid.split('.')[1]}.hook_mlp_out"][0]
+        else:
+            ls, hs = (int(x) for x in sid[1:].split(".H"))
+            s_out = cache[f"blocks.{ls}.attn.hook_result"][0, :, hs]
+        ln_in = cache[f"blocks.{lt}.ln1.hook_scale"][0]
+        pattern = cache[f"blocks.{lt}.attn.hook_pattern"]
+
+        def remove_source(v, hook):
+            v = v.clone()
+            x = s_out - s_out.mean(-1, keepdim=True)
+            v[0, :, ht, :] -= (x / ln_in) @ m.blocks[lt].attn.W_V[ht]
+            return v
+
+        hooks = [
+            (f"blocks.{lt}.attn.hook_v", remove_source),
+            (f"blocks.{lt}.attn.hook_pattern", lambda x, hook: pattern),
+        ]
+        with torch.no_grad(), m.hooks(fwd_hooks=hooks):
+            _, ablated = m.run_with_cache(tok)
+        d = cache[f"blocks.{lt}.attn.hook_result"][0, t, ht] - ablated[f"blocks.{lt}.attn.hook_result"][0, t, ht]
+        direct = float(((d - d.mean()) / s_f) @ m.W_U[:, pred])
+        assert edge == pytest.approx(direct, rel=1e-3, abs=1e-5), (sid, tid)
+
+
+@pytest.mark.inference
+def test_dla_matches_transformer_lens_apply_ln_to_stack(gpt2_loaded):
+    """DLA, Key parts nodes and edges share units: logits through the frozen
+    final LayerNorm, as TransformerLens' own apply_ln_to_stack computes them."""
+    import torch
+    from pry_sidecar.inference import run_circuit, run_dla
+    from pry_sidecar.schemas import CircuitRequest, DLARequest
+
+    m = gpt2_loaded.model
+    tok = m.to_tokens(IOI)
+    t = tok.shape[1] - 1
+    with torch.no_grad():
+        logits, cache = m.run_with_cache(tok)
+    pred = int(logits[0, t].argmax())
+    head = cache["blocks.9.attn.hook_result"][0:1, :, 9]  # [1, pos, d_model]
+    scaled = cache.apply_ln_to_stack(head[None], layer=-1, pos_slice=-1)[0, 0]
+    expected = float(scaled[t] @ m.W_U[:, pred]) if scaled.dim() == 2 else float(scaled @ m.W_U[:, pred])
+
+    dla = run_dla(DLARequest(preset_id="gpt2-small", prompt=IOI), gpt2_loaded)
+    tab = next(c for c in dla.components if c.layer == 9 and c.head == 9)
+    circ = run_circuit(CircuitRequest(preset_id="gpt2-small", prompt=IOI), gpt2_loaded)
+    node = next(n for n in circ.nodes if n.id == "L9.H9")
+    assert tab.contribution == pytest.approx(expected, rel=1e-3)
+    assert node.importance == pytest.approx(expected, rel=1e-3)
+    assert 1.0 < node.importance < 10.0  # logits, not the raw ~50 of an unscaled projection

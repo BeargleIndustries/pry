@@ -106,14 +106,14 @@ function featuresSection(entry: NotebookEntry): string {
         .map((h) => {
           const url = neuronpediaUrl(display, layer, h.id);
           const more = url ? link(url, 'Neuronpedia') : '<span class="muted">none</span>';
-          return `<tr><td>#${h.id}</td><td>${featureLabel(h)}</td><td>${h.activation.toFixed(2)}</td><td>${more}</td></tr>`;
+          return `<tr><td>#${escapeHtml(String(h.id))}</td><td>${featureLabel(h)}</td><td>${escapeHtml(Number(h.activation).toFixed(2))}</td><td>${more}</td></tr>`;
         })
         .join('')
     : '';
   const table = rows
     ? `<table><thead><tr><th>Feature</th><th>Label</th><th>Strength</th><th>More</th></tr></thead><tbody>${rows}</tbody></table>`
     : '';
-  const heading = last ? `Features on the last word, ${escapeHtml(quoteToken(last.text))} (layer ${layer})` : 'Features';
+  const heading = last ? `Features on the last word, ${escapeHtml(quoteToken(last.text))} (layer ${escapeHtml(String(layer))})` : 'Features';
   return `<h3>${heading}</h3>${para(entry.readouts.features)}${table}<p class="muted">Features are patterns a separate tool (a sparse autoencoder) found inside the model. Labels come from Neuronpedia and are best guesses, not certainties.</p>`;
 }
 

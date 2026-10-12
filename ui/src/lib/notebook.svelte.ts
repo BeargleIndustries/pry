@@ -57,10 +57,13 @@ export function createNotebookStore() {
     }
   }
 
-  function commit(next: Notebook): Promise<boolean> {
+  // The updater runs inside the queue, on the notebook as left by every earlier
+  // write, so two quick saves can't both start from the same old state.
+  function commit(update: (current: Notebook) => Notebook): Promise<boolean> {
     const run = chain.then(async () => {
       state.busy = true;
       try {
+        const next = update(nb);
         await saveNotebook(next);
         nb = next;
         state.entries = next.entries;
@@ -86,15 +89,15 @@ export function createNotebookStore() {
       // Snapshot so later changes to the live analysis state can't reach the saved entry.
       const plain = $state.snapshot(input) as NewEntryInput;
       const entry = buildEntry({ ...plain, id: newEntryId(now), now });
-      return (await commit(addEntry(nb, entry))) ? entry : null;
+      return (await commit((cur) => addEntry(cur, entry))) ? entry : null;
     },
     async update(id: string, patch: { title?: string; note?: string }): Promise<boolean> {
       if (!(await ensureLoaded())) return false;
-      return commit(updateEntry(nb, id, patch));
+      return commit((cur) => updateEntry(cur, id, patch));
     },
     async remove(id: string): Promise<boolean> {
       if (!(await ensureLoaded())) return false;
-      return commit(deleteEntry(nb, id));
+      return commit((cur) => deleteEntry(cur, id));
     },
     /** Save a report for the given entries (all when omitted). False when cancelled or failed. */
     async exportReport(ids?: string[]): Promise<boolean> {
