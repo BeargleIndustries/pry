@@ -101,7 +101,7 @@
       const forceReady = $page.url.searchParams.get('runtime') === 'ready';
       if (ready || forceReady) {
         stage = 'ready';
-        message = 'Runtime already installed';
+        message = 'Engine already installed';
         progress = 1;
         setTimeout(() => goto('/welcome/preset'), 400);
         return;
@@ -144,10 +144,10 @@
 
 <div class="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-8 backdrop-blur">
   <div class="mb-1 font-mono text-xs uppercase tracking-widest text-indigo-400">step 03</div>
-  <h2 class="mb-2 text-2xl font-semibold text-zinc-100">Installing the runtime</h2>
+  <h2 class="mb-2 text-2xl font-semibold text-zinc-100">Installing Pry's engine</h2>
   <p class="mb-6 text-sm text-zinc-400">
     Downloading Python and the libraries Pry uses to run models. It's about a 2.5 GB download,
-    roughly 5–15 minutes on home internet. You only need to do this once.
+    roughly 5 to 15 minutes on home internet. You only need to do this once.
   </p>
 
   {#if failed}
@@ -170,7 +170,7 @@
           onclick={copyDiag}
           class="inline-flex items-center gap-2 rounded-lg bg-zinc-800 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-700"
         >
-          <Copy class="h-4 w-4" /> Copy diagnostic
+          <Copy class="h-4 w-4" /> Copy error details
         </button>
         {#if diagnosticPath}
           <span class="font-mono text-xs text-zinc-500">{diagnosticPath}</span>
@@ -215,7 +215,7 @@
     <!-- Log tail -->
     <details class="mb-2 rounded-lg border border-zinc-800 bg-black/40">
       <summary class="cursor-pointer px-4 py-2 text-xs font-mono uppercase tracking-wider text-zinc-500 hover:text-zinc-300">
-        install log ({logLines.length} lines)
+        Setup log ({logLines.length} lines)
       </summary>
       <div class="max-h-64 overflow-auto px-4 pb-3 font-mono text-[11px] leading-relaxed text-zinc-500">
         {#each logLines.slice(-100) as line}

@@ -45,13 +45,13 @@
 
   {#if error}
     <div class="mb-4 rounded-lg border border-red-800 bg-red-950/40 p-4 text-sm text-red-300">
-      <div class="mb-1 font-semibold">Hardware probe failed</div>
+      <div class="mb-1 font-semibold">Couldn't check your graphics card</div>
       <div class="font-mono text-xs text-red-400/80">{error}</div>
     </div>
   {:else if !report}
     <div class="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-950/40 p-6">
       <div class="h-2 w-2 animate-pulse rounded-full bg-indigo-500"></div>
-      <span class="text-sm text-zinc-500">Probing GPU and drivers…</span>
+      <span class="text-sm text-zinc-500">Checking your graphics card…</span>
     </div>
   {:else}
     <HardwareCard {report} />
