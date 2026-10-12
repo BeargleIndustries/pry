@@ -47,6 +47,26 @@ export interface GenerateResponse {
   timing_ms: Record<string, number>;
   status?: string;
   generation?: string | null;
+  /** T26: one entry per written token (empty when max_new_tokens is 0). */
+  generation_steps?: GenerationStep[];
+  temperature_used?: number;
+  /** Seed of the random draws; set only when temperature_used > 0. */
+  seed_used?: number | null;
+}
+
+/**
+ * One written token of a continuation (T26). Chances come from the softmax at
+ * the sampling temperature; at temperature 0 they are the model's plain chances.
+ * `runner_up` is the most likely token other than the chosen one.
+ */
+export interface GenerationStep {
+  token: string;
+  token_id: number;
+  /** What this step adds to the decoded text ("" mid-character, e.g. part of an emoji). */
+  text?: string;
+  probability: number;
+  runner_up: string | null;
+  runner_up_probability: number | null;
 }
 
 export interface SAEFeaturesResponse {

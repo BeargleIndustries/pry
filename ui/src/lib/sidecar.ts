@@ -3,6 +3,7 @@ import { listen } from '@tauri-apps/api/event';
 import { isTauri } from './is-tauri';
 import { sidecarErrorMessage } from './sidecar-errors';
 import type { SidecarHealth } from './types';
+import { buildConceptSearchBody, parseConceptSearch, type ConceptSearchResult } from './concept-search';
 
 // Browser dev only (`npm run dev` against a manually started sidecar). Under
 // Tauri we never fall back to this: the port and token come from Rust.
@@ -348,6 +349,43 @@ export async function steerGenerate(
       max_new_tokens: maxNewTokens,
     }),
   });
+}
+
+/** T26: write a continuation and get each step's chosen token + runner-up. */
+export async function generateStepwise(
+  presetId: string,
+  prompt: string,
+  opts: { maxNewTokens: number; temperature: number; seed?: number | null },
+): Promise<import('./types').GenerateResponse> {
+  return request('/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      preset_id: presetId,
+      prompt,
+      max_new_tokens: opts.maxNewTokens,
+      temperature: opts.temperature,
+      ...(opts.seed != null ? { seed: opts.seed } : {}),
+      top_k_features: 1,
+    }),
+  });
+}
+
+/**
+ * T24: find features whose Neuronpedia label matches `query`. The sidecar
+ * sends the query to neuronpedia.org. A 502 SidecarError means Neuronpedia
+ * is unreachable (see isNeuronpediaUnavailable).
+ */
+export async function searchConcepts(
+  query: string,
+  presetId?: string | null,
+): Promise<ConceptSearchResult> {
+  const json = await request<unknown>('/concept-search', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: buildConceptSearchBody(query, presetId),
+  });
+  return parseConceptSearch(json);
 }
 
 export async function ablateHeads(
