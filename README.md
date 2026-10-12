@@ -108,7 +108,7 @@ Your prompts, results and lab notebook stay on your computer. There's no usage t
 
 Pry does go online for these:
 
-- **Setup and model downloads.** The engine comes from the Python and PyTorch download sites, and models come from Hugging Face.
+- **Setup and model downloads.** The engine comes from the Python and PyTorch download sites, and models come from Hugging Face. Pry also asks Hugging Face to check a model name you add, and whether your account has the Gemma license.
 - **Feature labels.** Pry asks Neuronpedia for the label of each feature it shows, by feature number. Your prompt isn't sent.
 - **Find a concept.** The words you search for go to Neuronpedia. The panel tells you before you search.
 - **Update check.** When it starts, Pry asks github.com whether there's a newer version. You can turn that off in Settings.
