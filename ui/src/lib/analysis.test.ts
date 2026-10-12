@@ -20,6 +20,14 @@ vi.mock('./sidecar', () => ({
   runPatching: vi.fn(async () => ({ kind: 'patch' })),
   fetchCircuit: vi.fn(async () => ({ kind: 'circuit' })),
   fetchHeadScores: vi.fn(async (presetId: string) => ({ kind: 'head-scores', preset_id: presetId })),
+  listModels: vi.fn(async () => ({
+    loaded: ['gpt2-small'],
+    active: 'gpt2-small',
+    available: [
+      { id: 'gpt2-small', tier: 'free', downloaded: true, available_sae_layers: [0, 6, 11] },
+      { id: 'pythia-70m', tier: 'free', downloaded: false, available_sae_layers: [0, 1] },
+    ],
+  })),
 }));
 
 import * as sidecar from './sidecar';
@@ -113,6 +121,38 @@ describe('analysis dispatchers use response.prompt, not the text box', () => {
     expect(state.response?.prompt).toBe(EDITED);
     expect(ctl.isPromptEdited(EDITED)).toBe(false);
     expect(state.focusTokenIndex).toBe(1);
+  });
+});
+
+describe('Features layer menu on a fresh profile', () => {
+  function stubGenerate() {
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, status: 200, json: async () => fakeResponse() })));
+  }
+
+  it('the first Run fills the layer list when nothing filled it at mount', async () => {
+    // Fresh profile: no saved model, so the mount path never looked up layers.
+    const { ctl, state } = makeController(false);
+    expect(state.availableSaeLayers).toEqual([]);
+    stubGenerate();
+    try {
+      await ctl.generate(RAN);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+    expect(state.availableSaeLayers).toEqual([0, 6, 11]);
+  });
+
+  it('does not refetch once the list is known', async () => {
+    const { ctl, state } = makeController(false);
+    state.availableSaeLayers = [3, 4];
+    stubGenerate();
+    try {
+      await ctl.generate(RAN);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+    expect(sidecar.listModels).not.toHaveBeenCalled();
+    expect(state.availableSaeLayers).toEqual([3, 4]);
   });
 });
 
