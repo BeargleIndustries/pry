@@ -17,6 +17,8 @@ export type TipPlacement = 'top' | 'bottom' | 'left' | 'right';
 export interface TipDef {
   /** Unique stable id; becomes localStorage key suffix. */
   id: string;
+  /** Names the thing the tip is about, shown as the tip's heading. */
+  title: string;
   /** querySelector for the anchor element. */
   target: string;
   /** Short one-liner shown by default. */
@@ -33,6 +35,7 @@ export interface TipDef {
 
 const CUSTOM_MODEL_VERDICT_TIP: TipDef = {
   id: 'custom-model-verdict',
+  title: 'Fit verdict',
   target: '[data-tip="custom-model-verdict"]',
   placement: 'bottom',
   blurb:
@@ -46,6 +49,7 @@ export const tipsRegistry: TipDef[] = [
     // Tutorial steps 1.4 and 1.5 target 'panel-a-heatmap'; string-equality
     // fallback in coordinate.ts marks this tip seen on step advance.
     id: 'panel-a-heatmap',
+    title: 'Attention grid',
     target: '[data-tip="panel-a-heatmap"]',
     placement: 'right',
     blurb:
@@ -55,6 +59,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'panel-a-head-detail',
+    title: 'One head, up close',
     target: '[data-tip="panel-a-head-detail"]',
     placement: 'top',
     blurb:
@@ -66,6 +71,7 @@ export const tipsRegistry: TipDef[] = [
     // Tutorial step 1.6 targets 'panel-a-agg-selector'; string-equality
     // fallback marks this tip seen on step advance.
     id: 'panel-a-agg-selector',
+    title: 'Agg menu',
     target: '[data-tip="panel-a-agg-selector"]',
     placement: 'bottom',
     blurb:
@@ -75,6 +81,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'panel-a-token-strip',
+    title: 'Word chips',
     target: '[data-tip="panel-a-token-strip"]',
     placement: 'bottom',
     blurb:
@@ -85,6 +92,7 @@ export const tipsRegistry: TipDef[] = [
     // Tutorial step 2.4 targets 'panel-b-token-strip'; string-equality
     // fallback marks this tip seen on step advance.
     id: 'panel-b-token-strip',
+    title: 'Word chips',
     target: '[data-tip="panel-b-token-strip"]',
     placement: 'bottom',
     blurb:
@@ -93,6 +101,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'panel-b-feature-row',
+    title: 'A feature',
     target: '[data-tip="panel-b-feature-row"]',
     placement: 'left',
     blurb:
@@ -102,6 +111,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'panel-a-from-selector',
+    title: 'FROM button',
     target: '[data-tip="panel-a-from-selector"]',
     placement: 'bottom',
     blurb:
@@ -110,6 +120,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'panel-a-to-selector',
+    title: 'TO button',
     target: '[data-tip="panel-a-to-selector"]',
     placement: 'bottom',
     blurb:
@@ -118,6 +129,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'panel-b-layer-selector',
+    title: 'Layer menu',
     target: '[data-tip="panel-b-layer-selector"]',
     placement: 'bottom',
     blurb:
@@ -128,6 +140,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'predictions-panel',
+    title: 'Predictions',
     target: '[data-tip="predictions-panel"]',
     placement: 'top',
     blurb:
@@ -137,6 +150,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'feature-histogram',
+    title: 'Feature history chart',
     target: '[data-tip="feature-histogram"]',
     placement: 'right',
     blurb:
@@ -146,6 +160,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'logit-lens-heatmap',
+    title: 'Logit Lens',
     target: '[data-tip="logit-lens-heatmap"]',
     placement: 'bottom',
     blurb:
@@ -155,6 +170,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'dla-waterfall',
+    title: 'Why (DLA) chart',
     target: '[data-tip="dla-waterfall"]',
     placement: 'left',
     blurb:
@@ -164,6 +180,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'export-button',
+    title: 'Download button',
     target: '[data-tip="export-button"]',
     placement: 'bottom',
     blurb:
@@ -172,6 +189,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'steering-panel',
+    title: 'Steering',
     target: '[data-tip="steering-panel"]',
     placement: 'top',
     blurb:
@@ -181,6 +199,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'ablation-head-toggle',
+    title: 'Ablation button',
     target: '[data-tip="ablation-head-toggle"]',
     placement: 'right',
     blurb:
@@ -190,6 +209,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'ablation-feature-toggle',
+    title: 'Ablation button',
     target: '[data-tip="ablation-feature-toggle"]',
     placement: 'right',
     blurb:
@@ -199,6 +219,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'patching-panel',
+    title: 'Swap & Compare',
     target: '[data-tip="patching-panel"]',
     placement: 'bottom',
     blurb:
@@ -208,6 +229,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'circuit-graph',
+    title: 'Key parts map',
     target: '[data-tip="circuit-graph"]',
     placement: 'left',
     blurb:
@@ -219,6 +241,7 @@ export const tipsRegistry: TipDef[] = [
   ...(CUSTOM_MODELS_ENABLED ? [CUSTOM_MODEL_VERDICT_TIP] : []),
   {
     id: 'neuronpedia-link',
+    title: 'Neuronpedia link',
     target: '[data-tip="neuronpedia-link"]',
     placement: 'top',
     blurb:
@@ -229,6 +252,7 @@ export const tipsRegistry: TipDef[] = [
   // Tips for 0.3.x features (T20, T22, T24, T25, T26), registered in T30.
   {
     id: 'panel-a-copying-heads',
+    title: 'Copying heads',
     target: '[data-tip="panel-a-copying-heads"]',
     placement: 'bottom',
     blurb:
@@ -238,6 +262,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'panel-a-copying-sequence',
+    title: 'The repeated words',
     target: '[data-tip="panel-a-copying-sequence"]',
     placement: 'bottom',
     blurb:
@@ -246,6 +271,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'experiments-button',
+    title: 'Experiments',
     target: '[data-tip="experiments-button"]',
     placement: 'bottom',
     blurb:
@@ -254,6 +280,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'compare-panel',
+    title: 'Compare',
     target: '[data-tip="compare-panel"]',
     placement: 'bottom',
     blurb:
@@ -263,6 +290,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'watch-it-write',
+    title: 'Watch it write',
     target: '[data-tip="watch-it-write"]',
     placement: 'top',
     blurb:
@@ -272,6 +300,7 @@ export const tipsRegistry: TipDef[] = [
   },
   {
     id: 'concept-search',
+    title: 'Find a concept',
     target: '[data-tip="concept-search"]',
     placement: 'bottom',
     blurb:

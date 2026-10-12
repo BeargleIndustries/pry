@@ -23,6 +23,7 @@
   import { tutorialState } from '$lib/tutorial/tutorial-store.svelte';
   import { tipsRegistry, type TipDef, type TipPlacement } from '$lib/tips/tips-registry';
   import { markTipSeen, isTipSeen } from '$lib/tips/coordinate';
+  import Pointer from './Pointer.svelte';
 
   const TIP_MAX_W = 320; // matches max-w-xs (~20rem)
   const TIP_EST_H = 120;
@@ -30,11 +31,11 @@
   const GAP = 10;
 
   let activeTip: TipDef | null = $state(null);
-  let position: { top: number; left: number; arrow: TipPlacement } | null =
+  let position: { top: number; left: number; arrow: TipPlacement; caret: number } | null =
     $state(null);
   let whyExpanded = $state(false);
 
-  let targetEl: HTMLElement | null = null;
+  let targetEl: HTMLElement | null = $state(null);
   let tipEl: HTMLDivElement | null = $state(null);
   let prevAriaDescribedBy: string | null = null;
 
@@ -54,10 +55,22 @@
     for (const tip of tipsRegistry) {
       if (isTipSeen(tip.id)) continue;
       const el = document.querySelector(tip.target) as HTMLElement | null;
-      if (!el) continue;
+      if (!el || !usable(el)) continue;
       activateTip(tip, el);
       return;
     }
+  }
+
+  /** A tip only makes sense next to something on screen that you can use. */
+  function usable(el: HTMLElement): boolean {
+    if (el.getClientRects().length === 0) return false;
+    if (el.closest('[inert], [aria-hidden="true"]')) return false;
+    const control = el.matches('button, input, select, textarea')
+      ? el
+      : null;
+    if (control && (control as HTMLButtonElement).disabled) return false;
+    if (el.getAttribute('aria-disabled') === 'true') return false;
+    return true;
   }
 
   function schedulePick(): void {
@@ -73,7 +86,7 @@
     placement: TipPlacement,
     tipW: number,
     tipH: number,
-  ): { top: number; left: number; arrow: TipPlacement } {
+  ): { top: number; left: number; arrow: TipPlacement; caret: number } {
     const r = target.getBoundingClientRect();
     const vw = window.innerWidth;
     const vh = window.innerHeight;
@@ -126,7 +139,13 @@
     pos.left = Math.max(EDGE_PAD, Math.min(pos.left, vw - tipW - EDGE_PAD));
     pos.top = Math.max(EDGE_PAD, Math.min(pos.top, vh - tipH - EDGE_PAD));
 
-    return { top: pos.top, left: pos.left, arrow: chosen };
+    // Caret sits on the tip's edge facing the target, lined up with its centre.
+    const vertical = chosen === 'top' || chosen === 'bottom';
+    const caret = vertical
+      ? Math.max(14, Math.min(r.left + r.width / 2 - pos.left, tipW - 14))
+      : Math.max(14, Math.min(r.top + r.height / 2 - pos.top, tipH - 14));
+
+    return { top: pos.top, left: pos.left, arrow: chosen, caret };
   }
 
   async function recomputePosition(): Promise<void> {
@@ -283,11 +302,18 @@
             return;
           }
         }
+        // A tip target becoming enabled (e.g. Export after the first Run).
+        if (m.type === 'attributes' && !activeTip) {
+          schedulePick();
+          return;
+        }
       }
     });
     mutationObserver.observe(document.body, {
       childList: true,
       subtree: true,
+      attributes: true,
+      attributeFilter: ['disabled', 'aria-disabled', 'hidden'],
     });
 
     schedulePick();
@@ -311,6 +337,7 @@
 </script>
 
 {#if activeTip && position}
+  <Pointer target={targetEl} z={59} />
   <div
     bind:this={tipEl}
     role="dialog"
@@ -321,13 +348,23 @@
     style:top={`${position.top}px`}
     style:left={`${position.left}px`}
   >
+    <span
+      class="pry-tip-caret pry-tip-caret-{position.arrow}"
+      style:--caret={`${position.caret}px`}
+      aria-hidden="true"
+    ></span>
     <div class="flex items-start gap-2">
-      <p
-        id={`pry-tip-${activeTip.id}-title`}
-        class="flex-1 text-xs leading-relaxed text-zinc-200"
-      >
-        {activeTip.blurb}
-      </p>
+      <div class="flex-1">
+        <p
+          id={`pry-tip-${activeTip.id}-title`}
+          class="text-[10px] font-semibold uppercase tracking-widest text-indigo-300"
+        >
+          {activeTip.title}
+        </p>
+        <p class="mt-1 text-xs leading-relaxed text-zinc-200">
+          {activeTip.blurb}
+        </p>
+      </div>
       <button
         type="button"
         onclick={dismiss}
@@ -353,3 +390,20 @@
     {/if}
   </div>
 {/if}
+
+<style>
+  /* Caret: a small rotated square on the edge facing the target. */
+  .pry-tip-caret {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: rgb(24 24 27); /* zinc-900 */
+    border: 1px solid rgba(67, 56, 202, 0.6); /* indigo-700/60 */
+    transform: rotate(45deg);
+  }
+  /* Tip below the target: caret on the top edge, pointing up. */
+  .pry-tip-caret-bottom { top: -7px; left: calc(var(--caret) - 6px); border-right: none; border-bottom: none; }
+  .pry-tip-caret-top { bottom: -7px; left: calc(var(--caret) - 6px); border-left: none; border-top: none; }
+  .pry-tip-caret-right { left: -7px; top: calc(var(--caret) - 6px); border-right: none; border-top: none; }
+  .pry-tip-caret-left { right: -7px; top: calc(var(--caret) - 6px); border-left: none; border-bottom: none; }
+</style>

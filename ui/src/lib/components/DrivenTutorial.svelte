@@ -2,7 +2,8 @@
   import { untrack } from 'svelte';
   import { tutorialState } from '$lib/tutorial/tutorial-store.svelte';
   import type { TourContext, TutorialActions } from '$lib/tutorial/actions';
-  import { tourUi } from '$lib/tutorial/tour-steps';
+  import { tourUi, targetLabels } from '$lib/tutorial/tour-steps';
+  import Pointer from './Pointer.svelte';
   import { findAnchor } from '$lib/tutorial/anchors';
   import { asyncStepSucceeded, needsModelOffer, TOUR_PRESET_ID } from '$lib/tutorial/step-machine';
 
@@ -32,6 +33,9 @@
 
   let completing = $state(false);
   let chaptersOpen = $state(false);
+  let cardEl: HTMLDivElement | null = $state(null);
+  /** The element the current step points at, once it's on screen. */
+  let pointedEl: HTMLElement | null = $state(null);
 
   const step = $derived(tutorialState.currentStep);
   const chapter = $derived(tutorialState.currentChapter);
@@ -93,12 +97,14 @@
     if (!tutorialState.open) return;
     const target = step?.target ?? null;
     clearHighlights();
+    pointedEl = null;
     if (!target) return;
     let el: HTMLElement | null = null;
     const find = () => {
       if (el?.isConnected && el.getClientRects().length > 0) return;
       el?.removeAttribute('data-tour-active');
       el = findAnchor(target);
+      pointedEl = el;
       if (!el) return;
       el.setAttribute('data-tour-active', 'true');
       el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
@@ -108,6 +114,7 @@
     return () => {
       clearInterval(timer);
       el?.removeAttribute('data-tour-active');
+      pointedEl = null;
     };
   });
 
@@ -233,7 +240,11 @@
 </script>
 
 {#if tutorialState.open && step && chapter}
+  {#if pointedEl}
+    <Pointer target={pointedEl} from={cardEl} z={49} />
+  {/if}
   <div
+    bind:this={cardEl}
     class="fixed bottom-4 right-4 z-50 w-[400px] max-w-[calc(100vw-2rem)] rounded-lg border border-zinc-700 bg-zinc-900/95 shadow-2xl backdrop-blur"
     role="dialog"
     aria-label={tourUi.cardLabel}
@@ -330,6 +341,12 @@
           </div>
         {/if}
 
+        {#if step.target}
+          <p class="mb-1.5 text-[11px] text-indigo-300" data-testid="tour-look-at">
+            <span class="font-semibold uppercase tracking-widest">{tourUi.lookAt}</span>
+            {targetLabels[step.target] ?? step.target}{#if !pointedEl}<span class="text-zinc-500"> · {tourUi.notOnScreen}</span>{/if}
+          </p>
+        {/if}
         <p class="text-sm leading-relaxed text-zinc-200">{step.blurb}</p>
 
         {#if step.why}
