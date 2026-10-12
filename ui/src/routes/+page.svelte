@@ -60,8 +60,8 @@
   import LicenseGateSteps from '$lib/components/LicenseGateSteps.svelte';
   import { goto } from '$app/navigation';
   import ExperimentGallery from '$lib/components/ExperimentGallery.svelte';
-  import { loadExperiments, applyExperiment } from '$lib/experiments/experiments';
-  import type { Experiment, ExperimentActions, PatchType } from '$lib/experiments/experiments';
+  import { loadExperiments, applyExperiment, resetExperiment } from '$lib/experiments/experiments';
+  import type { Experiment, ExperimentActions, ResetActions, PatchType } from '$lib/experiments/experiments';
   import { demoFromParams } from '$lib/head-scores';
   import { createCompare } from '$lib/compare.svelte';
   import ComparePanel from '$lib/components/ComparePanel.svelte';
@@ -612,15 +612,37 @@
       st.headAblations = heads.map((h) => ({ ...h }));
       st.headAblationMode = true;
     },
+    endTour: () => tutorialState.endForExperiment(),
+  };
+
+  /** Preset the last experiment couldn't load (the guide shows an error instead of its steps). */
+  let failedPreset = $state<string | null>(null);
+
+  function dismissGuide() {
+    activeExperiment = null;
+    failedPreset = null;
+  }
+
+  // "Back to normal" (see resetExperiment): the prompt is kept.
+  const resetActions: ResetActions = {
+    clearHeadAblations: () => {
+      st.headAblations = [];
+      st.headAblationMode = false;
+    },
+    hideHeadScores: () => analysis.hideHeadScores(),
+    clearPatchingPreset: () => { patchingPreset = null; },
+    dismissGuide,
   };
 
   async function pickExperiment(exp: Experiment) {
     if (experimentBusy) return;
     experimentsOpen = false;
     activeExperiment = exp;
+    failedPreset = null;
     experimentBusy = true;
     try {
-      await applyExperiment(exp, experimentActions);
+      const result = await applyExperiment(exp, experimentActions);
+      if (!result.ok && activeExperiment === exp) failedPreset = result.preset;
     } finally {
       experimentBusy = false;
     }
@@ -1346,10 +1368,12 @@
     {experiments}
     active={activeExperiment}
     busy={experimentBusy}
+    {failedPreset}
     presetLabel={(id) => displayName(id, presets)}
     onPick={pickExperiment}
     onClose={() => (experimentsOpen = false)}
-    onDismissGuide={() => (activeExperiment = null)}
+    onDismissGuide={dismissGuide}
+    onReset={() => resetExperiment(resetActions)}
   />
 
   <NotebookPanel

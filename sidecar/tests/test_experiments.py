@@ -35,6 +35,24 @@ def _patching_pairs() -> list[tuple[str, str, str]]:
     ]
 
 
+def test_experiment_schema():
+    """Every guide has its hook, why, prompt, steps, findings and "when you're done"."""
+    data = json.loads(EXPERIMENTS_JSON.read_text(encoding="utf-8"))
+    exps = data["experiments"]
+    assert len(exps) == 8
+    ids = {exp["id"] for exp in exps}
+    for exp in exps:
+        for key in ("hook", "why", "prompt"):
+            assert isinstance(exp.get(key), str) and exp[key].strip(), f"{exp['id']}: {key}"
+        assert exp["lookFor"], f"{exp['id']}: lookFor"
+        assert exp["found"]["summary"].strip(), f"{exp['id']}: found.summary"
+        nxt = exp["next"]
+        assert nxt["reset"].strip() and nxt["try"].strip(), f"{exp['id']}: next"
+        if "tryId" in nxt:
+            assert nxt["tryId"] in ids and nxt["tryId"] != exp["id"], f"{exp['id']}: next.tryId"
+        assert "demoLink" not in exp, f"{exp['id']}: demoLink reloads the app"
+
+
 def test_experiment_pairs_same_length():
     pairs = _patching_pairs()
     assert pairs, "expected at least one patching experiment"
