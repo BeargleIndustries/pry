@@ -1,6 +1,8 @@
 <script lang="ts">
   import Term from './Term.svelte';
+  import Readout from './Readout.svelte';
   import type { GenerateResponse, SteerResponse, FeatureHit } from '$lib/types';
+  import { steeringReadout } from '$lib/readouts';
   import { diffTokens } from '$lib/token-diff';
   import { searchConcepts, SidecarError } from '$lib/sidecar';
   import {
@@ -142,13 +144,17 @@
       : null,
   );
 
-  const highAlphaWarning = $derived(Math.abs(alpha) > 15);
+  const highAlphaWarning = $derived(Math.abs(alpha) > 20);
 </script>
 
 <div class="flex flex-col gap-4" data-tip="steering-panel">
+  <div class="flex flex-col gap-1">
+    <h2 class="text-sm font-semibold text-zinc-100"><Term key="steering">Steering</Term></h2>
+    <p class="text-xs text-zinc-500">Turn one concept up or down and see how the writing changes.</p>
+  </div>
   {#if !response}
     <div class="flex flex-col items-center justify-center py-12 text-zinc-500">
-      <p class="text-sm">Run a prompt first to see available features for steering.</p>
+      <p class="text-sm">Run a prompt and this tab fills in on its own with features you can steer.</p>
     </div>
   {:else}
     <!-- Concept search (T24) -->
@@ -190,7 +196,7 @@
           <p class="text-xs text-zinc-500">No labelled features matched "{conceptResult.query}".</p>
         {:else}
           <p class="text-[11px] text-zinc-500">
-            Closest labels for "{conceptResult.query}". The search ranks by how similar the words of a
+            Closest <Term key="neuronpedia">Neuronpedia</Term> labels for "{conceptResult.query}". The search ranks by how similar the words of a
             label are to yours, so there is always a top result, even when nothing really fits. Labels
             were written by another AI and can be wrong.
           </p>
@@ -247,10 +253,14 @@
       >
         {#each availableFeatures as feat (feat.id)}
           <option value={feat.id}>
-            #{feat.id} {feat.description ? `- ${feat.description}` : ''} (act: {feat.activation.toFixed(2)})
+            #{feat.id} {feat.description ? `- ${feat.description}` : '(no label yet)'} (fires at {feat.activation.toFixed(1)} on your prompt)
           </option>
         {/each}
       </select>
+      <p class="text-[10px] text-zinc-500">
+        Labels are written by an AI and can be wrong. The number after each one is its
+        <Term key="activation">activation</Term>: how strongly it fired on your prompt.
+      </p>
       {#if !conceptUsable && selectedFeature?.description}
         <p class="text-xs text-zinc-500">{selectedFeature.description}</p>
       {/if}
@@ -277,7 +287,7 @@
         <span class="text-[10px] text-zinc-600">Amplify</span>
       </div>
       {#if highAlphaWarning}
-        <p class="text-[10px] text-amber-500">High steering values may produce degenerate text.</p>
+        <p class="text-[10px] text-amber-500">Very high strengths can turn the text to mush. That's normal; lower it if it does.</p>
       {/if}
     </div>
 
@@ -299,6 +309,7 @@
 
     <!-- Results: side-by-side comparison -->
     {#if steerResponse}
+      <Readout text={steeringReadout(steerResponse)} />
       <div class="grid grid-cols-2 gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
         <!-- Original -->
         <div class="flex flex-col gap-1.5">
@@ -306,11 +317,11 @@
           <div class="whitespace-pre-wrap rounded bg-zinc-950 p-2 text-sm text-zinc-300 leading-relaxed"><span class="text-zinc-600">{steerResponse.prompt}</span>{#if diff}{#each diff.left as tok}<span class={tok.changed ? 'bg-red-900/40 text-red-300' : ''}>{tok.text}</span>{/each}{:else}{steerResponse.original_generation}{/if}</div>
           <!-- Original top predictions -->
           <div class="mt-1">
-            <p class="mb-1 text-[10px] font-medium text-zinc-500">Top predictions</p>
+            <p class="mb-1 text-[10px] font-medium text-zinc-500">Next-word guesses (top 5)</p>
             {#each steerResponse.original_top_predictions.slice(0, 5) as pred (pred.rank)}
               <div class="flex items-center gap-2 text-[11px]">
                 <span class="w-5 text-right text-zinc-600">{pred.rank}</span>
-                <span class="flex-1 font-mono text-zinc-300">{pred.token}</span>
+                <span class="flex-1 font-mono text-zinc-300">{showToken(pred.token)}</span>
                 <span class="tabular-nums text-zinc-500">{(pred.probability * 100).toFixed(1)}%</span>
               </div>
             {/each}
@@ -320,16 +331,16 @@
         <!-- Steered -->
         <div class="flex flex-col gap-1.5">
           <h4 class="text-xs font-semibold text-indigo-400">
-            Steered (alpha={steerResponse.alpha})
+            Steered (strength {steerResponse.alpha})
           </h4>
           <div class="whitespace-pre-wrap rounded bg-zinc-950 p-2 text-sm text-zinc-300 leading-relaxed"><span class="text-zinc-600">{steerResponse.prompt}</span>{#if diff}{#each diff.right as tok}<span class={tok.changed ? 'bg-indigo-900/40 text-indigo-300' : ''}>{tok.text}</span>{/each}{:else}{steerResponse.steered_generation}{/if}</div>
           <!-- Steered top predictions -->
           <div class="mt-1">
-            <p class="mb-1 text-[10px] font-medium text-zinc-500">Top predictions</p>
+            <p class="mb-1 text-[10px] font-medium text-zinc-500">Next-word guesses (top 5)</p>
             {#each steerResponse.steered_top_predictions.slice(0, 5) as pred (pred.rank)}
               <div class="flex items-center gap-2 text-[11px]">
                 <span class="w-5 text-right text-zinc-600">{pred.rank}</span>
-                <span class="flex-1 font-mono text-zinc-300">{pred.token}</span>
+                <span class="flex-1 font-mono text-zinc-300">{showToken(pred.token)}</span>
                 <span class="tabular-nums text-zinc-500">{(pred.probability * 100).toFixed(1)}%</span>
               </div>
             {/each}
