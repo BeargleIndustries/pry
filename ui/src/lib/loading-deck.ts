@@ -28,13 +28,13 @@ export type DeckKind = DeckCard['kind'];
  */
 export const LOADING_TIPS: Record<string, string> = {
   'predictions-panel': 'Predictions',
-  'logit-lens-heatmap': 'Logit lens',
+  'logit-lens-heatmap': 'Logit Lens',
   'dla-waterfall': 'Why (DLA)',
   'steering-panel': 'Steering',
-  'patching-panel': 'Swap & Compare',
-  'circuit-graph': 'Circuit',
+  'patching-panel': 'Swap test',
+  'circuit-graph': 'Key parts',
   'watch-it-write': 'Watch it write',
-  'concept-search': 'Concept search',
+  'concept-search': 'Find a concept',
   'compare-panel': 'Compare',
   'panel-b-layer-selector': 'Feature layers',
   'panel-a-copying-heads': 'Copying heads',

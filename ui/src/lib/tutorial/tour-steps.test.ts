@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { tourChapters, tourUi } from './tour-steps';
+import { LARGE_TARGETS, tourChapters, tourUi } from './tour-steps';
 
 const SRC = join(__dirname, '..', '..');
 
@@ -78,5 +78,24 @@ describe('tour copy', () => {
   it('describes positive and negative with the colors the UI uses', () => {
     const all = steps.map((s) => `${s.blurb} ${s.why ?? ''}`).join(' ').toLowerCase();
     expect(all).not.toMatch(/\bred bars?\b|\bgreen bars?\b/);
+  });
+});
+
+describe('tour placement', () => {
+  it('every step targeting a LARGE_TARGETS anchor declares focus', () => {
+    const missing = steps
+      .filter((s) => s.target !== null && LARGE_TARGETS.includes(s.target) && !s.focus)
+      .map((s) => s.id);
+    expect(missing).toEqual([]);
+    for (const s of steps) {
+      if (!s.focus) continue;
+      for (const f of s.focus) expect(f >= 0 && f <= 1, `${s.id} focus in [0,1]`).toBe(true);
+    }
+  });
+
+  it('placement values are valid sides', () => {
+    const sides = ['top', 'bottom', 'left', 'right'];
+    const bad = steps.filter((s) => s.placement !== undefined && !sides.includes(s.placement)).map((s) => s.id);
+    expect(bad).toEqual([]);
   });
 });

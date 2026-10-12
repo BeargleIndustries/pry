@@ -20,8 +20,8 @@
   </div>
 
   <p class="mb-6 text-lg leading-relaxed text-zinc-300">
-    Pry open the black box — explore what's actually happening inside small transformer language
-    models, locally, no cloud.
+    Pry opens the black box. See what's happening inside a small language model, right
+    on your computer. No cloud.
   </p>
 
   <p class="mb-8 text-sm leading-relaxed text-zinc-500">
@@ -58,7 +58,7 @@
           model. After that, you pick a model, and Pry takes care of the rest.
         </p>
         <p class="text-zinc-500">
-          Setup is about a 2.5 GB download, roughly 5–15 minutes on home internet.
+          Setup is about a 2.5 GB download, roughly 5 to 15 minutes on home internet.
         </p>
       </div>
     {/if}

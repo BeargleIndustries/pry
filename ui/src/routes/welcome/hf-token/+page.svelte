@@ -34,7 +34,7 @@
       return;
     }
     if (!/^hf_[A-Za-z0-9]{20,}$/.test(trimmed)) {
-      error = 'That doesn\'t look like a valid HuggingFace token (expected hf_… with at least 20 characters).';
+      error = 'That doesn\'t look like a valid Hugging Face token (expected hf_… with at least 20 characters).';
       return;
     }
     saving = true;
@@ -56,9 +56,9 @@
 
 <div class="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-8 backdrop-blur">
   <div class="mb-1 font-mono text-xs uppercase tracking-widest text-indigo-400">step 04b</div>
-  <h2 class="mb-2 text-2xl font-semibold text-zinc-100">HuggingFace access</h2>
+  <h2 class="mb-2 text-2xl font-semibold text-zinc-100">Hugging Face access</h2>
   <p class="mb-6 text-sm text-zinc-400">
-    Gemma is a gated model. Google asks you to accept its license on Hugging Face before downloading,
+    Gemma needs permission before you can download it. Google asks you to accept its license on Hugging Face before downloading,
     and Pry needs your Hugging Face token to download the weights on your behalf. The token stays on
     this computer.
   </p>
@@ -112,7 +112,7 @@
   <label class="mb-6 block">
     <span class="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-zinc-500">
       <Key class="h-3.5 w-3.5" />
-      HuggingFace token
+      Hugging Face token
     </span>
     <input
       type="password"

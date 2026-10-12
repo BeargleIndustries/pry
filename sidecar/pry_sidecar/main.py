@@ -14,10 +14,12 @@ Or directly:
 from __future__ import annotations
 
 import asyncio
+import concurrent.futures
 import hmac
 import logging
 import os
 import sys
+import threading
 from contextlib import asynccontextmanager
 
 import uvicorn
@@ -98,6 +100,19 @@ CPU_FALLBACK_MESSAGE = (
 
 def _device_label(device: str) -> str:
     return "GPU" if device == "cuda" else "CPU"
+
+
+# Loads in progress, per preset id. A second /load for the same preset waits
+# on the first one's future; the entry is cleared when that load ends.
+_INFLIGHT_LOADS: dict[str, concurrent.futures.Future] = {}
+_INFLIGHT_LOCK = threading.Lock()
+# How long a second /load waits on the first before giving up. Generous: a
+# first download of a big model can take many minutes on a slow link.
+LOAD_WAIT_TIMEOUT_S = 15 * 60
+LOAD_WAIT_TIMEOUT_MESSAGE = (
+    "This model is still loading from an earlier request and it is taking too long. "
+    "Try again in a few minutes, or restart Pry if it stays stuck."
+)
 
 
 def _prefetch_preset(manifest, push) -> None:
@@ -415,7 +430,26 @@ async def load(request: Request) -> Response:
         def worker() -> None:
             from pry_sidecar.registry import hf_token_for, license_gate_error
 
+            # One load per preset: a second /load while one is running waits
+            # for it instead of prefetching and loading again (code:D3).
+            with _INFLIGHT_LOCK:
+                inflight = _INFLIGHT_LOADS.get(preset_id)
+                owner = inflight is None
+                if owner:
+                    inflight = concurrent.futures.Future()
+                    _INFLIGHT_LOADS[preset_id] = inflight
+
             try:
+                if not owner:
+                    try:
+                        with Heartbeat(push, "load_model", 0.5, "Already loading this model…"):
+                            # Re-raises the first load's error.
+                            inflight.result(timeout=LOAD_WAIT_TIMEOUT_S)
+                    except concurrent.futures.TimeoutError:
+                        push("error", 0.0, LOAD_WAIT_TIMEOUT_MESSAGE)
+                        return
+                    push("ready", 1.0, f"Preset '{preset_id}' ready.")
+                    return
                 # The heavy libraries take 12-40 s to import (longest on the first
                 # load after a reboot); make that its own, honestly named stage.
                 with Heartbeat(push, "warmup", 0.05, "Starting the math libraries…"):
@@ -425,6 +459,7 @@ async def load(request: Request) -> Response:
                     tl_name = _prefetch_custom(custom_hf, push)
                     read_weights()
                     REGISTRY.load_custom(preset_id, tl_name, on_stage=custom_on_stage)
+                    inflight.set_result(None)
                     push("ready", 1.0, f"{custom_hf} ready (no feature dictionary).")
                     return
                 # Gated preset without a token: say so before any download.
@@ -432,14 +467,26 @@ async def load(request: Request) -> Response:
                 _prefetch_preset(manifest, push)
                 read_weights()
                 loaded = REGISTRY.load(preset_id, manifest, on_stage=on_stage)
+                inflight.set_result(None)
                 push("load_sae", 0.97, f"Features ready (layer {loaded.sae_layer}).")
                 push("ready", 1.0, f"Preset '{preset_id}' ready.")
             except Exception as exc:
-                stop_weights_beat()
+                if owner and not inflight.done():
+                    inflight.set_exception(exc)
                 logger.exception("load failed for preset %r", preset_id)
                 gate = license_gate_error(manifest, exc) if manifest is not None else None
                 push("error", 0.0, str(gate) if gate else f"Load failed: {exc}")
             finally:
+                # REGISTRY.load can return through its "already loaded" path
+                # without a model_loaded event, so always stop the beat (code:D2).
+                stop_weights_beat()
+                if owner:
+                    if not inflight.done():
+                        inflight.set_exception(RuntimeError("load ended unexpectedly"))
+                    # Clear on success or failure so a failed load never blocks the next.
+                    with _INFLIGHT_LOCK:
+                        if _INFLIGHT_LOADS.get(preset_id) is inflight:
+                            del _INFLIGHT_LOADS[preset_id]
                 loop.call_soon_threadsafe(queue.put_nowait, None)  # sentinel
 
         task = asyncio.create_task(asyncio.to_thread(worker))
@@ -1000,6 +1047,9 @@ async def circuit(request: Request) -> JSONResponse:
             {"error": "not_implemented", "detail": str(e)},
             status_code=501,
         )
+    except ValueError as e:
+        # Token position past the end of the prompt
+        return _error(str(e), status=400)
     except Exception as e:
         logger.exception("circuit failed for preset %r", req.preset_id)
         return JSONResponse(

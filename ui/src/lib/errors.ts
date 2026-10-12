@@ -11,6 +11,10 @@ export interface FriendlyError {
   details: string | null;
 }
 
+/** Shown when the error has no text at all. */
+export const GENERIC_ERROR =
+  'Something went wrong in Pry. Press Retry, or restart the engine from the chip at the top.';
+
 interface Rule {
   test: RegExp;
   message: string;
@@ -30,7 +34,7 @@ const RULES: Rule[] = [
   {
     test: /(different|same|mismatch\w*)\b.*\b(length|number of tokens|token count)|(length|token count)s? (differ|mismatch|must match)/i,
     message:
-      'The two prompts need the same number of tokens. Change one so they line up word for word, then run it again.',
+      'The two prompts need the same number of tokens (word pieces). Change one so they line up word for word, then run it again.',
   },
   {
     test: /(sae|feature)?\s*layer\b.*\b(mismatch|not loaded|isn't loaded|not available|no sae)|(no sae|sae not loaded)\b.*\blayer/i,
@@ -51,7 +55,7 @@ const RULES: Rule[] = [
 
 export function friendlyError(raw: unknown): FriendlyError {
   const text = (raw instanceof Error ? raw.message : String(raw ?? '')).trim();
-  if (!text) return { message: 'Something went wrong in Pry.', details: null };
+  if (!text) return { message: GENERIC_ERROR, details: null };
   // A license-gate message already names the missing step in plain words.
   if (gateStepMissing(text)) return { message: text, details: null };
   for (const rule of RULES) {

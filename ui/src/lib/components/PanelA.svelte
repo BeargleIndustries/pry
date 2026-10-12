@@ -18,6 +18,7 @@
     DEFAULT_AGG,
     isValidAgg,
     aggregateHead,
+    undefinedCellMessage,
     type Aggregation,
   } from '$lib/attention-agg';
   import { attentionReadout, isStartMarker } from '$lib/readouts';
@@ -34,7 +35,10 @@
     linesHeight,
   } from '$lib/attention-lines';
   import { tutorialState } from '$lib/tutorial/tutorial-store.svelte';
-  import { tick } from 'svelte';
+  import { tick, untrack } from 'svelte';
+  import { placePopup, type Placement, type RectLike } from '$lib/popup/place';
+  import { placementAttrs, viewportSize } from '$lib/popup/measure';
+  import { occupied } from '$lib/popup/occupied.svelte';
 
   // ---------------------------------------------------------------------------
   // Props
@@ -146,14 +150,14 @@
   // Aggregation helpers
   // ---------------------------------------------------------------------------
 
-  const NOT_DEFINED_MSG = 'Not defined for the first word: it can only look at itself.';
-
   // The sidecar only keeps attention for the first 64 words of long prompts.
   const ATTENTION_LIMIT = 64;
   const truncated = $derived(response?.attention_truncated === true);
   const focusPastLimit = $derived(truncated && effectiveFocusArrayPos >= ATTENTION_LIMIT);
   const nullCellMsg = $derived(
-    focusPastLimit ? `No attention data past the first ${ATTENTION_LIMIT} words.` : NOT_DEFINED_MSG,
+    focusPastLimit
+      ? `No attention data past the first ${ATTENTION_LIMIT} words.`
+      : undefinedCellMessage(focusMode),
   );
 
   const aggOptions = $derived(focusMode === 'from' ? FROM_OPTIONS : TO_OPTIONS);
@@ -183,6 +187,11 @@
     return grid;
   });
 
+  // TO on the last word: every square is grey, so say why above the grid.
+  const allUndefined = $derived(
+    !focusPastLimit && rawGrid.length > 0 && rawGrid.every((row) => row.every((v) => v === null)),
+  );
+
   // Normalize raw grid to [0, 1] over non-null values only
   const normalizedGrid = $derived.by<number[][]>(() => {
     const g = rawGrid;
@@ -208,20 +217,45 @@
 
   let tooltipLayer = $state<number | null>(null);
   let tooltipHead = $state<number | null>(null);
-  let tooltipX = $state(0);
-  let tooltipY = $state(0);
+  /** The hovered/focused cell; the tooltip is anchored to it via placePopup. */
+  let tooltipCell = $state<RectLike | null>(null);
+  let tooltipEl: HTMLDivElement | null = $state(null);
+  let tooltipPlaced = $state<Placement | null>(null);
 
   function onCellMouseEnter(l: number, h: number, e: MouseEvent) {
     tooltipLayer = l;
     tooltipHead = h;
-    tooltipX = (e.target as SVGElement).getBoundingClientRect().x;
-    tooltipY = (e.target as SVGElement).getBoundingClientRect().y;
+    tooltipCell = (e.currentTarget as SVGElement).getBoundingClientRect();
   }
 
   function onCellMouseLeave() {
     tooltipLayer = null;
     tooltipHead = null;
+    tooltipCell = null;
   }
+
+  $effect(() => {
+    if (!tooltipEl || !tooltipCell) {
+      tooltipPlaced = null;
+      return;
+    }
+    const el = tooltipEl;
+    const target = tooltipCell;
+    untrack(() => {
+      const p = placePopup({
+        target,
+        size: { w: el.offsetWidth, h: el.offsetHeight },
+        viewport: viewportSize(),
+        preferred: 'top',
+        previousSide: tooltipPlaced?.side,
+        previousMode: tooltipPlaced?.mode,
+        gap: 6,
+        edgePad: 8,
+        avoid: occupied.rects(),
+      });
+      tooltipPlaced = p.mode === 'fallback' ? null : p;
+    });
+  });
 
   // Clear tooltip if the window loses focus or user scrolls (coords go stale).
   $effect(() => {
@@ -288,11 +322,9 @@
   function onCellFocus(l: number, h: number, e: FocusEvent) {
     gridCurrent = { row: l, col: h };
     gridFocused = true;
-    const r = (e.currentTarget as SVGElement).getBoundingClientRect();
     tooltipLayer = l;
     tooltipHead = h;
-    tooltipX = r.x;
-    tooltipY = r.y;
+    tooltipCell = (e.currentTarget as SVGElement).getBoundingClientRect();
   }
 
   function onCellBlur() {
@@ -564,7 +596,7 @@
     <div class="flex items-center gap-2">
       {#if response && !headScoresMode}
         <span class="rounded-full border border-zinc-700 px-2 py-0.5 text-[10px] text-zinc-500">
-          {nLayers}L · {nHeads}H · {tokens.length} tokens
+          {nLayers} layers, {nHeads} heads, {tokens.length} tokens
         </span>
       {/if}
       {#if headScoresMode}
@@ -704,7 +736,7 @@
           </svg>
         </div>
         <div class="mt-1 mb-4 flex flex-wrap items-center gap-x-4 gap-y-1">
-          <span class="text-[10px] text-zinc-600">← Layers (rows) · Heads (cols) →</span>
+          <span class="text-[10px] text-zinc-600">Rows are layers, columns are heads</span>
           <span class="flex items-center gap-1.5 text-[11px] text-zinc-300">
             <span class="inline-block h-3 w-3 rounded-sm border-[3px]" style="border-color: {RING_COLOR.induction}"></span>
             {HEAD_KIND_LABEL.induction}
@@ -738,7 +770,7 @@
             {/each}
           </div>
           <div>
-            <p class="mb-1 text-xs font-semibold" style="color: {RING_COLOR.previous}">Previous-word heads</p>
+            <p class="mb-1 text-xs font-semibold" style="color: {RING_COLOR.previous}"><Term key="previous-token-head">Previous-word heads</Term></p>
             <p class="mb-2 text-[11px] leading-snug text-zinc-500">
               How much of the head's attention went to the word just before the current one.
             </p>
@@ -774,7 +806,7 @@
     </div>
   {:else if tokens.length < 2}
     <div class="flex items-center justify-center py-12">
-      <p class="text-sm text-zinc-500">Attention visualization requires at least 2 tokens.</p>
+      <p class="text-sm text-zinc-500">Type at least two words to see where they look. With one word, there's nothing to look at but itself.</p>
     </div>
   {:else}
     <!-- Plain-language readout (T21) -->
@@ -853,7 +885,7 @@
           bind:this={expertBtn}
           onclick={() => { view = 'expert'; }}
           aria-pressed={showExpert}
-          title="Every layer and head at once, one cell each."
+          title="The grid: every layer and head at once, one cell each."
           class={[
             'rounded px-3 py-1 text-xs transition-all',
             showExpert ? 'bg-indigo-500 text-white' : 'text-zinc-400 hover:text-zinc-200',
@@ -893,7 +925,7 @@
 
       <!-- Aggregation -->
       <div class="flex items-center gap-2" data-tour="panel-a-agg-selector" data-tip="panel-a-agg-selector">
-        <span class="text-[10px] uppercase tracking-widest text-zinc-600">Agg</span>
+        <span class="text-[10px] uppercase tracking-widest text-zinc-600">Score by</span>
         <select
           bind:value={aggregation}
           class="rounded border border-zinc-700 bg-zinc-800 px-2 py-1 text-xs text-zinc-300 focus:border-indigo-500 focus:outline-none"
@@ -906,6 +938,7 @@
 
       <!-- Ablation mode toggle -->
       <div class="flex items-center gap-2 ml-auto" data-tip="ablation-head-toggle">
+        <span class="text-[10px] text-zinc-500"><Term key="ablation">Knock out</Term> heads:</span>
         <button
           onclick={() => onToggleAblationMode?.(!ablationMode)}
           class={[
@@ -933,17 +966,23 @@
       </div>
     </div>
 
+    {#if allUndefined && focusMode === 'to'}
+      <p class="mb-3 rounded border border-zinc-700 bg-zinc-800/60 px-3 py-1.5 text-xs text-zinc-300" data-testid="to-last-word-notice">
+        {undefinedCellMessage('to')}
+      </p>
+    {/if}
+
     <!-- Ablation results -->
     {#if ablateResponse && ablationMode}
       <div class="mb-4 rounded-lg border border-red-800/50 bg-red-950/20 p-3" data-tour="ablation-results">
-        <h4 class="mb-2 text-xs font-semibold text-red-400">Ablation results</h4>
+        <h4 class="mb-2 text-xs font-semibold text-red-400">Knockout results</h4>
         <div class="grid grid-cols-2 gap-3">
           <div>
             <p class="mb-1 text-[10px] font-medium text-zinc-500">Original top-5</p>
             {#each ablateResponse.original_predictions.slice(0, 5) as pred (pred.rank)}
               <div class="flex items-center gap-2 text-[11px]">
                 <span class="w-5 text-right text-zinc-600">{pred.rank}</span>
-                <span class="flex-1 font-mono text-zinc-300">{pred.token}</span>
+                <span class="flex-1 font-mono text-zinc-300">{displayToken(pred.token)}</span>
                 <span class="tabular-nums text-zinc-500">{(pred.probability * 100).toFixed(1)}%</span>
               </div>
             {/each}
@@ -953,7 +992,7 @@
             {#each ablateResponse.ablated_predictions.slice(0, 5) as pred (pred.rank)}
               <div class="flex items-center gap-2 text-[11px]">
                 <span class="w-5 text-right text-zinc-600">{pred.rank}</span>
-                <span class="flex-1 font-mono text-zinc-300">{pred.token}</span>
+                <span class="flex-1 font-mono text-zinc-300">{displayToken(pred.token)}</span>
                 <span class="tabular-nums text-zinc-500">{(pred.probability * 100).toFixed(1)}%</span>
               </div>
             {/each}
@@ -961,12 +1000,12 @@
         </div>
         {#if ablateResponse.prediction_delta.length > 0}
           <div class="mt-2 border-t border-red-900/30 pt-2">
-            <p class="mb-1 text-[10px] font-medium text-zinc-500">Biggest changes</p>
+            <p class="mb-1 text-[10px] font-medium text-zinc-500">Biggest changes (in percentage points)</p>
             {#each ablateResponse.prediction_delta.slice(0, 5) as d}
               <div class="flex items-center gap-2 text-[11px]">
-                <span class="flex-1 font-mono text-zinc-300">{d.token}</span>
+                <span class="flex-1 font-mono text-zinc-300">{displayToken(d.token)}</span>
                 <span class="tabular-nums" style="color: {d.delta === 0 ? '#a1a1aa' : signedHex(d.delta)};">
-                  {signedNumber(d.delta * 100, 1)}%
+                  {signedNumber(d.delta * 100, 1)} pts
                 </span>
               </div>
             {/each}
@@ -1016,7 +1055,7 @@
             Showing layer {linesHead.layer}, head {linesHead.head}. Set Layer or Head to Auto to let Pry pick.
           {:else if autoHead}
             Showing layer {linesHead.layer}, head {linesHead.head}: the head with the highest "{aggLabel}"
-            score for {focusWord} (the brightest cell in the Expert view). Change the Agg question or pick a head.
+            score for {focusWord} (the brightest cell in the Expert view). Change Score by or pick a head.
           {:else}
             No head has a "{aggLabel}" score for {focusWord}, so this shows layer 0, head 0. Pick a head above.
           {/if}
@@ -1156,10 +1195,10 @@
         <div class="mb-3 flex items-center justify-between">
           <div>
             <span class="text-sm font-semibold text-zinc-200">
-              Layer {expandedLayer} · Head {expandedHead}
+              Layer {expandedLayer}, head {expandedHead}
             </span>
             <span class="ml-2 text-xs text-zinc-500">
-              {tokens.length}×{tokens.length} attention matrix
+              Its whole attention pattern, {tokens.length} words by {tokens.length} words
             </span>
           </div>
           <button
@@ -1182,7 +1221,7 @@
           <canvas bind:this={canvasEl}></canvas>
         </div>
         <div class="mt-3 flex items-center gap-3">
-          <span class="text-[10px] text-zinc-600">Rows = query tokens · Cols = key tokens</span>
+          <span class="text-[10px] text-zinc-600">Rows: the word doing the looking (the <Term key="query-key">query</Term>). Columns: the word looked at (the key).</span>
           <!-- Viridis legend -->
           <div class="ml-auto flex items-center gap-1.5">
             <span class="text-[10px] text-zinc-600">0</span>
@@ -1195,7 +1234,7 @@
       <!-- SVG Overview grid -->
       <div class="relative" data-tour="panel-a-heatmap" data-tip="panel-a-heatmap">
         <p id={gridDescId} class="mb-2 text-[10px] font-medium uppercase tracking-widest text-zinc-500">
-          Layers × Heads — click a cell to expand<span class="sr-only">. Arrow keys move between cells; Enter {ablationMode ? 'knocks the head out or puts it back' : 'opens the head'}.</span>
+          Expert view: layers × heads. Click a cell to open it<span class="sr-only">. Arrow keys move between cells; Enter {ablationMode ? 'knocks the head out or puts it back' : 'opens the head'}.</span>
         </p>
         <div class="overflow-x-auto">
           <svg
@@ -1289,7 +1328,7 @@
 
         <!-- Axis labels -->
         <div class="mt-1 flex items-center gap-3">
-          <span class="text-[10px] text-zinc-600">← Layers (rows) · Heads (cols) →</span>
+          <span class="text-[10px] text-zinc-600">Rows are layers, columns are heads</span>
           <!-- Viridis legend -->
           <div class="ml-auto flex items-center gap-1.5">
             <span class="text-[10px] text-zinc-600">low</span>
@@ -1302,12 +1341,16 @@
         {#if tooltipLayer !== null && tooltipHead !== null}
           {@const tv = rawGrid[tooltipLayer]?.[tooltipHead] ?? null}
           <div
+            bind:this={tooltipEl}
             class="pointer-events-none fixed z-50 rounded border border-zinc-600 bg-zinc-800 px-2.5 py-1.5 text-xs shadow-lg"
-            style="left: {tooltipX + 40}px; top: {tooltipY - 8}px;"
+            style:left="{tooltipPlaced?.left ?? 0}px"
+            style:top="{tooltipPlaced?.top ?? 0}px"
+            style:visibility={tooltipPlaced ? 'visible' : 'hidden'}
+            data-popup="hover"
+            {...placementAttrs(tooltipPlaced, null)}
           >
-            <span class="text-zinc-300">L{tooltipLayer} H{tooltipHead}</span>
-            <span class="mx-1.5 text-zinc-600">·</span>
-            <span class="font-mono text-indigo-300">{tv === null ? nullCellMsg : tv.toFixed(4)}</span>
+            <span class="text-zinc-300">Layer {tooltipLayer}, head {tooltipHead}:</span>
+            <span class="font-mono text-indigo-300">{tv === null ? nullCellMsg : `score ${tv.toFixed(2)} (${aggLabel})`}</span>
           </div>
         {/if}
       </div>

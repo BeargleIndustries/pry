@@ -148,7 +148,7 @@ function otherRuns(entry: NotebookEntry): string {
       .map((c) => `${c.name} (${c.effect.toFixed(2)})`);
     items.push(
       `<li>${escapeHtml(
-        `Swap & Compare (${p.patch_type}): "${p.clean_prompt}" predicts ${quoteToken(p.clean_predicted_token)}; ` +
+        `Swap test (${p.patch_type}): "${p.clean_prompt}" predicts ${quoteToken(p.clean_predicted_token)}; ` +
           `"${p.corrupted_prompt}" predicts ${quoteToken(p.corrupted_predicted_token)}.` +
           (top.length ? ` Parts with the biggest effect when swapped: ${top.join(', ')}.` : ''),
       )}</li>`,

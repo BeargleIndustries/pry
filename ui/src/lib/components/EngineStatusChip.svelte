@@ -124,7 +124,7 @@
         <dt class="text-zinc-500">Model</dt>
         <dd class="truncate text-zinc-200">{model ?? 'None loaded'}</dd>
         <dt class="text-zinc-500">Feature layer</dt>
-        <dd class="text-zinc-200">{h?.sae_layer ?? '—'}</dd>
+        <dd class="text-zinc-200">{h?.sae_layer ?? 'None'}</dd>
         {#if h?.torch}
           <dt class="text-zinc-500">PyTorch</dt>
           <dd class="truncate text-zinc-400">{h.torch}{h.cuda ? ` · CUDA ${h.cuda}` : ''}</dd>

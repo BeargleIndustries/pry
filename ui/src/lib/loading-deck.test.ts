@@ -50,6 +50,14 @@ describe('buildDeck', () => {
     for (const id of Object.keys(LOADING_TIPS)) expect(ids.has(id)).toBe(true);
   });
 
+  // copy:L1. Loading cards show away from their panel, so "this"/"these" point at nothing.
+  it('loading cards do not use deictic openers', () => {
+    const deck = buildDeck({ ...base, random: seeded(1), perKind: 99 });
+    const bodies = deck.flatMap((c) => (c.kind === 'tip' ? [c.body] : []));
+    expect(bodies.length).toBe(Object.keys(LOADING_TIPS).length);
+    for (const body of bodies) expect(body).not.toMatch(/^(this|these|toggle|hit|press)\b/i);
+  });
+
   it('never puts the same kind twice in a row', () => {
     for (let seed = 1; seed < 20; seed++) {
       const deck = buildDeck({ ...base, random: seeded(seed) });

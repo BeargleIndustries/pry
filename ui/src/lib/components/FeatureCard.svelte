@@ -3,6 +3,7 @@
 </script>
 
 <script lang="ts">
+  import Term from './Term.svelte';
   import type { FeatureHit, TokenFeatures, PresetDisplay } from '$lib/types';
   import { neuronpediaUrl as buildNeuronpediaUrl } from '$lib/preset-display';
   import { isNamedFeature, labelDetailOf } from '$lib/feature-label';
@@ -98,7 +99,7 @@
         Neuronpedia
       </button>
     {/if}
-    <span class="ml-auto text-xs font-mono text-zinc-400">act: {hit.activation.toFixed(1)}</span>
+    <span class="ml-auto text-xs font-mono text-zinc-400"><Term key="activation">activation</Term> {hit.activation.toFixed(1)}</span>
   </div>
 
   <!-- A2: Activation sparkline across tokens -->
@@ -118,12 +119,12 @@
         {#each sparklineData as val, i}
           {#if val === null}
             <rect x="{i * colPct}%" y="0" width="{colPct * 0.8}%" height="100%" fill="url(#{hatchId})">
-              <title>token {i}: not in top 5</title>
+              <title>word {i + 1}: not in the top 5</title>
             </rect>
           {:else}
             {@const h = val / sparklineMax}
             <rect x="{i * colPct}%" y="{(1 - h) * 100}%" width="{colPct * 0.8}%" height="{h * 100}%" class="fill-indigo-500/70">
-              <title>token {i}: {val.toFixed(2)}</title>
+              <title>word {i + 1}: activation {val.toFixed(2)}</title>
             </rect>
           {/if}
         {/each}
@@ -133,7 +134,7 @@
           <svg class="h-2 w-3" aria-hidden="true">
             <rect width="100%" height="100%" fill="url(#{hatchId})" />
           </svg>
-          not in top 5 for that token
+          not in the top 5 for that word
         </p>
       {/if}
     </div>
@@ -150,7 +151,7 @@
   {:else}
     <p class="mb-2 text-xs text-zinc-600 italic">
       unnamed feature #{hit.id}
-      {#if snippets.length === 0}— click for activating examples{/if}
+      {#if snippets.length === 0}. Click for examples where it fires.{/if}
     </p>
   {/if}
 

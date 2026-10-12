@@ -1,5 +1,5 @@
 <script lang="ts">
-  // Add a custom HuggingFace model (T32). "Check" asks Pry's engine to fetch
+  // Add a custom Hugging Face model (T32). "Check" asks Pry's engine to fetch
   // the model's settings file, confirm TransformerLens can load it and
   // estimate its size; the verdict uses the same rules as the built-in models.
   import { addCustomModel, evaluateCustomModel, saveHfToken } from '$lib/tauri';
@@ -52,7 +52,7 @@
     const name = hfId.trim();
     reset();
     if (!looksLikeHfId(name)) {
-      error = "That doesn't look like a HuggingFace model name. Names look like 'organization/model-name', for example EleutherAI/pythia-160m-deduped.";
+      error = "That doesn't look like a Hugging Face model name. Names look like 'organization/model-name', for example EleutherAI/pythia-160m-deduped.";
       return;
     }
     checking = true;
@@ -77,7 +77,7 @@
   async function handleSaveToken() {
     const t = token.trim();
     if (!/^hf_[A-Za-z0-9]{20,}$/.test(t)) {
-      error = "That doesn't look like a HuggingFace token (they start with hf_ and are at least 20 characters).";
+      error = "That doesn't look like a Hugging Face token (they start with hf_ and are at least 20 characters).";
       return;
     }
     savingToken = true;
@@ -148,7 +148,7 @@
       aria-labelledby="custom-model-title"
     >
       <h2 id="custom-model-title" class="mb-2 text-base font-semibold text-zinc-100">
-        Add a model from HuggingFace
+        Add a model from Hugging Face
       </h2>
       <p class="mb-4 text-xs text-zinc-400">
         Pry can open other text-generating models that TransformerLens (the library Pry uses to look inside
@@ -173,7 +173,7 @@
 
       <!-- Input -->
       <label for="hf-model-id" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-zinc-500">
-        HuggingFace model name
+        Hugging Face model name
       </label>
       <div class="mb-1.5 flex gap-2">
         <!-- Moving focus into a dialog when it opens is the expected dialog
@@ -240,14 +240,14 @@
       {/if}
       {#if gated}
         <div class="mb-4 rounded-md border border-zinc-800 bg-zinc-950/40 p-3 text-xs text-zinc-400">
-          <p class="mb-1 font-medium text-zinc-300">Give Pry a HuggingFace access token</p>
+          <p class="mb-1 font-medium text-zinc-300">Give Pry a Hugging Face access token</p>
           <ol class="mb-2 list-decimal space-y-0.5 pl-4">
             <li>On huggingface.co, sign in and accept the model's terms on its page.</li>
             <li>Go to Settings → Access Tokens on huggingface.co and create a token with "Read" access.</li>
             <li>Paste it below. Pry keeps it on this computer and restarts its engine to use it.</li>
           </ol>
           <div class="flex gap-2">
-            <label for="hf-token" class="sr-only">HuggingFace access token</label>
+            <label for="hf-token" class="sr-only">Hugging Face access token</label>
             <input
               id="hf-token"
               type="password"

@@ -2,10 +2,22 @@
   import { untrack } from 'svelte';
   import { tutorialState } from '$lib/tutorial/tutorial-store.svelte';
   import type { TourContext, TutorialActions } from '$lib/tutorial/actions';
-  import { tourUi, targetLabels } from '$lib/tutorial/tour-steps';
+  import { LARGE_TARGETS, tourUi, targetLabels } from '$lib/tutorial/tour-steps';
   import Pointer from './Pointer.svelte';
   import { findAnchor } from '$lib/tutorial/anchors';
   import { asyncStepSucceeded, needsModelOffer, TOUR_PRESET_ID } from '$lib/tutorial/step-machine';
+  import { arrowShown, DEFAULT_SHEET_BELOW, placePopup, type Placement, type Point } from '$lib/popup/place';
+  import {
+    clearSheetPadding,
+    focusPoint,
+    placementAttrs,
+    placementChanged,
+    rectOf,
+    scrollAboveSheet,
+    viewportSize,
+    type SheetFit,
+  } from '$lib/popup/measure';
+  import { occupied, OCCUPIED } from '$lib/popup/occupied.svelte';
 
   interface Props {
     generating: boolean;
@@ -112,7 +124,9 @@
       if (!el) return;
       targetMissing = false;
       el.setAttribute('data-tour-active', 'true');
-      el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+      // Instant under the sheet, so the scroll above it (below) isn't undone by an animation.
+      const instant = prefersReducedMotion() || window.innerWidth < DEFAULT_SHEET_BELOW;
+      el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: instant ? 'auto' : 'smooth' });
     };
     find();
     const timer = setInterval(find, 250);
@@ -123,6 +137,80 @@
       pointedEl = null;
     };
   });
+
+  // ---- Card placement (placePopup) ----
+  // Beside the target, inside it for large panels, a bottom sheet in narrow
+  // windows, bottom-right with no target. Measured every frame, but the card
+  // only moves when the result changes: hysteresis keeps the side while it
+  // still fits, so it re-places on step change, resize, a moving target, or
+  // the current side no longer fitting.
+  let placed = $state<Placement | null>(null);
+  let placedFocus = $state<Point | null>(null);
+  /** Bottom sheet: whether the whole target or only its focus point is kept above it. */
+  let sheetFit = $state<SheetFit | null>(null);
+
+  $effect(() => {
+    if (!tutorialState.open) return;
+    const s = step;
+    if (!s) return;
+    let prev: Placement | null = null; // hysteresis is per step
+    let raf = 0;
+    // Bottom sheet: scroll the target above it once per target, size and sheet height.
+    let sheetScrollKey = '';
+    let sheetScrollEl: Element | null = null;
+    const loop = () => {
+      raf = requestAnimationFrame(loop);
+      if (!cardEl) return;
+      const t = pointedEl ? rectOf(pointedEl) : null;
+      const focus = t ? focusPoint(t, s.focus) : null;
+      const next = placePopup({
+        target: t,
+        focus: focus ?? undefined,
+        size: { w: cardEl.offsetWidth, h: cardEl.offsetHeight },
+        viewport: viewportSize(),
+        preferred: s.placement ?? 'bottom',
+        previousSide: prev?.side,
+        previousMode: prev?.mode,
+        avoid: occupied.rects([OCCUPIED.tourCard]),
+        sheetBelow: DEFAULT_SHEET_BELOW,
+        large: s.target !== null && LARGE_TARGETS.includes(s.target),
+      });
+      prev = next;
+      if (next.mode === 'sheet' && pointedEl && t && focus) {
+        const key = `${Math.round(t.height)}|${Math.round(next.top)}`;
+        if (pointedEl !== sheetScrollEl || key !== sheetScrollKey) {
+          sheetScrollEl = pointedEl;
+          sheetScrollKey = key;
+          sheetFit = scrollAboveSheet(pointedEl, focus.y, next.top);
+          return; // measure again next frame
+        }
+      } else if (sheetScrollEl && next.mode !== 'sheet') {
+        clearSheetPadding();
+        sheetScrollEl = null;
+        sheetScrollKey = '';
+        sheetFit = null;
+      }
+      if (placementChanged(placed, next)) {
+        placed = next;
+        placedFocus = focus;
+      }
+    };
+    // Started from a frame callback so the effect itself tracks only the step.
+    raf = requestAnimationFrame(loop);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearSheetPadding();
+    };
+  });
+
+  // The card is an occupied area for every other popup while it's up.
+  $effect(() => {
+    if (!cardEl) return;
+    return occupied.registerElement(OCCUPIED.tourCard, cardEl);
+  });
+
+  /** Arrow shown only when short (rule 6), the sheet included; the ring always shows. */
+  const showArrow = $derived(arrowShown(placed));
 
   function clearHighlights() {
     document
@@ -231,9 +319,11 @@
     tutorialState.goToChapter(index);
   }
 
-  const nextLabel = $derived(
-    isFinal ? tourUi.done : step?.run && !step.run.skipIf?.(ctx) ? step.run.label : tourUi.next,
-  );
+  const nextLabel = $derived.by(() => {
+    if (isFinal) return tourUi.done;
+    if (step?.run && !step.run.skipIf?.(ctx)) return step.run.label;
+    return tourUi.next;
+  });
 
   const asyncHint = $derived.by(() => {
     if (bannerVisible) return null;
@@ -247,17 +337,39 @@
 
 {#if tutorialState.open && step && chapter}
   {#if pointedEl}
-    <Pointer target={pointedEl} from={cardEl} z={49} />
+    <Pointer
+      target={pointedEl}
+      arrowFrom={showArrow ? placed?.arrowFrom : null}
+      arrowTo={showArrow ? placed?.arrowTo : null}
+      focusRing={placed?.mode === 'inset' && !placed.arrowExempt}
+      z={49}
+    />
   {/if}
   <div
     bind:this={cardEl}
-    class="fixed bottom-4 right-4 z-50 w-[400px] max-w-[calc(100vw-2rem)] rounded-lg border border-zinc-700 bg-zinc-900/95 shadow-2xl backdrop-blur"
+    class="pry-tour-card fixed z-50 flex flex-col rounded-lg border border-zinc-700 bg-zinc-900/95 shadow-2xl backdrop-blur {placed?.mode === 'sheet' ? 'max-h-[45vh]' : 'w-[400px] max-w-[calc(100vw-2rem)]'}"
+    style:top="{placed?.top ?? 0}px"
+    style:left="{placed?.left ?? 0}px"
+    style:width={placed?.mode === 'sheet' ? `${placed.width}px` : null}
+    style:visibility={placed ? 'visible' : 'hidden'}
     role="dialog"
     aria-label={tourUi.cardLabel}
     data-testid="tour-card"
+    data-popup="tour"
+    data-step-id={step.id}
+    {...placementAttrs(placed, placedFocus)}
+    data-popup-arrow-shown={String(showArrow)}
+    data-popup-sheet-fit={placed?.mode === 'sheet' ? (sheetFit ?? '') : null}
   >
+    {#if placed?.caretEdge}
+      <span
+        class="pry-card-caret pry-card-caret-{placed.caretEdge}"
+        style:--caret="{placed.caret}px"
+        aria-hidden="true"
+      ></span>
+    {/if}
     <!-- Header -->
-    <div class="flex items-start justify-between gap-2 border-b border-zinc-800 px-4 py-2">
+    <div class="flex flex-shrink-0 items-start justify-between gap-2 border-b border-zinc-800 px-4 py-2">
       <div class="min-w-0">
         <p class="text-[10px] font-semibold uppercase tracking-widest text-indigo-400">
           {tourUi.chapterOf(tutorialState.chapterIndex + 1, chapters.length)} · {tourUi.stepOf(tutorialState.stepIndex + 1, chapter.steps.length)}
@@ -315,7 +427,7 @@
     {/if}
 
     <!-- Body -->
-    <div class="px-4 py-3" aria-live="polite">
+    <div class="min-h-0 flex-1 overflow-y-auto px-4 py-3" aria-live="polite">
       {#if completing}
         <p class="py-4 text-center text-sm text-indigo-300">{tourUi.complete}</p>
       {:else}
@@ -405,7 +517,7 @@
 
     <!-- Footer -->
     {#if !completing}
-      <div class="flex items-center justify-between gap-2 border-t border-zinc-800 px-4 py-2">
+      <div class="flex flex-shrink-0 items-center justify-between gap-2 border-t border-zinc-800 px-4 py-2">
         <button type="button" onclick={handleClose} class="text-[11px] text-zinc-500 hover:text-zinc-300">
           {tourUi.exit}
         </button>
@@ -431,3 +543,25 @@
     {/if}
   </div>
 {/if}
+
+<style>
+  @media (prefers-reduced-motion: no-preference) {
+    .pry-tour-card {
+      transition: top 150ms ease, left 150ms ease;
+    }
+  }
+  /* Caret: a small rotated square on the card edge facing the target. */
+  .pry-card-caret {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: rgb(24 24 27);
+    border: 1px solid rgb(63 63 70); /* zinc-700 */
+    transform: rotate(45deg);
+    pointer-events: none;
+  }
+  .pry-card-caret-top { top: -7px; left: calc(var(--caret) - 6px); border-right: none; border-bottom: none; }
+  .pry-card-caret-bottom { bottom: -7px; left: calc(var(--caret) - 6px); border-left: none; border-top: none; }
+  .pry-card-caret-left { left: -7px; top: calc(var(--caret) - 6px); border-right: none; border-top: none; }
+  .pry-card-caret-right { right: -7px; top: calc(var(--caret) - 6px); border-left: none; border-bottom: none; }
+</style>

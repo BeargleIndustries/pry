@@ -296,6 +296,35 @@ def test_model_info_with_license_gate_roundtrip():
 
 
 # ---------------------------------------------------------------------------
+# DLA / circuit: real_weights_verified and circuit target_token_index
+# ---------------------------------------------------------------------------
+
+
+def test_dla_and_circuit_responses_default_real_weights_verified_true():
+    from pry_sidecar.schemas import CircuitResponse, DLAResponse
+
+    dla = DLAResponse(preset_id="gpt2-small", prompt="Hi")
+    circ = CircuitResponse(preset_id="gpt2-small", prompt="Hi")
+    assert dla.real_weights_verified is True and circ.real_weights_verified is True
+    off = DLAResponse.model_validate_json(
+        DLAResponse(preset_id="g", prompt="Hi", real_weights_verified=False).model_dump_json()
+    )
+    assert off.real_weights_verified is False
+    assert CircuitResponse(preset_id="g", prompt="Hi", real_weights_verified=False).model_dump()[
+        "real_weights_verified"
+    ] is False
+
+
+def test_circuit_request_target_token_index():
+    from pry_sidecar.schemas import CircuitRequest
+
+    assert CircuitRequest(prompt="Hi").target_token_index is None
+    assert CircuitRequest(prompt="Hi", target_token_index=2).target_token_index == 2
+    with pytest.raises(ValidationError):
+        CircuitRequest(prompt="Hi", target_token_index=-1)
+
+
+# ---------------------------------------------------------------------------
 # Module import smoke tests
 # ---------------------------------------------------------------------------
 

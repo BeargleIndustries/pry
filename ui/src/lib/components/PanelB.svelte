@@ -4,6 +4,7 @@
   import FeatureCard from './FeatureCard.svelte';
   import Readout from './Readout.svelte';
   import { featuresReadout } from '$lib/readouts';
+  import { signedHex, signedNumber } from '$lib/signed-color';
 
   interface Props {
     response: GenerateResponse | null;
@@ -47,6 +48,15 @@
   function isFeatureAblated(featureIndex: number): boolean {
     return featureAblations.some((a) => a.feature_index === featureIndex);
   }
+
+  // A failed layer switch leaves the layer unchanged, so the select's `value`
+  // prop doesn't change either and the menu would keep showing the layer that
+  // failed. Put it back once the switch is over.
+  let layerSelect = $state<HTMLSelectElement | null>(null);
+  $effect(() => {
+    const layer = currentSaeLayer ?? response?.sae_layer_used;
+    if (!layerSwitching && layerSelect && layer !== undefined) layerSelect.value = String(layer);
+  });
 
   // Default focus to last token when response arrives and no external focus set
   let internalFocusIndex = $state<number | null>(null);
@@ -107,12 +117,13 @@
   <!-- Panel header -->
   <div class="flex items-baseline gap-2">
     <h2 class="text-sm font-semibold text-zinc-100"><Term key="feature">Features</Term></h2>
-    <span class="text-xs text-zinc-600">Concepts that lit up (<Term key="sae">SAE</Term>)</span>
+    <span class="text-xs text-zinc-600">Concepts that lit up, from the feature dictionary (<Term key="sae">SAE</Term>)</span>
     {#if response}
       {#if availableSaeLayers.length > 1}
         <div class="ml-auto flex items-center gap-1.5" data-tip="panel-b-layer-selector" data-tour="panel-b-layer-selector">
           <span class="text-[10px] uppercase tracking-widest text-zinc-600">Layer</span>
           <select
+            bind:this={layerSelect}
             value={currentSaeLayer ?? response.sae_layer_used}
             onchange={(e) => {
               const val = parseInt((e.target as HTMLSelectElement).value, 10);
@@ -137,6 +148,7 @@
 
       <!-- Ablation mode toggle -->
       <div class="flex items-center gap-2" data-tip="ablation-feature-toggle">
+        <span class="text-[10px] text-zinc-500"><Term key="ablation">Knock out</Term> features:</span>
         <button
           onclick={() => onToggleAblationMode?.(!ablationMode)}
           class={[
@@ -170,14 +182,14 @@
   <!-- Ablation results -->
   {#if ablateResponse && ablationMode}
     <div class="rounded-lg border border-red-800/50 bg-red-950/20 p-3">
-      <h4 class="mb-2 text-xs font-semibold text-red-400">Feature ablation results</h4>
+      <h4 class="mb-2 text-xs font-semibold text-zinc-300">Knockout results</h4>
       <div class="grid grid-cols-2 gap-3">
         <div>
           <p class="mb-1 text-[10px] font-medium text-zinc-500">Original top-5</p>
           {#each ablateResponse.original_predictions.slice(0, 5) as pred (pred.rank)}
             <div class="flex items-center gap-2 text-[11px]">
               <span class="w-5 text-right text-zinc-600">{pred.rank}</span>
-              <span class="flex-1 font-mono text-zinc-300">{pred.token}</span>
+              <span class="flex-1 font-mono text-zinc-300">{displayToken(pred.token)}</span>
               <span class="tabular-nums text-zinc-500">{(pred.probability * 100).toFixed(1)}%</span>
             </div>
           {/each}
@@ -187,7 +199,7 @@
           {#each ablateResponse.ablated_predictions.slice(0, 5) as pred (pred.rank)}
             <div class="flex items-center gap-2 text-[11px]">
               <span class="w-5 text-right text-zinc-600">{pred.rank}</span>
-              <span class="flex-1 font-mono text-zinc-300">{pred.token}</span>
+              <span class="flex-1 font-mono text-zinc-300">{displayToken(pred.token)}</span>
               <span class="tabular-nums text-zinc-500">{(pred.probability * 100).toFixed(1)}%</span>
             </div>
           {/each}
@@ -195,12 +207,12 @@
       </div>
       {#if ablateResponse.prediction_delta.length > 0}
         <div class="mt-2 border-t border-red-900/30 pt-2">
-          <p class="mb-1 text-[10px] font-medium text-zinc-500">Biggest changes</p>
+          <p class="mb-1 text-[10px] font-medium text-zinc-500">Biggest changes (in percentage points)</p>
           {#each ablateResponse.prediction_delta.slice(0, 5) as d}
             <div class="flex items-center gap-2 text-[11px]">
-              <span class="flex-1 font-mono text-zinc-300">{d.token}</span>
-              <span class="tabular-nums" class:text-red-400={d.delta < 0} class:text-emerald-400={d.delta > 0}>
-                {d.delta > 0 ? '+' : ''}{(d.delta * 100).toFixed(1)}%
+              <span class="flex-1 font-mono text-zinc-300">{displayToken(d.token)}</span>
+              <span class="tabular-nums" style="color: {d.delta === 0 ? '#a1a1aa' : signedHex(d.delta)};">
+                {signedNumber(d.delta * 100, 1)} pts
               </span>
             </div>
           {/each}
@@ -212,18 +224,18 @@
   {#if !response}
     <!-- Empty: no response yet -->
     <div class="flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 py-12">
-      <p class="text-sm text-zinc-600">Run a prompt to see SAE features.</p>
+      <p class="text-sm text-zinc-600">Run a prompt to see the concepts inside.</p>
     </div>
   {:else if response.sae_features.length === 0}
     <!-- Empty: no SAE features in response -->
     <div class="flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 py-12">
-      <p class="text-sm text-zinc-600">No SAE features captured for this run.</p>
+      <p class="text-sm text-zinc-600">No features came back. Press Run again, or pick another layer.</p>
     </div>
   {:else}
     <!-- Token strip -->
     {#if showTokenStrip}
     <div data-tour="panel-b-token-strip" data-tip="panel-b-token-strip">
-      <p class="mb-2 text-xs text-zinc-600">Click a token to inspect its features:</p>
+      <p class="mb-2 text-xs text-zinc-600">Click a word chip to see its features:</p>
       <div class="flex flex-wrap gap-1">
         {#each response.tokens as token}
           {@const isActive = resolvedFocusIndex === token.index}
@@ -268,7 +280,7 @@
                     'mt-2 flex-shrink-0 rounded-full p-1 text-xs transition-colors',
                     isFeatureAblated(hit.id)
                       ? 'bg-red-700 text-white'
-                      : 'border border-zinc-700 text-zinc-500 hover:text-red-400 hover:border-red-600',
+                      : 'border border-zinc-700 text-zinc-500 hover:text-orange-400 hover:border-orange-600',
                   ].join(' ')}
                   title={isFeatureAblated(hit.id) ? 'Remove from ablation' : 'Add to ablation'}
                 >

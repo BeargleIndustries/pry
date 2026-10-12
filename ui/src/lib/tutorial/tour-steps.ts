@@ -26,11 +26,38 @@ export interface StepRun {
   skipIf?(ctx: TourContext): boolean;
 }
 
+export type PopupSide = 'top' | 'bottom' | 'left' | 'right';
+
+/**
+ * Anchors too big for the tour card to sit beside at common window sizes.
+ * Steps that target one of these must declare `focus` (checked in
+ * tour-steps.test.ts), so the card can sit inside the target next to it.
+ */
+export const LARGE_TARGETS: readonly string[] = [
+  'predictions-panel',
+  'patching-panel',
+  'compare-panel',
+  'steering-panel',
+  'panel-a-lines',
+  'panel-a-heatmap',
+  'logit-lens-heatmap',
+  'dla-waterfall',
+  'circuit-graph',
+  'copying-heads-view',
+  'watch-it-write',
+  'panel-b-features-list',
+  'ablation-results',
+];
+
 export interface TourStep {
   id: string;
   blurb: string;
   why: string | null;
   target: string | null;
+  /** Preferred side of the target for the card (placePopup flips it when it doesn't fit). */
+  placement?: PopupSide;
+  /** Point the arrow aims at, as a fraction [fx, fy] of the target rect. Default [0.5, 0.5]. */
+  focus?: [number, number];
   compare?: boolean;
   enter?(ctx: TourContext): void;
   run?: StepRun;
@@ -141,8 +168,8 @@ export const targetLabels: Record<string, string> = {
   'predictions-panel': 'the Predictions tab, right side',
   'panel-a-lines': 'the Attention lines, left side',
   'glossary-term': 'a word with a dotted underline',
-  'panel-a-heatmap': 'the attention grid, left side',
-  'panel-a-agg-selector': 'the Agg menu, above the grid',
+  'panel-a-heatmap': 'Expert view (the grid), left side',
+  'panel-a-agg-selector': 'the Score by menu, above the grid',
   'panel-a-from-selector': 'the FROM and TO buttons, above the grid',
   'copying-heads-view': 'the copying-heads view, left side',
   'watch-it-write': 'Watch it write, under the predictions',
@@ -151,7 +178,7 @@ export const targetLabels: Record<string, string> = {
   'circuit-graph': 'the Key parts map, left side',
   'ablation-head-toggle': 'the Ablation button, above the grid',
   'ablation-results': 'the before and after guesses, left side',
-  'patching-panel': 'the Swap & Compare panel, left side',
+  'patching-panel': 'the Swap test panel, left side',
   'panel-b-features-list': 'the feature list, right side',
   'feature-histogram': 'the little chart under a feature',
   'panel-b-layer-selector': 'the layer menu, top of the Features tab',
@@ -179,59 +206,70 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'basics.welcome',
         target: 'header-help',
+        placement: 'bottom',
         blurb:
           "Welcome to Pry! It's a microscope for a language model. You type a sentence, the model guesses the next word, and Pry shows you what went on inside while it guessed.",
         why:
-          "Inside, a language model is a big stack of layers full of numbers, and it learned to guess the next word by reading a mountain of text, and nobody wrote its rules by hand, so even the people who build these things have to study them the way a biologist studies a cell. That's interpretability: looking inside to see how the answer got made. Pry runs GPT-2 small, a little model researchers know really well, right on your computer. You can hop around with the Chapters button, and the ? button up here gets you back to the tour later.",
+          "Inside, a language model is a big stack of layers full of numbers. Nobody wrote its rules by hand. It learned them by reading a mountain of text, so even the people who build these things have to study them the way a biologist studies a cell. That's interpretability: looking inside to see how the answer got made. Pry runs GPT-2 small, a little model researchers know really well, right on your computer. You can hop around with the Chapters button, and the ? button up here gets you back to the tour later.",
       },
       {
         id: 'basics.prompt',
         target: 'prompt-input',
+        placement: 'bottom',
         enter: (ctx) => ctx.setPrompt(CAT),
         blurb:
           'First, a prompt. I typed "The cat sat on the" into the box. You already know how that one ends, so let\'s see if the model does.',
         why:
-          "The prompt is the text you give the model, and Pry asks one question about it: what word comes next? Starting with a sentence everybody can finish means you know the answer before the model does. If it agrees with you, you get to look inside and see how it got there. If it surprises you, that's even more fun.",
+          "The prompt's the text you give the model, and Pry asks one question about it: what word comes next? Starting with a sentence everybody can finish means you know the answer before the model does. If it agrees with you, you get to look inside and see how it got there. If it surprises you, that's even more fun.",
       },
       {
         id: 'basics.run',
         target: 'run-button',
+        placement: 'bottom',
         enter: (ctx) => ctx.setPrompt(CAT),
         run: runPrompt(CAT),
         blurb:
-          "Next I'll press Run for you. The first Run has to load the model into memory, so it takes a moment. After that it's quick.",
+          "Press Run it and I'll run the prompt for you. The first run has to load the model into memory, so it takes a moment. After that it's quick.",
         why:
           "Behind the window there's a small engine (a Python program) holding the model. Run sends it your prompt, and it sends back everything Pry shows you: the word pieces, where the model looked, which concepts lit up, and its guesses. The model doesn't learn anything from you, and nothing carries over from one Run to the next. Same prompt in, same numbers out.",
       },
       {
         id: 'basics.tokens',
         target: 'token-strip',
+        placement: 'bottom',
+        focus: [0.2, 0.5],
         blurb:
-          "See the chips above the panels? Those are tokens, the word pieces the model reads. A dot means the piece starts with a space. Click a chip to focus on it.",
+          "See the word chips above the panels? Those are tokens, the word pieces the model reads. A dot means the piece starts with a space. Click a chip to focus on it.",
         why:
           "Models don't read letters or whole words. They read tokens, chunks from a fixed list of about 50,000. Common words get one token, and rare words get chopped into a few, kind of like building a model out of standard LEGO bricks. Every chart in Pry is laid out by token, and clicking a chip tells all the panels which word you're asking about. Pry calls that word the focus.",
       },
       {
         id: 'basics.predictions',
         target: 'predictions-panel',
+        placement: 'left',
+        focus: [0.5, 0.2],
         enter: (ctx) => ctx.openRightTab('predictions'),
         blurb:
           "Here are the model's top guesses for the next word, each with its chance. The sentence in the shaded box says the same thing in plain words, and most panels have one.",
         why:
-          "The model doesn't pick one word. It scores every token it knows and turns the scores into chances that add up to 100%, and the bars show the top few. One long bar means it's sure. A few bars about the same length means it's torn. Pry calls the plain-words sentence a readout, and it's built from the same numbers, so you can get the gist without squinting at a chart.",
+          "The model doesn't pick one word. It scores every token it knows and turns the scores into chances that add up to 100%, and the bars show the top few. The top bar always fills the row, so look at the others next to it. Much shorter means it's sure. Similar lengths mean it's torn. The percentages give the exact chance. Pry calls the plain-words sentence a readout, and it's built from the same numbers, so you can get the gist without squinting at a chart.",
       },
       {
         id: 'basics.lines',
         target: 'panel-a-lines',
+        placement: 'right',
+        focus: [0.3, 0.3],
         enter: (ctx) => showAttention(ctx, 'lines'),
         blurb:
-          "Over here is Attention, in the Lines view. Each word on the left draws lines to the earlier words it looked at. Darker line, harder look.",
+          "Over here's Attention, in the Lines view. Each word on the left draws lines to the earlier words it looked at. Brighter, bolder line, harder look.",
         why:
-          "Attention's how a word pulls in information from the words before it. Picture a student glancing back at their notes before writing the next word. A word can look at itself and anything earlier, but never ahead. The model has lots of these lookers running at once, called attention heads, and the Lines view shows you one. On Auto, Pry picks the head that looks hardest from the focused word, and the Layer and Head menus let you pick a different one.",
+          "Attention's how a word pulls in information from the words before it, the way you'd glance back at your notes before writing the next word. A word can look at itself and anything earlier, but never ahead. The model's got lots of these lookers running at once, called attention heads, and the Lines view shows you one. On Auto, Pry picks the head that looks hardest from the focused word, and the Layer and Head menus let you pick a different one.",
       },
       {
         id: 'basics.focus',
         target: 'panel-a-lines',
+        placement: 'right',
+        focus: [0.3, 0.3],
         enter: (ctx) => {
           showAttention(ctx, 'lines');
           focusWord(ctx, 'cat');
@@ -244,10 +282,11 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'basics.glossary',
         target: 'glossary-term',
+        placement: 'bottom',
         blurb:
-          'Spot a word with a dotted underline? Hover over it, or Tab to it, and you get a one-line definition. Attention head, logit and feature all have one.',
+          'Spot a word with a dotted underline? Hover over it, or Tab to it, for a one-line definition. Attention head, token and feature all have one. Next up: the whole grid of heads.',
         why:
-          "Interpretability has a LOT of jargon, and jargon keeps people out. The dotted words are Pry's glossary, with short, plain definitions written for someone who's never seen the term. You'll also get little first-time tips the first time you open each panel. They stay quiet while the tour's running, so they don't talk over it.",
+          "Interpretability's got a LOT of jargon, and jargon keeps people out. The dotted words are Pry's glossary, with short, plain definitions written for someone who's never seen the term. You'll also get little first-time tips the first time you open each panel. They stay quiet while the tour's running, so they don't talk over it. Press Next to keep going.",
       },
     ],
   },
@@ -259,36 +298,42 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'attention.grid',
         target: 'panel-a-heatmap',
+        placement: 'right',
+        focus: [0.5, 0.4],
         enter: (ctx) => showAttention(ctx, 'expert'),
         blurb:
-          "Now the Expert view, a grid with every attention head in it: 12 layers top to bottom, 12 heads across. Each square's one head.",
+          "Now the Expert view (the grid), with every attention head in it: 12 layers top to bottom, 12 heads across. Each square's one head.",
         why:
-          "GPT-2 small has 12 layers with 12 heads each, so 144 little lookers. The Lines view shows you one of them, and the grid shows all of them, each scored for the word you focused. Brighter squares score higher. Click a square to open that head's whole pattern, a table of which word looked at which. Think of a wall of security monitors: you scan the whole wall, then zoom in on the screen where something's going on.",
+          "GPT-2 small's got 12 layers with 12 heads each, so 144 little lookers. The Lines view shows you one of them, and the grid shows all of them, each scored for the word you focused. Brighter squares score higher. Click a square to open that head's whole pattern, a table of which word looked at which. The grid's your wall of security monitors, and a head's pattern is the one screen you zoom in on when something's going on.",
       },
       {
         id: 'attention.agg',
         target: 'panel-a-agg-selector',
+        placement: 'bottom',
         enter: (ctx) => {
           showAttention(ctx, 'expert');
           ctx.setPanelAAggregation('previous');
         },
         blurb:
-          "Same numbers, new question. I switched the Agg menu from Strongest look to Previous word, so the bright squares are now heads that mostly look one word back.",
+          "Same numbers, new question. I switched the Score by menu from Strongest look to Previous word, so the bright squares are now heads that mostly look one word back.",
         why:
-          "Each square has to squish a whole pattern down to one number, and the Agg menu picks how. Strongest look scores how hard the head locked onto a single earlier word. Spread scores whether it stuck to one word or scattered across lots of them. Looks back is how far back it reached, and Previous word is how much went to the word just before. A handful of heads light up bright on Previous word, since keeping track of the last word is one of the simplest jobs researchers have caught these models doing.",
+          "Each square has to squish a whole pattern down to one number, and the Score by menu picks how. Strongest look scores how hard the head locked onto a single earlier word. Spread scores whether it stuck to one word or scattered across lots of them. Looks back is how far back it reached, and Previous word is how much went to the word just before. A handful of heads light up bright on Previous word, since keeping track of the last word is one of the simplest jobs researchers have caught these models doing.",
       },
       {
         id: 'attention.from-to',
         target: 'panel-a-from-selector',
+        placement: 'bottom',
         enter: (ctx) => showAttention(ctx, 'expert'),
         blurb:
           'FROM and TO flip the question around. FROM asks where this word looked. TO asks which later words looked back at it.',
         why:
-          "Attention has two ends, the word doing the looking and the word getting looked at. FROM asks about the first one and TO asks about the second. TO also gets an option called Average received, which is how much attention this word got, on average, from the words after it. A word that gets lots of attention is one the model keeps checking back on, like the main character everybody in a story keeps talking about.",
+          "Attention's got two ends, the word doing the looking and the word getting looked at. FROM asks about the first one and TO asks about the second. TO also gets an option called Average received, which is how much attention this word got, on average, from the words after it. A word that gets lots of attention is one the model keeps checking back on, like the main character everybody in a story keeps talking about.",
       },
       {
         id: 'attention.copying',
         target: 'copying-heads-view',
+        placement: 'right',
+        focus: [0.5, 0.3],
         enter: (ctx) => {
           ctx.setHeadAblation(false);
           ctx.openLeftTab('attention');
@@ -297,7 +342,7 @@ export const tourChapters: TourChapter[] = [
         blurb:
           'Time for a famous experiment! Pry feeds the model some random word pieces, then repeats them, and rings the heads that copy "what came next last time".',
         why:
-          "A model can't guess random words. The second time the same random words come around, though, it can, as long as it remembers what followed each one the first time. Copying heads (researchers call them induction heads) handle exactly that: spot a repeat, look at what came after it last time, copy it forward. They often team up with previous-word heads, which get their own ring. Researchers at Anthropic wrote them up in 2021 and 2022, and they're still one of the best-understood tricks these models have. Press \"Back to your prompt\" to leave this view.",
+          "A model can't guess random words. The second time the same random words come around, though, it can, as long as it remembers what followed each one the first time. Copying heads (researchers call them induction heads) handle exactly that: spot a repeat, look at what came after it last time, copy it forward. They often team up with previous-word heads, which get their own ring. Researchers at Anthropic wrote them up in 2021 and 2022, and they're still one of the best-understood tricks these models have. Press \"Back to your prompt\" to leave this view. Next up: what the model guesses.",
       },
     ],
   },
@@ -309,16 +354,19 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'guesses.run',
         target: 'run-button',
+        placement: 'bottom',
         enter: (ctx) => ctx.setPrompt(JORDAN),
         run: runPrompt(JORDAN),
         blurb:
-          'New prompt: "Michael Jordan played the sport of". To get this one right, the model needs a fact it picked up from its training text. Running it now.',
+          'New prompt: "Michael Jordan played the sport of". To get this one right, the model needs a fact it picked up from its training text. Press Run it to send it.',
         why:
           "The cat sentence mostly takes habit and grammar. This one takes knowledge, since to say basketball the model has to have stored something about Michael Jordan. Fact recall makes a good test case because it raises a big question: where, in all those numbers, does a fact live? The next few steps give you two ways to watch the answer form.",
       },
       {
         id: 'guesses.predictions',
         target: 'predictions-panel',
+        placement: 'left',
+        focus: [0.5, 0.2],
         enter: (ctx) => ctx.openRightTab('predictions'),
         blurb:
           'Did basketball make the top spot? The readout gives you its chance in plain words, and a "confident" tag shows up when the top guess has better than even odds.',
@@ -328,20 +376,24 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'guesses.write',
         target: 'watch-it-write',
+        placement: 'left',
+        focus: [0.5, 0.3],
         enter: (ctx) => ctx.openRightTab('predictions'),
         blurb:
-          'Down here is Watch it write. Press Write it and the model keeps going one word at a time, showing the word it picked and the runner-up at each step.',
+          'Down here\'s Watch it write. Press Write it and the model keeps going one word at a time, showing the word it picked and the runner-up at each step.',
         why:
-          "A model writes by guessing a word, sticking it on the end, and guessing again, like laying track in front of a moving train. Temperature's how adventurous it gets. At 0 it always takes the top guess. Turn it up and it rolls weighted dice, so less likely words get a shot. Above 0 there's a checkbox to reuse the same random draws, so you can change one setting and compare fairly.",
+          "A model writes by guessing a word, sticking it on the end, and guessing again, like laying track in front of a moving train. Temperature's how adventurous it gets. At 0 it always takes the top guess. Turn it up and it rolls weighted dice, so less likely words get a shot. After one write above 0, a checkbox appears that reuses the same random draws, so you can change one setting and compare fairly.",
       },
       {
         id: 'guesses.lens',
         target: 'logit-lens-heatmap',
+        placement: 'right',
+        focus: [0.5, 0.5],
         enter: (ctx) => ctx.openLeftTab('logit-lens'),
         blurb:
-          "Over on the left, the Logit Lens. Each row is a layer, and it shows what the model would guess if you stopped it there. Look for the row where basketball shows up.",
+          "Over on the left, the Logit Lens. Each row's a layer, and it shows what the model would guess if you stopped it there. Look for the row where basketball shows up.",
         why:
-          "The model builds its answer bit by bit as the text moves up through the layers. The logit lens grabs the half-built answer at each layer and asks: if you had to answer right now, what would you say? Early layers usually guess something generic. Somewhere along the way the right answer shows up and gets stronger, and the readout tells you which layer it first takes the lead in. It's an approximation, since the middle layers weren't built to be read this way.",
+          "The model builds its answer bit by bit as the text moves up through the layers. The logit lens grabs the half-built answer at each layer and asks: if you had to answer right now, what would you say? Early layers usually guess something generic. Somewhere along the way the right answer shows up and gets stronger, and the readout tells you which layer it first takes the lead in. It's an approximation, since the middle layers weren't built to be read this way. Next up: which parts of the model get the credit.",
       },
     ],
   },
@@ -353,16 +405,19 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'responsible.run',
         target: 'run-button',
+        placement: 'bottom',
         enter: (ctx) => ctx.setPrompt(IOI),
         run: runPrompt(IOI),
         blurb:
-          'Next up: "When Mary and John went to the store, John gave a drink to". You know it\'s Mary. Let\'s find the parts of the model that know it too.',
+          'Next up: "When Mary and John went to the store, John gave a drink to". You know it\'s Mary. Press Run it, and let\'s find the parts that know it too.',
         why:
           "This one's a classic in interpretability. To say Mary, the model has to notice the two names, notice that John showed up twice, and pick the other one. Researchers traced how GPT-2 small does it and found a whole team of heads working together. It makes a great test, because the answer depends on this exact sentence and not on some phrase the model memorized.",
       },
       {
         id: 'responsible.dla',
         target: 'dla-waterfall',
+        placement: 'right',
+        focus: [0.5, 0.3],
         enter: (ctx) => ctx.openLeftTab('dla'),
         blurb:
           'Why (DLA) hands out credit and blame. Blue bars pushed toward the predicted word and orange bars pushed against it. Bigger bar, bigger push.',
@@ -372,11 +427,13 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'responsible.parts',
         target: 'circuit-graph',
+        placement: 'right',
+        focus: [0.5, 0.4],
         enter: (ctx) => ctx.openLeftTab('circuit'),
         blurb:
           'Key parts maps out the biggest pushers, highest layer on top. The lines between them show one kind of link, which Pry calls the direct value path.',
         why:
-          "Each line measures one specific thing: how much an earlier part's output, once a later head reads it, pushes the predicted word up. That's the direct value path. Other ways parts affect each other (like changing where a head looks) don't get drawn, so a missing line doesn't prove two parts aren't connected. Change the Threshold to show more or fewer parts, and pick a part to list its connections.",
+          "Each line measures one specific thing: how much an earlier part's output, once a later head reads it, pushes the predicted word up. That's the direct value path. Other ways parts affect each other (like changing where a head looks) don't get drawn, so a missing line doesn't prove two parts aren't connected. Change the Threshold and press Find key parts to show more or fewer parts, and pick a part to list its connections. Next up: poking the model to test a guess.",
       },
     ],
   },
@@ -388,6 +445,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'poke.knockout',
         target: 'ablation-head-toggle',
+        placement: 'bottom',
         enter: (ctx) => {
           ctx.hideCopyingHeads();
           ctx.openLeftTab('attention');
@@ -399,26 +457,30 @@ export const tourChapters: TourChapter[] = [
           result: (ctx) => ctx.headAblationResult(),
         },
         blurb:
-          "Looking only gets you suspects, so let's poke something! I picked three heads researchers call name movers: 9.9, 9.6 and 10.0. Next switches them off and runs again.",
+          "Looking only gets you suspects. Time to poke! I picked three name mover heads: layer 9, head 9; layer 9, head 6; and layer 10, head 0. Press Knock them out to switch them off.",
         why:
           "Switching a part off to see what breaks is called ablation, and it's about the oldest trick in science. Pry knocks a head out by setting its output to zero. If the answer falls apart, that head mattered. If the answer holds, either the head didn't matter for this sentence or other parts covered for it. While Ablation is on you can click any square in the grid to add or drop a head, then press Run Ablated.",
       },
       {
         id: 'poke.knockout-result',
         target: 'ablation-results',
+        placement: 'right',
+        focus: [0.5, 0.3],
         enter: (ctx) => {
           ctx.hideCopyingHeads();
           ctx.openLeftTab('attention');
           ctx.setHeadAblation(true);
         },
         blurb:
-          'Compare the normal top five with the knocked-out top five. Did Mary lose ground? Big networks have spare parts, so a small drop still counts as a result.',
+          'Compare Original top-5 with Ablated top-5. Did Mary lose ground? Big networks have spare parts, so a small drop still counts as a result.',
         why:
           "In the original study, when the name movers got switched off, other heads partly took over (the researchers called them backup name movers). Worth remembering: a model can route around damage, so one knockout can make a part look less important than it is. While it's on, the button reads \"Ablation ON\", so press it again when you're done. Until then, the Attention panel sticks to the grid, since that's where you pick heads.",
       },
       {
         id: 'poke.swap',
         target: 'patching-panel',
+        placement: 'right',
+        focus: [0.5, 0.2],
         enter: (ctx) => {
           ctx.setHeadAblation(false);
           ctx.openLeftTab('patching');
@@ -429,18 +491,20 @@ export const tourChapters: TourChapter[] = [
           result: (ctx) => ctx.patchingResult(),
         },
         blurb:
-          'Swap & Compare takes two prompts one word apart, "John gave a drink to" and "Mary gave a drink to", and swaps pieces from one run into the other.',
+          'Swap test takes two prompts one word apart, "John gave a drink to" and "Mary gave a drink to", and swaps pieces between runs. Press Run the swap to start.',
         why:
           "Researchers call this activation patching. Pry runs the original prompt and the changed one, then reruns the changed one while pasting in a single piece of the model's inner state from the original run. If that one swap brings the original answer back, the piece was carrying the information that decides it. Both prompts need the same number of tokens so the pieces line up, and Pry counts them for you. Heads, MLPs and Residual pick which pieces get swapped.",
       },
       {
         id: 'poke.swap-result',
         target: 'patching-panel',
+        placement: 'right',
+        focus: [0.5, 0.5],
         enter: (ctx) => ctx.openLeftTab('patching'),
         blurb:
           "Check out the Residual view, a grid of layers by words. Each square swaps one layer at one word, and the strong squares show where the name that matters is sitting, and when.",
         why:
-          "The residual stream is the model's running notes, a scratchpad every layer reads from and writes to. Swapping it at one word and one layer asks whether the deciding information is sitting in that exact spot. Often it's on the repeated name in the early layers, then it turns up at the last word in later layers, where the answer gets written. You're watching information move through the sentence. Try Heads next to see which single heads matter most.",
+          "The residual stream is the model's running notes, a scratchpad every layer reads from and writes to. Swapping it at one word and one layer asks whether the deciding information is sitting in that exact spot. Often it's on the repeated name in the early layers, then it turns up at the last word in later layers, where the answer gets written. You're watching information move through the sentence. Try Heads next to see which single heads matter most. Next up: the concepts inside the model.",
       },
     ],
   },
@@ -452,16 +516,19 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'concepts.run',
         target: 'run-button',
+        placement: 'bottom',
         enter: (ctx) => ctx.setPrompt(NURSE),
         run: runPrompt(NURSE),
         blurb:
-          'New prompt: "The doctor told the nurse she would". Who\'s "she"? Most people decide without noticing they did. Let\'s see what the model decides, and how.',
+          'New prompt: "The doctor told the nurse she would". Who\'s "she"? Most people decide without noticing they did. Press Run it to see what the model decides.',
         why:
-          "Attention shows where the model looks, and features show what it's thinking about. Pry uses a sparse autoencoder (SAE), a tool that splits the model's inner state at a word into thousands of possible concepts, where only a few are switched on at once. Lots of them match ideas a person can put a name to, and sometimes that includes stereotypes the model soaked up from its training text.",
+          "Attention shows where the model looks, and features show what it's thinking about. Pry uses a feature dictionary (SAE, short for sparse autoencoder), a tool that splits the model's inner state at a word into thousands of possible concepts, where only a few are switched on at once. Lots of them match ideas a person can put a name to, and sometimes that includes stereotypes the model soaked up from its training text.",
       },
       {
         id: 'concepts.features',
         target: 'panel-b-features-list',
+        placement: 'left',
+        focus: [0.5, 0.2],
         enter: (ctx) => {
           ctx.openRightTab('features');
           focusWord(ctx, 'she');
@@ -469,11 +536,12 @@ export const tourChapters: TourChapter[] = [
         blurb:
           'Here are the features that fired on "she", strongest first, each with a label, a strength bar and a Neuronpedia link. See anything about nurses, women or caregiving?',
         why:
-          "A feature is a direction in the model's inner state that tends to mean one thing, and act is how strongly it's on for this word. The labels are auto-generated: another AI read the text each feature fires hardest on and wrote a short description, which Neuronpedia (a public site) publishes. Labels can be vague or flat wrong, so take them as hints. If a gender or job feature fires hard on she here, you're looking at the bias inside the model, not guessing at it from outputs.",
+          "A feature's a direction in the model's inner state that tends to mean one thing, and act is how strongly it's on for this word. The labels are auto-generated: another AI read the text each feature fires hardest on and wrote a short description, which Neuronpedia (a public site) publishes. Labels can be vague or flat wrong, so take them as hints. If a gender or job feature fires hard on she here, you're looking at the bias inside the model, not guessing at it from outputs.",
       },
       {
         id: 'concepts.history',
         target: 'feature-histogram',
+        placement: 'left',
         enter: (ctx) => ctx.openRightTab('features'),
         blurb:
           "Under each feature there's a tiny chart across your words, showing how hard it fired on each one. A hatched bar means it wasn't in that word's top five.",
@@ -483,6 +551,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'concepts.layer',
         target: 'panel-b-layer-selector',
+        placement: 'bottom',
         enter: (ctx) => ctx.openRightTab('features'),
         run: {
           label: 'Switch to layer 2',
@@ -491,36 +560,40 @@ export const tourChapters: TourChapter[] = [
           result: (ctx) => ctx.response(),
         },
         blurb:
-          'Features live at every depth, and GPT-2 small starts you at layer 8. Next switches to layer 2, near the bottom, so you can see the features change for the same word.',
+          'Features live at every depth, and GPT-2 small starts you at layer 8. Press Switch to layer 2 to jump near the bottom and watch the features change for the same word.',
         why:
-          "Early layers tend to pick up surface stuff like spelling, word shape and grammar. Later layers pick up meaning: roles, topics, who's who. Kind of like reading a page for the letters first, then the sentences, then the story. Each layer has its own feature dictionary, so switching loads a new one and reruns your prompt, which takes a few seconds. So when you ask what fired, it's worth asking at what depth, too.",
+          "Early layers tend to pick up surface stuff like spelling, word shape and grammar. Later layers pick up meaning: roles, topics, who's who. Kind of like reading a page for the letters first, then the sentences, then the story. Each layer's got its own feature dictionary, so switching loads a new one and reruns your prompt, which takes a few seconds. So when you ask what fired, it's worth asking at what depth, too.",
       },
       {
         id: 'concepts.knockout',
         target: 'ablation-feature-toggle',
+        placement: 'left',
         enter: (ctx) => ctx.openRightTab('features'),
         blurb:
-          'You can knock out features too. Turn on Ablation here, tick the features to switch off, and press Run Ablated. If the guesses shift, those features mattered.',
+          'You can knock out features too. Turn on Ablation here, click the round x next to each feature you want to switch off, and press Run Ablated. If the guesses shift, those features mattered.',
         why:
           "A feature firing shows it's there. Switching it off tests whether it matters. If removing a caregiving feature changes what the model guesses after she, that's evidence the feature takes part in the decision instead of just tagging along. If nothing changes, it was along for the ride, or other features covered for it. Same logic as knocking out heads, one level up.",
       },
       {
         id: 'concepts.steer',
         target: 'steering-panel',
+        placement: 'left',
+        focus: [0.5, 0.2],
         enter: (ctx) => ctx.openRightTab('steering'),
         blurb:
-          'Steering is a volume knob for a concept. Pick a feature, drag the strength, press Run Steered, and compare the original and steered text side by side.',
+          'Steering\'s a volume knob for a concept. Pick a feature, drag the strength, press Run Steered, and compare the original and steered text side by side.',
         why:
           "Knockouts switch things off. Steering pushes a feature harder, or pushes it negative. If cranking up a feature labeled formal language makes the writing more formal, that's causal evidence the label's right, and if nothing changes, the label might be off. Pry shows only the words the model added and highlights the ones that changed. Push too hard and the text turns to mush (which is its own kind of lesson).",
       },
       {
         id: 'concepts.find',
         target: 'concept-search',
+        placement: 'left',
         enter: (ctx) => ctx.openRightTab('steering'),
         blurb:
           'Want a concept that isn\'t in your prompt? Type it into Find a concept, like "the ocean", and Pry searches Neuronpedia for matching features to steer with.',
         why:
-          "Search ranks feature labels by how close their words are to yours, so there's always a top result, even when nothing really fits. Another AI wrote the labels, so check a match makes sense before you trust it. Privacy note: searching sends the words you type, plus which model and layer you're on, to Neuronpedia, a public website. That's all it sends. The tour won't search for you, so it's your call.",
+          "Search ranks feature labels by how close their words are to yours, so there's always a top result, even when nothing really fits. Another AI wrote the labels, so check a match makes sense before you trust it. Privacy note: searching sends the words you type, plus which model and layer you're on, to Neuronpedia, a public website. That's all it sends. The tour won't search for you, so it's your call. Next up: comparing two prompts.",
       },
     ],
   },
@@ -532,6 +605,8 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'compare.run',
         target: 'compare-panel',
+        placement: 'top',
+        focus: [0.5, 0.25],
         compare: true,
         enter: (ctx) => ctx.setComparePrompts(COMPARE_A, COMPARE_B),
         run: {
@@ -544,18 +619,20 @@ export const tourChapters: TourChapter[] = [
           result: (ctx) => (ctx.compareResult() as { a?: unknown } | null)?.a ?? null,
         },
         blurb:
-          'Compare mode runs two prompts side by side: "The doctor said that" and "The nurse said that". One word different. What changes inside?',
+          'Compare mode runs two prompts side by side: "The doctor said that" and "The nurse said that". One word different. Press Compare them to run both.',
         why:
           "Scientists love a controlled experiment: change one thing, keep everything else the same, and study the difference. Compare mode does that for prompts. It shows which next words gained or lost chance, which features show up for only one prompt, and how differently each attention head looks from the word you pick.",
       },
       {
         id: 'compare.read',
         target: 'compare-panel',
+        placement: 'top',
+        focus: [0.5, 0.25],
         compare: true,
         blurb:
           'Check the next-word changes. Did "he" or "she" move? Keep in mind a difference shows what changed along with the word. It doesn\'t prove what caused what.',
         why:
-          "Compare shows correlation, and correlation isn't causation. If a feature only shows up for nurse, it travels with that word in these two prompts, and that's all you know so far. To test whether it causes a different guess, grab the poking tools: knock it out, steer it, or swap it with Swap & Compare. The Compare button in the header takes you back to the single-prompt view.",
+          "Compare shows correlation, and correlation isn't causation. If a feature only shows up for nurse, it travels with that word in these two prompts, and that's all you know so far. To test whether it causes a different guess, grab the poking tools: knock it out, steer it, or swap it with Swap test. The Compare button in the header takes you back to the single-prompt view. Next up: your lab.",
       },
     ],
   },
@@ -567,6 +644,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'lab.experiments',
         target: 'experiments-button',
+        placement: 'bottom',
         blurb:
           'Experiments opens eight guided experiments, like "Who gets the drink?" and "Can it count years?". Each one sets everything up and tells you what to look for.',
         why:
@@ -575,6 +653,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'lab.notebook',
         target: 'notebook-button',
+        placement: 'bottom',
         blurb:
           "Found something cool? The bookmark button saves this run to your lab notebook with a note, and Notebook opens everything you've saved.",
         why:
@@ -583,10 +662,11 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'lab.export',
         target: 'export-button',
+        placement: 'bottom',
         blurb:
           "The download button saves this run's raw numbers as a JSON file, through a normal Save dialog. Handy if you want to dig in with your own code.",
         why:
-          "Everything Pry draws comes from numbers, and you can have them. The export holds the run plus any extra analysis you did on it: Logit Lens, Why (DLA), knockouts, steering, Swap & Compare and Key parts. JSON is a plain text format that pretty much every programming language can read, so it's an easy way to get your results into your own notebooks and scripts.",
+          "Everything Pry draws comes from numbers, and you can have them. The export holds the run plus any extra analysis you did on it: Logit Lens, Why (DLA), knockouts, steering, Swap test and Key parts. JSON's a plain text format that almost every programming language can read, so it's an easy way to get your results into your own notebooks and scripts. Next up: switching models and checking on the engine.",
       },
     ],
   },
@@ -598,6 +678,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'models.switcher',
         target: 'model-switcher',
+        placement: 'bottom',
         blurb:
           "This menu switches models, and each one gets a badge for how well it fits your computer. Gemma 2 2B needs a graphics card. The tour sticks with GPT-2 small.",
         why:
@@ -606,6 +687,7 @@ export const tourChapters: TourChapter[] = [
       {
         id: 'models.engine',
         target: 'engine-chip',
+        placement: 'bottom',
         blurb:
           "This chip shows the engine: whether it's running on your graphics card (GPU) or main processor (CPU), and which model's loaded. Click it for details and a Restart button.",
         why:
@@ -613,11 +695,12 @@ export const tourChapters: TourChapter[] = [
       },
       {
         id: 'models.done',
-        target: 'header-help',
+        target: 'experiments-button',
+        placement: 'bottom',
         blurb:
-          "You made it through the tour! The ? button gets you back anytime, to start over, pick up where you left off, or jump to a chapter. Settings can restart it too.",
+          "You made it through the tour! Next up: press Experiments, top right, and pick one of eight guided experiments. The ? button brings the tour back anytime.",
         why:
-          "Pretty much every tool here follows the scientific method: look at something, guess what it means, then poke it to test the guess. In Pry, you look with attention and features, and you poke with knockouts, steering and swaps. Try your own prompts, and try saying the same idea a different way to see if the same parts light up. If a pattern holds up through that, you've probably found something real.",
+          "Pretty much every tool here follows the scientific method: look at something, guess what it means, then poke it to test the guess. In Pry, you look with attention and features, and you poke with knockouts, steering and swaps. Try your own prompts, and try saying the same idea a different way to see if the same parts light up. If a pattern holds up through that, you've probably found something real. The ? button lets you start over, pick up where you left off, or jump to a chapter.",
       },
     ],
   },

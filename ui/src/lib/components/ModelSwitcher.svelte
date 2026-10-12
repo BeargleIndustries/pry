@@ -115,7 +115,7 @@
         </button>
       {/each}
       {#if loadable.length === 0}
-        <div class="px-3 py-2 text-xs text-zinc-500">No compatible presets.</div>
+        <div class="px-3 py-2 text-xs text-zinc-500">No models fit this computer yet.</div>
       {/if}
     </div>
   {/if}

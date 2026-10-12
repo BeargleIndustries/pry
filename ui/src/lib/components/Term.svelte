@@ -3,13 +3,17 @@
   shows its plain-language definition from $lib/glossary; Escape hides it.
   The definition is always in the DOM (hidden when closed) and linked with
   aria-describedby, so screen readers read it on focus. The tooltip uses
-  position: fixed, so panels with overflow don't clip it; it flips above the
-  word near the bottom of the window and is clamped to the window's sides.
+  position: fixed, so panels with overflow don't clip it; placePopup puts it
+  below the word, flips it above near the bottom of the window, keeps it inside
+  the window and off occupied areas (the experiment guide, the update banner).
   It never takes focus. z-[70] sits above FirstTimeTip (z-60) and dialogs (z-50).
 -->
 <script lang="ts">
-  import type { Snippet } from 'svelte';
+  import { untrack, type Snippet } from 'svelte';
   import { lookupTerm } from '$lib/glossary';
+  import { placePopup, type Placement } from '$lib/popup/place';
+  import { placementAttrs, viewportSize } from '$lib/popup/measure';
+  import { occupied } from '$lib/popup/occupied.svelte';
 
   interface Props {
     /** Glossary key or alias, e.g. "attention-head" or "head". */
@@ -29,31 +33,37 @@
   const EDGE = 8;
 
   let anchor: HTMLSpanElement | null = $state(null);
+  let tipEl: HTMLSpanElement | null = $state(null);
   let hovered = $state(false);
   let focused = $state(false);
   let dismissed = $state(false);
-  let pos = $state<{ left: number; top?: number; bottom?: number; width: number }>({ left: 0, top: 0, width: MAX_W });
+  /** Current placement; null until measured, or when there's nowhere to put it. */
+  let pos = $state<Placement | null>(null);
 
   const open = $derived(entry !== null && (hovered || focused) && !dismissed);
 
   function place() {
-    if (!anchor) return;
+    if (!anchor || !tipEl) return;
     const r = anchor.getBoundingClientRect();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const width = Math.min(MAX_W, vw - EDGE * 2);
-    const left = Math.max(EDGE, Math.min(r.left, vw - width - EDGE));
-    pos =
-      r.bottom + GAP + EST_H > vh && r.top - GAP - EST_H > 0
-        ? { left, bottom: vh - r.top + GAP, width }
-        : { left, top: r.bottom + GAP, width };
+    const next = placePopup({
+      target: r.width || r.height ? r : null,
+      size: { w: tipEl.offsetWidth || MAX_W, h: tipEl.offsetHeight || EST_H },
+      viewport: viewportSize(),
+      preferred: 'bottom',
+      previousSide: pos?.side,
+      previousMode: pos?.mode,
+      gap: GAP,
+      edgePad: EDGE,
+      avoid: occupied.rects(),
+    });
+    // A glossary tooltip is never shown without its word on screen.
+    pos = next.mode === 'fallback' ? null : next;
   }
 
   function show(kind: 'hover' | 'focus') {
     dismissed = false;
     if (kind === 'hover') hovered = true;
     else focused = true;
-    place();
   }
 
   function onKeydown(e: KeyboardEvent) {
@@ -78,8 +88,14 @@
     };
   }
 
+  // Place once the tooltip is laid out (it has to be visible to measure), then
+  // follow scrolling and resizing while it's open.
   $effect(() => {
-    if (!open) return;
+    if (!open || !tipEl) {
+      pos = null;
+      return;
+    }
+    untrack(place);
     const onMove = () => place();
     window.addEventListener('scroll', onMove, true);
     window.addEventListener('resize', onMove);
@@ -105,13 +121,16 @@
     {@attach listeners}
     role="term"
   >{#if children}{@render children()}{:else}{entry.term}{/if}</span><span
+    bind:this={tipEl}
     id={tipId}
     role="tooltip"
+    data-popup="term"
     class="pointer-events-none fixed z-[70] rounded-md border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-left text-xs font-normal normal-case leading-snug tracking-normal text-zinc-200 shadow-xl {open ? 'block' : 'hidden'}"
-    style:left="{pos.left}px"
-    style:top={pos.top !== undefined ? `${pos.top}px` : null}
-    style:bottom={pos.bottom !== undefined ? `${pos.bottom}px` : null}
-    style:max-width="{pos.width}px"
+    style:left="{pos?.left ?? 0}px"
+    style:top="{pos?.top ?? 0}px"
+    style:max-width="{Math.min(MAX_W, (typeof window === 'undefined' ? MAX_W + EDGE * 2 : window.innerWidth) - EDGE * 2)}px"
+    style:visibility={pos ? 'visible' : 'hidden'}
+    {...placementAttrs(pos, null)}
   >{entry.definition}</span>
 {:else}
   {#if children}{@render children()}{:else}{key}{/if}

@@ -123,6 +123,12 @@ export interface DLAResponse {
   components: DLAComponent[];
   timing_ms: Record<string, number>;
   status?: string;
+  /**
+   * False only for a post-norm model (Gemma 2) whose numbers haven't been
+   * checked against the real weights yet. Older engines omit it, which means
+   * true; read it with `realWeightsVerified()` from `sidecar.ts`.
+   */
+  real_weights_verified?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -235,6 +241,12 @@ export interface CircuitResponse {
   edge_threshold?: number;
   timing_ms: Record<string, number>;
   status?: string;
+  /**
+   * False only for a post-norm model (Gemma 2) whose numbers haven't been
+   * checked against the real weights yet. Older engines omit it, which means
+   * true; read it with `realWeightsVerified()` from `sidecar.ts`.
+   */
+  real_weights_verified?: boolean;
 }
 
 // ---------------------------------------------------------------------------

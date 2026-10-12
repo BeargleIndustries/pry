@@ -72,14 +72,14 @@ export const glossary: Record<string, GlossaryEntry> = {
   dla: {
     term: 'DLA',
     definition:
-      'Direct logit attribution: an estimate of how much each head or MLP directly pushed the predicted word-piece up or down.',
-    aliases: ['direct logit attribution'],
+      'Direct logit attribution: how much each head or MLP directly pushed the guess up or down. It leaves out help that goes through other parts.',
+    aliases: ['direct logit attribution', 'why (dla)'],
   },
-  'activation-patching': {
-    term: 'activation patching',
+  patching: {
+    term: 'patching',
     definition:
-      "Copying one part's internal state from one prompt's run into another's, to test whether that part causes the difference.",
-    aliases: ['patching', 'swap & compare'],
+      "Copying one part's work from one prompt's run into another's, to test whether that part causes the difference. Pry's Swap test.",
+    aliases: ['activation patching', 'activation-patching', 'swap test'],
   },
   ablation: {
     term: 'ablation',
@@ -90,7 +90,7 @@ export const glossary: Record<string, GlossaryEntry> = {
   sae: {
     term: 'SAE',
     definition:
-      "Sparse autoencoder: a separate tool trained to split a layer's internal state into many features, only a few active at a time.",
+      "Pry's feature dictionary (a sparse autoencoder): a separate tool that splits a layer's inner state into many features, a few on at a time.",
     aliases: ['saes', 'sparse autoencoder', 'feature detector', 'feature dictionary'],
   },
   feature: {
@@ -132,7 +132,7 @@ export const glossary: Record<string, GlossaryEntry> = {
   temperature: {
     term: 'temperature',
     definition:
-      'How much chance goes into picking each next word. At 0 the model always takes its top guess; higher values take more risks.',
+      'How much randomness goes into picking each next word. At 0 the model always takes its top guess; higher values take more risks.',
     aliases: [],
   },
   neuronpedia: {
@@ -152,6 +152,41 @@ export const glossary: Record<string, GlossaryEntry> = {
     definition:
       "The model's last step: turning the final internal state into a score (a logit) for every word-piece it knows.",
     aliases: ['unembed'],
+  },
+  'direct-value-path': {
+    term: 'direct value path',
+    definition:
+      "One part's output fed straight into a later head's values, with nothing in between. Key parts lines show only this kind of link.",
+    aliases: ['value path'],
+  },
+  threshold: {
+    term: 'threshold',
+    definition: "The cutoff: parts that push less than this don't show. Lower it to see more parts.",
+    aliases: ['cutoff'],
+  },
+  'query-key': {
+    term: 'query and key',
+    definition:
+      "The word doing the looking is the query, and the word it's looking at is the key. A head scores every pair.",
+    aliases: ['query', 'queries', 'key', 'keys', 'query/key'],
+  },
+  'name-mover': {
+    term: 'name mover',
+    definition:
+      'A head that copies a name from earlier in the text into the guess. In GPT-2 small, layer 9, head 9 is a well-known one.',
+    aliases: ['name movers', 'name mover head', 'name mover heads'],
+  },
+  seed: {
+    term: 'seed',
+    definition:
+      "The starting number for the random picks when the model writes. Use the same seed and settings and you'll get the same text.",
+    aliases: ['random seed'],
+  },
+  circuit: {
+    term: 'circuit',
+    definition:
+      "The research word for a small set of parts that work together on one job. Pry's Key parts tab shows a simple version.",
+    aliases: ['circuits', 'key parts'],
   },
 };
 

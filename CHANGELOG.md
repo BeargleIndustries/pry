@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.3.8
+
+### New
+- **Experiment guides tell the whole story.** Each guide now keeps the experiment's goal and its prompt in view, says why it matters, shows what researchers found without a click, and ends with what to try next. Back to normal turns off the experiment's knockouts and copying-heads view and closes the guide, and it leaves your prompt alone. While the tour is open, the guide shrinks to its header so the two never overlap.
+- **Popups sit next to what they're about.** Tour cards, tips, glossary words and grid hovers all find a spot beside their target, with a short arrow, instead of covering it. On a big panel the card sits inside the panel, next to the part it means. Every tour step also says where to look.
+- **Clearer tour and tips.** Every step says what to press when it's asking you to do something, and the tips got another plain-words pass. Swap & Compare's now called Swap test (that's the name the guides use).
+- A tip whose target is hidden behind an experiment guide waits until you close the guide, instead of popping up somewhere else.
+
+### Fixed
+- Switching the Features layer could leave the engine with no feature dictionary at all if the switch failed. Now Pry keeps the old layer, shows an error, puts the layer menu back, and Run still works.
+- If you ran a new prompt while an analysis was still working, its results could land on the new prompt. Pry now drops results that belong to an older run.
+- In the attention grid's TO view, each score counted the word's attention to itself. It now counts only the later words that look back at it.
+- Why (DLA) and Key parts gave Gemma 2 2B's heads the wrong size, because they skipped a normalization step that Gemma has and GPT-2 doesn't.
+- The Logit Lens on Gemma 2 2B now caps scores the same way the model does before turning them into chances.
+- After an engine update, Pry reloads your model instead of sitting on an empty engine.
+- Pry won't load two models at once. The model menu's off while a model loads, so a second load can't start on top of the first.
+
 ## 0.3.7
 
 ### New

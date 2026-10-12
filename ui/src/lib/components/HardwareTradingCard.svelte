@@ -49,7 +49,7 @@
     ctx.fillStyle = '#6366F1';
     ctx.font = 'bold 48px system-ui, sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText('Pry — Hardware Card', 60, 90);
+    ctx.fillText('Pry Hardware Card', 60, 90);
 
     // GPU name
     ctx.fillStyle = '#FAFAFA';

@@ -270,7 +270,7 @@ def test_load_gemma_gated_download_names_license_step(monkeypatch):
 def test_gemma_loads_and_features(no_neuronpedia):
     if not os.environ.get("HF_TOKEN"):
         pytest.skip("HF_TOKEN not set (Gemma is gated: accept the license on huggingface.co first)")
-    from conftest import _hf_cached
+    from tests.conftest import _hf_cached
 
     if not _hf_cached("google/gemma-2-2b"):
         pytest.skip("google/gemma-2-2b not in local HF cache")
@@ -301,3 +301,55 @@ def test_gemma_loads_and_features(no_neuronpedia):
                 assert f.activation > 0
     finally:
         REGISTRY.unload(GEMMA)
+
+
+@pytest.mark.inference
+def test_real_gemma_sums(monkeypatch):
+    """code:A1 on the real gemma-2-2b: DLA bars (heads through ln1_post) plus
+    the unattributed bias add up to the pre-soft-cap logit. Skips without
+    the cached weights; reads only the local cache (no token, no network).
+    Once this has passed on a machine with the weights,
+    inference.POST_NORM_VERIFIED can flip to True (record it in the evidence
+    index)."""
+    from tests.conftest import _hf_cached
+
+    if not _hf_cached("google/gemma-2-2b"):
+        pytest.skip("google/gemma-2-2b not in local HF cache")
+
+    import huggingface_hub.constants as hf_constants
+    import torch
+    from transformer_lens import HookedTransformer
+
+    from pry_sidecar.inference import run_dla
+    from pry_sidecar.schemas import DLARequest
+    from tests.tiny_models import dla_bias, loaded_for
+
+    # Cache only: a gated repo can't be re-checked online without a token.
+    monkeypatch.setattr(hf_constants, "HF_HUB_OFFLINE", True)
+    try:
+        import transformers.utils.hub as tf_hub
+
+        monkeypatch.setattr(tf_hub, "_is_offline_mode", True, raising=False)
+    except ImportError:
+        pass
+
+    m = PRESETS[GEMMA].model
+    model = HookedTransformer.from_pretrained(
+        m.tl_name, device="cpu", **({"dtype": m.dtype} if m.dtype else {})
+    )
+    model.cfg.use_attn_result = True
+    loaded = loaded_for(model, GEMMA)
+
+    prompt = "The capital of France is"
+    resp = run_dla(DLARequest(preset_id=GEMMA, prompt=prompt), loaded)
+    t = resp.target_token_index
+    with torch.no_grad():
+        logits, cache = model.run_with_cache(model.to_tokens(prompt))
+    pred = int(logits[0, t].argmax())
+    # Pre-soft-cap logit in float32 (bf16 logits are too coarse).
+    logit = cache["ln_final.hook_normalized"][0, t].float() @ model.W_U[:, pred].float()
+    if getattr(model, "b_U", None) is not None:
+        logit = logit + model.b_U[pred].float()
+    total = sum(c.contribution for c in resp.components) + dla_bias(model, cache, pred, t)
+    print(f"gemma DLA sum={total:.4f} logit={float(logit):.4f}")
+    assert total == pytest.approx(float(logit), rel=2e-2, abs=0.25)

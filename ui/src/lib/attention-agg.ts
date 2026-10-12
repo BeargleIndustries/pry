@@ -16,12 +16,21 @@ export const FROM_OPTIONS: AggOption<FromAgg>[] = [
 ];
 
 export const TO_OPTIONS: AggOption<ToAgg>[] = [
-  { id: 'max', label: 'Strongest' },
+  { id: 'max', label: 'Strongest look' },
   { id: 'mean', label: 'Average received' },
   { id: 'spread', label: 'Spread (one word vs. many)' },
 ];
 
 export const DEFAULT_AGG: Aggregation = 'max';
+
+/** Why a grid square is grey: FROM fails on the first word, TO on the last. */
+export const FIRST_WORD_MSG = 'Not defined for the first word: it can only look at itself.';
+export const LAST_WORD_MSG =
+  'Nothing comes after the last word, so no later word looks back at it. Pick an earlier word.';
+
+export function undefinedCellMessage(mode: 'from' | 'to'): string {
+  return mode === 'to' ? LAST_WORD_MSG : FIRST_WORD_MSG;
+}
 
 export function isValidAgg(mode: 'from' | 'to', agg: string): agg is Aggregation {
   return (mode === 'from' ? FROM_OPTIONS : TO_OPTIONS).some((o) => o.id === agg);
@@ -67,11 +76,15 @@ export function aggregateFrom(matrix: number[][], fi: number, agg: FromAgg): num
   }
 }
 
-/** TO mode: column `fi`, causal queries q >= fi only. */
+/**
+ * TO mode: column `fi`, later queries q > fi only. The word's attention to
+ * itself is left out, so the last word (no later words) gives null.
+ */
 export function aggregateTo(matrix: number[][], fi: number, agg: ToAgg): number | null {
   if (fi < 0 || fi >= matrix.length) return null;
   const col: number[] = [];
-  for (let q = fi; q < matrix.length; q++) col.push(matrix[q]?.[fi] ?? 0);
+  for (let q = fi + 1; q < matrix.length; q++) col.push(matrix[q]?.[fi] ?? 0);
+  if (col.length === 0) return null;
   switch (agg) {
     case 'max': {
       let m = -Infinity;
