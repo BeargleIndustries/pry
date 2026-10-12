@@ -18,6 +18,7 @@
     DEFAULT_AGG,
     isValidAgg,
     aggregateHead,
+    undefinedCellMessage,
     type Aggregation,
   } from '$lib/attention-agg';
   import { attentionReadout, isStartMarker } from '$lib/readouts';
@@ -149,14 +150,14 @@
   // Aggregation helpers
   // ---------------------------------------------------------------------------
 
-  const NOT_DEFINED_MSG = 'Not defined for the first word: it can only look at itself.';
-
   // The sidecar only keeps attention for the first 64 words of long prompts.
   const ATTENTION_LIMIT = 64;
   const truncated = $derived(response?.attention_truncated === true);
   const focusPastLimit = $derived(truncated && effectiveFocusArrayPos >= ATTENTION_LIMIT);
   const nullCellMsg = $derived(
-    focusPastLimit ? `No attention data past the first ${ATTENTION_LIMIT} words.` : NOT_DEFINED_MSG,
+    focusPastLimit
+      ? `No attention data past the first ${ATTENTION_LIMIT} words.`
+      : undefinedCellMessage(focusMode),
   );
 
   const aggOptions = $derived(focusMode === 'from' ? FROM_OPTIONS : TO_OPTIONS);
@@ -185,6 +186,11 @@
     }
     return grid;
   });
+
+  // TO on the last word: every square is grey, so say why above the grid.
+  const allUndefined = $derived(
+    !focusPastLimit && rawGrid.length > 0 && rawGrid.every((row) => row.every((v) => v === null)),
+  );
 
   // Normalize raw grid to [0, 1] over non-null values only
   const normalizedGrid = $derived.by<number[][]>(() => {
@@ -959,6 +965,12 @@
         {/if}
       </div>
     </div>
+
+    {#if allUndefined && focusMode === 'to'}
+      <p class="mb-3 rounded border border-zinc-700 bg-zinc-800/60 px-3 py-1.5 text-xs text-zinc-300" data-testid="to-last-word-notice">
+        {undefinedCellMessage('to')}
+      </p>
+    {/if}
 
     <!-- Ablation results -->
     {#if ablateResponse && ablationMode}
