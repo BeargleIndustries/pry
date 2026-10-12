@@ -55,6 +55,12 @@ export interface PlaceInput {
   avoid?: RectLike[];
   /** Tour card only: viewports narrower than this get the bottom sheet. */
   sheetBelow?: number;
+  /**
+   * Allow narrowing the popup down to this width (its text reflows, so the
+   * height grows to keep the area) when it can't sit beside the target or
+   * next to the focus point at full width. The result's `width` says how wide.
+   */
+  minW?: number;
 }
 
 export interface Placement {
@@ -220,6 +226,27 @@ function dockBottom(left: number, right: number, vp: { w: number; h: number }, p
 // ---------------------------------------------------------------------------
 
 export function placePopup(input: PlaceInput): Placement {
+  const first = placeAtSize(input);
+  if (!input.minW || first.mode !== 'inset') return first;
+  // Crowded (say, a docked guide taking most of a narrow window): a narrower
+  // popup beside the target beats one inside it; failing that, keep the
+  // widest one next to the focus point.
+  let best = placedWell(first) ? first : null;
+  const { w, h } = input.size;
+  for (let nw = w - 20; nw >= input.minW; nw -= 20) {
+    const p = placeAtSize({ ...input, size: { w: nw, h: Math.ceil((h * w) / nw) } });
+    if (p.mode === 'anchored') return p;
+    if (!best && placedWell(p)) best = p;
+  }
+  return best ?? first;
+}
+
+/** Beside the target, or next to the focus point inside it, or a docked/fallback card. */
+function placedWell(p: Placement): boolean {
+  return p.mode !== 'inset' || !p.arrowExempt;
+}
+
+function placeAtSize(input: PlaceInput): Placement {
   const gap = input.gap ?? DEFAULT_GAP;
   const pad = input.edgePad ?? DEFAULT_EDGE_PAD;
   const vp = input.viewport;

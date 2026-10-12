@@ -402,7 +402,12 @@ async function measureTip(tipId: string, target: string, deps: AuditDeps, phase:
         rec.target = t;
         rec.inViewport = true;
         const g = guideRect();
-        const inGuide = !!(g && t && placementFlags(g, vp(), null, null, [{ left: t.left + t.width / 2 - 0.5, top: t.top + t.height / 2 - 0.5, width: 1, height: 1 }]).overlapsAvoid);
+        // The centre of the target's on-screen part (what anchorState probes).
+        const c = t && {
+          x: (Math.max(t.left, 0) + Math.min(t.left + t.width, window.innerWidth)) / 2,
+          y: (Math.max(t.top, 0) + Math.min(t.top + t.height, window.innerHeight)) / 2,
+        };
+        const inGuide = !!(g && c && placementFlags(g, vp(), null, null, [{ left: c.x - 0.5, top: c.y - 0.5, width: 1, height: 1 }]).overlapsAvoid);
         if (phase !== 'guide-open') rec.failures.push('tip waiting outside the guide-open pass');
         else if (!inGuide) rec.failures.push('tip waiting but its target centre is not under the guide');
         rec.pass = rec.failures.length === 0;

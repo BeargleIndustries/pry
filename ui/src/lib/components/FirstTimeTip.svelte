@@ -32,6 +32,8 @@
 
   const TIP_MAX_W = 320; // matches max-w-xs (~20rem)
   const TIP_EST_H = 120;
+  /** Narrowest a tip gets when a docked guide crowds a small window. */
+  const TIP_MIN_W = 220;
 
   let activeTip: TipDef | null = $state(null);
   let position = $state<Placement | null>(null);
@@ -116,10 +118,15 @@
     if (!activeTip || !targetEl) return;
     const t = rectOf(targetEl);
     const focus = t ? focusPoint(t, activeTip.focus) : null;
+    // Size at full width: a tip narrowed last time reports its reflowed height,
+    // so scale it back to the area it would take at TIP_MAX_W.
+    const w = tipEl?.offsetWidth || TIP_MAX_W;
+    const h = tipEl?.offsetHeight || TIP_EST_H;
     const next = placePopup({
       target: t,
       focus: focus ?? undefined,
-      size: { w: tipEl?.offsetWidth || TIP_MAX_W, h: tipEl?.offsetHeight || TIP_EST_H },
+      size: { w: TIP_MAX_W, h: Math.ceil((h * w) / TIP_MAX_W) },
+      minW: TIP_MIN_W,
       viewport: viewportSize(),
       preferred: activeTip.placement,
       previousSide: position?.side,
@@ -378,9 +385,10 @@
     aria-modal="false"
     aria-labelledby={`pry-tip-${activeTip.id}-title`}
     id={`pry-tip-${activeTip.id}`}
-    class="fixed z-[60] max-w-xs rounded-lg border border-indigo-700/60 bg-zinc-900 p-3 shadow-xl"
+    class="fixed z-[60] rounded-lg border border-indigo-700/60 bg-zinc-900 p-3 shadow-xl"
     style:top={`${position.top}px`}
     style:left={`${position.left}px`}
+    style:width={`${position.width}px`}
     data-popup="tip"
     data-tip-id={activeTip.id}
     {...placementAttrs(position, positionFocus)}

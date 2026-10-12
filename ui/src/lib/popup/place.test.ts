@@ -77,6 +77,20 @@ describe('placePopup', () => {
     expect(intersects(boxOf(q), narrow[0])).toBe(false);
   });
 
+  it('› narrows (minW) to sit beside the target when a dock leaves too little room', () => {
+    // 740x700 with a 400px guide down the left: 302px of room on the right.
+    const vp = { w: 740, h: 700 };
+    const guide = rect(16, 64, 400, 620);
+    const target = rect(660, 8, 28, 28); // a header button, top right
+    const full = placePopup({ target, viewport: vp, size: { w: 320, h: 130 }, preferred: 'bottom', avoid: [guide] });
+    expect(full.mode).not.toBe('anchored');
+    const narrow = placePopup({ target, viewport: vp, size: { w: 320, h: 130 }, preferred: 'bottom', avoid: [guide], minW: 220 });
+    expect(narrow.mode).toBe('anchored');
+    expect(narrow.width).toBeLessThan(320);
+    expect(intersects(boxOf(narrow), guide)).toBe(false);
+    expect(narrow.height).toBeGreaterThan(130); // reflowed text is taller
+  });
+
   it('› clamps inside viewport with edgePad', () => {
     const p = placePopup(base({ target: rect(5, 300, 40, 20), preferred: 'bottom' }));
     expect(p.left).toBeGreaterThanOrEqual(12);
