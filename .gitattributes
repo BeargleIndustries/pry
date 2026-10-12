@@ -1,0 +1,3 @@
+# Bundled files whose bytes are hashed or shipped verbatim: keep LF on every checkout.
+src-tauri/resources/*.txt text eol=lf
+sidecar/presets.json text eol=lf
