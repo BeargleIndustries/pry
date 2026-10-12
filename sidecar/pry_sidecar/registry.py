@@ -19,6 +19,15 @@ if TYPE_CHECKING:
 logger = logging.getLogger("pry_sidecar")
 
 
+def _fault_sae_swap_enabled() -> bool:
+    """Dev-only fault switch: make ``swap_sae`` fail on purpose.
+
+    Needs both ``PRY_DEV=1`` and ``PRY_FAULT_SAE_SWAP=1`` so a stray
+    variable on a user's machine can never trigger it.
+    """
+    return os.environ.get("PRY_DEV") == "1" and os.environ.get("PRY_FAULT_SAE_SWAP") == "1"
+
+
 class LicenseGateError(RuntimeError):
     """A gated model (e.g. Gemma) can't be downloaded yet.
 
@@ -354,9 +363,13 @@ class ModelRegistry:
             return loaded
 
     def swap_sae(self, preset_id: str, layer: int, manifest: "PresetManifest") -> LoadedModel:
-        """Unload current SAE, load new SAE at specified layer. Model stays resident.
+        """Load the SAE for ``layer`` and swap it in. Model stays resident.
 
-        Updates loaded.sae, loaded.sae_layer.
+        Updates loaded.sae, loaded.sae_layer. On failure the old SAE and layer
+        stay in place, so the engine keeps working at the old layer. If the
+        old SAE can't be put back either, the preset is dropped from the
+        registry so the next ``/load`` starts clean.
+
         IMPORTANT: This method does NOT acquire the per-preset lock itself.
         Caller (run_sae_features) must hold the lock for the entire operation
         (swap + forward pass + SAE encode) to prevent race conditions with
@@ -366,36 +379,62 @@ class ModelRegistry:
         if loaded is None:
             raise RuntimeError(f"preset {preset_id!r} not loaded")
 
-        import gc
         import torch
         from sae_lens import SAE
 
         sae_id = manifest.sae_id(layer)
-
-        # Free old SAE before loading new one to minimize peak VRAM
         old_sae = loaded.sae
-        loaded.sae = None
-        del old_sae
-        gc.collect()
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
+        old_layer = loaded.sae_layer
 
-        try:
+        def load_new():
+            if _fault_sae_swap_enabled():
+                raise RuntimeError("PRY_FAULT_SAE_SWAP: injected SAE swap failure (dev only)")
             sae_result = SAE.from_pretrained(
                 release=manifest.sae.release,
                 sae_id=sae_id,
                 device=loaded.device,
             )
-            if isinstance(sae_result, tuple):
-                sae = sae_result[0]
-            else:
-                sae = sae_result
+            return sae_result[0] if isinstance(sae_result, tuple) else sae_result
+
+        try:
+            try:
+                # Load the new SAE first, so the old one is still there if this fails.
+                sae = load_new()
+            except torch.cuda.OutOfMemoryError:
+                if old_sae is None or loaded.device != "cuda":
+                    raise
+                # No room for both: park the old SAE on the CPU and retry.
+                loaded.sae = None
+                old_sae.to("cpu")
+                gc.collect()
+                torch.cuda.empty_cache()
+                sae = load_new()
         except Exception as e:
-            # On failure, try to restore original SAE at the old layer
+            # Put the old SAE and layer back so the engine keeps working.
+            try:
+                if old_sae is not None and loaded.sae is None:
+                    old_sae.to(loaded.device)
+                loaded.sae = old_sae
+                loaded.sae_layer = old_layer
+            except Exception as restore_err:
+                logger.error(
+                    "could not restore the layer-%s SAE for %r (%s); dropping the preset",
+                    old_layer, preset_id, restore_err,
+                )
+                with self._meta_lock:
+                    self._loaded.pop(preset_id, None)
+                    if self._last_loaded == preset_id:
+                        self._last_loaded = next(iter(self._loaded), None)
+                loaded.model = None
+                loaded.sae = None
             raise RuntimeError(f"failed to load SAE {manifest.sae.release}@{sae_id}: {e}") from e
 
         loaded.sae = sae
         loaded.sae_layer = layer
+        del old_sae
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
         return loaded
 
     def unload(self, preset_id: str) -> bool:
