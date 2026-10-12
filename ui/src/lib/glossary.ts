@@ -126,7 +126,7 @@ export const glossary: Record<string, GlossaryEntry> = {
   'attention-sink': {
     term: 'start-of-text marker',
     definition:
-      'A special first token. Many heads park their attention on it when nothing else is worth looking at, so it is often bright.',
+      "A special first token. Lots of heads park their attention on it when nothing else is worth looking at, so it's often bright.",
     aliases: ['attention sink', 'start of text', 'bos', 'bos token'],
   },
   temperature: {

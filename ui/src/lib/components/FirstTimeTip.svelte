@@ -51,6 +51,7 @@
   function pickNextTip(): void {
     if (activeTip) return;
     if (tutorialState.open) return;
+    if (document.querySelector('.loading-screen')) return; // wait until the model has loaded
     if (typeof document === 'undefined') return;
     for (const tip of tipsRegistry) {
       if (isTipSeen(tip.id)) continue;
@@ -302,8 +303,8 @@
 
   onMount(() => {
     mutationObserver = new MutationObserver((mutations) => {
-      // Something now covers the active tip's target (loading screen, dialog).
-      if (activeTip && targetEl && !usable(targetEl)) {
+      // Something now covers the active tip's target (dialog), or loading started.
+      if (activeTip && targetEl && (!usable(targetEl) || document.querySelector('.loading-screen'))) {
         release();
         schedulePick();
         return;

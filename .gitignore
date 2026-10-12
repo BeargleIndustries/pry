@@ -75,6 +75,9 @@ ui/.svelte-kit/
 *.exe
 *.msi
 *.nsis
+# Updater outputs (scripts/release.ps1); signatures and the release manifest
+*.sig
+/latest.json
 
 # ── Crash logs ───────────────────────────────────────────────────────────────
 crash-*.log

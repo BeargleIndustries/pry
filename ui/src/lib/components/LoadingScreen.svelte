@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
+  import UpdateCard from './UpdateCard.svelte';
   import { fly } from 'svelte/transition';
   import {
     BookOpen,
@@ -425,6 +426,8 @@
       {#if note}
         <p class="mt-4 border-l-2 border-indigo-500/50 pl-3 text-sm leading-relaxed text-zinc-400">{note}</p>
       {/if}
+
+      <UpdateCard variant="card" />
 
       <!-- card deck -->
       {#if card}

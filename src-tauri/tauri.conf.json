@@ -28,6 +28,7 @@
   "bundle": {
     "active": true,
     "targets": ["nsis"],
+    "createUpdaterArtifacts": true,
     "category": "DeveloperTool",
     "shortDescription": "Pry open the black box",
     "longDescription": "Local-first desktop interpretability tool for small transformer LLMs.",
@@ -63,13 +64,13 @@
   },
   "plugins": {
     "updater": {
-      "_comment": "active=false for v1: Tauri 2 updater requires a signed pubkey. When signing lands post-v1, set active=true and populate pubkey.",
-      "active": false,
-      "dialog": false,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEIwNkRERkY5MzMxNDVBRDgKUldUWVdoUXorZDl0c0ViVlJVTEQxUEpCT3RhZ3c2MGhsMEoyRjVUUklXSDlnMmZiWGYwUXlycGYK",
       "endpoints": [
-        "https://github.com/beargleindustries/pry/releases/latest/download/latest.json"
+        "https://github.com/BeargleIndustries/pry/releases/latest/download/latest.json"
       ],
-      "pubkey": ""
+      "windows": {
+        "installMode": "passive"
+      }
     }
   }
 }

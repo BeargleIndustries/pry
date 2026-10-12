@@ -113,6 +113,24 @@ async fn restart_sidecar_engine(
     Ok(Some(base_url))
 }
 
+/// Stop the sidecar before the app updater runs the installer. On Windows the
+/// updater launches the NSIS installer and calls `std::process::exit`, which
+/// skips `RunEvent::ExitRequested`, so the UI calls this first: the sidecar is
+/// stopped the same way as on exit/restart (crash latch set, `taskkill /T`,
+/// wait for the child) and no python.exe is left holding files. If the
+/// install then fails, the UI calls `restart_sidecar` to bring it back.
+#[tauri::command]
+async fn stop_sidecar_for_update(state: State<'_, SidecarState>) -> Result<(), AppError> {
+    let taken = state.inner().lock().await.take();
+    if let Some(mut h) = taken {
+        tracing::info!("app update: stopping sidecar before install");
+        if let Err(e) = h.shutdown().await {
+            tracing::warn!("app update: sidecar shutdown error: {e}");
+        }
+    }
+    Ok(())
+}
+
 #[tauri::command]
 async fn sidecar_stderr(state: State<'_, SidecarState>) -> Result<Vec<String>, AppError> {
     let arc: &Arc<Mutex<Option<SidecarHandle>>> = state.inner();
@@ -306,10 +324,13 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .invoke_handler(tauri::generate_handler![
             sidecar_url,
             sidecar_connection,
             restart_sidecar,
+            stop_sidecar_for_update,
             sidecar_stderr,
             probe_hardware,
             evaluate_presets,

@@ -71,7 +71,7 @@ export const STAGE_LABELS: Record<string, string> = {
   warmup: 'Starting the math libraries',
   check_files: "Checking the model's files",
   download_model: 'Downloading the model',
-  load_model: "Reading the model's weights",
+  load_model: 'Loading the model into memory',
   to_device: 'Moving it to your GPU',
   download_sae: 'Downloading the feature dictionary',
   load_sae: 'Loading the feature dictionary',

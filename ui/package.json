@@ -13,7 +13,9 @@
     "prepare": "svelte-kit sync || echo \"\""
   },
   "dependencies": {
+    "@tauri-apps/plugin-process": "~2.3.0",
     "@tauri-apps/plugin-shell": "^2.3.5",
+    "@tauri-apps/plugin-updater": "~2.10.0",
     "d3-interpolate": "^3",
     "d3-scale": "^4",
     "lucide-svelte": "^0.460"
