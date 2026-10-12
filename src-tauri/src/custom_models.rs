@@ -79,7 +79,7 @@ fn load_from(path: &Path) -> anyhow::Result<Vec<CustomPreset>> {
 
 fn save_to(path: &Path, models: &[CustomPreset]) -> anyhow::Result<()> {
     let json = serde_json::to_string_pretty(models)?;
-    std::fs::write(path, json)?;
+    crate::bootstrap::layout::write_file_atomic(path, json.as_bytes())?;
     Ok(())
 }
 
