@@ -17,6 +17,7 @@ from typing import Optional
 
 import requests
 
+from .custom_models import is_custom_id
 from .presets import PRESETS, PresetManifest
 from .registry import REGISTRY, LoadedModel, ModelRegistry
 from .schemas import (
@@ -332,14 +333,17 @@ def run_generate(req: GenerateRequest, loaded: LoadedModel) -> GenerateResponse:
     # M3 fix: guard for concurrent unload — unload() nulls model/sae while
     # holding the per-preset lock, so these can be None even on a non-None
     # LoadedModel that was fetched moments ago.
-    if loaded.model is None or loaded.sae is None:
+    # T32: a custom model (custom:<hf_id>) has no manifest and no SAE; it
+    # returns attention + predictions with empty sae_features.
+    manifest = PRESETS.get(req.preset_id)
+    if manifest is None and not is_custom_id(req.preset_id):
+        raise RuntimeError(f"unknown preset: {req.preset_id!r}")
+    has_sae = manifest is not None
+
+    if loaded.model is None or (has_sae and loaded.sae is None):
         raise RuntimeError(
             f"model '{req.preset_id}' was unloaded during inference"
         )
-
-    if req.preset_id not in PRESETS:
-        raise RuntimeError(f"unknown preset: {req.preset_id!r}")
-    manifest = PRESETS[req.preset_id]
 
     # Acquire per-preset lock for the entire inference operation to prevent
     # a concurrent unload from nulling the model mid-inference.
@@ -347,10 +351,13 @@ def run_generate(req: GenerateRequest, loaded: LoadedModel) -> GenerateResponse:
     with lock:
         model = loaded.model
         sae = loaded.sae
-        sae_layer = req.sae_layer if req.sae_layer is not None else loaded.sae_layer
-        if model is None or sae is None:
+        sae_layer = (
+            None if not has_sae
+            else req.sae_layer if req.sae_layer is not None else loaded.sae_layer
+        )
+        if model is None or (has_sae and sae is None):
             raise RuntimeError(f"model '{req.preset_id}' was unloaded during inference")
-        if sae_layer != loaded.sae_layer:
+        if has_sae and sae_layer != loaded.sae_layer:
             # The loaded SAE is trained for loaded.sae_layer only.
             raise ValueError(
                 f"Asked for layer {sae_layer} but the loaded feature map is for "
@@ -363,7 +370,7 @@ def run_generate(req: GenerateRequest, loaded: LoadedModel) -> GenerateResponse:
         tokens = [TokenInfo(index=i, text=str(s)) for i, s in enumerate(token_strs)]
 
         # -- forward pass with cache ----------------------------------------
-        resid_hook_name = sae_hook_name(manifest, sae_layer)
+        resid_hook_name = sae_hook_name(manifest, sae_layer) if has_sae else None
 
         def names_filter(name: str) -> bool:
             return name.endswith("hook_pattern") or name == resid_hook_name
@@ -398,19 +405,23 @@ def run_generate(req: GenerateRequest, loaded: LoadedModel) -> GenerateResponse:
 
         # -- SAE features at the configured layer --------------------------
         sae_start = time.perf_counter()
-        resid = cache[resid_hook_name][0]  # [seq, d_model]
-        # H5 fix: ensure resid is on the SAE's device and matches its expected dtype.
-        # In normal operation both are on the same device, but explicit cast guards
-        # against mixed-placement edge cases and sae_lens dtype expectations (float32).
-        resid = resid.to(device=sae.device, dtype=getattr(sae, "dtype", resid.dtype))
-        with torch.no_grad():
-            feature_acts = sae.encode(resid)  # [seq, d_sae]
-        sae_ms = (time.perf_counter() - sae_start) * 1000
-
         sae_features: list[TokenFeatures] = []
         unique_feature_ids: set[int] = set()
         top_k = max(1, int(req.top_k_features))
-        for token_idx in range(feature_acts.shape[0]):
+        if has_sae:
+            resid = cache[resid_hook_name][0]  # [seq, d_model]
+            # H5 fix: ensure resid is on the SAE's device and matches its expected dtype.
+            # In normal operation both are on the same device, but explicit cast guards
+            # against mixed-placement edge cases and sae_lens dtype expectations (float32).
+            resid = resid.to(device=sae.device, dtype=getattr(sae, "dtype", resid.dtype))
+            with torch.no_grad():
+                feature_acts = sae.encode(resid)  # [seq, d_sae]
+            n_feature_tokens = feature_acts.shape[0]
+        else:
+            n_feature_tokens = 0
+        sae_ms = (time.perf_counter() - sae_start) * 1000
+
+        for token_idx in range(n_feature_tokens):
             top_vals, top_ids = torch.topk(feature_acts[token_idx], top_k)
             hits: list[FeatureHit] = []
             for val, fid in zip(top_vals.tolist(), top_ids.tolist()):
@@ -432,7 +443,7 @@ def run_generate(req: GenerateRequest, loaded: LoadedModel) -> GenerateResponse:
         top_predictions: list[TopPrediction] = []
         try:
             final_logits = _logits[0, -1, :]  # last position logits
-            top_probs = torch.softmax(final_logits, dim=-1)
+            top_probs = torch.softmax(final_logits.float(), dim=-1)
             top_vals, top_ids = torch.topk(top_probs, 10)
             for rank, (prob, tid) in enumerate(
                 zip(top_vals.tolist(), top_ids.tolist()), start=1
@@ -469,8 +480,8 @@ def run_generate(req: GenerateRequest, loaded: LoadedModel) -> GenerateResponse:
     # H2 fix: derive Neuronpedia ids from the preset manifest instead of
     # hardcoding "gpt2-small". Returns None for non-GPT-2 presets so we skip
     # the fetch entirely rather than producing garbage 404 release ids.
-    neuronpedia_model_id = manifest.neuronpedia_model_id
-    neuronpedia_release_id = manifest.neuronpedia_release_id(sae_layer)
+    neuronpedia_model_id = manifest.neuronpedia_model_id if has_sae else None
+    neuronpedia_release_id = manifest.neuronpedia_release_id(sae_layer) if has_sae else None
 
     def _fetch_one(fid: int) -> tuple[int, tuple[Optional[str], str, tuple[str, ...]]]:
         if neuronpedia_model_id is None or neuronpedia_release_id is None:
@@ -692,7 +703,7 @@ def run_logit_lens(req: LogitLensRequest, loaded: LoadedModel) -> LogitLensRespo
 
         # Get final-layer predictions for each position (ground truth to compare)
         lens_start = time.perf_counter()
-        final_probs = torch.softmax(logits[0], dim=-1)  # [seq, vocab]
+        final_probs = torch.softmax(logits[0].float(), dim=-1)  # [seq, vocab]
         final_preds = torch.argmax(final_probs, dim=-1)  # [seq]
 
         # Build grid: [layer][token_pos]
@@ -713,7 +724,7 @@ def run_logit_lens(req: LogitLensRequest, loaded: LoadedModel) -> LogitLensRespo
             layer_logits = normed @ model.W_U  # [seq, vocab]
             if hasattr(model, "b_U") and model.b_U is not None:
                 layer_logits = layer_logits + model.b_U
-            layer_probs = torch.softmax(layer_logits, dim=-1)  # [seq, vocab]
+            layer_probs = torch.softmax(layer_logits.float(), dim=-1)  # [seq, vocab]
             layer_preds = torch.argmax(layer_probs, dim=-1)  # [seq]
 
             row: list[LogitLensCell] = []
@@ -817,7 +828,7 @@ def run_dla(req: DLARequest, loaded: LoadedModel) -> DLAResponse:
                 result = cache[result_key][0]  # [seq, n_heads, d_model]
                 for head_idx in range(n_heads):
                     head_output = result[target_pos, head_idx, :]  # [d_model]
-                    contribution = float((head_output @ unembed_dir).item())
+                    contribution = float((head_output.float() @ unembed_dir).item())
                     components.append(DLAComponent(
                         name=f"L{layer_idx}.H{head_idx}",
                         type="attention",
@@ -830,7 +841,7 @@ def run_dla(req: DLARequest, loaded: LoadedModel) -> DLAResponse:
             mlp_key = f"blocks.{layer_idx}.hook_mlp_out"
             if mlp_key in cache:
                 mlp_output = cache[mlp_key][0, target_pos, :]  # [d_model]
-                contribution = float((mlp_output @ unembed_dir).item())
+                contribution = float((mlp_output.float() @ unembed_dir).item())
                 components.append(DLAComponent(
                     name=f"MLP.{layer_idx}",
                     type="mlp",
@@ -874,7 +885,7 @@ def _extract_top_predictions(model, logits_2d, position: int = -1, k: int = 10) 
     import torch
 
     final_logits = logits_2d[position, :]  # [vocab]
-    probs = torch.softmax(final_logits, dim=-1)
+    probs = torch.softmax(final_logits.float(), dim=-1)
     top_vals, top_ids = torch.topk(probs, k)
     results = []
     for rank, (prob, tid) in enumerate(zip(top_vals.tolist(), top_ids.tolist()), start=1):
@@ -1166,6 +1177,35 @@ def run_ablate_features(req: AblateFeatureRequest, loaded: LoadedModel) -> Ablat
 # ---------------------------------------------------------------------------
 
 
+def _forward_with_fp32_logit(model, tokens, target_pos: int, token_id: int):
+    """Run ``model(tokens)`` (with any hooks already added) and also return the
+    logit of ``token_id`` at ``target_pos`` computed in float32 from the final
+    normalized residual. For bf16 models (Gemma) the model's own logits are
+    rounded to ~0.125 near 20, too coarse for patching's small differences;
+    for fp32 models this equals the model's logit.
+    """
+    import torch
+
+    grabbed = {}
+
+    def grab(x, hook):
+        grabbed["n"] = x[0, target_pos].detach()
+        return x
+
+    with model.hooks(fwd_hooks=[("ln_final.hook_normalized", grab)]):
+        logits = model(tokens)
+    if "n" not in grabbed:  # no final-norm hook (shouldn't happen): fall back
+        return logits, float(logits[0, target_pos, token_id].float().item())
+    value = grabbed["n"].float() @ model.W_U[:, token_id].float()
+    b_U = getattr(model, "b_U", None)
+    if b_U is not None:
+        value = value + b_U[token_id].float()
+    cap = float(getattr(model.cfg, "output_logits_soft_cap", 0.0) or 0.0)
+    if cap > 0:
+        value = cap * torch.tanh(value / cap)
+    return logits, float(value.item())
+
+
 # Residual patching runs one forward pass per (layer, position); ~12 x 50.
 MAX_RESID_PATCH_RUNS = 600
 
@@ -1253,8 +1293,9 @@ def run_patching(req: PatchRequest, loaded: LoadedModel) -> PatchResponse:
         corrupted_predicted_token = model.to_single_str_token(corrupted_pred_id)
 
         # Baseline logit values for the clean prediction token
-        clean_logit_val = float(clean_logits[0, target_pos, clean_pred_id].item())
-        corrupted_logit_val = float(corrupted_logits[0, target_pos, clean_pred_id].item())
+        with torch.no_grad():
+            _, clean_logit_val = _forward_with_fp32_logit(model, clean_tokens, target_pos, clean_pred_id)
+            _, corrupted_logit_val = _forward_with_fp32_logit(model, corrupted_tokens, target_pos, clean_pred_id)
 
         # -- Patch each component --
         patch_start = time.perf_counter()
@@ -1277,10 +1318,9 @@ def run_patching(req: PatchRequest, loaded: LoadedModel) -> PatchResponse:
                     model.add_hook(hook_name, patch_head_hook)
                     try:
                         with torch.no_grad():
-                            patched_logits = model(corrupted_tokens)
+                            _, patched_logit_val = _forward_with_fp32_logit(model, corrupted_tokens, target_pos, clean_pred_id)
                     finally:
                         model.reset_hooks()
-                    patched_logit_val = float(patched_logits[0, target_pos, clean_pred_id].item())
                     effect = patched_logit_val - corrupted_logit_val
 
                     components.append(PatchComponent(
@@ -1308,10 +1348,9 @@ def run_patching(req: PatchRequest, loaded: LoadedModel) -> PatchResponse:
                 model.add_hook(hook_name, patch_mlp_hook)
                 try:
                     with torch.no_grad():
-                        patched_logits = model(corrupted_tokens)
+                        _, patched_logit_val = _forward_with_fp32_logit(model, corrupted_tokens, target_pos, clean_pred_id)
                 finally:
                     model.reset_hooks()
-                patched_logit_val = float(patched_logits[0, target_pos, clean_pred_id].item())
                 effect = patched_logit_val - corrupted_logit_val
 
                 components.append(PatchComponent(
@@ -1359,10 +1398,9 @@ def run_patching(req: PatchRequest, loaded: LoadedModel) -> PatchResponse:
                     model.add_hook(cache_key, patch_resid_hook)
                     try:
                         with torch.no_grad():
-                            patched_logits = model(corrupted_tokens)
+                            _, patched_logit_val = _forward_with_fp32_logit(model, corrupted_tokens, target_pos, clean_pred_id)
                     finally:
                         model.reset_hooks()
-                    patched_logit_val = float(patched_logits[0, target_pos, clean_pred_id].item())
                     effect = patched_logit_val - corrupted_logit_val
 
                     components.append(PatchComponent(
@@ -1619,7 +1657,7 @@ def run_circuit(req: CircuitRequest, loaded: LoadedModel) -> CircuitResponse:
                 result = cache[result_key][0]  # [seq, n_heads, d_model]
                 for head_idx in range(n_heads):
                     head_output = result[target_pos, head_idx, :]
-                    contribution = float((head_output @ unembed_dir).item())
+                    contribution = float((head_output.float() @ unembed_dir).item())
                     cid = f"L{layer_idx}.H{head_idx}"
                     component_importance[cid] = contribution
 
@@ -1627,7 +1665,7 @@ def run_circuit(req: CircuitRequest, loaded: LoadedModel) -> CircuitResponse:
             mlp_key = f"blocks.{layer_idx}.hook_mlp_out"
             if mlp_key in cache:
                 mlp_output = cache[mlp_key][0, target_pos, :]
-                contribution = float((mlp_output @ unembed_dir).item())
+                contribution = float((mlp_output.float() @ unembed_dir).item())
                 cid = f"MLP.{layer_idx}"
                 component_importance[cid] = contribution
 

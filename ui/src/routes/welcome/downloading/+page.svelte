@@ -5,6 +5,7 @@
   import { Download, CheckCircle2 } from 'lucide-svelte';
   import { loadPreset, type LoadProgress } from '$lib/sidecar';
   import { fmtBytes } from '$lib/bootstrap-events';
+  import { gateStepMissing } from '$lib/hf-gate';  import LicenseGateSteps from '$lib/components/LicenseGateSteps.svelte';
 
   // LoadProgress is imported from $lib/sidecar — shared SSE event type.
 
@@ -92,6 +93,8 @@
     sseAbort = null;
   });
 
+  const gateStep = $derived(gateStepMissing(error));
+
   const pct = $derived(Math.max(0, Math.min(100, Math.round(progress * 100))));
   const phaseLabel = $derived(
     phase === 'model' ? 'Downloading model weights' :
@@ -108,7 +111,21 @@
     your computer, so you only download them once.
   </p>
 
-  {#if error}
+  {#if error && gateStep}
+    <!-- T31: the gated model needs a setup step first; say which one. -->
+    <div class="mb-4 rounded-lg border border-amber-700 bg-amber-950/30 p-4 text-sm text-amber-200">
+      <div class="mb-1 font-semibold">One more step before the download</div>
+      <div class="mb-4">{error}</div>
+      <LicenseGateSteps name="Gemma" missing={gateStep} onAddToken={() => goto('/welcome/hf-token')} />
+      <button
+        onclick={retry}
+        disabled={retrying}
+        class="mt-4 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        {retrying ? 'Trying again…' : "I've done it. Try again"}
+      </button>
+    </div>
+  {:else if error}
     <div class="mb-4 rounded-lg border border-red-800 bg-red-950/40 p-4 text-sm text-red-300">
       <div class="mb-1 font-semibold">Download failed</div>
       <div class="mb-3 font-mono text-xs text-red-400/80">{error}</div>

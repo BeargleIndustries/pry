@@ -224,6 +224,16 @@ pub fn write_pointer(runtime_dir: &Path, rel: &str) -> std::io::Result<()> {
     atomic_replace(&tmp, &runtime_dir.join(ACTIVE_FILE))
 }
 
+/// Replace `path` with `bytes` atomically (temp file + flush + rename), so a
+/// crash leaves the old contents or the new ones, never a torn file.
+pub fn write_file_atomic(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
+    let mut tmp = path.as_os_str().to_owned();
+    tmp.push(".tmp");
+    let tmp = PathBuf::from(tmp);
+    write_synced(&tmp, bytes)?;
+    atomic_replace(&tmp, path)
+}
+
 #[cfg(windows)]
 fn atomic_replace(src: &Path, dst: &Path) -> std::io::Result<()> {
     use std::os::windows::ffi::OsStrExt;

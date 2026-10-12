@@ -90,7 +90,8 @@ If loading on CUDA runs out of memory (a GPU smaller than the preset needs), the
 
 - `GET /health`: `{status, version, device, gpu_name, torch, cuda, loaded_preset, sae_layer, hf_token_present}`. `device` is `"cuda"`, `"cpu"` or `null` (nothing loaded) and reflects the device actually in use. Health never imports torch: before a model loads, `torch` comes from package metadata and `cuda`/`gpu_name` are `null`.
 - `GET /models`: loaded presets, plus every preset with its download/VRAM size, SAE layers, whether the model is already in the HF cache, its `display` block and `cpu_ok`.
-- `POST /load`: load a preset's model and SAE. Streams progress as server-sent events (see "Load progress").
+- `POST /load`: load a preset's model and SAE. Streams progress as server-sent events (see "Load progress"). `{"custom": {"hf_id": "org/name"}}` instead loads a user-added model with no SAE (T32); it is then addressed as `preset_id: "custom:org/name"`. Feature endpoints (`/sae-features`, `/steer`, `/ablate-feature`, `/concept-search`, `/feature/{id}`) return 409 with a plain message for it.
+- `POST /custom-models/validate`: `{hf_id}` → can Pry load this model? Checks TransformerLens' model list, fetches the repo's config.json (using `HF_TOKEN` if set), checks the architecture and estimates parameters and memory. 422 `{error, gated}` when the repo can't be checked.
 - `POST /tokenize`: `{preset_id, text}` → `{tokens, count}`. `count` includes the BOS token, so it is the same length `/patch` compares. The preset must be loaded.
 - `POST /unload`: free a preset's model and SAE from memory.
 - `POST /generate`: run a prompt. Returns tokens, attention for every layer, the top SAE features per token, next-token predictions, and optionally a continuation.
@@ -103,7 +104,7 @@ If loading on CUDA runs out of memory (a GPU smaller than the preset needs), the
 - `POST /patch`: activation patching from a clean prompt into a corrupted one, per head, MLP, or residual layer.
 - `POST /circuit`: the components with the largest DLA scores, plus signed "direct value path" edges between them (`edges_method: "direct_value_path"`): how much a source's output, passed straight through a later head's value path with that head's attention and all LayerNorm scales frozen, moves the predicted logit. Q/K composition and routes through other components are excluded. Edges below `edge_threshold` (default 0.05 logits) are dropped; at most 30 are returned, largest |weight| first.
 - `POST /head-scores`: `{preset_id, prompt?, top_k=8}` → every head's induction and previous-token score (0-1), plus the top `top_k` of each. The induction score runs a fixed test sequence: 25 seeded random tokens, then the same 25 again (`sequence_tokens`, no BOS). It is the mean attention from each second-copy token to the token that followed its first occurrence. The previous-token score is the mean attention to the token just before, over positions 2 onward of `prompt` or, if omitted, the test sequence. A prompt shorter than two tokens returns 400.
-- `GET /feature/{id}`: a feature's Neuronpedia label and top-activating snippets. Covers presets whose `display.neuronpedia_model_id` is set (GPT-2 small and Pythia-70M); the rest return `status: "no_coverage"`.
+- `GET /feature/{id}`: a feature's Neuronpedia label and top-activating snippets. Covers presets whose `display.neuronpedia_model_id` is set (GPT-2 small, Pythia-70M and Gemma 2 2B); the rest return `status: "no_coverage"`.
 - `POST /concept-search`: `{query, preset_id?}` → features of the loaded SAE whose Neuronpedia label matches `query` (`feature_id`, `description`, `similarity`, `top_boosted_tokens`), one row per feature. **Sends `query` to neuronpedia.org** via `POST /api/explanation/search` (documented in Neuronpedia's OpenAPI at https://www.neuronpedia.org/api-doc). `query` needs at least 3 characters (400 otherwise). Neuronpedia unreachable → 502 `{"error": "neuronpedia_unavailable", "detail": "<sentence>"}`. Presets without Neuronpedia coverage return `status: "no_coverage"`. Any returned `feature_id` can be passed to `/steer`, which accepts any `0 <= feature_id < d_sae`.
 
 Bad input returns 400 with a plain-language `error` message: a feature from a different layer than the loaded SAE; a feature, layer, or head outside the model; or a `target_token_index` past the end of the prompt (`/dla`, `/patch`). A preset that isn't loaded returns 409.
@@ -118,4 +119,15 @@ Neuronpedia ids (checked against the live API on 2026-10-11, and against SAELens
 |---|---|---|---|
 | gpt2-small | `gpt2-small` | `res-jb` | `gpt2-small/8-res-jb/100` (200) |
 | pythia-70m | `pythia-70m-deduped` | `res-sm` | `pythia-70m-deduped/3-res-sm/2` (200, labelled). `pythia-70m/…` returns 404 |
-| gemma-2-2b, gemma-2-9b | `null` | `null` | Not set until T31 picks the Gemma Scope SAE width |
+| gemma-2-2b | `gemma-2-2b` | `gemmascope-res-16k` | `gemma-2-2b/12-gemmascope-res-16k/0` (200, labelled; layers 0 and 25 also 200) |
+| gemma-2-9b | `null` | `null` | Disabled |
+
+## Gemma 2 2B (T31)
+
+Checked 2026-10-11 against SAELens 5.11.0, TransformerLens 2.15.4 and the Hugging Face API.
+
+- **SAE:** release `gemma-scope-2b-pt-res-canonical`, ids `layer_{N}/width_16k/canonical` for N = 0-25 (`sae.id_template` in `presets.json`; the other presets use `blocks.{layer}.{hook}`). Repo `google/gemma-scope-2b-pt-res` (not gated), loader `gemma_2`. The loader builds the config locally: JumpReLU, `d_in` 2304, `d_sae` 16384, `hook_name` `blocks.{N}.hook_resid_post`, float32. Each layer is one 302 MB `params.npz`. The plain `gemma-scope-2b-pt-res` release has no `canonical` ids, only `average_l0_*` ones.
+- **Model:** `google/gemma-2-2b` is gated (`gated: "manual"`): the user accepts Google's license on huggingface.co in their own browser and gives Pry a read token. The repo ships float32 safetensors (10.5 GB). TL loads float32 by default, which with TL's separate unembed (+0.6B params) is about 13 GB, so the preset sets `model.dtype: "bfloat16"` (about 6.5 GB of weights). The SAE stays float32; `inference.py` casts the residual to the SAE's dtype before `encode`.
+- **Tokens:** TL reads `HF_TOKEN` from the env and passes `token=` to transformers itself, and `SAE.from_pretrained` (5.11) has no token parameter, so the registry passes neither (a `token=` kwarg collides with TL's own).
+- **Gate errors:** a load of a gated preset without `HF_TOKEN` stops before any download. A Hugging Face 401 (no or bad token) or 403 (token fine, license not accepted) becomes a plain `error` event that names the missing step (`registry.license_gate_error`).
+- `test_gemma_loads_and_features` needs `HF_TOKEN` and the cached model; it skips otherwise.

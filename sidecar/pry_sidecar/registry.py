@@ -19,6 +19,94 @@ if TYPE_CHECKING:
 logger = logging.getLogger("pry_sidecar")
 
 
+class LicenseGateError(RuntimeError):
+    """A gated model (e.g. Gemma) can't be downloaded yet.
+
+    ``step`` names the missing setup step: ``"token"`` (no Hugging Face token,
+    or Hugging Face rejected it) or ``"license"`` (the token works but its
+    account hasn't accepted the model's license). The message is plain
+    language and is shown to the user as-is.
+    """
+
+    def __init__(self, step: str, message: str) -> None:
+        super().__init__(message)
+        self.step = step
+
+
+def _gate_message(manifest: "PresetManifest", step: str, token_present: bool) -> str:
+    name = manifest.display.name
+    lead = f"{name} needs one more setup step: "
+    again = f"then load {name} again."
+    if step == "license":
+        return (
+            lead + "your Hugging Face account hasn't accepted Google's Gemma license yet. "
+            f"Accept it at huggingface.co/{manifest.model.hf_id} in your browser, " + again
+        )
+    if token_present:
+        return (
+            lead + "Hugging Face didn't accept the token Pry has saved. Paste a fresh "
+            "read token in the Hugging Face token step, " + again
+        )
+    return (
+        lead + "Pry doesn't have your Hugging Face token yet. Add it in the "
+        "Hugging Face token step, " + again
+    )
+
+
+def hf_token_for(manifest: "PresetManifest") -> Optional[str]:
+    """The HF token for a gated preset (None for ungated presets).
+
+    Raises LicenseGateError when the preset is gated and no token is set.
+    Rust passes the saved token to this process as ``HF_TOKEN``.
+    """
+    if not manifest.license_gate:
+        return None
+    token = os.environ.get("HF_TOKEN")
+    if not token:
+        raise LicenseGateError("token", _gate_message(manifest, "token", token_present=False))
+    return token
+
+
+def license_gate_error(manifest: "PresetManifest", exc: BaseException) -> Optional[LicenseGateError]:
+    """Classify a load failure on a gated preset as a missing setup step.
+
+    Hugging Face answers 401 when the token is missing or invalid and 403 when
+    a valid token's account hasn't accepted the license (huggingface_hub's
+    ``GatedRepoError``; transformers re-raises it as an OSError ``from`` the
+    original). Returns None when the failure isn't about the gate.
+    """
+    if not manifest.license_gate:
+        return None
+    token_present = bool(os.environ.get("HF_TOKEN"))
+    status: Optional[int] = None
+    gated = False
+    seen: set[int] = set()
+    e: Optional[BaseException] = exc
+    while e is not None and id(e) not in seen:
+        seen.add(id(e))
+        if isinstance(e, LicenseGateError):
+            return e
+        code = getattr(getattr(e, "response", None), "status_code", None)
+        if code in (401, 403):
+            status = code
+        text = str(e)
+        if type(e).__name__ == "GatedRepoError" or "gated repo" in text.lower():
+            gated = True
+        if status is None:
+            if "401 Client Error" in text:
+                status = 401
+            elif "403 Client Error" in text:
+                status = 403
+        e = e.__cause__ or e.__context__
+    if status is None and not gated:
+        return None
+    if not token_present or status == 401:
+        step = "token"
+    else:
+        step = "license"
+    return LicenseGateError(step, _gate_message(manifest, step, token_present))
+
+
 class LoadedModel:
     """A loaded model + its companion SAE, pinned to a device."""
 
@@ -26,8 +114,8 @@ class LoadedModel:
         self,
         preset_id: str,
         model: object,  # HookedTransformer
-        sae: object,  # sae_lens.SAE
-        sae_layer: int,
+        sae: object,  # sae_lens.SAE; None for custom models (T32)
+        sae_layer: Optional[int],  # None for custom models (no SAE)
         device: str,
     ) -> None:
         self.preset_id = preset_id
@@ -116,18 +204,12 @@ class ModelRegistry:
             device = "cuda" if torch.cuda.is_available() else "cpu"
             sae_layer = manifest.sae.layer
 
-            # M1 fix: read HF_TOKEN from env and pass it to gated model/SAE
-            # downloads. Only used when the preset declares a license_gate.
-            hf_token: Optional[str] = None
-            if manifest.license_gate:
-                hf_token = os.environ.get("HF_TOKEN")
-                if not hf_token:
-                    raise RuntimeError(
-                        f"Preset '{preset_id}' requires a HuggingFace token "
-                        f"(license gate: {manifest.license_gate!r}). "
-                        "Set the HF_TOKEN environment variable after accepting "
-                        "the model license on huggingface.co."
-                    )
+            # Gated presets need HF_TOKEN in the env. TransformerLens and
+            # huggingface_hub read it from there themselves: TL passes
+            # token=HF_TOKEN to transformers on its own (a token= kwarg here
+            # would collide with it), and SAELens 5.11's SAE.from_pretrained
+            # has no token parameter.
+            hf_token_for(manifest)
 
             def notify(event: str) -> None:
                 if on_stage is not None:
@@ -150,7 +232,7 @@ class ModelRegistry:
                 m = HookedTransformer.from_pretrained(
                     manifest.model.tl_name,
                     device=on,
-                    **({"token": hf_token} if hf_token else {}),
+                    **({"dtype": manifest.model.dtype} if manifest.model.dtype else {}),
                 )
                 m.cfg.use_attn_result = True
                 return m
@@ -167,18 +249,14 @@ class ModelRegistry:
                 raise RuntimeError(f"failed to load model {manifest.model.tl_name}: {e}") from e
             notify("model_loaded")
 
-            hook = manifest.sae.hook
-            sae_id = f"blocks.{sae_layer}.{hook}"
+            sae_id = manifest.sae_id(sae_layer)
 
             def load_sae(on: str):
-                sae_kwargs: dict = dict(
+                sae_result = SAE.from_pretrained(
                     release=manifest.sae.release,
                     sae_id=sae_id,
                     device=on,
                 )
-                if hf_token:
-                    sae_kwargs["hf_token"] = hf_token
-                sae_result = SAE.from_pretrained(**sae_kwargs)
                 # sae_lens.SAE.from_pretrained returns a tuple in some versions
                 # (sae, cfg_dict, sparsity). Normalize to the SAE object.
                 return sae_result[0] if isinstance(sae_result, tuple) else sae_result
@@ -210,6 +288,71 @@ class ModelRegistry:
             self._last_loaded = preset_id
             return loaded
 
+    # -- custom models (T32) -------------------------------------------------
+    # Kept apart from load() on purpose: no manifest, no SAE, no license gate.
+
+    def load_custom(
+        self,
+        preset_id: str,
+        tl_name: str,
+        on_stage: Optional[Callable[[str, str], None]] = None,
+    ) -> LoadedModel:
+        """Load a user-added model (``custom:<hf_id>``) without an SAE.
+
+        Same per-id lock, CUDA-OOM CPU fallback and ``on_stage`` events as
+        ``load()``. Passes the user's HF token (if any) so gated repos the
+        user has accepted can download.
+        """
+        if preset_id in self._loaded:
+            return self._loaded[preset_id]
+
+        lock = self._get_lock(preset_id)
+        with lock:
+            if preset_id in self._loaded:
+                return self._loaded[preset_id]
+            try:
+                import torch
+                from transformer_lens import HookedTransformer
+            except ImportError as e:
+                raise RuntimeError(f"required ML deps not available: {e}") from e
+
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+
+            def load_model(on: str):
+                # No token= here: TransformerLens passes token=HF_TOKEN to
+                # transformers itself, and a second one is a TypeError.
+                m = HookedTransformer.from_pretrained(tl_name, device=on)
+                m.cfg.use_attn_result = True
+                return m
+
+            try:
+                try:
+                    model = load_model(device)
+                except torch.cuda.OutOfMemoryError as e:
+                    if device != "cuda":
+                        raise
+                    logger.warning(
+                        "CUDA out of memory loading custom model %r (%s); retrying on CPU",
+                        tl_name, e,
+                    )
+                    gc.collect()
+                    torch.cuda.empty_cache()
+                    device = "cpu"
+                    if on_stage is not None:
+                        on_stage("cpu_fallback", device)
+                    model = load_model(device)
+            except Exception as e:
+                raise RuntimeError(f"failed to load model {tl_name}: {e}") from e
+            if on_stage is not None:
+                on_stage("model_loaded", device)
+
+            loaded = LoadedModel(
+                preset_id=preset_id, model=model, sae=None, sae_layer=None, device=device,
+            )
+            self._loaded[preset_id] = loaded
+            self._last_loaded = preset_id
+            return loaded
+
     def swap_sae(self, preset_id: str, layer: int, manifest: "PresetManifest") -> LoadedModel:
         """Unload current SAE, load new SAE at specified layer. Model stays resident.
 
@@ -227,7 +370,7 @@ class ModelRegistry:
         import torch
         from sae_lens import SAE
 
-        sae_id = f"blocks.{layer}.{manifest.sae.hook}"
+        sae_id = manifest.sae_id(layer)
 
         # Free old SAE before loading new one to minimize peak VRAM
         old_sae = loaded.sae
@@ -238,17 +381,11 @@ class ModelRegistry:
             torch.cuda.empty_cache()
 
         try:
-            hf_token: Optional[str] = None
-            if manifest.license_gate:
-                hf_token = os.environ.get("HF_TOKEN")
-            sae_kwargs: dict = dict(
+            sae_result = SAE.from_pretrained(
                 release=manifest.sae.release,
                 sae_id=sae_id,
                 device=loaded.device,
             )
-            if hf_token:
-                sae_kwargs["hf_token"] = hf_token
-            sae_result = SAE.from_pretrained(**sae_kwargs)
             if isinstance(sae_result, tuple):
                 sae = sae_result[0]
             else:

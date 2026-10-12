@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+from pydantic_core import PydanticCustomError
 
 
 # ---------------------------------------------------------------------------
@@ -12,8 +13,30 @@ from pydantic import BaseModel, Field
 # ---------------------------------------------------------------------------
 
 
+class CustomModelRef(BaseModel):
+    hf_id: str = Field(..., min_length=1, max_length=200)
+
+
 class LoadRequest(BaseModel):
-    preset_id: str
+    """Either a preset id, or ``custom: {hf_id}`` for a user-added model (T32).
+
+    A custom model is then addressed as ``custom:<hf_id>`` in every other
+    request (``preset_id``); ``preset_id: "custom:<hf_id>"`` loads it too.
+    """
+
+    preset_id: str | None = None
+    custom: CustomModelRef | None = None
+
+    @model_validator(mode="after")
+    def _one_target(self) -> "LoadRequest":
+        if (self.preset_id is None) == (self.custom is None):
+            # PydanticCustomError (not ValueError) keeps e.errors() JSON-safe.
+            raise PydanticCustomError("one_target", "give exactly one of preset_id or custom")
+        return self
+
+
+class CustomValidateRequest(BaseModel):
+    hf_id: str = Field(..., min_length=1, max_length=200)
 
 
 class UnloadRequest(BaseModel):
@@ -142,7 +165,8 @@ class GenerateResponse(BaseModel):
     # Frontend should show a notice rather than silently displaying partial data.
     attention_truncated: bool = False
     sae_features: list[TokenFeatures] = Field(default_factory=list)
-    sae_layer_used: int = 0
+    # None for a custom model (T32): it has no feature dictionary (SAE).
+    sae_layer_used: int | None = 0
     top_predictions: list[TopPrediction] = Field(default_factory=list)
     timing_ms: dict[str, float] = Field(default_factory=dict)
     status: str = "ok"

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.4
+
+### New
+- **Gemma 2 2B** is available, with Google's Gemma Scope features (Neuronpedia labels included). It loads in a compact number format (bfloat16, about 6.5 GB of graphics memory) so it fits 12 GB cards; it needs a GPU. Google requires two steps first, and Pry walks you through them: accept the Gemma license on Hugging Face in your own browser, and save a Hugging Face token in Pry. If a load is refused, Pry says which step is missing. Gemma hasn't been tried end to end on a real machine yet, since that needs an account with the license accepted.
+- **Add your own models from Hugging Face.** Type a model name and Pry checks it's a kind TransformerLens supports, estimates its size, and gives the same "fits / tight / too big" verdict as the built-in models. Added models are remembered. Most panels work on them: attention, copying heads, predictions, logit lens, Why (DLA), knockouts, Swap & Compare, Key parts, Compare and Watch it write. Features and Steering need a trained feature dictionary that Pry only has for the built-in models, and those panels say so.
+
+### Fixed
+- The model picker's memory check counted the operating system twice when it had a live reading of graphics memory, and also counted the model Pry already had loaded (which a switch unloads first). Models now get the verdict their real free memory supports.
+- Loading any model that needs a Hugging Face login failed with an error inside Pry. The token was passed twice to one loader and in a form another loader doesn't accept.
+
 ## 0.3.3
 
 ### New

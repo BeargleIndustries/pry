@@ -42,7 +42,8 @@ export interface GenerateResponse {
   /** True when attention was only captured for the first 64 tokens. */
   attention_truncated?: boolean;
   sae_features: TokenFeatures[];
-  sae_layer_used: number;
+  /** null for a custom model (T32): it has no feature dictionary. */
+  sae_layer_used: number | null;
   top_predictions?: TopPrediction[];
   timing_ms: Record<string, number>;
   status?: string;
@@ -302,4 +303,6 @@ export interface SidecarHealth {
   loaded_preset?: string | null;
   sae_layer?: number | null;
   hf_token_present?: boolean;
+  /** GPU memory the engine holds for the loaded model (MB); freed on a model switch. */
+  vram_reserved_mb?: number | null;
 }

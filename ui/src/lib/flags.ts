@@ -1,4 +1,4 @@
-// Feature flags for 0.2.0 (contract §7).
+// Feature flags (contract §7).
 
-/** Custom (user-added HF) models. Hidden until T32 finishes loading them. */
-export const CUSTOM_MODELS_ENABLED = false;
+/** Custom (user-added HF) models: on since T32 (they load without an SAE). */
+export const CUSTOM_MODELS_ENABLED = true;

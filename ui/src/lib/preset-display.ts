@@ -4,6 +4,7 @@
 
 import type { PresetDisplay } from './types';
 import type { PresetCompatibility, Verdict } from './tauri';
+import { hfIdOf } from './custom-models';
 
 /** Anything that carries a preset id and (maybe) its display block. */
 export interface PresetLike {
@@ -37,7 +38,8 @@ export function displayName(
   const entry = typeof preset === 'string' ? findPreset(preset, list) : preset;
   const name = entry?.display?.name?.trim();
   if (name) return name;
-  return typeof preset === 'string' ? preset : idOf(preset) || 'Unknown model';
+  // Custom models (T32) are named by their HuggingFace id.
+  return hfIdOf(typeof preset === 'string' ? preset : idOf(preset)) || 'Unknown model';
 }
 
 const NEURONPEDIA = 'https://www.neuronpedia.org';
@@ -48,11 +50,11 @@ const NEURONPEDIA = 'https://www.neuronpedia.org';
  */
 export function neuronpediaUrlBase(
   display: Pick<PresetDisplay, 'neuronpedia_model_id' | 'neuronpedia_release_suffix'> | null | undefined,
-  layer: number,
+  layer: number | null,
 ): string | null {
   const model = display?.neuronpedia_model_id;
   const suffix = display?.neuronpedia_release_suffix;
-  if (!model || !suffix || !Number.isInteger(layer) || layer < 0) return null;
+  if (!model || !suffix || layer == null || !Number.isInteger(layer) || layer < 0) return null;
   return `${model}/${layer}-${suffix}`;
 }
 
@@ -63,7 +65,7 @@ export function neuronpediaUrlBase(
  */
 export function neuronpediaUrl(
   display: Pick<PresetDisplay, 'neuronpedia_model_id' | 'neuronpedia_release_suffix'> | null | undefined,
-  layer: number,
+  layer: number | null,
   featureId: number,
 ): string | null {
   const base = neuronpediaUrlBase(display, layer);
