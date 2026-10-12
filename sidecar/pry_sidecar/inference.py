@@ -281,6 +281,37 @@ def _label_length_bucket(desc: str) -> str:
     return "low"
 
 
+def _gpt2_unicode_to_byte() -> dict[str, int]:
+    """Inverse of GPT-2's ``bytes_to_unicode`` table (256 entries)."""
+    keep = list(range(ord("!"), ord("~") + 1)) + list(range(0xA1, 0xAC + 1)) + list(range(0xAE, 0xFF + 1))
+    out: dict[str, int] = {}
+    extra = 0
+    for b in range(256):
+        if b in keep:
+            out[chr(b)] = b
+        else:
+            out[chr(256 + extra)] = b
+            extra += 1
+    return out
+
+
+_GPT2_U2B = _gpt2_unicode_to_byte()
+
+
+def decode_bpe_bytes(text: str) -> str:
+    """Undo GPT-2 byte-level BPE markers (``Ġ`` = space, ``Ċ`` = newline,
+    ``âĢĻ`` = ``’``). Only applies when the text contains mapping-range
+    characters (U+0100-U+0143) and every character is in the table, so plain
+    text and other tokenizers pass through unchanged. Newlines become ``⏎``
+    and tabs/CRs become spaces so the snippet stays on one line."""
+    if not any("\u0100" <= c <= "\u0143" for c in text):
+        return text
+    if any(c not in _GPT2_U2B for c in text):
+        return text
+    decoded = bytes(_GPT2_U2B[c] for c in text).decode("utf-8", errors="replace")
+    return decoded.replace("\r\n", "\n").replace("\n", "\u23ce").replace("\t", " ").replace("\r", " ")
+
+
 def fetch_top_activating_snippets(
     model_id: str,
     release_id: str,
@@ -303,7 +334,7 @@ def fetch_top_activating_snippets(
         for act in sorted_acts:
             tokens = act.get("tokens") or []
             if tokens:
-                text = "".join(tokens)[:80].strip()
+                text = decode_bpe_bytes("".join(tokens))[:80].strip()
                 if text:
                     snippets.append(text)
         return tuple(snippets)
