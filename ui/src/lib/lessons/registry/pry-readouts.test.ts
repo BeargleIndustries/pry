@@ -384,6 +384,15 @@ describe('Pry readouts: one test per readout', () => {
     expect(r('patch.peak', { type: 'head' })).toMatchObject({ layer: 1, position: 1, patched: 3 });
   });
 
+  it('feature_ablation.count', async () => {
+    await ran();
+    expect(r('feature_ablation.count')).toBe(0);
+    await act('set_feature_ablation', { ids: [7, 105], on: true });
+    expect(r('feature_ablation.count')).toBe(2);
+    await act('set_feature_ablation', { ids: [7], on: false });
+    expect(r('feature_ablation.count')).toBe(1);
+  });
+
   it('feature_ablation.delta', async () => {
     await ran();
     await act('set_feature_ablation', { ids: [7], on: true });
@@ -478,7 +487,7 @@ describe('Pry readouts: one test per readout', () => {
 
   it('every readout returns undefined before anything ran', () => {
     for (const [name, def] of Object.entries(pryReadouts)) {
-      if (['result', 'ablation.heads', 'ablation.head_count'].includes(name)) continue;
+      if (['result', 'ablation.heads', 'ablation.head_count', 'feature_ablation.count'].includes(name)) continue;
       expect(def.read({}), name).toBeUndefined();
     }
   });

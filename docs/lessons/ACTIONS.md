@@ -108,6 +108,7 @@ Effects: `view` and `compute` run freely and replay when a section opens; `downl
 | `patch.cell` | record | `{ layer: integer, position: integer }` | One Swap test cell: clean, corrupted and patched logits, and the share. |
 | `patch.focused` | record |  | The Swap test cell selected now: its layer, word position or head, the three logits and the share. |
 | `patch.peak` | record | `{ type: "head" \| "mlp" \| "resid" }` | The Swap test cell with the biggest share. |
+| `feature_ablation.count` | number (count) |  | How many features are knocked out. |
 | `feature_ablation.delta` | number (probability) | `{ token: string }` | How much one token's probability changed with the features knocked out. |
 | `feature_ablation.prediction` | record | `{ side: "original" \| "ablated", token: string }` | One token's probability, logit and rank with the features knocked out, or in the original run. |
 | `feature_ablation.top5` | list | `{ side: "original" \| "ablated" }` | The top 5 predictions, original or ablated. |

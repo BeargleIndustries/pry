@@ -58,6 +58,7 @@ export interface PrySource {
   headScores: HeadScoresResponse | null;
   headAblations: HeadPick[];
   headAblate: AblateResponse | null;
+  featureAblations: { feature_index: number; layer: number }[];
   featureAblate: AblateResponse | null;
   patch: PatchResponse | null;
   patchByType: Partial<Record<string, PatchResponse>>;
@@ -86,6 +87,7 @@ export function liveSource(): PrySource {
     headScores: s.headScoresResponse,
     headAblations: s.headAblations,
     headAblate: s.headAblateResponse,
+    featureAblations: s.featureAblations,
     featureAblate: s.featureAblateResponse,
     patch: s.patchResponse,
     patchByType: pryUi.patching.byType,
@@ -619,6 +621,12 @@ export const pryReadouts: Record<string, ReadoutDef> = {
     }),
   },
 
+  'feature_ablation.count': {
+    type: 'number',
+    unit: 'count',
+    doc: 'How many features are knocked out.',
+    read: reader((s) => s.featureAblations.length),
+  },
   'feature_ablation.delta': {
     args: token,
     type: 'number',

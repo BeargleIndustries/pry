@@ -31,7 +31,7 @@ const PLAN_READOUTS = [
   'features.top', 'features.has', 'features.activation', 'features.label', 'features.has_snippets',
   'ablation.heads', 'ablation.head_count', 'ablation.top_guess.token', 'ablation.delta', 'ablation.prediction', 'ablation.top5',
   'patch.cell', 'patch.focused', 'patch.peak',
-  'feature_ablation.delta', 'feature_ablation.prediction', 'feature_ablation.top5',
+  'feature_ablation.count', 'feature_ablation.delta', 'feature_ablation.prediction', 'feature_ablation.top5',
   'steer.text', 'steer.changed_tokens', 'steer.coherence', 'steer.control_top_changed', 'steer.persist', 'steer.scale',
   'circuit.nodes', 'circuit.target',
   'readout',
