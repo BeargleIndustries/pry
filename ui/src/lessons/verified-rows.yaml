@@ -338,6 +338,8 @@ rows:
       - { name: beachbase, action: run, prompt: "On our trip we walked along the beach and watched the ocean" }
       - { name: ocean20, action: steer, prompt: "On our trip we walked along the beach and watched the ocean", featureId: 8548, saeLayer: 8, alpha: 20 }
       - { name: rain25, action: steer, prompt: "On our trip we walked along the beach and watched the ocean", featureId: 21791, saeLayer: 8, alpha: 25 }
+      - { name: targetlabel, action: featureInfo, featureId: 21791, network: true }
+      - { name: controllabel, action: featureInfo, featureId: 15662, network: true }
     record: unsteered top 4; target and control ids; steering strength; steered, control and unsteered texts; MF-4 measures (changed tokens, coherence, scale, control norms and cosine); whether the label's word appears in each text
     claim: both texts change and only the target's moves toward its label
     status: narrowed
@@ -348,6 +350,8 @@ rows:
       strength: { path: target.strength, unit: number }
       strength_high: { from_row: 63, path: s_high.strength, unit: number, note: "row 63 recorded the same target at s_high" }
       concept_words: { list: [target.word], unit: list, of: string }
+      target_label: { path: target_label, unit: string, note: "Neuronpedia's label for the target (21791), fetched by GET /feature/{id} when this row was recorded (lesson checks run without the network)" }
+      control_label: { path: control_label, unit: string, note: "Neuronpedia's label for the control (15662), fetched the same way" }
 
   - id: 26
     outline: [P3.2.md:11, P3.2.md:51, P3.2.md:61, P3.2.md:94.2]

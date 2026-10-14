@@ -402,6 +402,9 @@ function one(model: string, r: RowRequestSpec): { endpoint: string; body: unknow
       return { endpoint: '/head-scores', body: buildHeadScoresRequest({ presetId }) };
     case 'embedding':
       return { endpoint: '/embedding', body: buildEmbeddingRequest({ presetId, prompt: s('prompt'), positions: r.positions as number[] }) };
+    case 'featureInfo':
+      // GET /feature/{id}: the feature card's Neuronpedia lookup, for a feature that isn't active on any recorded prompt.
+      return { endpoint: `/feature/${n('featureId')}`, body: {} };
     default:
       throw new Error(`verified-rows.yaml: unknown action ${JSON.stringify(r.action)} in request ${r.name}`);
   }

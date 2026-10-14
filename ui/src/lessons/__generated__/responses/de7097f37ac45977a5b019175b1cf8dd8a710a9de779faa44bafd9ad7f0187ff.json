@@ -1,0 +1,283 @@
+{
+ "key": "de7097f37ac45977a5b019175b1cf8dd8a710a9de779faa44bafd9ad7f0187ff",
+ "variant": "r1",
+ "request": {
+  "endpoint": "/sae-features",
+  "model": "gpt2-small",
+  "body": {
+   "preset_id": "gpt2-small",
+   "prompt": "The nurse said that",
+   "sae_layer": 8,
+   "top_k_features": 5
+  }
+ },
+ "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+ "device": "cpu",
+ "libs": {
+  "python": "3.12.13",
+  "torch": "2.5.1+cpu",
+  "transformer_lens": "2.15.4",
+  "sae_lens": "5.11.0",
+  "transformers": "4.57.6",
+  "numpy": "1.26.4"
+ },
+ "recorded": "2026-10-14",
+ "neuronpedia_fetched": null,
+ "offline": false,
+ "trimmed": [],
+ "response": {
+  "preset_id": "gpt2-small",
+  "prompt": "The nurse said that",
+  "tokens": [
+   {
+    "index": 0,
+    "text": "<|endoftext|>"
+   },
+   {
+    "index": 1,
+    "text": "The"
+   },
+   {
+    "index": 2,
+    "text": " nurse"
+   },
+   {
+    "index": 3,
+    "text": " said"
+   },
+   {
+    "index": 4,
+    "text": " that"
+   }
+  ],
+  "sae_features": [
+   {
+    "token_index": 0,
+    "top_k": [
+     {
+      "id": 11746,
+      "activation": 501.9688415527344,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 11533,
+      "activation": 466.14398193359375,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 4078,
+      "activation": 450.62896728515625,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 13997,
+      "activation": 427.57275390625,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 7662,
+      "activation": 412.3442687988281,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     }
+    ]
+   },
+   {
+    "token_index": 1,
+    "top_k": [
+     {
+      "id": 6069,
+      "activation": 38.275970458984375,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 7920,
+      "activation": 18.48867416381836,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 14957,
+      "activation": 4.367920875549316,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 2222,
+      "activation": 3.8694920539855957,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 495,
+      "activation": 3.2859041690826416,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     }
+    ]
+   },
+   {
+    "token_index": 2,
+    "top_k": [
+     {
+      "id": 21213,
+      "activation": 44.65057373046875,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 19093,
+      "activation": 11.903231620788574,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 821,
+      "activation": 8.781829833984375,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 7698,
+      "activation": 8.106558799743652,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 15707,
+      "activation": 6.06845235824585,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     }
+    ]
+   },
+   {
+    "token_index": 3,
+    "top_k": [
+     {
+      "id": 1753,
+      "activation": 15.457450866699219,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 22022,
+      "activation": 13.979141235351562,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 11429,
+      "activation": 9.127982139587402,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 12214,
+      "activation": 8.582210540771484,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 11625,
+      "activation": 7.663477897644043,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     }
+    ]
+   },
+   {
+    "token_index": 4,
+    "top_k": [
+     {
+      "id": 22201,
+      "activation": 28.651222229003906,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 22509,
+      "activation": 18.476369857788086,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 20441,
+      "activation": 7.645265579223633,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 1753,
+      "activation": 3.317741870880127,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 1960,
+      "activation": 3.2291643619537354,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     }
+    ]
+   }
+  ],
+  "sae_layer_used": 8,
+  "status": "ok"
+ }
+}
