@@ -37,7 +37,7 @@
     <h2 class="mb-3 text-4xl font-semibold text-zinc-100">Pry is ready.</h2>
 
     <p class="mb-8 max-w-lg text-lg leading-relaxed text-zinc-300">
-      Let's open the black box.
+      Let's peek inside.
     </p>
 
     <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -66,7 +66,7 @@
 
     <p class="mt-6 text-xs text-zinc-500">
       <span class="text-zinc-400">Find the copying heads</span> gives the model you just set up a short
-      test: 25 random <Term key="word-pieces">word-pieces</Term>, then the same ones again. Pry then rings the <Term key="attention-head">attention heads</Term> that,
+      test: 25 random <Term key="token">tokens</Term>, then the same ones again. Pry then rings the <Term key="attention-head">attention heads</Term> that,
       the second time through, look at whatever came next last time. That is one way models copy.
     </p>
     <p class="mt-2 text-xs text-zinc-500">

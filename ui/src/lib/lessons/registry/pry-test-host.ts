@@ -316,7 +316,7 @@ export function makeHost(prompt = 'I like the river bank'): TestHost {
   const analysis = new AnalysisController(createInitialAnalysisState(), deps);
   // A loaded model already knows its layer menu, so a Run makes only /generate.
   analysis.state.availableSaeLayers = [6, 8];
-  // ...and its loaded feature dictionary layer (memoContext), as after any earlier Run.
+  // ...and its loaded SAE layer (memoContext), as after any earlier Run.
   analysis.state.saeLayer = 8;
   const compare = new CompareController(createInitialCompareState(), {
     getSelectedPreset: () => page.active ?? 'gpt2-small',

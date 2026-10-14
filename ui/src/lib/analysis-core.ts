@@ -351,7 +351,7 @@ export class AnalysisController {
   }
 
   /**
-   * Switch the feature dictionary (SAE) layer. Commit-on-complete: once the
+   * Switch the SAE layer. Commit-on-complete: once the
    * engine has loaded the layer it is recorded, even when a newer Run replaced
    * the response meanwhile (that response keeps its own features). Lessons rely
    * on this: an aborted switch_sae_layer still records the new layer, and

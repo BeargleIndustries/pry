@@ -44,7 +44,7 @@ const CUSTOM_MODEL_VERDICT_TIP: TipDef = {
   blurb:
     "The badge says whether this model fits your computer's memory. Models you add here run attention, predictions, Logit Lens, Why (DLA), knockouts and the Swap test, but not features.",
   why:
-    "To show features, a model needs a matching feature dictionary (SAE) trained on it, and Pry only has those for its built-in models. A model you add loads without one, so the Features and Steering panels stay empty for it. Everything that reads the model's own parts still works: attention, predictions, Logit Lens, Why (DLA), knocking heads out, and the Swap test.",
+    "To show features, a model needs a matching sparse autoencoder (SAE) trained on it, and Pry only has those for its built-in models. A model you add loads without one, so the Features and Steering panels stay empty for it. Everything that reads the model's own parts still works: attention, predictions, Logit Lens, Why (DLA), knocking heads out, and the Swap test.",
 };
 
 export const tipsRegistry: TipDef[] = [
@@ -104,9 +104,9 @@ export const tipsRegistry: TipDef[] = [
     target: '[data-tip="panel-b-feature-row"]',
     placement: 'left',
     blurb:
-      "Each row is one feature: an idea the feature dictionary (SAE) found active on the selected word. The bar shows how strongly it fired, and the label is the name Neuronpedia gave it.",
+      "Each row is one feature: a pattern the sparse autoencoder (SAE) found active on the selected word, often matching an idea. The bar shows how strongly it fired, and the label is the name Neuronpedia gave it.",
     why:
-      "The labels are auto-generated from the training examples where the feature fires hardest (via Neuronpedia), which means they're a best guess, not a guarantee. Always peek at the example text underneath before trusting a label, because sometimes the label catches one pattern while the feature covers two or three things at once. The feature dictionary (SAE) is a separate small model trained to split the model's insides into ideas like these, one per feature.",
+      "The labels are auto-generated from the training examples where the feature fires hardest (via Neuronpedia), which means they're a best guess, not a guarantee. Always peek at the example text underneath before trusting a label, because sometimes the label catches one pattern while the feature covers two or three things at once. The SAE is a separate small network trained to split the model's residual stream into patterns like these, one per feature.",
   },
   {
     id: 'panel-a-from-selector',
@@ -134,9 +134,9 @@ export const tipsRegistry: TipDef[] = [
     target: '[data-tip="panel-b-layer-selector"]',
     placement: 'bottom',
     blurb:
-      "Pick how deep into the model to look. Deeper layers tend to hold more abstract ideas. Switching layers runs the feature dictionary for that depth.",
+      "Pick how deep into the model to look. Deeper layers tend to hold more abstract ideas. Switching layers runs the SAE for that depth.",
     why:
-      "The model has a stack of layers (12 in GPT-2 small), each one building a richer picture. Early layers tend to catch surface stuff, like word shape, grammar and part of speech. Later layers catch meaning, relationships, and who's who in a sentence, like whether 'she' means the nurse. Switching layers here loads the feature dictionary (SAE) for the new depth and runs the model on your prompt again. That's a few seconds of waiting. Try jumping between an early layer and a late one on the same word to see the difference.",
+      "The model has a stack of layers (12 in GPT-2 small), each one building a richer picture. Early layers tend to catch surface stuff, like word shape, grammar and part of speech. Later layers catch meaning, relationships, and who's who in a sentence, like whether 'she' means the nurse. Switching layers here loads the SAE for the new depth and runs the model on your prompt again. That's a few seconds of waiting. Try jumping between an early layer and a late one on the same word to see the difference.",
     tutorialStepId: 'concepts.layer',
   },
   {
@@ -146,9 +146,9 @@ export const tipsRegistry: TipDef[] = [
     placement: 'left',
     focus: [0.5, 0.2],
     blurb:
-      "The model's top 10 guesses for the next word, ranked by probability. The bar shows how likely it thinks each one is.",
+      "The model's top 10 guesses for the next token, ranked by probability. Each bar shows that guess's chance.",
     why:
-      "Every time the model reads a token, it scores every word piece it knows and turns those scores into chances that add up to 100%. Here's the top 10. If the model's confident, the first bar dominates and the rest are tiny. If it's torn between options, you'll see several bars about the same size. That's usually where the interesting stuff lives, because a confident model is boring to study and an unsure one is telling you something about the input.",
+      "Every time the model reads a token, it scores every token in its vocabulary and turns those scores into chances that add up to 100%. Here's the top 10. When one guess gets most of the chance, the first bar dominates and the rest are tiny. When the chance is spread out, you'll see several bars about the same size. Those spread-out spots are often a good place to look, since small changes to the prompt can tip them.",
   },
   {
     id: 'feature-histogram',
@@ -167,9 +167,9 @@ export const tipsRegistry: TipDef[] = [
     placement: 'right',
     focus: [0.5, 0.5],
     blurb:
-      "What the model would guess at every layer if you made it answer early. You're watching it make up its mind in slow motion.",
+      "A rough read of what each layer's partial result would predict, if you made the model answer early.",
     why:
-      "Each layer refines the guess. The Logit Lens takes the model's work in progress at each layer and asks, 'if you had to guess right now, what would you say?' Indigo cells already match the final answer, and brighter means that layer is more sure. Early rows are a rough read, since the middle layers weren't built to be read this way, so an early match is a hint, not proof. If the guess changes partway up, the layers just before the change are where the answer got settled, and that's usually the part worth studying.",
+      "Each layer adds its work to the residual stream. The Logit Lens reads the residual stream at each layer and asks, 'if you had to guess right now, what would you say?' Indigo cells already match the final answer, and brighter means a higher chance at that layer. Early rows are a rough read, since the middle layers weren't built to be read this way, so an early match is a hint, not proof. If the guess changes partway up, the layers around the change are a good place to look next, and a knockout or a Swap test can check them.",
   },
   {
     id: 'dla-waterfall',
@@ -180,7 +180,7 @@ export const tipsRegistry: TipDef[] = [
     blurb:
       "Each bar is one part of the model. Blue pushed directly toward the predicted word, orange pushed against it. Only direct pushes count, so a part that helps by nudging other parts can look small here.",
     why:
-      "When the model guesses 'mat' after 'The cat sat on the', every attention head and every MLP layer (the processing step after attention) pushes on that word's score. Some push toward 'mat' (blue), some push against it (orange). You're seeing the 30 biggest direct pushes. DLA (direct logit attribution) only counts what each part writes straight into the final guess, so a head that helps by changing what later heads do won't get credit here. Researchers use it as a first pass at finding which heads matter. It's a simplified estimate, so the bars won't add up exactly to the model's final score.",
+      "When the model guesses 'mat' after 'The cat sat on the', every attention head and every MLP pushes on that word's score. Some push toward 'mat' (blue), some push against it (orange). You're seeing the 30 biggest direct pushes. DLA (direct logit attribution) only counts what each part writes straight into the final guess, so a head that helps by changing what later heads do won't get credit here. Researchers use it as a first pass at finding which heads matter. Under the chart, Pry lists the bars' total, the real logit and the gap between them. The gap is the embedding's own direct push plus the attention-output and unembedding biases, not drawn as bars.",
   },
   {
     id: 'export-button',
@@ -201,7 +201,7 @@ export const tipsRegistry: TipDef[] = [
     blurb:
       "Pick a feature, set the strength, press Run Steered. You're nudging the model from the inside for this one run. Compare the outputs to see what changed.",
     why:
-      "Up to now you've been looking, and steering lets you test. When you steer a feature, Pry adds more of that feature to the model's insides at one layer, scaled by the strength you pick. Push a 'nurse' feature with a positive strength and see whether the model starts writing more about nurses, or use a negative strength and see whether the nurse idea fades. If the output changes the way you'd expect, that's good evidence the feature does what its label says. If nothing changes, the feature might show up alongside the idea without driving it. That difference matters a lot for safety work.",
+      "Up to now you've been looking, and steering lets you test. When you steer a feature, Pry adds more of that feature to the model's insides at one layer, scaled by the strength you pick. Push a 'nurse' feature with a positive strength and see whether the model starts writing more about nurses, or use a negative strength and see whether the nurse idea fades. If the output changes the way you'd expect, that's evidence the feature pushes the writing that way at this strength. It doesn't show the label covers everything the feature does. If nothing changes, the feature might show up alongside the idea without driving it. That difference matters a lot for safety work.",
   },
   {
     id: 'ablation-head-toggle',
@@ -211,7 +211,7 @@ export const tipsRegistry: TipDef[] = [
     blurb:
       "Turn Ablation on, then click squares in the grid to pick heads to knock out. A Run Ablated button appears once you've picked one. It runs the model again without those heads, so you can see if the guess changes.",
     why:
-      "There are 144 attention heads in GPT-2 small (12 layers times 12 heads), and on any one sentence, many of them barely change the answer. Knocking heads out is how you find the ones that matter. Pry swaps a head's output for zeros, so the rest of the model has to answer without it. A big change in the guesses means the model needed that head. No change means it wasn't needed, at least for this sentence. Researchers do this over and over to map which heads form the circuit behind a behavior.",
+      "There are 144 attention heads in GPT-2 small (12 layers times 12 heads), and on any one sentence, many of them barely change the answer. Knocking heads out is how you find the ones that matter. Pry swaps a head's output for zeros, so the rest of the model has to answer without it. A big change in the guesses means the model needed that head. No change means the model could answer without it here. Other parts may have covered for it. Researchers do this over and over to map which heads form the circuit behind a behavior.",
   },
   {
     id: 'ablation-feature-toggle',
@@ -219,9 +219,9 @@ export const tipsRegistry: TipDef[] = [
     target: '[data-tip="ablation-feature-toggle"]',
     placement: 'right',
     blurb:
-      "Turn Ablation on, then click the round x next to each feature to switch it off. Press Run Ablated to see the guesses without them. If the answer shifts, those features were driving the guess, not just showing up.",
+      "Turn Ablation on, then click the round x next to each feature to switch it off. Press Run Ablated to see the guesses without them. If the answer shifts, those features affect the guess here.",
     why:
-      "Feature labels come from Neuronpedia, based on the text that sets each feature off hardest. Showing up isn't the same as causing, though. A feature labeled 'nurse' can fire on the word 'nurse' without making the model think about nurses. It might just be along for the ride. Knocking it out settles it: switch the feature off, run again, and if the guesses change in a nurse-related way, the feature was pitching in. One catch: the feature dictionary (SAE) can't rebuild the model's insides perfectly, so switching a feature off also adds a little noise. What you see is the feature's real effect plus a bit of that noise.",
+      "Feature labels come from Neuronpedia, based on the text that sets each feature off hardest. Showing up isn't the same as causing, though. A feature labeled 'nurse' can fire on the word 'nurse' without changing anything the model writes. It might just be along for the ride. Knocking it out is a test: switch the feature off, run again, and see whether the guesses change in a nurse-related way. Knocking out a feature removes only the part of the residual stream the SAE accounts for. The SAE's leftover error stays, so a small change can mean the feature mattered little or that its share was small.",
   },
   {
     id: 'patching-panel',
@@ -232,7 +232,7 @@ export const tipsRegistry: TipDef[] = [
     blurb:
       "Run two prompts, then swap one piece of the model's insides from one run into the other to see which piece changes the answer.",
     why:
-      "Researchers use this all the time to track down which parts of a model matter (they call it patching). You pick two prompts the model answers differently, an original prompt and a changed prompt, and run both. Then Pry copies one part's output from the original run into the changed run, one part at a time. If swapping layer 7, head 3 makes the changed prompt answer like the original, that head's part of what causes the difference. Blue squares bring the original answer back, and the number is how much its score went up. Orange squares push it further away. It's like debugging by swapping parts until you find the broken one.",
+      "Researchers use this all the time to track down which parts of a model matter (they call it activation patching). You pick two prompts the model answers differently, an original prompt and a changed prompt, and run both. Then Pry copies one part's output from the original run into the changed run, one part at a time. If swapping layer 7, head 3 raises the original answer's score a lot, that head carries information that matters for the difference between the two prompts. Blue squares raise the original answer's score, and the number is how much it went up. Orange squares push it further away.",
   },
   {
     id: 'circuit-graph',
@@ -253,7 +253,7 @@ export const tipsRegistry: TipDef[] = [
     target: '[data-tip="neuronpedia-link"]',
     placement: 'top',
     blurb:
-      "Opens this feature's page on Neuronpedia, a public catalog of features from feature dictionaries (SAEs). It shows more examples, community notes, and related features.",
+      "Opens this feature's page on Neuronpedia, a public catalog of features from sparse autoencoders (SAEs). It shows more examples, community notes, and related features.",
     why:
       "Neuronpedia is a community project that catalogs features across many models. Each feature gets a page with the text that sets it off hardest, auto-generated descriptions, and sometimes notes from researchers who've studied it. When Pry shows you a feature labeled 'past-tense verb' or 'female professional', that label came from Neuronpedia's labeling pipeline. Clicking through shows more than Pry can fit in a card, including how the feature behaves on thousands of other inputs. It's the closest thing to a field guide for model insides.",
   },
@@ -297,7 +297,7 @@ export const tipsRegistry: TipDef[] = [
     blurb:
       "Type two prompts that differ by a word or two, then press Run both to see how the predictions, features and attention change.",
     why:
-      "Small, controlled changes are one of the clearest ways to learn what a model is reacting to. If swapping 'he' for 'she' changes which features light up, those features are likely tracking that difference. This view only shows what changed, not why. To test which parts cause a change, try the Swap test.",
+      "Small, controlled changes are one of the clearest ways to learn what a model is reacting to. If swapping 'he' for 'she' changes which features fire, those features are likely tracking that difference. This view only shows what changed, not why. To test which parts cause a change, try the Swap test.",
   },
   {
     id: 'watch-it-write',
@@ -316,8 +316,8 @@ export const tipsRegistry: TipDef[] = [
     target: '[data-tip="concept-search"]',
     placement: 'bottom',
     blurb:
-      "Search for any idea by name, then steer with the matching feature, even if it didn't light up on your prompt.",
+      "Search for any idea by name, then steer with the matching feature, even if it didn't fire on your prompt.",
     why:
-      "The search compares your words with the feature labels on Neuronpedia. Those labels were written by another AI and can be wrong, and the closest match isn't always a good match. Steering is the honest check: if pushing the feature changes the text in the way the label suggests, the label is probably about right.",
+      "The search compares your words with the feature labels on Neuronpedia. Those labels were written by another AI and can be wrong, and the closest match isn't always a good match. Steering is one check: if pushing the feature changes the text the way the label suggests, the label fits at least that much.",
   },
 ];

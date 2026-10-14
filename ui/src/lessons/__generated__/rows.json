@@ -61,6 +61,20 @@
     "top10_total": 0.6297955038025975,
     "tokens": 7
    },
+   "constants": {
+    "basketball": {
+     "value": 0.42208388447761536,
+     "unit": "probability"
+    },
+    "fid": {
+     "value": 12472,
+     "unit": "number"
+    },
+    "sae_layer": {
+     "value": 8,
+     "unit": "layer"
+    }
+   },
    "checks": [
     {
      "claim": "top 4 as the lesson quotes",
@@ -313,6 +327,16 @@
     "summed_cosine_pos5_pos2": 0.9573173025322534,
     "summed_match_pos5_pos2": 0
    },
+   "constants": {
+    "river_bank_position": {
+     "value": 5,
+     "unit": "position"
+    },
+    "the_bank_position": {
+     "value": 2,
+     "unit": "position"
+    }
+   },
    "checks": [
     {
      "claim": "embedding identical at position 5 in both sentences",
@@ -498,6 +522,48 @@
     "top10_total": 0.9260434508323669,
     "tokens": 15
    },
+   "constants": {
+    "to_position": {
+     "value": 14,
+     "unit": "position"
+    },
+    "mary_head_layer": {
+     "value": 10,
+     "unit": "layer"
+    },
+    "mary_head": {
+     "value": 7,
+     "unit": "head"
+    },
+    "mary_heads": {
+     "value": [
+      {
+       "layer": 9,
+       "head": 6
+      },
+      {
+       "layer": 9,
+       "head": 9
+      },
+      {
+       "layer": 10,
+       "head": 7
+      },
+      {
+       "layer": 11,
+       "head": 10
+      }
+     ],
+     "unit": "list",
+     "of": "record",
+     "kind": "literature",
+     "source": "Wang et al. 2022 (IOI), name-mover heads"
+    },
+    "store_position": {
+     "value": 8,
+     "unit": "position"
+    }
+   },
    "checks": [
     {
      "claim": "top 4 as the lesson quotes",
@@ -544,6 +610,35 @@
     ],
     "top10_total": 0.3977181608788669,
     "tokens": 17
+   },
+   "constants": {
+    "qu_prob": {
+     "value": 0.3194815218448639,
+     "unit": "probability"
+    },
+    "last_from_position": {
+     "value": 16,
+     "unit": "position"
+    },
+    "top_induction_layer": {
+     "value": 5,
+     "unit": "layer"
+    },
+    "top_induction_head": {
+     "value": 5,
+     "unit": "head"
+    },
+    "top_induction_head_ref": {
+     "value": {
+      "layer": 5,
+      "head": 5
+     },
+     "unit": "record"
+    },
+    "qu_position": {
+     "value": 8,
+     "unit": "position"
+    }
    },
    "checks": [
     {
@@ -752,6 +847,37 @@
     ],
     "top10_total": 0.3541130442172289,
     "tokens": 13
+   },
+   "constants": {
+    "map_head": {
+     "value": "L0H7",
+     "unit": "string"
+    },
+    "map_head_layer": {
+     "value": 0,
+     "unit": "layer"
+    },
+    "map_head_head": {
+     "value": 7,
+     "unit": "head"
+    },
+    "control_head": {
+     "value": "L9H9",
+     "unit": "string"
+    },
+    "control_head_layer": {
+     "value": 9,
+     "unit": "layer"
+    },
+    "control_head_head": {
+     "value": 9,
+     "unit": "head"
+    },
+    "margin_negative": {
+     "value": -0.05,
+     "unit": "probability",
+     "source": "outline P3.7:70"
+    }
    },
    "checks": [
     {
@@ -1355,6 +1481,16 @@
     "gap": 1.163037785794586,
     "answer": " basketball"
    },
+   "constants": {
+    "top_mlp_layer": {
+     "value": 9,
+     "unit": "layer"
+    },
+    "push_threshold": {
+     "value": 1.75,
+     "unit": "logit"
+    }
+   },
    "checks": [
     {
      "claim": "MLPs appear among the top 3",
@@ -1402,6 +1538,24 @@
      "position": 11,
      "weight": 0.8083962202072144,
      "delta": -0.002849757671356201
+    }
+   },
+   "constants": {
+    "layer": {
+     "value": 2,
+     "unit": "layer"
+    },
+    "head": {
+     "value": 8,
+     "unit": "head"
+    },
+    "token": {
+     "value": " gave",
+     "unit": "string"
+    },
+    "position": {
+     "value": 11,
+     "unit": "position"
     }
    },
    "checks": [
@@ -1454,6 +1608,38 @@
      0.19061271846294403,
      0.0009149760007858276
     ]
+   },
+   "constants": {
+    "sae_layer": {
+     "value": 8,
+     "unit": "layer"
+    },
+    "top_ids": {
+     "value": [
+      21213,
+      19093,
+      821
+     ],
+     "unit": "list",
+     "of": "number"
+    },
+    "n_top": {
+     "value": 3,
+     "unit": "count"
+    },
+    "control_id": {
+     "value": 7698,
+     "unit": "number"
+    },
+    "doctor_top_ids": {
+     "value": [
+      7195,
+      11067,
+      19093
+     ],
+     "unit": "list",
+     "of": "number"
+    }
    },
    "checks": [
     {
@@ -1578,6 +1764,31 @@
      }
     }
    },
+   "constants": {
+    "target_id": {
+     "value": 21791,
+     "unit": "number"
+    },
+    "control_id": {
+     "value": 15662,
+     "unit": "number"
+    },
+    "strength": {
+     "value": 25,
+     "unit": "number"
+    },
+    "strength_high": {
+     "value": 30,
+     "unit": "number"
+    },
+    "concept_words": {
+     "value": [
+      "rain"
+     ],
+     "unit": "list",
+     "of": "string"
+    }
+   },
    "checks": [
     {
      "claim": "unsteered top 4",
@@ -1627,6 +1838,16 @@
     ],
     "L9H9_argmax": " Mary",
     "L9H9_weight_on_mary": 0.6651334762573242
+   },
+   "constants": {
+    "task_threshold": {
+     "value": 0.3,
+     "unit": "probability"
+    },
+    "task_threshold_negative": {
+     "value": -0.3,
+     "unit": "probability"
+    }
    },
    "checks": [
     {
@@ -1707,6 +1928,20 @@
      "L11": " to"
     },
     "to_takes_over_at": 9
+   },
+   "constants": {
+    "peak_layer": {
+     "value": 2,
+     "unit": "layer"
+    },
+    "peak_position": {
+     "value": 10,
+     "unit": "position"
+    },
+    "peak_word": {
+     "value": " John",
+     "unit": "string"
+    }
    },
    "checks": [
     {
@@ -1891,6 +2126,18 @@
       10.93716049194336
      ]
     ]
+   },
+   "constants": {
+    "top_head": {
+     "value": 6,
+     "unit": "head",
+     "alias": 51
+    },
+    "top_head_layer": {
+     "value": 9,
+     "unit": "layer",
+     "alias": 51
+    }
    },
    "checks": [
     {
@@ -2273,6 +2520,12 @@
     "actual": 2.191035270690918,
     "gap": -0.9281865006778389
    },
+   "constants": {
+    "last_position": {
+     "value": 6,
+     "unit": "position"
+    }
+   },
    "checks": [
     {
      "claim": "MLPs appear among the top 3",
@@ -2462,6 +2715,12 @@
       "share": -0.10660722330926438
      }
     ]
+   },
+   "constants": {
+    "best_mlp_not_l0": {
+     "value": 1,
+     "unit": "layer"
+    }
    },
    "checks": [
     {
@@ -3214,6 +3473,20 @@
      ]
     ]
    },
+   "constants": {
+    "rank_L5": {
+     "value": 9,
+     "unit": "count"
+    },
+    "rank_L6": {
+     "value": 6,
+     "unit": "count"
+    },
+    "rank_L7": {
+     "value": 2,
+     "unit": "count"
+    }
+   },
    "checks": [
     {
      "claim": "\" basketball\" not on top at L5-L7",
@@ -3259,6 +3532,16 @@
     "actual": 3.361577033996582,
     "gap": -1.202643062453717,
     "logit_difference": 3.361577033996582
+   },
+   "constants": {
+    "top_head_layer": {
+     "value": 9,
+     "unit": "layer"
+    },
+    "top_head": {
+     "value": 6,
+     "unit": "head"
+    }
    },
    "checks": [
     {
@@ -3363,6 +3646,16 @@
      "famous names or personalities"
     ],
     "uncovered_snippet": "ETAIRIE, La. -- Drew Brees was critical Wednesday of the way NFL commissioner"
+   },
+   "constants": {
+    "fid": {
+     "value": 12472,
+     "unit": "number"
+    },
+    "sae_layer": {
+     "value": 8,
+     "unit": "layer"
+    }
    },
    "checks": [
     {

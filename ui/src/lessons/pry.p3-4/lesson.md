@@ -222,9 +222,10 @@ free: true
 :::
 
 :::do{id=doctor-knockout}
-Press **Do it** to run the doctor prompt and knock out the top features at ' doctor'. One of them's labelled after a TV show. Labels can be odd like that, and it's worth remembering they're guesses.
+Press **Do it** to clear the knockouts, run the doctor prompt and knock out the top features at ' doctor'. One of them's labelled after a TV show. Labels can be odd like that, and it's worth remembering they're guesses.
 
 ```actions
+- reset: {}
 - set_prompt: { text: "The doctor said that" }
 - run: {}
 - focus_token: { text: " doctor" }

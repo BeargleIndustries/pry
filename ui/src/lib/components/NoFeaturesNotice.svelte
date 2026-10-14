@@ -1,6 +1,6 @@
 <script lang="ts">
   // Shown in place of a feature panel (Features, Steering) when the loaded
-  // model is a custom one with no feature dictionary (T32).
+  // model is a custom one with no SAE (T32).
   import { NO_SAE_MESSAGE } from '$lib/custom-models';
 
   interface Props {

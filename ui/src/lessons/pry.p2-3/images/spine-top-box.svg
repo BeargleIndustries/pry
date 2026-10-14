@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 520" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="14">
+  <title>The top of the spine: the unembedding</title>
+  <rect width="480" height="520" fill="#ffffff"/>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#666"/>
+    </marker>
+  </defs>
+  <!-- logits -->
+  <rect x="120" y="14" width="240" height="40" rx="8" fill="#f2f2f2" stroke="#999"/>
+  <text x="240" y="39" text-anchor="middle" fill="#222">a logit for every token</text>
+  <line x1="240" y1="78" x2="240" y2="58" stroke="#666" stroke-width="2" marker-end="url(#a)"/>
+  <!-- unembedding, highlighted -->
+  <rect x="100" y="80" width="280" height="56" rx="10" fill="#fff4d6" stroke="#d08a00" stroke-width="3"/>
+  <text x="240" y="106" text-anchor="middle" fill="#7a5000" font-weight="700">unembedding</text>
+  <text x="240" y="126" text-anchor="middle" fill="#7a5000" font-size="12">the model's last step</text>
+  <line x1="240" y1="160" x2="240" y2="140" stroke="#666" stroke-width="2" marker-end="url(#a)"/>
+  <!-- layers -->
+  <g fill="#eef1f5" stroke="#9aa5b4">
+    <rect x="140" y="162" width="200" height="22" rx="4"/>
+    <rect x="140" y="188" width="200" height="22" rx="4"/>
+    <rect x="140" y="214" width="200" height="22" rx="4"/>
+    <rect x="140" y="292" width="200" height="22" rx="4"/>
+    <rect x="140" y="318" width="200" height="22" rx="4"/>
+    <rect x="140" y="344" width="200" height="22" rx="4"/>
+  </g>
+  <g text-anchor="middle" fill="#444" font-size="12">
+    <text x="240" y="178">L11</text>
+    <text x="240" y="204">L10</text>
+    <text x="240" y="230">L9</text>
+    <text x="240" y="268">...</text>
+    <text x="240" y="308">L2</text>
+    <text x="240" y="334">L1</text>
+    <text x="240" y="360">L0</text>
+  </g>
+  <!-- residual stream line -->
+  <line x1="110" y1="440" x2="110" y2="150" stroke="#3b6fb6" stroke-width="3" marker-end="url(#a)"/>
+  <text x="96" y="300" fill="#1f3f6e" font-size="12" text-anchor="end" transform="rotate(-90 96 300)">residual stream</text>
+  <!-- embedding -->
+  <rect x="120" y="400" width="240" height="40" rx="8" fill="#f2f2f2" stroke="#999"/>
+  <text x="240" y="425" text-anchor="middle" fill="#222">embedding</text>
+  <rect x="120" y="466" width="240" height="36" rx="8" fill="#ffffff" stroke="#bbb"/>
+  <text x="240" y="489" text-anchor="middle" fill="#555">your tokens</text>
+  <line x1="240" y1="464" x2="240" y2="444" stroke="#666" stroke-width="2" marker-end="url(#a)"/>
+</svg>

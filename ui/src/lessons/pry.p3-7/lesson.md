@@ -106,10 +106,10 @@ Key parts explains the guess after the word you've selected, the same way Why (D
 :::
 
 :::observe{id=map-obs}
-The map explains "49", the top guess after the last word. Each box is a head or an MLP with a big direct push, and the lines run between them.
+The map is built for the selected token, the last " 17", so it explains the guess after it: "49". Each box is a head or an MLP with a big direct push, and the lines run between them.
 
 ```yaml
-check: { read: circuit.target, op: contains, value: { token: "49" } }
+check: { read: circuit.target, op: contains, value: { token: " 17" } }
 ```
 :::
 
@@ -287,9 +287,10 @@ free: true
 :::
 
 :::do{id=war-1650-run}
-Press **Do it** to run the 1650 sentence, select its last " 16", draw Key parts and knock out the same map head as before.
+Press **Do it** to clear the knockouts, run the 1650 sentence, select its last " 16", draw Key parts and knock out the same map head as before.
 
 ```actions
+- reset: {}
 - set_prompt: { text: "The war lasted from the year 1650 to the year 16" }
 - run: {}
 - focus_token: { text: " 16", occurrence: last }

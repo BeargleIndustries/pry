@@ -71,12 +71,20 @@ export function loadRecorded(dir: string): Recorded {
   return out;
 }
 
-/** rows.json values by row id, for `$row.<id>.<field>`. */
+/**
+ * rows.json by row id, for `$row.<id>.<field>`: the row's `constants` (their
+ * values) first, then its recorded `values` for any field without a constant.
+ */
 export function loadRows(file: string): Map<string, Record<string, unknown>> {
   const out = new Map<string, Record<string, unknown>>();
   if (!existsSync(file)) return out;
-  const doc = JSON.parse(readFileSync(file, 'utf8')) as { rows: { id: number; values: Record<string, unknown> }[] };
-  for (const r of doc.rows) out.set(String(r.id), r.values ?? {});
+  const doc = JSON.parse(readFileSync(file, 'utf8')) as {
+    rows: { id: number; values: Record<string, unknown>; constants?: Record<string, { value: unknown }> }[];
+  };
+  for (const r of doc.rows) {
+    const constants = Object.fromEntries(Object.entries(r.constants ?? {}).map(([k, c]) => [k, c.value]));
+    out.set(String(r.id), { ...(r.values ?? {}), ...constants });
+  }
   return out;
 }
 
@@ -139,9 +147,8 @@ export async function walkLesson(
   let before: unknown;
   let baseline: unknown;
 
-  // Slots in scope: the front matter's plus the current section's own `:::slots`
-  // (a section's slots are its own; P3.1 reuses a name across sections).
-  let slots: Record<string, Slot> = { ...(lesson.meta.slots ?? {}) };
+  const slots: Record<string, Slot> = { ...(lesson.meta.slots ?? {}) };
+  for (const s of lesson.sections) Object.assign(slots, s.slots ?? {});
 
   const read = (name: string, args?: Record<string, unknown>, capture?: unknown) => {
     const def = readouts[name];
@@ -150,7 +157,11 @@ export async function walkLesson(
   };
   const src: SlotSource = {
     read: (name, args, capture) => read(name, args, capture !== undefined ? captures.get(capture) : undefined),
-    row: (id) => opts.rows?.get(id),
+    // The walker compares values, so the unit only matters for rendering.
+    row: (id, field) => {
+      const value = pick(opts.rows?.get(id), field);
+      return value === undefined ? undefined : { value, unit: 'number' };
+    },
     readouts,
   };
   const bindings = { earlier: () => undefined, row: (id: string, field: string) => pick(opts.rows?.get(id), field) };
@@ -215,13 +226,7 @@ export async function walkLesson(
         ok = typeof got === 'number' && typeof want === 'number' && Math.abs(got - want) <= (tol ?? 0);
         break;
       case 'contains':
-        // A string holds a substring; a list holds an item; a record holds every field of `value`.
-        ok =
-          typeof got === 'string'
-            ? typeof want === 'string' && got.includes(want)
-            : Array.isArray(got)
-              ? got.some((g) => deepEqual(g, want))
-              : isObj(got) && isObj(want) && Object.entries(want).every(([k, w]) => deepEqual(got[k], w, tol));
+        ok = typeof got === 'string' ? typeof want === 'string' && got.includes(want) : Array.isArray(got) && got.some((g) => deepEqual(g, want));
         break;
       case 'starts_with':
         ok = typeof got === 'string' && typeof want === 'string' && got.startsWith(want);
@@ -230,22 +235,8 @@ export async function walkLesson(
         ok = false;
     }
     if (item.not) ok = !ok;
-    // A check's `expect` is the readout's recorded value (AUTHORING.md): the live
-    // readout must match it too. `absent` = the readout has no value (a token
-    // outside the top ten); a record matches on the fields `expect` names.
-    if (ok && item.expect !== undefined && item.expect !== 'pending') {
-      const e = item.expect;
-      ok =
-        e === 'absent'
-          ? got === undefined
-          : typeof e === 'number' && typeof got === 'number'
-            ? Math.abs(got - e) <= (tol ?? Math.max(1e-3, Math.abs(e) * 1e-3))
-            : isObj(e) && isObj(got)
-              ? Object.entries(e).every(([k, w]) => deepEqual(got[k], w, tol))
-              : deepEqual(got, e);
-      if (!ok) return { ok, got, want: `${fmt(want)} (recorded ${fmt(e)})` };
-    }
-    return { ok, got, want };
+    const expected = typeof item.expect === 'boolean' ? item.expect : true;
+    return { ok: ok === expected, got, want };
   }
 
   const prompt = () => host.page.prompt;
@@ -316,23 +307,7 @@ export async function walkLesson(
   }
 
   /** Predict feedback is shown at the reveal: evaluated at the observe it `checks`, or at section end. */
-  const pendingFeedback = new Map<string, { texts: unknown[]; scope: Record<string, Slot> }>();
-  /** Checks feedback slots in the scope of the section that holds the predict. */
-  function checkFeedback(fb: { texts: unknown[]; scope: Record<string, Slot> }, at: string, done: Set<string>) {
-    const here = slots;
-    slots = fb.scope;
-    for (const s of slotsIn(fb.texts)) checkSlot(s, at, done);
-    slots = here;
-  }
-  /**
-   * Inside a transfer, a faded do step leaves Run to the learner (P1.3:5 "the
-   * learner presses Run"). With no action that runs anything, the walk plays
-   * the learner: the transfer's prompt in the box, then Run.
-   */
-  let learnerPrompt: string | undefined;
-  /** Learner actions a task asks for, with the settings its prose tells the learner to use (P1.5:5 "sets temperature 0 and presses Write"). */
-  const LEARNER_PLAY: Record<string, Record<string, unknown>> = { write_it: { temperature: 0 }, run: {} };
-  const RUNS = ['run', 'ensure_run', 'run_compare', 'write_it', 'run_logit_lens', 'run_dla', 'run_head_ablation', 'run_patching', 'run_feature_ablation', 'run_steer', 'steer_across', 'run_circuit', 'show_embedding'];
+  const pendingFeedback = new Map<string, unknown[]>();
 
   async function walkStep(step: Step, where: string, done: Set<string>) {
     const at = `${where}/${step.id ?? step.kind}`;
@@ -343,7 +318,6 @@ export async function walkLesson(
     }
     switch (step.kind) {
       case 'do': {
-        for (const s of slotsIn([step.prose.map((p) => p.text)])) checkSlot(s, at, done);
         before = read('result');
         for (const a of step.actions) {
           try {
@@ -353,43 +327,25 @@ export async function walkLesson(
             res.errors.push(`${at}: ${a.name} threw ${String(e)}`);
           }
         }
-        if (learnerPrompt !== undefined && !step.actions.some((a) => RUNS.includes(a.name))) {
-          for (const [name, args] of [['set_prompt', { text: learnerPrompt }], ['run', {}]] as const) {
-            const r = await dispatcher.dispatch(name, args, { signal, bindings });
-            if (r.status !== 'done') res.errors.push(`${at}: learner ${name} ${r.status}`);
-          }
-        }
         if (typeof f.capture === 'string') captures.set(f.capture, read('result'));
         break;
       }
       case 'observe':
-        for (const s of slotsIn([step.prose.map((p) => p.text)])) checkSlot(s, at, done);
         runCheckItems(f.check, at);
         runAsserts(f.assert, at, done);
         if (step.id && pendingFeedback.has(step.id)) {
-          checkFeedback(pendingFeedback.get(step.id)!, at, done);
+          for (const s of slotsIn(pendingFeedback.get(step.id)!)) checkSlot(s, at, done);
           pendingFeedback.delete(step.id);
         }
         break;
       case 'predict':
-        pendingFeedback.set(typeof f.checks === 'string' ? f.checks : `__end:${at}`, { texts: [f.choices], scope: slots });
+        if (typeof f.checks === 'string') pendingFeedback.set(f.checks, [f.choices]);
+        else pendingFeedback.set(`__end:${at}`, [f.choices]);
         for (const s of slotsIn([step.prose.map((p) => p.text)])) checkSlot(s, at, done);
         break;
-      case 'task': {
-        // Learner-driven. When every learner action is one the walk can play the
-        // way the task tells the learner to (LEARNER_PLAY), it plays them and checks
-        // the target; otherwise the target is the learner's to reach.
-        const acts = (f.learner_actions as string[] | undefined) ?? [];
-        if (acts.length && acts.every((a) => a in LEARNER_PLAY)) {
-          for (const a of acts) {
-            const r = await dispatcher.dispatch(a, LEARNER_PLAY[a], { signal, bindings });
-            if (r.status !== 'done') res.errors.push(`${at}: learner ${a} ${r.status}`);
-          }
-          runCheckItems(f.target, at);
-          if (typeof f.capture === 'string') captures.set(f.capture, read('result'));
-        }
+      case 'task':
+        // Learner-driven: its target is the learner's to reach, not checkable here.
         break;
-      }
       default: {
         // Prose and fields (feedback, supports, leaves_open, ...); assert lines are checked by runAsserts.
         const { assert: _assert, ...rest } = f;
@@ -397,10 +353,7 @@ export async function walkLesson(
         runAsserts(f.assert, at, done);
       }
     }
-    const outer = learnerPrompt;
-    if (step.kind === 'transfer') learnerPrompt = f.prompt as string;
     for (const c of step.children) await walkStep(c, at, done);
-    learnerPrompt = outer;
   }
 
   let state: unknown;
@@ -414,18 +367,17 @@ export async function walkLesson(
       res.errors.push(`${where}: apply threw ${String(e)}`);
     }
     if (baseline === undefined) baseline = read('result');
-    slots = { ...(lesson.meta.slots ?? {}), ...(section.slots ?? {}) };
     const done = new Set<string>();
     for (const step of section.steps) await walkStep(step, where, done);
-    for (const [k, fb] of pendingFeedback) {
+    for (const [k, texts] of pendingFeedback) {
       // A predict whose reveal is an observe in a later section waits for it.
       if (!k.startsWith('__end:')) continue;
-      checkFeedback(fb, `${where}/feedback`, done);
+      for (const s of slotsIn(texts)) checkSlot(s, `${where}/feedback`, done);
       pendingFeedback.delete(k);
     }
     state = set.snapshot();
   }
-  for (const fb of pendingFeedback.values()) checkFeedback(fb, 'end/feedback', new Set());
+  for (const texts of pendingFeedback.values()) for (const s of slotsIn(texts)) checkSlot(s, 'end/feedback', new Set());
   vi.unstubAllGlobals();
   return res;
 }

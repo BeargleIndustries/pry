@@ -84,8 +84,8 @@ clean: { read: patch.peak, args: { type: mlp }, field: clean, expect: 15.9624528
 corrupted: { read: patch.peak, args: { type: mlp }, field: corrupted, expect: 13.080302238464355, tolerance: 0.05 }
 patched_l: { read: patch.peak, args: { type: mlp }, field: patched, expect: 15.456536293029785, tolerance: 0.05 }
 share: { from: [clean, corrupted, patched_l], formula: share, format: probability }
-l2_share: { read: patch.cell, args: { layer: 2, position: $row.34.last_position }, field: share, expect: 0.40324814685155025, tolerance: 0.02 }
-l11_share: { read: patch.cell, args: { layer: 11, position: $row.34.last_position }, field: share, expect: -0.3850042056096413, tolerance: 0.02 }
+l2_share: { read: patch.cell, args: { layer: 2, position: 0 }, field: share, expect: 0.40324814685155025, tolerance: 0.02 }
+l11_share: { read: patch.cell, args: { layer: 11, position: 0 }, field: share, expect: -0.3850042056096413, tolerance: 0.02 }
 :::
 
 :::do{id=mlp-swaps}

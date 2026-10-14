@@ -98,7 +98,7 @@
   const pct = $derived(Math.max(0, Math.min(100, Math.round(progress * 100))));
   const phaseLabel = $derived(
     phase === 'model' ? 'Downloading model weights' :
-    phase === 'sae' ? 'Downloading the feature detector (SAE)' :
+    phase === 'sae' ? 'Downloading the sparse autoencoder (SAE)' :
     'Ready',
   );
 </script>
@@ -107,7 +107,7 @@
   <div class="mb-1 font-mono text-xs uppercase tracking-widest text-indigo-400">step 05</div>
   <h2 class="mb-2 text-2xl font-semibold text-zinc-100">Downloading {presetId}</h2>
   <p class="mb-6 text-sm text-zinc-400">
-    Downloading the model and its feature detector (<Term key="sae">SAE</Term>) from Hugging Face. They're saved on
+    Downloading the model and its sparse autoencoder (<Term key="sae">SAE</Term>) from Hugging Face. They're saved on
     your computer, so you only download them once.
   </p>
 

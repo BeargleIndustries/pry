@@ -148,9 +148,10 @@ choices:
 ## With the control {id=s3-7 outline=P3.2.md#3.7}
 
 :::do{id=movers-knockout}
-Press **Do it** to knock out the name movers (and your P2.1 head, if it's a different one) and run again.
+Press **Do it** to clear the last knockout, switch off the name movers (and your P2.1 head, if it's a different one) and run again.
 
 ```actions
+- reset: {}
 - set_head_ablation: { heads: [{ layer: 9, head: 9 }, { layer: 9, head: 6 }, { layer: 10, head: 0 }, { $earlier: pry.p2-1.head-pick, fallback: { layer: 9, head: 9 } }], on: true }
 - run_head_ablation: {}
 ```
@@ -289,9 +290,10 @@ free: true
 :::
 
 :::do{id=tom-knockout}
-Press **Do it** to run the Tom and Sarah sentence, then knock out the same three name movers.
+Press **Do it** to clear the knockouts, run the Tom and Sarah sentence, then knock out the same three name movers.
 
 ```actions
+- reset: {}
 - set_prompt: { text: "When Tom and Sarah went to the park, Sarah gave a ball to" }
 - run: {}
 - set_head_ablation: { heads: [{ layer: 9, head: 9 }, { layer: 9, head: 6 }, { layer: 10, head: 0 }], on: true }

@@ -45,7 +45,7 @@
   data-lesson-hidden={isHidden('predictions-panel') || undefined}
 >
   <div class="flex items-baseline gap-2">
-    <h2 class="text-sm font-semibold text-zinc-100">Next-word guesses (top 10)</h2>
+    <h2 class="text-sm font-semibold text-zinc-100">Next-token guesses (top 10)</h2>
     <span class="text-xs text-zinc-600">With the model's chance for each next <Term key="token">token</Term> (its <Term key="probability">probability</Term>)</span>
   </div>
 

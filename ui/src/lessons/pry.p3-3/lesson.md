@@ -158,7 +158,7 @@ skeptic: { says: "A skeptic would say these cells light up because of this one p
 
 :::slots
 top_head_layer: { read: patch.peak, args: { type: head }, field: layer, expect: 8 }
-top_head: { read: patch.peak, args: { type: head }, field: head, expect: 10 }
+top_head: { read: patch.peak, args: { type: head }, field: position, expect: 10 }
 head_clean: { read: patch.peak, args: { type: head }, field: clean, expect: 18.466388702392578, tolerance: 0.05 }
 head_corrupted: { read: patch.peak, args: { type: head }, field: corrupted, expect: 14.966815948486328, tolerance: 0.05 }
 head_patched: { read: patch.peak, args: { type: head }, field: patched, expect: 16.252490997314453, tolerance: 0.05 }
