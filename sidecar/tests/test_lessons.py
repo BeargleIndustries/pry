@@ -143,12 +143,17 @@ def _strip(obj):
 
 
 def _trim(endpoint: str, resp: dict) -> tuple[dict, list[str]]:
-    """Keep files small: /generate attention keeps each head's last query row only."""
+    """Keep files small: /generate attention keeps each head's last query row only.
+
+    Earlier rows become null, so the last row keeps its real index: a lesson reading
+    attention FROM the last token (`from: <last position>`) gets the recorded row, and
+    a read from any other position comes back undefined, never a wrong row.
+    """
     trimmed = []
     if endpoint == "/generate" and resp.get("attention"):
         for layer in resp["attention"]:
-            layer["heads"] = [h[-1:] for h in layer["heads"]]
-        trimmed.append("attention: each head's last query row only")
+            layer["heads"] = [[None] * (len(h) - 1) + h[-1:] for h in layer["heads"]]
+        trimmed.append("attention: each head's last query row only (earlier rows null)")
     return resp, trimmed
 
 

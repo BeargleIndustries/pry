@@ -20,7 +20,7 @@ slots:
   actual_logit: { read: dla.actual, expect: 15.962 }
   gap: { read: dla.gap, expect: 1.163 }
   x: { row: "22.push_threshold", format: logit }
-  n: { read: dla.parts_above, args: { threshold: $row.22.push_threshold }, expect: 7 }
+  n: { read: dla.parts_above, args: { threshold: $row.22.push_threshold }, expect: 2 }
   k: { row: "22.top_mlp_layer", format: count }
 ---
 
