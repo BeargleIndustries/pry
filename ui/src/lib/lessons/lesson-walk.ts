@@ -229,8 +229,22 @@ export async function walkLesson(
         ok = false;
     }
     if (item.not) ok = !ok;
-    const expected = typeof item.expect === 'boolean' ? item.expect : true;
-    return { ok: ok === expected, got, want };
+    // A check's `expect` is the readout's recorded value (AUTHORING.md): the live
+    // readout must match it too. `absent` = the readout has no value (a token
+    // outside the top ten); a record matches on the fields `expect` names.
+    if (ok && item.expect !== undefined && item.expect !== 'pending') {
+      const e = item.expect;
+      ok =
+        e === 'absent'
+          ? got === undefined
+          : typeof e === 'number' && typeof got === 'number'
+            ? Math.abs(got - e) <= (tol ?? Math.max(1e-3, Math.abs(e) * 1e-3))
+            : isObj(e) && isObj(got)
+              ? Object.entries(e).every(([k, w]) => deepEqual(got[k], w, tol))
+              : deepEqual(got, e);
+      if (!ok) return { ok, got, want: `${fmt(want)} (recorded ${fmt(e)})` };
+    }
+    return { ok, got, want };
   }
 
   const prompt = () => host.page.prompt;
