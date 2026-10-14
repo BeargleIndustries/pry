@@ -210,9 +210,9 @@ Coherence at the higher strength is {coh_high}, against {coh_at_s} at {s}. The s
 ```yaml
 check: { read: steer.coherence, args: { which: steered }, op: lt, value: $read.steer.coherence, value_args: { which: original } }
 assert:
-  - require: { slot: coh_high, op: lt, slot2: coh_at_s }
-    say: "Pushing harder dropped coherence further."
-    else: "Pushing harder didn't drop coherence any further on this feature: the steered text came out the same, word for word. Push hard enough and text can turn to mush; this feature stopped changing first."
+  - require: { slot: coh_high, op: equals, slot2: coh_at_s }
+    say: "Pushing harder didn't drop coherence any further on this feature: the steered text came out the same, word for word. Push hard enough and text can turn to mush; this feature stopped changing first."
+    else: "Pushing harder moved coherence. Compare the two numbers, and read both texts before you decide what changed."
 ```
 :::
 

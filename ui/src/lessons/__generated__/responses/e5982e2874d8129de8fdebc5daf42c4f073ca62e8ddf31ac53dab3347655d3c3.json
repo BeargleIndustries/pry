@@ -1,0 +1,225 @@
+{
+ "key": "e5982e2874d8129de8fdebc5daf42c4f073ca62e8ddf31ac53dab3347655d3c3",
+ "variant": "r1",
+ "request": {
+  "endpoint": "/steer",
+  "model": "gpt2-small",
+  "body": {
+   "preset_id": "gpt2-small",
+   "prompt": "On our trip we walked along the beach and watched the ocean",
+   "feature_id": 21791,
+   "sae_layer": 8,
+   "alpha": 30,
+   "max_new_tokens": 50
+  }
+ },
+ "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+ "device": "cpu",
+ "libs": {
+  "python": "3.12.13",
+  "torch": "2.5.1+cpu",
+  "transformer_lens": "2.15.4",
+  "sae_lens": "5.11.0",
+  "transformers": "4.57.6",
+  "numpy": "1.26.4"
+ },
+ "recorded": "2026-10-14",
+ "neuronpedia_fetched": null,
+ "offline": false,
+ "trimmed": [],
+ "response": {
+  "preset_id": "gpt2-small",
+  "prompt": "On our trip we walked along the beach and watched the ocean",
+  "feature_id": 21791,
+  "alpha": 30.0,
+  "sae_layer": 8,
+  "original_generation": ". We were surprised to see the ocean. It was a beautiful place. We were surprised to see the ocean.\n\nWe were surprised to see the ocean. It was a beautiful place. We were surprised to see the ocean.\n\nWe",
+  "steered_generation": ". The sun was shining and the clouds were falling. The wind was blowing and the clouds were falling. The rain was falling and the clouds were falling. The rain was falling and the clouds were falling. The rain was falling and the clouds were falling",
+  "original_top_predictions": [
+   {
+    "token": ".",
+    "probability": 0.10398386418819427,
+    "rank": 1,
+    "logit": null
+   },
+   {
+    "token": " rise",
+    "probability": 0.04655522480607033,
+    "rank": 2,
+    "logit": null
+   },
+   {
+    "token": " breeze",
+    "probability": 0.03423939272761345,
+    "rank": 3,
+    "logit": null
+   },
+   {
+    "token": ",",
+    "probability": 0.02948336862027645,
+    "rank": 4,
+    "logit": null
+   },
+   {
+    "token": " turn",
+    "probability": 0.026859022676944733,
+    "rank": 5,
+    "logit": null
+   },
+   {
+    "token": " swell",
+    "probability": 0.025494398549199104,
+    "rank": 6,
+    "logit": null
+   },
+   {
+    "token": " as",
+    "probability": 0.02444697916507721,
+    "rank": 7,
+    "logit": null
+   },
+   {
+    "token": " and",
+    "probability": 0.01909797452390194,
+    "rank": 8,
+    "logit": null
+   },
+   {
+    "token": " slowly",
+    "probability": 0.017912045121192932,
+    "rank": 9,
+    "logit": null
+   },
+   {
+    "token": " go",
+    "probability": 0.017636094242334366,
+    "rank": 10,
+    "logit": null
+   }
+  ],
+  "steered_top_predictions": [
+   {
+    "token": ".",
+    "probability": 0.13417142629623413,
+    "rank": 1,
+    "logit": null
+   },
+   {
+    "token": ",",
+    "probability": 0.03774213790893555,
+    "rank": 2,
+    "logit": null
+   },
+   {
+    "token": " rise",
+    "probability": 0.03772565722465515,
+    "rank": 3,
+    "logit": null
+   },
+   {
+    "token": " and",
+    "probability": 0.023311428725719452,
+    "rank": 4,
+    "logit": null
+   },
+   {
+    "token": " wash",
+    "probability": 0.018607821315526962,
+    "rank": 5,
+    "logit": null
+   },
+   {
+    "token": " turn",
+    "probability": 0.01721079833805561,
+    "rank": 6,
+    "logit": null
+   },
+   {
+    "token": " roll",
+    "probability": 0.016415001824498177,
+    "rank": 7,
+    "logit": null
+   },
+   {
+    "token": " as",
+    "probability": 0.015901941806077957,
+    "rank": 8,
+    "logit": null
+   },
+   {
+    "token": " for",
+    "probability": 0.014976320788264275,
+    "rank": 9,
+    "logit": null
+   },
+   {
+    "token": " in",
+    "probability": 0.01443217508494854,
+    "rank": 10,
+    "logit": null
+   }
+  ],
+  "changed_token_indices": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29,
+   30,
+   31,
+   32,
+   33,
+   34,
+   35,
+   36,
+   37,
+   38,
+   39,
+   40,
+   41,
+   42,
+   43,
+   44,
+   45,
+   46,
+   47,
+   48,
+   49
+  ],
+  "coherence": {
+   "original": -1.0128633975982666,
+   "steered": -1.0579530000686646
+  },
+  "scale": {
+   "strength": 30.0,
+   "activation_p50": 0.0,
+   "activation_p99": 0.0,
+   "activation_max": 0.0
+  },
+  "control": null,
+  "status": "ok"
+ }
+}

@@ -194,9 +194,9 @@ assert:
   - require: { slot: movers_delta, op: lt, value: -0.1 }
     say: "With the name movers off, ' Mary' drops a lot."
     else: "With the name movers off, ' Mary' drops."
-  - require: { slot: control_delta, op: gt, value: -0.02 }
-    say: "With random heads off, ' Mary' barely moves."
-    else: "With random heads off, ' Mary' moves too, just not as far."
+  - require: { slot: control_delta, op: lt, value: -0.02 }
+    say: "With random heads off, ' Mary' moves too, just not as far."
+    else: "With random heads off, ' Mary' barely moves."
 ```
 :::
 

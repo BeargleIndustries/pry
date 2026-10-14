@@ -133,6 +133,7 @@ Is that drop more than switching off any feature does? Press **Do it** to clear 
 
 ```actions
 - reset: {}
+- set_feature_ablation: { ids: $row.24.top_ids, on: false }
 - set_feature_ablation: { ids: [$row.24.control_id], on: true }
 - run_feature_ablation: {}
 ```
@@ -226,6 +227,7 @@ Press **Do it** to clear the knockouts, run the doctor prompt and knock out the 
 
 ```actions
 - reset: {}
+- set_feature_ablation: { ids: [$row.24.control_id], on: false }
 - set_prompt: { text: "The doctor said that" }
 - run: {}
 - focus_token: { text: " doctor" }

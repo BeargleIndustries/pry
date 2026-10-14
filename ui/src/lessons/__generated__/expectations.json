@@ -206,6 +206,36 @@
       ]
     },
     {
+      "endpoint": "/ablate-head",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "When Mary and John went to the store, John gave a drink to",
+        "ablations": [
+          {
+            "layer": 9,
+            "head": 9
+          },
+          {
+            "layer": 9,
+            "head": 6
+          },
+          {
+            "layer": 10,
+            "head": 0
+          },
+          {
+            "layer": 9,
+            "head": 9
+          }
+        ]
+      },
+      "key": "30900680a4ced0c6eb8d96810abd2ec4515dfa3f415966a13ba61e21960a565a",
+      "lessons": [
+        "pry.p3-2"
+      ]
+    },
+    {
       "endpoint": "/generate",
       "model": "gpt2-small",
       "body": {
@@ -323,36 +353,6 @@
       "key": "493a048097532cf3c30a9421f900fca60b8d02a73b801ccf20aaa3488fabdaaf",
       "lessons": [
         "pry.p3-7"
-      ]
-    },
-    {
-      "endpoint": "/ablate-feature",
-      "model": "gpt2-small",
-      "body": {
-        "preset_id": "gpt2-small",
-        "prompt": "The nurse said that",
-        "feature_ablations": [
-          {
-            "feature_index": 21213,
-            "layer": 8
-          },
-          {
-            "feature_index": 19093,
-            "layer": 8
-          },
-          {
-            "feature_index": 821,
-            "layer": 8
-          },
-          {
-            "feature_index": 7698,
-            "layer": 8
-          }
-        ]
-      },
-      "key": "50f8a0df9eeec656890e1af56cba554a2349ac4963a069e34e24264bbd81237d",
-      "lessons": [
-        "pry.p3-4"
       ]
     },
     {
@@ -645,6 +645,24 @@
       ]
     },
     {
+      "endpoint": "/ablate-feature",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The nurse said that",
+        "feature_ablations": [
+          {
+            "feature_index": 7698,
+            "layer": 8
+          }
+        ]
+      },
+      "key": "9cd467d418acd6095629c22875edb5c02d830eb0792462a16adacf1981af5348",
+      "lessons": [
+        "pry.p3-4"
+      ]
+    },
+    {
       "endpoint": "/generate",
       "model": "gpt2-small",
       "body": {
@@ -911,40 +929,6 @@
       "key": "ebda32aacf0986d0757a30f1d1335d843b3e96e746c9ded950756851de962be8",
       "lessons": [
         "pry.p2-2"
-      ]
-    },
-    {
-      "endpoint": "/ablate-head",
-      "model": "gpt2-small",
-      "body": {
-        "preset_id": "gpt2-small",
-        "prompt": "When Mary and John went to the store, John gave a drink to",
-        "ablations": [
-          {
-            "layer": 2,
-            "head": 8
-          },
-          {
-            "layer": 9,
-            "head": 9
-          },
-          {
-            "layer": 9,
-            "head": 6
-          },
-          {
-            "layer": 10,
-            "head": 0
-          },
-          {
-            "layer": 9,
-            "head": 9
-          }
-        ]
-      },
-      "key": "f1329914bc363d5c14e06054e2b2aff1d2993eeb2cf9280205e8fa49dab1a0d9",
-      "lessons": [
-        "pry.p3-2"
       ]
     },
     {
@@ -1478,7 +1462,7 @@
         {
           "where": "s3-7/three-obs",
           "kind": "assert",
-          "name": "control_delta gt -0.02",
+          "name": "control_delta lt -0.02",
           "prompt": "When Mary and John went to the store, John gave a drink to"
         },
         {
@@ -1782,7 +1766,7 @@
         {
           "where": "s3-6/harder-obs",
           "kind": "assert",
-          "name": "coh_high lt coh_at_s",
+          "name": "coh_high equals coh_at_s",
           "prompt": "On our trip we walked along the beach and watched the ocean"
         }
       ]
@@ -2133,13 +2117,13 @@
         {
           "where": "s3-5/map-obs",
           "kind": "check",
-          "name": "circuit.target contains {\"token\":\"49\"}",
+          "name": "circuit.target contains {\"token\":\" 17\"}",
           "prompt": "The war lasted from the year 1732 to the year 17",
           "check": {
             "read": "circuit.target",
             "op": "contains",
             "value": {
-              "token": "49"
+              "token": " 17"
             }
           }
         },
