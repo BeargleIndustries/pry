@@ -192,7 +192,7 @@ Effects: `view` and `compute` run freely and replay when a section opens; `downl
 | View | Arguments | What it shows |
 |---|---|---|
 | `embedding-compare` | `{}` | Two token positions side by side with the count of matching numbers; rows split into embedding and positional embedding when split; cosine only beside the lists it compares. |
-| `text-diff` | `{ a: string, b: string }` | Two captured texts with the changed tokens marked. |
+| `text-diff` | `{ a: string, b?: string, text?: string }` | A captured text against a second capture (b) or a literal reference text, with the changed tokens marked. |
 | `top5-pair` | `{ a: string, b: string }` | Two captured top 5 lists side by side. |
 | `three-logits` | `{}` | Clean, corrupted and patched logits on one line with the share formula. |
 | `summary-table` | `{ [key]: any }` | The three-tool summary table from P3.6. |
