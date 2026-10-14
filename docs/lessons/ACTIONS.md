@@ -103,6 +103,7 @@ Effects: `view` and `compute` run freely and replay when a section opens; `downl
 | `ablation.head_count` | number (count) |  | How many heads are knocked out. |
 | `ablation.top_guess.token` | string |  | The top prediction with the heads knocked out. |
 | `ablation.delta` | number (probability) | `{ token: string }` | How much one token's probability changed with the heads knocked out. |
+| `ablation.top_delta` | number (probability) |  | How much the original top token's probability changed with the heads knocked out (knocked out minus original). |
 | `ablation.prediction` | record | `{ side: "original" \| "ablated", token: string }` | One token's probability, logit and rank with the heads knocked out, or in the original run. |
 | `ablation.top5` | list | `{ side: "original" \| "ablated" }` | The top 5 predictions, original or ablated. |
 | `patch.cell` | record | `{ layer: integer, position: integer }` | One Swap test cell: clean, corrupted and patched logits, and the share. |

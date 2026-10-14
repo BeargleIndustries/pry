@@ -358,6 +358,13 @@ describe('Pry readouts: one test per readout', () => {
     expect(r('ablation.prediction', { side: 'ablated', token: ' zebra' })).toBeUndefined();
   });
 
+  it('ablation.top_delta is the original top token\'s change, undefined before a knockout run', async () => {
+    expect(r('ablation.top_delta')).toBeUndefined();
+    await knocked();
+    // Original top " the" 0.3 -> 0.15 knocked out.
+    expect(r('ablation.top_delta')).toBeCloseTo(-0.15);
+  });
+
   it('ablation.top5', async () => {
     await knocked();
     expect((r('ablation.top5', { side: 'ablated' }) as unknown[]).length).toBe(5);
