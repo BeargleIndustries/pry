@@ -26,7 +26,7 @@ import {
 import { GRANTS_FILE, grant, grantStatus, loadGrants, revoke, saveGrants, type GrantStore, type GrantsFs, type Permissions } from './lessons/grants';
 import { inTauri, type LessonLog } from './lessons/log';
 import type { Effect } from './lessons/registry/contract';
-import type { RunnerJournal } from './lessons/runner/types';
+import { memoryJournal, type RunnerJournal } from './lessons/runner/types';
 import type { PickerItem } from './lessons/LessonPicker.svelte';
 import type { UserLessonRow } from './lessons/LessonsSettings.svelte';
 import type { Lesson } from './lessons/format/schema';
@@ -92,7 +92,8 @@ export function createLessonsApp(deps: LessonsAppDeps) {
   const runner = new LessonRunner({
     set: pryToolSet,
     memo: pryMemo,
-    journal: journalOver(deps.notebook, deps.provenance),
+    // The harness build keeps its journal in memory: a debug run never writes the learner's notebook.
+    journal: POPUP_AUDIT ? memoryJournal() : journalOver(deps.notebook, deps.provenance),
     progress,
     rows: (id) => (rowsData[id] as { values?: unknown } | undefined)?.values,
     currentModel: deps.currentModel,
@@ -121,7 +122,8 @@ export function createLessonsApp(deps: LessonsAppDeps) {
       Object.assign(texts, loaded);
       extra = bundledEntries(realFormat, loaded, {}, undefined);
     }
-    if (inTauri()) {
+    // The harness build lists bundled lessons and the skeletons only: no user-lesson folder is touched.
+    if (inTauri() && !POPUP_AUDIT) {
       try {
         library = library ?? (await openLessonLibrary({ lessonDir: pryToolSet.lessonDir, idPrefix: pryToolSet.idPrefix, log: deps.log }));
         await library.ensureTemplate().catch(() => {});

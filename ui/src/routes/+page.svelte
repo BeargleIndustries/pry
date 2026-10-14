@@ -358,6 +358,79 @@
     writePref('collapsed', String(on));
   }
 
+  // Dev-only (POPUP_AUDIT): what the popup audit's learning-mode pass and the
+  // harness driver (scripts/dev/popup-audit.mjs) drive Lessons with.
+  const auditLessons = {
+    open: async (side: Side) => {
+      setLessonSide(side);
+      setLessonCollapsed(false);
+      await openLessons();
+    },
+    close: () => closeLessons(),
+    openLesson: async (id: string, sectionId: string | null = null) => (await ensureLessons(true)).openLesson(id, sectionId),
+    sectionCount: () => lessons?.runner.lesson?.sections.length ?? 0,
+    goto: async (i: number) => {
+      await lessons?.runner.goto(i);
+    },
+    hasExplainResult: () => {
+      const has = (b: { kind: string; children: { kind: string; children: unknown[] }[] }): boolean =>
+        b.kind === 'explain-result' || b.children.some((c) => has(c as never));
+      return !!lessons?.model.step?.blocks.some((b) => has(b as never));
+    },
+    railed: () => lessonLayout.railed,
+    loaded: () => loadState === 'loaded',
+    collapse: (on: boolean) => setLessonCollapsed(on),
+    widenVisible: () => widenVisible,
+    widen: () => widenWindow(),
+    setWindowSize: async (w: number, h: number) => {
+      const { getCurrentWindow, LogicalSize } = await import('@tauri-apps/api/window');
+      await getCurrentWindow().unmaximize().catch(() => {});
+      await getCurrentWindow().setSize(new LogicalSize(w, h));
+    },
+    /** Answers, runs and shows the lesson's first observe that has a check. */
+    driveObserve: async () => {
+      const r = lessons?.runner;
+      const lesson = r?.lesson;
+      if (!r || !lesson) return false;
+      for (let i = 0; i < lesson.sections.length; i++) {
+        await r.goto(i);
+        const flat = (bs: NonNullable<typeof r.section>['steps']): typeof bs => bs.flatMap((s) => [s, ...flat(s.children)]);
+        const steps = flat(lesson.sections[i].steps);
+        const obs = steps.find((s) => s.kind === 'observe' && s.fields.check && s.id);
+        if (!obs) continue;
+        for (const s of steps) {
+          if (s === obs) break;
+          const key = r.keyOf(lesson.sections[i], s);
+          if (s.kind === 'predict') await r.skipStep(key);
+          if (s.kind === 'do') await r.doStep(key);
+        }
+        await r.showObserve(r.keyOf(lesson.sections[i], obs));
+        return true;
+      }
+      return false;
+    },
+    /** Points at an anchor whose tab is closed (the pointer-hidden-target screenshot). */
+    pointHidden: (anchor: string) => {
+      lessons?.model.clearPointer();
+      lessons?.model.point({ anchor });
+    },
+    showInstall: () => {
+      if (!lessons) return;
+      lessons.state.pending = [
+        {
+          entry: { id: 'someone.lens-tour', source: 'user', folder: '', file: '', lesson: { id: 'someone.lens-tour', title: 'A tour of the logit lens', draft: false, permissions: {}, sections: [], images: [] }, error: null, images: {} },
+          manifest: { id: 'someone.lens-tour', sourcePath: '', permissions: { download: ['gpt2-medium'], network: ['neuronpedia'], external: ['arxiv.org'] } },
+          ask: { download: ['gpt2-medium'], network: ['neuronpedia'], external: ['arxiv.org'] },
+        },
+      ];
+      lessons.state.installOpen = true;
+    },
+    openSettings: () => {
+      settingsOpen = true;
+    },
+  };
+  if (POPUP_AUDIT && typeof window !== 'undefined') (window as unknown as { __pryLessons: typeof auditLessons }).__pryLessons = auditLessons;
+
   // ---------------------------------------------------------------------------
   // Inline prompt handler
   // ---------------------------------------------------------------------------
@@ -694,8 +767,13 @@
             },
             closeExperiment: () => dismissGuide(),
             setCustomModelDialog: (open) => (customModelDialogOpen = open),
+            lessons: auditLessons,
           },
-          { guideTour: params.get('guideTour') === '1' },
+          {
+            guideTour: params.get('guideTour') === '1',
+            skipTour: params.get('skipTour') === '1',
+            lessons: params.get('lessons') === 'both' ? ['right', 'left'] : params.get('lessons') === 'right' ? ['right'] : params.get('lessons') === 'left' ? ['left'] : [],
+          },
         ),
       );
     }
