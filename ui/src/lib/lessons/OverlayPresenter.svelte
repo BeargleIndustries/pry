@@ -43,7 +43,7 @@
     #handlers: ((c: PresenterCommand) => void)[] = [];
 
     show(step: RenderedStep, nav: Nav): void {
-      this.section = step as Section;
+      this.section = step.section;
       this.nav = nav;
       this.pointers = [];
     }

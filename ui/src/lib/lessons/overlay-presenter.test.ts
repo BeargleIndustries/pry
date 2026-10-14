@@ -6,7 +6,7 @@ import { render } from 'svelte/server';
 import OverlayPresenter, { hasLook, OverlayModel, overlayUi, TOUR_SEEN_KEY } from './OverlayPresenter.svelte';
 import { loadLessonSource } from './format/normalise';
 import type { Section } from './format/schema';
-import type { Presenter, PresenterCommand } from './registry/contract';
+import type { Presenter, PresenterCommand, RenderedStep } from './registry/contract';
 
 // Plan T7a: the overlay presenter against a stub runner fed RenderedSteps
 // built from the quick tour's outline-coverage skeleton. Rendered on the
@@ -27,7 +27,8 @@ function stubRunner(presenter: Presenter) {
   const commands: PresenterCommand[] = [];
   const go = (i: number) => {
     index = i;
-    presenter.show(sections[i], { index: i, total: sections.length, canBack: i > 0 });
+    // The overlay draws from the rendered step's normalised section (contract RenderedStep).
+    presenter.show({ section: sections[i] } as RenderedStep, { index: i, total: sections.length, canBack: i > 0 });
     const looks = sections[i].steps.flatMap((s) => s.prose.flatMap((p) => p.inline.filter((n) => n.type === 'look')));
     for (const look of looks) {
       const at = look.attrs?.at ?? [];

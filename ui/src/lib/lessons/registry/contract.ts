@@ -3,6 +3,7 @@
 // implement. Tool-neutral: nothing here imports Pry code.
 
 import type { ZodType } from 'zod';
+import type { RenderedStep } from '../render';
 
 /**
  * What an action touches. `view` and `compute` run freely; every other effect
@@ -103,12 +104,13 @@ export interface ToolActionSet<VS> {
 }
 
 /**
- * A step as the runner hands it to a presenter. Its shape belongs to the
- * runner's renderer (T3, `lessons/render.ts`); T3 replaces this alias.
+ * A step as the runner hands it to a presenter: one section with each step's
+ * state resolved. Its shape belongs to the runner's renderer (`lessons/render.ts`).
  */
-export type RenderedStep = unknown;
+export type { RenderedStep };
 
-export type PointerTarget = { anchor: string; args?: unknown } | { runner: string };
+/** A tool anchor, or a runner target (`lesson:spine` with `args.box`, `lesson:step:<id>`, `lesson:image:<id>`). */
+export type PointerTarget = { anchor: string; args?: unknown } | { runner: string; args?: unknown };
 
 export type PresenterCommand = 'next' | 'back' | 'skip' | 'exit' | { commit: unknown };
 

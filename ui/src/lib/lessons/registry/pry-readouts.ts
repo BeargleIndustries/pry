@@ -84,7 +84,8 @@ export function liveSource(): PrySource {
     focusTokenIndex: s.focusTokenIndex,
     logitLens: s.logitLensResponse,
     dla: s.dlaResponse,
-    headScores: s.headScoresResponse,
+    // Only while the copying-heads view shows them (the scores stay cached per model).
+    headScores: s.headScoresMode ? s.headScoresResponse : null,
     headAblations: s.headAblations,
     headAblate: s.headAblateResponse,
     featureAblations: s.featureAblations,
