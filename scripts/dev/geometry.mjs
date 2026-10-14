@@ -43,6 +43,11 @@ const RECT_ALLOW = {
   'predictions-panel': 'everything-else row',
   'settings-tour': 'removed',
   'experiments-button': 're-purposed',
+  // Inside the Features panel (not the header box, prompt row or workspace columns).
+  'glossary-term#5': "Features heading copy pass (0.4.0): 'Features that fired…' is shorter, shifting the panel's inner rows",
+  'glossary-term#6': "Features heading copy pass (0.4.0): 'Features that fired…' is shorter, shifting the panel's inner rows",
+  'panel-b-layer-selector': "Features heading copy pass (0.4.0): 'Features that fired…' is shorter, shifting the panel's inner rows",
+  'ablation-feature-toggle': "Features heading copy pass (0.4.0): 'Features that fired…' is shorter, shifting the panel's inner rows",
 };
 const STRUCTURAL = new Set(['header', 'prompt-row', 'workspace-left', 'workspace-right', 'workspace']);
 
@@ -215,7 +220,7 @@ function diff(base, cur) {
   for (const [k, r0] of Object.entries(b)) {
     const r1 = c[k];
     const name = baseName(k);
-    const allow = !STRUCTURAL.has(name) && RECT_ALLOW[name];
+    const allow = !STRUCTURAL.has(name) && (RECT_ALLOW[k] ?? RECT_ALLOW[name]);
     if (!r1) {
       const bad = !allow;
       failed ||= bad;

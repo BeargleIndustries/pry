@@ -212,7 +212,7 @@ const added: Record<string, Omit<AnchorDef, 'locate'> & { locate?: AnchorDef['lo
     locate: (a: { part: string }) => findWith('dla-bar', 'data-part', a.part),
   },
   // Added by the T1 gate after T2b closed (critic M8, P3.2:51 "cells L9H9, L9H6, L10H0").
-  // TODO(pry-learning T4-ui): mark grid cells as the head-cell anchor with `data-head="L9H9"`.
+  // PanelA.svelte marks each grid cell `data-tour="head-cell" data-head="L9H9"` (T3).
   'head-cell': {
     doc: 'One cell in the attention head grid, picked by layer and head.',
     label: 'a head in the attention grid, left side',

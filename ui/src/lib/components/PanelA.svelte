@@ -1299,6 +1299,8 @@
                   tabindex={isTabStop ? 0 : -1}
                   data-row={l}
                   data-col={h}
+                  data-tour="head-cell"
+                  data-head={`L${l}H${h}`}
                   aria-selected={ablationMode ? isAbl : att.expandedLayer === l && att.expandedHead === h}
                   aria-label={cellLabel(l, h, rawVal)}
                   onmouseenter={(e) => onCellMouseEnter(l, h, e)}
