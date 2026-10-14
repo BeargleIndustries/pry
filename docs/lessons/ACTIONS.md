@@ -103,10 +103,12 @@ Effects: `view` and `compute` run freely and replay when a section opens; `downl
 | `ablation.head_count` | number (count) |  | How many heads are knocked out. |
 | `ablation.top_guess.token` | string |  | The top prediction with the heads knocked out. |
 | `ablation.delta` | number (probability) | `{ token: string }` | How much one token's probability changed with the heads knocked out. |
+| `ablation.prediction` | record | `{ side: "original" \| "ablated", token: string }` | One token's probability, logit and rank with the heads knocked out, or in the original run. |
 | `ablation.top5` | list | `{ side: "original" \| "ablated" }` | The top 5 predictions, original or ablated. |
 | `patch.cell` | record | `{ layer: integer, position: integer }` | One Swap test cell: clean, corrupted and patched logits, and the share. |
 | `patch.peak` | record | `{ type: "head" \| "mlp" \| "resid" }` | The Swap test cell with the biggest share. |
 | `feature_ablation.delta` | number (probability) | `{ token: string }` | How much one token's probability changed with the features knocked out. |
+| `feature_ablation.prediction` | record | `{ side: "original" \| "ablated", token: string }` | One token's probability, logit and rank with the features knocked out, or in the original run. |
 | `feature_ablation.top5` | list | `{ side: "original" \| "ablated" }` | The top 5 predictions, original or ablated. |
 | `steer.text` | string | `{ which: "original" \| "steered" \| "control" }` | The original, steered or control text. |
 | `steer.changed_tokens` | number (count) |  | How many tokens steering changed. |

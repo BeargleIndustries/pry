@@ -4,7 +4,8 @@
 // Readouts read current state. With `from: <capture>` they read a capture
 // instead: a capture is the value of the generic `result` readout taken when
 // the do step ran (a plain copy of everything below), and the runner passes it
-// back as `args.from`. Every read returns undefined while its data isn't there.
+// back as `args.from_capture` (not `from`, which attention readouts use for a
+// token position). Every read returns undefined while its data isn't there.
 
 import { z } from 'zod';
 import type { ReadoutDef } from './contract';
@@ -107,10 +108,10 @@ type Reader = (src: PrySource, args: any) => unknown;
 /** Wraps a reader: picks the capture or the live state, and turns a missing value or host into undefined. */
 function reader(fn: Reader): ReadoutDef['read'] {
   return (args?: any) => {
-    const { from, ...rest } = (args ?? {}) as { from?: PrySource };
-    if (!from && !hasPryHost()) return undefined;
+    const { from_capture: cap, ...rest } = (args ?? {}) as { from_capture?: PrySource };
+    if (!cap && !hasPryHost()) return undefined;
     try {
-      const v = fn(from ?? liveSource(), rest);
+      const v = fn(cap ?? liveSource(), rest);
       return v === null || Number.isNaN(v) ? undefined : v;
     } catch {
       return undefined;
@@ -253,6 +254,14 @@ const ablTop5 = (r: AblateResponse | null, side: 'original' | 'ablated') =>
   (side === 'original' ? r?.original_predictions : r?.ablated_predictions)
     ?.slice(0, 5)
     .map((p) => ({ token: p.token, prob: p.probability }));
+
+/** One token's numbers in a knockout run, original or ablated. Ablate responses carry no logit yet. */
+function ablPrediction(r: AblateResponse | null, side: 'original' | 'ablated', tok: string) {
+  const p = (side === 'original' ? r?.original_predictions : r?.ablated_predictions)?.find((x) => x.token === tok);
+  return p ? { prob: p.probability, logit: (p as { logit?: number | null }).logit ?? undefined, rank: p.rank } : undefined;
+}
+
+const ablPredArgs = z.object({ side: z.enum(['original', 'ablated']), token: z.string() }).strict();
 
 const focusFeatures = (src: PrySource) => src.response?.sae_features.find((f) => f.token_index === src.focusTokenIndex);
 
@@ -568,6 +577,12 @@ export const pryReadouts: Record<string, ReadoutDef> = {
     doc: 'How much one token\'s probability changed with the heads knocked out.',
     read: reader((s, a) => s.headAblate?.prediction_delta.find((d) => d.token === a.token)?.delta),
   },
+  'ablation.prediction': {
+    args: ablPredArgs,
+    type: 'record',
+    doc: 'One token\'s probability, logit and rank with the heads knocked out, or in the original run.',
+    read: reader((s, a) => ablPrediction(s.headAblate, a.side, a.token)),
+  },
   'ablation.top5': { args: ablationSide, type: 'list', doc: 'The top 5 predictions, original or ablated.', read: reader((s, a) => ablTop5(s.headAblate, a.side)) },
 
   'patch.cell': {
@@ -600,6 +615,12 @@ export const pryReadouts: Record<string, ReadoutDef> = {
     unit: 'probability',
     doc: 'How much one token\'s probability changed with the features knocked out.',
     read: reader((s, a) => s.featureAblate?.prediction_delta.find((d) => d.token === a.token)?.delta),
+  },
+  'feature_ablation.prediction': {
+    args: ablPredArgs,
+    type: 'record',
+    doc: 'One token\'s probability, logit and rank with the features knocked out, or in the original run.',
+    read: reader((s, a) => ablPrediction(s.featureAblate, a.side, a.token)),
   },
   'feature_ablation.top5': { args: ablationSide, type: 'list', doc: 'The top 5 predictions, original or ablated.', read: reader((s, a) => ablTop5(s.featureAblate, a.side)) },
 
