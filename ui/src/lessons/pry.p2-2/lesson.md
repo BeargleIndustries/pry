@@ -201,6 +201,8 @@ Picking up a pattern from earlier in the prompt, with no change to the weights, 
 
 :::slots
 qu_before: { row: "15.qu_prob", format: probability }
+qu: { read: prediction, args: { token: " Qu" }, field: prob, expect: 0.1158 }
+the_p: { read: prediction, args: { token: " the" }, field: prob, expect: 0.0169 }
 :::
 
 ::::transfer{id=yellow}

@@ -192,12 +192,14 @@ export const glossary: Record<string, GlossaryEntry> = {
     term: 'threshold',
     definition: "The cutoff: parts that push less than this don't show. Lower it to see more parts.",
     aliases: ['cutoff'],
+    introducedIn: 'pry.p3-7',
   },
   'query-key': {
     term: 'query and key',
     definition:
       "The word doing the looking is the query, and the word it's looking at is the key. A head scores every pair.",
     aliases: ['query', 'queries', 'key', 'keys', 'query/key'],
+    introducedIn: 'pry.p2-1',
   },
   'name-mover': {
     term: 'name mover',

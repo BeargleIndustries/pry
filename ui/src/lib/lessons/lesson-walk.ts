@@ -88,6 +88,21 @@ export function loadRows(file: string): Map<string, Record<string, unknown>> {
   return out;
 }
 
+/**
+ * Recordings keep only each head's last query row of attention (test_lessons.py
+ * `_trim`). Put that row back at the last token's index so readouts that read
+ * the last token's row find it; earlier rows stay empty (not recorded).
+ */
+function untrim(resp: unknown): unknown {
+  const r = resp as { tokens?: unknown[]; attention?: { heads: number[][][] }[] } | undefined;
+  const n = r?.tokens?.length ?? 0;
+  if (!r?.attention || n < 2 || r.attention[0]?.heads?.[0]?.length !== 1) return resp;
+  return {
+    ...r,
+    attention: r.attention.map((l) => ({ ...l, heads: l.heads.map((h) => [...Array.from({ length: n - 1 }, () => []), h[0]]) })),
+  };
+}
+
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 function pick(v: unknown, field?: string): unknown {
@@ -102,10 +117,24 @@ function deepEqual(a: unknown, b: unknown, tol?: number): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
-/** Every field `want` names equals the same field in `got` (extra fields in `got` are fine). */
-function subset(got: unknown, want: Record<string, unknown>, tol?: number): boolean {
-  return isObj(got) && Object.entries(want).every(([k, w]) => deepEqual(got[k], w, tol));
+/**
+ * A recorded expect against a live value: numbers within `tol` (default 1e-3,
+ * or 0.1% of the value), at any depth in lists and records, so a list of parts
+ * authored with rounded contributions still matches.
+ */
+function approxEqual(live: unknown, want: unknown, tol?: number): boolean {
+  if (typeof live === 'number' && typeof want === 'number') return Math.abs(live - want) <= (tol ?? Math.max(1e-3, Math.abs(want) * 1e-3));
+  if (Array.isArray(live) && Array.isArray(want)) return live.length === want.length && want.every((w, i) => approxEqual(live[i], w, tol));
+  if (isObj(live) && isObj(want)) {
+    const keys = new Set([...Object.keys(live), ...Object.keys(want)]);
+    return [...keys].every((k) => approxEqual(live[k], want[k], tol));
+  }
+  return live === want;
 }
+
+/** `value` held by a record: every field it names matches. */
+const holdsFields = (got: unknown, want: unknown, tol?: number) =>
+  isObj(got) && isObj(want) && Object.entries(want).every(([k, w]) => approxEqual(got[k], w, tol));
 
 /** Default tolerance for a slot's live value against its authored expect. */
 function slotTolerance(expect: number, slot: Slot): number {
@@ -135,7 +164,7 @@ export async function walkLesson(
       const req = { endpoint, model, body, key };
       if (n === 0) res.requests.push(req);
       const list = opts.recorded.get(key);
-      let out: unknown = list?.[n] ?? list?.[0];
+      let out: unknown = untrim(list?.[n] ?? list?.[0]);
       if (out === undefined) {
         if (n === 0) res.missing.push(req);
         out = answer(endpoint, body);
@@ -152,17 +181,15 @@ export async function walkLesson(
   let before: unknown;
   let baseline: unknown;
 
-  // A section sees the lesson's slots plus its own (lint's slotsFor); refilled per section below.
-  const slots: Record<string, Slot> = { ...(lesson.meta.slots ?? {}) };
-
-  const bindings = { earlier: () => undefined, row: (id: string, field: string) => pick(opts.rows?.get(id), field) };
-  /** `$row.<id>.<field>` anywhere in readout args or a check value, resolved from rows.json. */
-  const bind = <T>(v: T): T => resolveBindings(v, bindings) as T;
+  // Slots in scope: the front matter's plus the current section's own `:::slots`
+  // (a section's slots are its own; P3.1 reuses a name across sections).
+  let slots: Record<string, Slot> = { ...(lesson.meta.slots ?? {}) };
 
   const read = (name: string, args?: Record<string, unknown>, capture?: unknown) => {
     const def = readouts[name];
     if (!def) return undefined;
-    const a = args === undefined ? undefined : bind(args);
+    // `$row` inside readout arguments (slot and check args, P3.3's patch.cell) resolves first.
+    const a = args === undefined ? undefined : (resolveBindings(args, bindings) as Record<string, unknown>);
     return def.read(capture !== undefined ? { ...(a ?? {}), from_capture: capture } : a);
   };
   const src: SlotSource = {
@@ -174,12 +201,13 @@ export async function walkLesson(
     },
     readouts,
   };
+  const bindings = { earlier: () => undefined, row: (id: string, field: string) => pick(opts.rows?.get(id), field) };
 
   /** A check's right-hand side; `skip` when it needs the learner. */
   function rhs(item: CheckItem): { value?: unknown; skip?: string } {
     const v = item.value;
-    // A record or list value may hold `$row` constants (`{ token: $row.23.token }`).
-    if (typeof v !== 'string') return { value: bind(v) };
+    // `$row` inside a record or list value (P3.3: contains { layer: $row.27.peak_layer }).
+    if (typeof v !== 'string') return { value: v !== null && typeof v === 'object' ? resolveBindings(v, bindings) : v };
     if (!v.startsWith('$')) return { value: v };
     let m: RegExpExecArray | null;
     if (v === '$prediction') return { skip: 'compares with the learner\'s prediction' };
@@ -237,13 +265,13 @@ export async function walkLesson(
         ok = typeof got === 'number' && typeof want === 'number' && Math.abs(got - want) <= (tol ?? 0);
         break;
       case 'contains':
-        // A record `want` matches on the fields it names (`{ position: 0 }` against a top-source record).
+        // A string holds a substring; a list holds an item; a record holds every field of `value`.
         ok =
           typeof got === 'string'
             ? typeof want === 'string' && got.includes(want)
             : Array.isArray(got)
-              ? got.some((g) => (isObj(want) ? subset(g, want, tol) : deepEqual(g, want, tol)))
-              : isObj(got) && isObj(want) && subset(got, want, tol);
+              ? got.some((g) => deepEqual(g, want) || holdsFields(g, want, tol))
+              : isObj(got) && isObj(want) && Object.entries(want).every(([k, w]) => deepEqual(got[k], w, tol));
         break;
       case 'starts_with':
         ok = typeof got === 'string' && typeof want === 'string' && got.startsWith(want);
@@ -252,8 +280,22 @@ export async function walkLesson(
         ok = false;
     }
     if (item.not) ok = !ok;
-    const expected = typeof item.expect === 'boolean' ? item.expect : true;
-    return { ok: ok === expected, got, want };
+    // A check's `expect` is the readout's recorded value (AUTHORING.md): the live
+    // readout must match it too. `absent` = the readout has no value (a token
+    // outside the top ten); a record matches on the fields `expect` names.
+    if (ok && item.expect !== undefined && item.expect !== 'pending') {
+      const e = item.expect;
+      ok =
+        e === 'absent'
+          ? got === undefined
+          : typeof e === 'number' && typeof got === 'number'
+            ? Math.abs(got - e) <= (tol ?? Math.max(1e-3, Math.abs(e) * 1e-3))
+            : isObj(e) && isObj(got)
+              ? holdsFields(got, e, tol)
+              : approxEqual(got, e, tol);
+      if (!ok) return { ok, got, want: `${fmt(want)} (recorded ${fmt(e)})` };
+    }
+    return { ok, got, want };
   }
 
   const prompt = () => host.page.prompt;
@@ -262,6 +304,10 @@ export async function walkLesson(
     const key = `${where}|${name}`;
     if (done.has(key)) return;
     done.add(key);
+    if (learnerGap && slots[name] && !slots[name].from_capture) {
+      res.checks.push({ where, kind: 'slot', name, ok: true, skipped: learnerGap, detail: '', prompt: prompt() });
+      return;
+    }
     const slot = slots[name];
     if (!slot) return;
     for (const f of slot.from ?? []) checkSlot(f, where, done);
@@ -272,7 +318,7 @@ export async function walkLesson(
     }
     const got = slotValue(name, slots, src);
     const want = slot.expect;
-    const ok = typeof want === 'number' && typeof got === 'number' ? Math.abs(got - want) <= slotTolerance(want, slot) : deepEqual(got, want);
+    const ok = typeof want === 'number' && typeof got === 'number' ? Math.abs(got - want) <= slotTolerance(want, slot) : approxEqual(got, want, slot.tolerance);
     res.checks.push({ where, kind: 'slot', name, ok, detail: `live ${fmt(got)}, expect ${fmt(want)}`, expect: want, prompt: prompt() });
   }
 
@@ -291,6 +337,10 @@ export async function walkLesson(
 
   function runAsserts(list: AssertItem[] | undefined, where: string, done: Set<string>) {
     for (const a of list ?? []) {
+      if (learnerGap) {
+        res.checks.push({ where, kind: 'assert', name: a.require.slot, ok: true, skipped: learnerGap, detail: '', prompt: prompt() });
+        continue;
+      }
       for (const s of [a.require.slot, a.require.slot2].filter((x): x is string => !!x)) checkSlot(s, where, done);
       for (const s of slotsIn([a.say, a.else])) checkSlot(s, where, done);
       let fell = false;
@@ -309,6 +359,10 @@ export async function walkLesson(
   function runCheckItems(items: CheckItem | CheckItem[] | undefined, where: string) {
     const list = items === undefined ? [] : Array.isArray(items) ? items : [items];
     for (const item of list) {
+      if (learnerGap) {
+        res.checks.push({ where, kind: 'check', name: item.read, ok: true, skipped: learnerGap, detail: '', prompt: prompt(), check: item });
+        continue;
+      }
       const r = evalCheck(item);
       res.checks.push({
         where,
@@ -324,7 +378,25 @@ export async function walkLesson(
   }
 
   /** Predict feedback is shown at the reveal: evaluated at the observe it `checks`, or at section end. */
-  const pendingFeedback = new Map<string, unknown[]>();
+  const pendingFeedback = new Map<string, { texts: unknown[]; scope: Record<string, Slot> }>();
+  /** Checks feedback slots in the scope of the section that holds the predict. */
+  function checkFeedback(fb: { texts: unknown[]; scope: Record<string, Slot> }, at: string, done: Set<string>) {
+    const here = slots;
+    slots = fb.scope;
+    for (const s of slotsIn(fb.texts)) checkSlot(s, at, done);
+    slots = here;
+  }
+  /**
+   * Inside a transfer, a faded do step leaves Run to the learner (P1.3:5 "the
+   * learner presses Run"). With no action that runs anything, the walk plays
+   * the learner: the transfer's prompt in the box, then Run.
+   */
+  let learnerPrompt: string | undefined;
+  /** Set after a learner task the walk can't play: later reads in its transfer or section are the learner's. */
+  let learnerGap: string | undefined;
+  /** Learner actions a task asks for, with the settings its prose tells the learner to use (P1.5:5 "sets temperature 0 and presses Write"). */
+  const LEARNER_PLAY: Record<string, Record<string, unknown>> = { write_it: { temperature: 0 }, run: {} };
+  const RUNS = ['run', 'ensure_run', 'run_compare', 'write_it', 'run_logit_lens', 'run_dla', 'run_head_ablation', 'run_patching', 'run_feature_ablation', 'run_steer', 'steer_across', 'run_circuit', 'show_embedding'];
 
   async function walkStep(step: Step, where: string, done: Set<string>) {
     const at = `${where}/${step.id ?? step.kind}`;
@@ -335,6 +407,7 @@ export async function walkLesson(
     }
     switch (step.kind) {
       case 'do': {
+        // A do step's prose often reports what the run gives: its slots are read after the actions.
         before = read('result');
         for (const a of step.actions) {
           try {
@@ -344,25 +417,47 @@ export async function walkLesson(
             res.errors.push(`${at}: ${a.name} threw ${String(e)}`);
           }
         }
+        if (learnerPrompt !== undefined && !step.actions.some((a) => RUNS.includes(a.name))) {
+          for (const [name, args] of [['set_prompt', { text: learnerPrompt }], ['run', {}]] as const) {
+            const r = await dispatcher.dispatch(name, args, { signal, bindings });
+            if (r.status !== 'done') res.errors.push(`${at}: learner ${name} ${r.status}`);
+          }
+        }
         if (typeof f.capture === 'string') captures.set(f.capture, read('result'));
+        for (const s of slotsIn([step.prose.map((p) => p.text)])) checkSlot(s, at, done);
         break;
       }
       case 'observe':
+        for (const s of slotsIn([step.prose.map((p) => p.text)])) checkSlot(s, at, done);
         runCheckItems(f.check, at);
         runAsserts(f.assert, at, done);
         if (step.id && pendingFeedback.has(step.id)) {
-          for (const s of slotsIn(pendingFeedback.get(step.id)!)) checkSlot(s, at, done);
+          checkFeedback(pendingFeedback.get(step.id)!, at, done);
           pendingFeedback.delete(step.id);
         }
         break;
       case 'predict':
-        if (typeof f.checks === 'string') pendingFeedback.set(f.checks, [f.choices]);
-        else pendingFeedback.set(`__end:${at}`, [f.choices]);
+        pendingFeedback.set(typeof f.checks === 'string' ? f.checks : `__end:${at}`, { texts: [f.choices], scope: slots });
         for (const s of slotsIn([step.prose.map((p) => p.text)])) checkSlot(s, at, done);
         break;
-      case 'task':
-        // Learner-driven: its target is the learner's to reach, not checkable here.
+      case 'task': {
+        // Learner-driven. When every learner action is one the walk can play the
+        // way the task tells the learner to (LEARNER_PLAY), it plays them and checks
+        // the target; otherwise the target is the learner's to reach.
+        const acts = (f.learner_actions as string[] | undefined) ?? [];
+        if (acts.length && acts.every((a) => a in LEARNER_PLAY)) {
+          for (const a of acts) {
+            const r = await dispatcher.dispatch(a, LEARNER_PLAY[a], { signal, bindings });
+            if (r.status !== 'done') res.errors.push(`${at}: learner ${a} ${r.status}`);
+          }
+          runCheckItems(f.target, at);
+          if (typeof f.capture === 'string') captures.set(f.capture, read('result'));
+        } else if (acts.length) {
+          // The learner's run decides what the rest of this transfer (or section) reads.
+          learnerGap = `after task ${step.id ?? at}, which the walk can't play (${acts.join(', ')})`;
+        }
         break;
+      }
       default: {
         // Prose and fields (feedback, supports, leaves_open, ...); assert lines are checked by runAsserts.
         const { assert: _assert, ...rest } = f;
@@ -370,14 +465,16 @@ export async function walkLesson(
         runAsserts(f.assert, at, done);
       }
     }
+    const outer = learnerPrompt;
+    if (step.kind === 'transfer') learnerPrompt = f.prompt as string;
     for (const c of step.children) await walkStep(c, at, done);
+    learnerPrompt = outer;
+    if (step.kind === 'transfer') learnerGap = undefined;
   }
 
   let state: unknown;
   for (const section of lesson.sections) {
     const where = section.id;
-    for (const k of Object.keys(slots)) delete slots[k];
-    Object.assign(slots, lesson.meta.slots ?? {}, section.slots ?? {});
     const overlay = section.enter?.value as Record<string, unknown> | undefined;
     state = !state || overlay?.reset ? set.target(lesson.meta.baseline, overlay ?? {}) : set.target(lesson.meta.baseline, overlay ?? {}, state as any);
     try {
@@ -386,17 +483,19 @@ export async function walkLesson(
       res.errors.push(`${where}: apply threw ${String(e)}`);
     }
     if (baseline === undefined) baseline = read('result');
+    slots = { ...(lesson.meta.slots ?? {}), ...(section.slots ?? {}) };
+    learnerGap = undefined;
     const done = new Set<string>();
     for (const step of section.steps) await walkStep(step, where, done);
-    for (const [k, texts] of pendingFeedback) {
+    for (const [k, fb] of pendingFeedback) {
       // A predict whose reveal is an observe in a later section waits for it.
       if (!k.startsWith('__end:')) continue;
-      for (const s of slotsIn(texts)) checkSlot(s, `${where}/feedback`, done);
+      checkFeedback(fb, `${where}/feedback`, done);
       pendingFeedback.delete(k);
     }
     state = set.snapshot();
   }
-  for (const texts of pendingFeedback.values()) for (const s of slotsIn(texts)) checkSlot(s, 'end/feedback', new Set());
+  for (const fb of pendingFeedback.values()) checkFeedback(fb, 'end/feedback', new Set());
   vi.unstubAllGlobals();
   return res;
 }
