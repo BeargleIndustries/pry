@@ -6,7 +6,7 @@
 //
 // Every piece of user or model text goes through escapeHtml. Tokens and notes
 // can contain anything, including HTML.
-import type { NotebookEntry } from './notebook';
+import type { JournalEntry, NotebookEntry } from './notebook';
 import { neuronpediaUrl } from './preset-display';
 import { isNamedFeature } from './feature-label';
 import { pct, quoteToken } from './readouts';
@@ -180,6 +180,82 @@ function experimentSection(entry: NotebookEntry): string {
   return `<h3>From the experiment card "${escapeHtml(exp.title)}"</h3>${cites ? `<p>What researchers found is described in:</p><ul>${cites}</ul>` : ''}`;
 }
 
+/** One row per thing that shaped the run; rows with nothing recorded are left out. */
+function provenanceSection(entry: NotebookEntry): string {
+  const p = entry.provenance;
+  if (!p) return '';
+  const rows: [string, string | null][] = [
+    ['Pry version', p.appVersion],
+    ['Engine version', p.sidecarVersion],
+    ['Device', p.device],
+    ['PyTorch', p.torchVersion],
+    ['CUDA', p.cudaVersion],
+    ['TransformerLens', p.transformerLensVersion],
+    ['SAELens', p.saeLensVersion],
+    ['transformers', p.transformersVersion],
+    ['Model', p.modelPreset],
+    ['Model revision', p.modelRevision],
+    ['SAE', p.sae ? `${p.sae.release} / ${p.sae.id}, layer ${p.sae.layer}` : null],
+    ['Temperature', p.temperature === null ? null : String(p.temperature)],
+    ['Seed', p.seed === null ? null : String(p.seed)],
+    [
+      'Heads knocked out',
+      p.knockouts.heads.length ? p.knockouts.heads.map((h) => `${h.layer}.${h.head}`).join(', ') : null,
+    ],
+    ['Features knocked out', p.knockouts.features.length ? p.knockouts.features.map((f) => `#${f}`).join(', ') : null],
+    [
+      'Steering',
+      p.steering
+        ? `feature #${p.steering.featureId} at strength ${p.steering.strength}, layer ${p.steering.layer}` +
+          (p.steering.control ? ', with a control feature' : '') +
+          (p.steering.persistencePrompts.length ? `; also tried on: ${p.steering.persistencePrompts.join(' | ')}` : '')
+        : null,
+    ],
+    [
+      'Why (DLA) target',
+      p.dla ? quoteToken(p.dla.answer) + (p.dla.contrast !== null ? ` against ${quoteToken(p.dla.contrast)}` : '') : null,
+    ],
+    ['Swap test', p.patch ? `clean "${p.patch.clean}", corrupted "${p.patch.corrupted}", patching ${p.patch.type}` : null],
+    ['Key parts threshold', p.circuitThreshold === null ? null : String(p.circuitThreshold)],
+    ['Compare', p.compare ? `"${p.compare.a}" and "${p.compare.b}"` : null],
+  ];
+  const body = rows
+    .filter((r): r is [string, string] => r[1] !== null && r[1] !== '')
+    .map(([k, v]) => `<tr><th>${escapeHtml(k)}</th><td>${escapeHtml(v)}</td></tr>`)
+    .join('');
+  return `<h3>How this was run</h3><table><tbody>${body}</tbody></table>`;
+}
+
+function show(v: unknown): string {
+  if (v === null || v === undefined) return 'nothing';
+  return typeof v === 'string' ? v : JSON.stringify(v);
+}
+
+function answerText(j: JournalEntry): string {
+  if (j.skipped) return 'skipped';
+  const a = j.answer;
+  return show(a.choice ?? a.text ?? a.pick ?? a.value);
+}
+
+/** Lesson steps that made a prediction or ran a check, with what Pry measured. */
+function predictionsSection(journal: JournalEntry[]): string {
+  const steps = journal.filter((j) => j.kind === 'predict' || j.check);
+  if (steps.length === 0) return '';
+  const items = steps.map((j) => {
+    const c = j.check;
+    const measured = c
+      ? `<br><span class="muted">Pry checked</span> <code>${escapeHtml(`${c.read} ${c.op} ${show(c.expected)}`)}</code>` +
+        `<br><span class="muted">Pry measured</span> <code>${escapeHtml(show(c.actual))}</code>` +
+        ` ${escapeHtml(c.agrees ? '(matches your answer)' : '(does not match your answer)')}`
+      : '';
+    return (
+      `<li><span class="muted">${escapeHtml(`${j.lesson.id}, step ${j.stepId}`)}</span><br>` +
+      `${escapeHtml(j.question)}<br><span class="muted">You said</span> ${escapeHtml(answerText(j))}${measured}</li>`
+    );
+  });
+  return `<section><h2>Your predictions and what happened</h2><ul>${items.join('')}</ul></section>`;
+}
+
 function entrySection(entry: NotebookEntry, i: number): string {
   const r = entry.readouts;
   const charts = [
@@ -200,6 +276,7 @@ function entrySection(entry: NotebookEntry, i: number): string {
     featuresSection(entry),
     otherRuns(entry),
     experimentSection(entry),
+    provenanceSection(entry),
     `</article>`,
   ].join('\n');
 }
@@ -208,6 +285,8 @@ export interface ReportOptions {
   generatedAt?: Date;
   /** Page title; defaults to the entry title (one entry) or "Pry lab notebook". */
   title?: string;
+  /** Lesson steps to list under "Your predictions and what happened". */
+  journal?: JournalEntry[];
 }
 
 /** A complete, self-contained HTML document for one or more notebook entries. */
@@ -223,6 +302,7 @@ export function buildReport(entries: NotebookEntry[], opts: ReportOptions = {}):
   const body = entries.length
     ? entries.map(entrySection).join('\n')
     : '<p>This notebook has no saved runs yet.</p>';
+  const predictions = predictionsSection(opts.journal ?? []);
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -241,6 +321,7 @@ export function buildReport(entries: NotebookEntry[], opts: ReportOptions = {}):
 </header>
 ${toc}
 ${body}
+${predictions}
 <footer class="muted">
 <p>How to read this: the sentences are plain-language summaries of Pry's charts. Attention shows where a word looks, not what the model relies on. "Why (DLA)" shows direct pushes only, so the parts don't add up to the final score. Feature labels are best guesses.</p>
 <p>This file is self-contained. It loads nothing from the internet; the links above only open if you click them.</p>
