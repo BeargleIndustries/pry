@@ -31,6 +31,7 @@ import {
   type PatchType,
 } from './pry-state.svelte';
 import { pryAnchors } from './pry-anchors';
+import { alignedPositions } from '../../compare';
 
 export const PANELS = [
   'attention',
@@ -162,15 +163,30 @@ const open_panel: ActionDef = {
   },
 };
 
+const compareSide = z.enum(['a', 'b']);
+
 const focus_token: ActionDef = {
   args: z.union([
-    z.object({ text: z.string(), occurrence: occurrence.optional() }).strict(),
-    z.object({ index: z.number().int().min(0) }).strict(),
+    z.object({ text: z.string(), occurrence: occurrence.optional(), side: compareSide.optional() }).strict(),
+    z.object({ index: z.number().int().min(0), side: compareSide.optional() }).strict(),
   ]),
-  doc: 'Selects a token by its text and which occurrence (first, last or the nth), or by index, where the start marker is 0.',
+  doc: 'Selects a token by its text and which occurrence (first, last or the nth), or by index, where the start marker is 0. In Compare mode it picks the Compare position, reading the tokens of prompt `side` (a, the default, or b).',
   effect: 'view',
-  run: async (a: FocusSpec) => {
-    const s = pryHost().analysis.state;
+  run: async ({ side, ...a }: FocusSpec & { side?: 'a' | 'b' }) => {
+    const h = pryHost();
+    if (h.getCompareMode()) {
+      const c = h.compare.state;
+      const resp = side === 'b' ? c.b : c.a;
+      const idx = resp ? resolveFocus(resp.tokens, a) : undefined;
+      if (!resp || idx === undefined) throw new Error(`No such token in Compare prompt ${side ?? 'a'}: ${JSON.stringify(a)}`);
+      const pos = resp.tokens.findIndex((t) => t.index === idx);
+      const at = c.a && c.b ? alignedPositions(c.a, c.b).findIndex((p) => (side === 'b' ? p.posB : p.posA) === pos) : -1;
+      if (at < 0) throw new Error(`Compare can't line up ${JSON.stringify(a)} with the other prompt; only the last word is offered when the token counts differ.`);
+      c.positionIndex = at;
+      return;
+    }
+    if (side === 'b') throw new Error('focus_token side b needs Compare mode on.');
+    const s = h.analysis.state;
     const idx = s.response ? resolveFocus(s.response.tokens, a) : undefined;
     if (idx === undefined) throw new Error(`No such token in this run: ${JSON.stringify(a)}`);
     s.focusTokenIndex = idx;

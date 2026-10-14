@@ -139,6 +139,21 @@ describe('Pry actions: one test per action', () => {
     expect(h.compare.state.b?.prompt).toBe('The nurse said');
   });
 
+  it('› focus_token in Compare mode picks the Compare position from side a or b', async () => {
+    await run('set_compare', { a: 'The doctor said that', b: 'The nurse said that' });
+    await run('run_compare');
+    await expect(run('focus_token', { text: ' nurse', side: 'b' })).rejects.toThrow(/needs Compare mode/);
+    await run('set_compare_mode', { on: true });
+    // <|endoftext|> The doctor(2) said(3) that(4); positions run from the last word: that 0, said 1, doctor 2.
+    await run('focus_token', { text: ' said', side: 'b' });
+    expect(h.compare.state.positionIndex).toBe(1);
+    await run('focus_token', { text: ' doctor' });
+    expect(h.compare.state.positionIndex).toBe(2);
+    await run('focus_token', { text: ' nurse', side: 'b' });
+    expect(h.compare.state.positionIndex).toBe(2);
+    await expect(run('focus_token', { text: ' nurse' })).rejects.toThrow(/Compare prompt a/);
+  });
+
   it('write_it writes with the given temperature, seed and length', async () => {
     await ran();
     await run('write_it', { temperature: 0.7, seed: 3, max_tokens: 4 });
