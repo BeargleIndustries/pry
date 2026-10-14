@@ -14,8 +14,8 @@ Effects: `view` and `compute` run freely and replay when a section opens; `downl
 | `ensure_run` | compute | `{ prompt: string }` | Runs the prompt only if the memo lacks this request. |
 | `open_panel` | view | `{ panel: "attention" \| "logit-lens" \| "dla" \| "patching" \| "circuit" \| "steering" \| "predictions" \| "features" \| "watch-it-write" }` | Opens a left or right tab. |
 | `open_view` | view | `{ panel: "attention" \| "logit-lens" \| "dla" \| "patching" \| "circuit" \| "steering" \| "predictions" \| "features" \| "watch-it-write" }` | Same as `open_panel`. Opens a left or right tab. |
-| `focus_token` | view | `{ text: string, occurrence?: "first" \| "last" \| integer } \| { index: integer }` | Selects a token by its text and which occurrence (first, last or the nth), or by index, where the start marker is 0. |
-| `focus_item` | view | `{ text: string, occurrence?: "first" \| "last" \| integer } \| { index: integer }` | Same as `focus_token`. Selects a token by its text and which occurrence (first, last or the nth), or by index, where the start marker is 0. |
+| `focus_token` | view | `{ text: string, occurrence?: "first" \| "last" \| integer, side?: "a" \| "b" } \| { index: integer, side?: "a" \| "b" }` | Selects a token by its text and which occurrence (first, last or the nth), or by index, where the start marker is 0. In Compare mode it picks the Compare position, reading the tokens of prompt `side` (a, the default, or b). |
+| `focus_item` | view | `{ text: string, occurrence?: "first" \| "last" \| integer, side?: "a" \| "b" } \| { index: integer, side?: "a" \| "b" }` | Same as `focus_token`. Selects a token by its text and which occurrence (first, last or the nth), or by index, where the start marker is 0. In Compare mode it picks the Compare position, reading the tokens of prompt `side` (a, the default, or b). |
 | `highlight` | view | `{ anchor: string } \| { anchors: string[] }` | Rings an anchor. A list points at each anchor in turn. |
 | `set_hidden` | view | `{ anchor: string, on: boolean }` | Hides or shows a hideable region. |
 | `reset` | view | `{}` | Returns the app to its baseline, like Back to normal. |

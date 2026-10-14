@@ -65,6 +65,13 @@ export function runLint(argv: string[]): LintRun {
     .map((f) => readIf(join(setRoot, '__generated__', f)))
     .filter((t): t is string => t !== undefined)
     .reduce((acc, t) => strings(JSON.parse(t), acc), new Set<string>());
+  // Row constants (`rows[].constants`, written by `lessons:compile -- --rows`) that `$row.<id>.<field>` must name.
+  const rowsJsonText = verifiedRows ? readIf(join(setRoot, '__generated__', 'rows.json')) : undefined;
+  const rowConstants = rowsJsonText
+    ? Object.fromEntries(
+        (JSON.parse(rowsJsonText) as { rows: { id: number; constants?: Record<string, unknown> }[] }).rows.map((r) => [String(r.id), r.constants ?? {}]),
+      )
+    : undefined;
 
   const lines: string[] = [];
   const issuesByFile = new Map<string, LessonIssue[]>();
@@ -96,6 +103,7 @@ export function runLint(argv: string[]): LintRun {
       release: flags.has('--release'),
       knownLessons: known,
       verifiedRows,
+      rowConstants,
       recordedPrompts: recordedPrompts.size ? recordedPrompts : undefined,
       caveatTools: Object.keys(words.pinned_caveats ?? {}),
       imageSize: (src, file) => {
