@@ -246,6 +246,8 @@ export interface PryHost {
   setPatchingPreset(p: { clean: string; corrupted: string; patchType: PatchType } | null): void;
   /** The model the engine holds now. */
   activePresetId(): string | null;
+  /** The loaded weights' revision from the load's ready event (null when unknown). Part of the memo key. */
+  modelRevision(): string | null;
   /** The load controller's switch entry (licence gate kept). Never throws. */
   switchModel(presetId: string): Promise<void>;
   /** Opens a link in the browser. */

@@ -208,8 +208,11 @@
   function beginLoadTrack(presetId: string) {
     loadTrack = startLoad(presetId, Date.now(), readHistory(presetId));
   }
+  // The loaded weights' revision (MF-5 ready event): part of the Lessons memo key.
+  let loadedRevision: string | null = null;
   function onLoadEvent(ev: LoadProgress) {
     if (loadTrack) loadTrack = recordEvent(loadTrack, ev, Date.now());
+    if (ev.stage === 'ready' || ev.stage === 'already_loaded') loadedRevision = ev.model_revision ?? null;
   }
 
   // ---------------------------------------------------------------------------
@@ -700,6 +703,7 @@
       setAggregation: (agg) => { panelAAggregation = agg; },
       setPatchingPreset: (p) => { patchingPreset = p ? { ...p } : null; },
       activePresetId: () => activePresetId,
+      modelRevision: () => loadedRevision,
       switchModel: (id) => handleSwitch(id),
       openLink: async (url) => {
         try {

@@ -63,7 +63,7 @@ export function callerOf(ctx: ActionContext): SidecarCaller {
   const c = (ctx as RunnerActionContext).call;
   if (!c) return directCall;
   return (req, fetcher) =>
-    c({ ...req, modelRevision: pryHost().analysis.state.response?.model_revision ?? null }, fetcher);
+    c({ ...req, modelRevision: pryHost().modelRevision() }, fetcher);
 }
 
 function abortIf(ctx: ActionContext): void {
