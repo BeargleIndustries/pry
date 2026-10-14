@@ -113,6 +113,19 @@ describe('sidecar request bodies', () => {
     }
   });
 
+  it('every request-key fixture endpoint is a route registered in main.py', () => {
+    const main = readFileSync(
+      fileURLToPath(new URL('../../../sidecar/pry_sidecar/main.py', import.meta.url)),
+      'utf-8',
+    );
+    const routes = new Set([...main.matchAll(/Route\("([^"]+)"/g)].map((m) => m[1]));
+    const fixture = JSON.parse(
+      readFileSync(fileURLToPath(new URL('../../../sidecar/tests/fixtures/request-keys.json', import.meta.url)), 'utf-8'),
+    ) as { vectors: { endpoint: string }[] };
+    expect(fixture.vectors).toHaveLength(12);
+    for (const v of fixture.vectors) expect(routes, v.endpoint).toContain(v.endpoint);
+  });
+
   it('a row request and the app\'s request for the same action produce the same request key', async () => {
     // A row request spells every default out and lists args in another order;
     // the app's call leans on the defaults. Same action, same key.
