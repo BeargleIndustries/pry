@@ -1,0 +1,1276 @@
+{
+ "key": "492f134e4292d701b2035d65b7536bd09d552d4e093aa6da4d6b01d661e19cdf",
+ "variant": "r1",
+ "request": {
+  "endpoint": "/logit-lens",
+  "model": "gpt2-small",
+  "body": {
+   "preset_id": "gpt2-small",
+   "prompt": "She took her coat down from the hook,\nAnd sat beside the fire to read a"
+  }
+ },
+ "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+ "device": "cpu",
+ "libs": {
+  "python": "3.12.13",
+  "torch": "2.5.1+cpu",
+  "transformer_lens": "2.15.4",
+  "sae_lens": "5.11.0",
+  "transformers": "4.57.6",
+  "numpy": "1.26.4"
+ },
+ "recorded": "2026-10-14",
+ "neuronpedia_fetched": null,
+ "offline": false,
+ "trimmed": [],
+ "response": {
+  "preset_id": "gpt2-small",
+  "prompt": "She took her coat down from the hook,\nAnd sat beside the fire to read a",
+  "tokens": [
+   {
+    "index": 0,
+    "text": "<|endoftext|>"
+   },
+   {
+    "index": 1,
+    "text": "She"
+   },
+   {
+    "index": 2,
+    "text": " took"
+   },
+   {
+    "index": 3,
+    "text": " her"
+   },
+   {
+    "index": 4,
+    "text": " coat"
+   },
+   {
+    "index": 5,
+    "text": " down"
+   },
+   {
+    "index": 6,
+    "text": " from"
+   },
+   {
+    "index": 7,
+    "text": " the"
+   },
+   {
+    "index": 8,
+    "text": " hook"
+   },
+   {
+    "index": 9,
+    "text": ","
+   },
+   {
+    "index": 10,
+    "text": "\n"
+   },
+   {
+    "index": 11,
+    "text": "And"
+   },
+   {
+    "index": 12,
+    "text": " sat"
+   },
+   {
+    "index": 13,
+    "text": " beside"
+   },
+   {
+    "index": 14,
+    "text": " the"
+   },
+   {
+    "index": 15,
+    "text": " fire"
+   },
+   {
+    "index": 16,
+    "text": " to"
+   },
+   {
+    "index": 17,
+    "text": " read"
+   },
+   {
+    "index": 18,
+    "text": " a"
+   }
+  ],
+  "grid": [
+   [
+    {
+     "predicted_token": "\n",
+     "probability": 0.34442171454429626,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "pher",
+     "probability": 0.13033975660800934,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " a",
+     "probability": 0.1292186975479126,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " own",
+     "probability": 0.41093629598617554,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " coat",
+     "probability": 0.9727282524108887,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "stairs",
+     "probability": 0.5102248191833496,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.615860641002655,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.6986778974533081,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " hook",
+     "probability": 0.9873551726341248,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.21048010885715485,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "\n",
+     "probability": 0.8250925540924072,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.6149040460586548,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " sat",
+     "probability": 0.7086146473884583,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " beside",
+     "probability": 0.9189555644989014,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.8129729628562927,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " fire",
+     "probability": 0.6547794938087463,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " get",
+     "probability": 0.11947678029537201,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " read",
+     "probability": 0.7889546751976013,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " few",
+     "probability": 0.1562711000442505,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": "\n",
+     "probability": 0.08009959012269974,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "pard",
+     "probability": 0.30858495831489563,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " a",
+     "probability": 0.12396910041570663,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " own",
+     "probability": 0.8595029711723328,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " coat",
+     "probability": 0.9922022819519043,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "stairs",
+     "probability": 0.44848179817199707,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.51010662317276,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.8849508762359619,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " hook",
+     "probability": 0.9591715931892395,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.3659548759460449,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "\n",
+     "probability": 0.42020753026008606,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "rea",
+     "probability": 0.4603317081928253,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " behind",
+     "probability": 0.18889498710632324,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.3386038839817047,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.8886810541152954,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "proof",
+     "probability": 0.7305534482002258,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " get",
+     "probability": 0.13698895275592804,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " aloud",
+     "probability": 0.4222780764102936,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " lot",
+     "probability": 0.17279130220413208,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.026910267770290375,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "pherd",
+     "probability": 0.5138142108917236,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " a",
+     "probability": 0.1489558070898056,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " own",
+     "probability": 0.9716297388076782,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " coat",
+     "probability": 0.9951100945472717,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "pour",
+     "probability": 0.4714502692222595,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.6798799633979797,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.9479181170463562,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " hook",
+     "probability": 0.7517208456993103,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.40596911311149597,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "\n",
+     "probability": 0.29095888137817383,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.4148751497268677,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " atop",
+     "probability": 0.1836947351694107,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.39430204033851624,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.8986852765083313,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "flies",
+     "probability": 0.3690478205680847,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " be",
+     "probability": 0.18266192078590393,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " aloud",
+     "probability": 0.5028432011604309,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " couple",
+     "probability": 0.20377255976200104,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.027061179280281067,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "pherd",
+     "probability": 0.582624077796936,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " a",
+     "probability": 0.24243660271167755,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " own",
+     "probability": 0.9750720262527466,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " coat",
+     "probability": 0.9920156002044678,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "LOAD",
+     "probability": 0.16784285008907318,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.5014409422874451,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.9331779479980469,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " hook",
+     "probability": 0.6152164340019226,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.5263568162918091,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "                ",
+     "probability": 0.1865553855895996,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.613837718963623,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " comfortably",
+     "probability": 0.3703683912754059,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.5623475909233093,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.7591372728347778,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "storm",
+     "probability": 0.5354039669036865,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " be",
+     "probability": 0.21304947137832642,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "just",
+     "probability": 0.5475524663925171,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " few",
+     "probability": 0.3610287308692932,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.026887336745858192,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "pherd",
+     "probability": 0.6563255786895752,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " a",
+     "probability": 0.2708812355995178,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " own",
+     "probability": 0.9943256974220276,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " coat",
+     "probability": 0.9817379117012024,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "cast",
+     "probability": 0.16063286364078522,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.5484537482261658,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.8423526883125305,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "hole",
+     "probability": 0.228660449385643,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.5804369449615479,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "\n",
+     "probability": 0.19752107560634613,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.4910048544406891,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " atop",
+     "probability": 0.19744151830673218,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.7821052670478821,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.4115336537361145,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "flies",
+     "probability": 0.3484370708465576,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " be",
+     "probability": 0.3001788854598999,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " aloud",
+     "probability": 0.8799353837966919,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " couple",
+     "probability": 0.27865129709243774,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.02654830552637577,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "pherd",
+     "probability": 0.6488958597183228,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " up",
+     "probability": 0.31153517961502075,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " own",
+     "probability": 0.9998002648353577,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " coat",
+     "probability": 0.944871187210083,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "cast",
+     "probability": 0.23067809641361237,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.5025309324264526,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.4255428910255432,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "hole",
+     "probability": 0.46961328387260437,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.6935091614723206,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "                ",
+     "probability": 0.41445478796958923,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.6193815469741821,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " quietly",
+     "probability": 0.37291446328163147,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.7812765836715698,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.3714219927787781,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "flies",
+     "probability": 0.490542471408844,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " be",
+     "probability": 0.18941177427768707,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " aloud",
+     "probability": 0.6909291744232178,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " couple",
+     "probability": 0.19133105874061584,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.0264239814132452,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "pard",
+     "probability": 0.3030025362968445,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " a",
+     "probability": 0.20755435526371002,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " own",
+     "probability": 0.999581515789032,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " coat",
+     "probability": 0.8373640179634094,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " stairs",
+     "probability": 0.6894659399986267,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.4250500798225403,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " rest",
+     "probability": 0.43755587935447693,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "hole",
+     "probability": 0.29611822962760925,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.38812005519866943,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "                ",
+     "probability": 0.5705826282501221,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.8264133334159851,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " quietly",
+     "probability": 0.42159634828567505,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " her",
+     "probability": 0.3600817322731018,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " rest",
+     "probability": 0.2999607026576996,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "flies",
+     "probability": 0.7964264154434204,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " make",
+     "probability": 0.13093282282352448,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " aloud",
+     "probability": 0.9955451488494873,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " lot",
+     "probability": 0.14411215484142303,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.026436978951096535,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "ffield",
+     "probability": 0.3411475121974945,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " her",
+     "probability": 0.19345645606517792,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " own",
+     "probability": 0.9939702749252319,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " coat",
+     "probability": 0.474383145570755,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "cloth",
+     "probability": 0.18581445515155792,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.4271816909313202,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " table",
+     "probability": 0.4599098861217499,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "pipe",
+     "probability": 0.4516296088695526,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " but",
+     "probability": 0.48932430148124695,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "                ",
+     "probability": 0.4169934093952179,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.9402685761451721,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " quietly",
+     "probability": 0.5074412822723389,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " her",
+     "probability": 0.453098326921463,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " bed",
+     "probability": 0.4364794194698334,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "flies",
+     "probability": 0.8853713274002075,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " make",
+     "probability": 0.18226651847362518,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " aloud",
+     "probability": 0.99652099609375,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " few",
+     "probability": 0.11421474814414978,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.026673292741179466,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "ffield",
+     "probability": 0.4225006699562073,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " advantage",
+     "probability": 0.36124590039253235,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " own",
+     "probability": 0.971550703048706,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " jacket",
+     "probability": 0.7104175090789795,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " jacket",
+     "probability": 0.3377251923084259,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.3665820062160492,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " ceiling",
+     "probability": 0.26236072182655334,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "hole",
+     "probability": 0.6421952247619629,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " but",
+     "probability": 0.1173897385597229,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "                ",
+     "probability": 0.5383622050285339,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " sat",
+     "probability": 0.27829158306121826,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " quietly",
+     "probability": 0.34064069390296936,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " him",
+     "probability": 0.6190744042396545,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " bed",
+     "probability": 0.5475594401359558,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "flies",
+     "probability": 0.5982146859169006,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " watch",
+     "probability": 0.32060277462005615,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " aloud",
+     "probability": 0.9972044825553894,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " poem",
+     "probability": 0.557957112789154,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.026949947699904442,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "ffield",
+     "probability": 0.389344185590744,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " advantage",
+     "probability": 0.46542707085609436,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " own",
+     "probability": 0.5868011116981506,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " jacket",
+     "probability": 0.5226014256477356,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " to",
+     "probability": 0.7249058485031128,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " her",
+     "probability": 0.8892086148262024,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " floor",
+     "probability": 0.5246857404708862,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "hole",
+     "probability": 0.6289926171302795,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " but",
+     "probability": 0.11140398681163788,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "   ",
+     "probability": 0.3799910843372345,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " wore",
+     "probability": 0.2389284074306488,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " down",
+     "probability": 0.5022581219673157,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " him",
+     "probability": 0.3978896141052246,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " bed",
+     "probability": 0.6194087266921997,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "fly",
+     "probability": 0.4484073221683502,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " watch",
+     "probability": 0.46726277470588684,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " aloud",
+     "probability": 0.9825989007949829,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " book",
+     "probability": 0.601011335849762,
+     "matches_final": true
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.027445368468761444,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "ffield",
+     "probability": 0.17392663657665253,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " her",
+     "probability": 0.3585279881954193,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " own",
+     "probability": 0.2381044626235962,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " off",
+     "probability": 0.424606055021286,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " to",
+     "probability": 0.8299283385276794,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " her",
+     "probability": 0.9968690276145935,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " floor",
+     "probability": 0.4088450074195862,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " and",
+     "probability": 0.37026044726371765,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " and",
+     "probability": 0.1471373438835144,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "\n",
+     "probability": 0.7052690386772156,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " wore",
+     "probability": 0.13408468663692474,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " down",
+     "probability": 0.891084611415863,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " her",
+     "probability": 0.6979644298553467,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " bed",
+     "probability": 0.2802087962627411,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "light",
+     "probability": 0.23204749822616577,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " keep",
+     "probability": 0.2139892280101776,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " aloud",
+     "probability": 0.5606945753097534,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " book",
+     "probability": 0.7590230107307434,
+     "matches_final": true
+    }
+   ],
+   [
+    {
+     "predicted_token": "\n",
+     "probability": 0.06229811906814575,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " was",
+     "probability": 0.10185535997152328,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " a",
+     "probability": 0.1654365211725235,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " time",
+     "probability": 0.04903900623321533,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " off",
+     "probability": 0.5098475217819214,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " to",
+     "probability": 0.3415478467941284,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " her",
+     "probability": 0.40431690216064453,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " floor",
+     "probability": 0.08270272612571716,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " and",
+     "probability": 0.254459023475647,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " and",
+     "probability": 0.1635337471961975,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "\n",
+     "probability": 0.9826016426086426,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " she",
+     "probability": 0.05160735547542572,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " down",
+     "probability": 0.43542006611824036,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " me",
+     "probability": 0.24796979129314423,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " fire",
+     "probability": 0.048966679722070694,
+     "matches_final": true
+    },
+    {
+     "predicted_token": ",",
+     "probability": 0.36295774579048157,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.043371133506298065,
+     "matches_final": true
+    },
+    {
+     "predicted_token": ".",
+     "probability": 0.21022795140743256,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " book",
+     "probability": 0.4418783485889435,
+     "matches_final": true
+    }
+   ]
+  ],
+  "n_layers": 12,
+  "status": "ok"
+ }
+}

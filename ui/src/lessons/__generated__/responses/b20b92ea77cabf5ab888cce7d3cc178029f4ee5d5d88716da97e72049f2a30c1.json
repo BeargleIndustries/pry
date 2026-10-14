@@ -1,0 +1,508 @@
+{
+ "key": "b20b92ea77cabf5ab888cce7d3cc178029f4ee5d5d88716da97e72049f2a30c1",
+ "variant": "r1",
+ "request": {
+  "endpoint": "/logit-lens",
+  "model": "gpt2-small",
+  "body": {
+   "preset_id": "gpt2-small",
+   "prompt": "Michael Jordan played the sport of"
+  }
+ },
+ "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+ "device": "cpu",
+ "libs": {
+  "python": "3.12.13",
+  "torch": "2.5.1+cpu",
+  "transformer_lens": "2.15.4",
+  "sae_lens": "5.11.0",
+  "transformers": "4.57.6",
+  "numpy": "1.26.4"
+ },
+ "recorded": "2026-10-14",
+ "neuronpedia_fetched": null,
+ "offline": false,
+ "trimmed": [],
+ "response": {
+  "preset_id": "gpt2-small",
+  "prompt": "Michael Jordan played the sport of",
+  "tokens": [
+   {
+    "index": 0,
+    "text": "<|endoftext|>"
+   },
+   {
+    "index": 1,
+    "text": "Michael"
+   },
+   {
+    "index": 2,
+    "text": " Jordan"
+   },
+   {
+    "index": 3,
+    "text": " played"
+   },
+   {
+    "index": 4,
+    "text": " the"
+   },
+   {
+    "index": 5,
+    "text": " sport"
+   },
+   {
+    "index": 6,
+    "text": " of"
+   }
+  ],
+  "grid": [
+   [
+    {
+     "predicted_token": "\n",
+     "probability": 0.34442171454429626,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " Michael",
+     "probability": 0.30219826102256775,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " Jordan",
+     "probability": 0.9999121427536011,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " played",
+     "probability": 0.8538578152656555,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.27821749448776245,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "sw",
+     "probability": 0.8429874181747437,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.6686776280403137,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": "\n",
+     "probability": 0.08009959012269974,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " Michael",
+     "probability": 0.13031195104122162,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " Jordan",
+     "probability": 0.9998881816864014,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " played",
+     "probability": 0.9372636675834656,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.7451463341712952,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "sw",
+     "probability": 0.9985806941986084,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.7944145798683167,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.026910267770290375,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " Jordan",
+     "probability": 0.1422138214111328,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " Jordan",
+     "probability": 0.9989575147628784,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " played",
+     "probability": 0.8562935590744019,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.8531836271286011,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "sw",
+     "probability": 0.9977816939353943,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.6200478076934814,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.027061179280281067,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " Jackson",
+     "probability": 0.1445603221654892,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " Jordan",
+     "probability": 0.9894046783447266,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " played",
+     "probability": 0.6870971322059631,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.6118291020393372,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "sw",
+     "probability": 0.9984999895095825,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.4600285291671753,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.026887336745858192,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " Jackson",
+     "probability": 0.22368387877941132,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " Jordan",
+     "probability": 0.9722804427146912,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " played",
+     "probability": 0.6749774813652039,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.5337961316108704,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "sw",
+     "probability": 0.9997876286506653,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.42287158966064453,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.02654830552637577,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " Jackson",
+     "probability": 0.18787913024425507,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " Jordan",
+     "probability": 0.663872241973877,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " played",
+     "probability": 0.5924221277236938,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.871218204498291,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "sw",
+     "probability": 0.9986321330070496,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " course",
+     "probability": 0.5757175087928772,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.0264239814132452,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " Jackson",
+     "probability": 0.2525205910205841,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "'s",
+     "probability": 0.8066752552986145,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " played",
+     "probability": 0.40276825428009033,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.8778091073036194,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "sw",
+     "probability": 0.9835351705551147,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " course",
+     "probability": 0.2720627188682556,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.026436978951096535,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " Jackson",
+     "probability": 0.2775864899158478,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "'s",
+     "probability": 0.9339300990104675,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " a",
+     "probability": 0.30409690737724304,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.823590099811554,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "sw",
+     "probability": 0.8974786400794983,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " baseball",
+     "probability": 0.27565109729766846,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.026673292741179466,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " Jackson",
+     "probability": 0.19209693372249603,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "'s",
+     "probability": 0.9145141839981079,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " a",
+     "probability": 0.3783626854419708,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.547013521194458,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "sw",
+     "probability": 0.3384171426296234,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " basketball",
+     "probability": 0.42222118377685547,
+     "matches_final": true
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.026949947699904442,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " Jackson",
+     "probability": 0.27022895216941833,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "'s",
+     "probability": 0.8153703808784485,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " basketball",
+     "probability": 0.8340195417404175,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " role",
+     "probability": 0.4971988797187805,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " in",
+     "probability": 0.1903282105922699,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " basketball",
+     "probability": 0.9319525957107544,
+     "matches_final": true
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.027445368468761444,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " Jackson",
+     "probability": 0.07141000777482986,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "'s",
+     "probability": 0.3684181869029999,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " basketball",
+     "probability": 0.3440031111240387,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " role",
+     "probability": 0.2596619427204132,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " of",
+     "probability": 0.6680691242218018,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " basketball",
+     "probability": 0.8335673809051514,
+     "matches_final": true
+    }
+   ],
+   [
+    {
+     "predicted_token": "\n",
+     "probability": 0.06229811906814575,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " J",
+     "probability": 0.017747769132256508,
+     "matches_final": true
+    },
+    {
+     "predicted_token": ",",
+     "probability": 0.11674942821264267,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " in",
+     "probability": 0.11094268411397934,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " game",
+     "probability": 0.07417662441730499,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " of",
+     "probability": 0.4495674669742584,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " basketball",
+     "probability": 0.4220840334892273,
+     "matches_final": true
+    }
+   ]
+  ],
+  "n_layers": 12,
+  "status": "ok"
+ }
+}

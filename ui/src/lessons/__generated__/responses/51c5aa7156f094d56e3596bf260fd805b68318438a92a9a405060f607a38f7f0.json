@@ -1,0 +1,216 @@
+{
+ "key": "51c5aa7156f094d56e3596bf260fd805b68318438a92a9a405060f607a38f7f0",
+ "variant": "r1",
+ "request": {
+  "endpoint": "/ablate-head",
+  "model": "gpt2-small",
+  "body": {
+   "preset_id": "gpt2-small",
+   "prompt": "When Mary and John went to the store, John gave a drink to",
+   "ablations": [
+    {
+     "layer": 8,
+     "head": 3
+    }
+   ]
+  }
+ },
+ "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+ "device": "cpu",
+ "libs": {
+  "python": "3.12.13",
+  "torch": "2.5.1+cpu",
+  "transformer_lens": "2.15.4",
+  "sae_lens": "5.11.0",
+  "transformers": "4.57.6",
+  "numpy": "1.26.4"
+ },
+ "recorded": "2026-10-14",
+ "neuronpedia_fetched": null,
+ "offline": false,
+ "trimmed": [],
+ "response": {
+  "preset_id": "gpt2-small",
+  "prompt": "When Mary and John went to the store, John gave a drink to",
+  "original_predictions": [
+   {
+    "token": " Mary",
+    "probability": 0.6769932508468628,
+    "rank": 1
+   },
+   {
+    "token": " them",
+    "probability": 0.12825962901115417,
+    "rank": 2
+   },
+   {
+    "token": " the",
+    "probability": 0.04757941886782646,
+    "rank": 3
+   },
+   {
+    "token": " John",
+    "probability": 0.02347848005592823,
+    "rank": 4
+   },
+   {
+    "token": " her",
+    "probability": 0.014105485752224922,
+    "rank": 5
+   },
+   {
+    "token": " their",
+    "probability": 0.011191682890057564,
+    "rank": 6
+   },
+   {
+    "token": " his",
+    "probability": 0.008982484228909016,
+    "rank": 7
+   },
+   {
+    "token": " everyone",
+    "probability": 0.006099645048379898,
+    "rank": 8
+   },
+   {
+    "token": " a",
+    "probability": 0.005901940166950226,
+    "rank": 9
+   },
+   {
+    "token": " each",
+    "probability": 0.003451433964073658,
+    "rank": 10
+   }
+  ],
+  "ablated_predictions": [
+   {
+    "token": " Mary",
+    "probability": 0.47042176127433777,
+    "rank": 1
+   },
+   {
+    "token": " them",
+    "probability": 0.14399854838848114,
+    "rank": 2
+   },
+   {
+    "token": " the",
+    "probability": 0.08664721250534058,
+    "rank": 3
+   },
+   {
+    "token": " John",
+    "probability": 0.041886504739522934,
+    "rank": 4
+   },
+   {
+    "token": " her",
+    "probability": 0.031170690432190895,
+    "rank": 5
+   },
+   {
+    "token": " a",
+    "probability": 0.023268062621355057,
+    "rank": 6
+   },
+   {
+    "token": " their",
+    "probability": 0.020833224058151245,
+    "rank": 7
+   },
+   {
+    "token": " everyone",
+    "probability": 0.013451529666781425,
+    "rank": 8
+   },
+   {
+    "token": " his",
+    "probability": 0.011378035880625248,
+    "rank": 9
+   },
+   {
+    "token": " one",
+    "probability": 0.006202529650181532,
+    "rank": 10
+   }
+  ],
+  "prediction_delta": [
+   {
+    "token": " Mary",
+    "original_prob": 0.6769932508468628,
+    "ablated_prob": 0.47042176127433777,
+    "delta": -0.20657148957252502
+   },
+   {
+    "token": " the",
+    "original_prob": 0.04757941886782646,
+    "ablated_prob": 0.08664721250534058,
+    "delta": 0.039067793637514114
+   },
+   {
+    "token": " John",
+    "original_prob": 0.02347848005592823,
+    "ablated_prob": 0.041886504739522934,
+    "delta": 0.018408024683594704
+   },
+   {
+    "token": " a",
+    "original_prob": 0.005901940166950226,
+    "ablated_prob": 0.023268062621355057,
+    "delta": 0.01736612245440483
+   },
+   {
+    "token": " her",
+    "original_prob": 0.014105485752224922,
+    "ablated_prob": 0.031170690432190895,
+    "delta": 0.017065204679965973
+   },
+   {
+    "token": " them",
+    "original_prob": 0.12825962901115417,
+    "ablated_prob": 0.14399854838848114,
+    "delta": 0.015738919377326965
+   },
+   {
+    "token": " their",
+    "original_prob": 0.011191682890057564,
+    "ablated_prob": 0.020833224058151245,
+    "delta": 0.009641541168093681
+   },
+   {
+    "token": " everyone",
+    "original_prob": 0.006099645048379898,
+    "ablated_prob": 0.013451529666781425,
+    "delta": 0.007351884618401527
+   },
+   {
+    "token": " one",
+    "original_prob": 0.0,
+    "ablated_prob": 0.006202529650181532,
+    "delta": 0.006202529650181532
+   },
+   {
+    "token": " each",
+    "original_prob": 0.003451433964073658,
+    "ablated_prob": 0.0,
+    "delta": -0.003451433964073658
+   },
+   {
+    "token": " his",
+    "original_prob": 0.008982484228909016,
+    "ablated_prob": 0.011378035880625248,
+    "delta": 0.0023955516517162323
+   }
+  ],
+  "ablations": [
+   {
+    "layer": 8,
+    "head": 3
+   }
+  ],
+  "feature_ablations": null,
+  "status": "ok"
+ }
+}

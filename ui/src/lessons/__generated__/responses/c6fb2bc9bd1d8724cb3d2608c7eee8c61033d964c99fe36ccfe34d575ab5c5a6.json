@@ -1,0 +1,1084 @@
+{
+ "key": "c6fb2bc9bd1d8724cb3d2608c7eee8c61033d964c99fe36ccfe34d575ab5c5a6",
+ "variant": "r1",
+ "request": {
+  "endpoint": "/logit-lens",
+  "model": "gpt2-small",
+  "body": {
+   "preset_id": "gpt2-small",
+   "prompt": "The sun went down behind the hill,\nThe night was dark and very"
+  }
+ },
+ "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+ "device": "cpu",
+ "libs": {
+  "python": "3.12.13",
+  "torch": "2.5.1+cpu",
+  "transformer_lens": "2.15.4",
+  "sae_lens": "5.11.0",
+  "transformers": "4.57.6",
+  "numpy": "1.26.4"
+ },
+ "recorded": "2026-10-14",
+ "neuronpedia_fetched": null,
+ "offline": false,
+ "trimmed": [],
+ "response": {
+  "preset_id": "gpt2-small",
+  "prompt": "The sun went down behind the hill,\nThe night was dark and very",
+  "tokens": [
+   {
+    "index": 0,
+    "text": "<|endoftext|>"
+   },
+   {
+    "index": 1,
+    "text": "The"
+   },
+   {
+    "index": 2,
+    "text": " sun"
+   },
+   {
+    "index": 3,
+    "text": " went"
+   },
+   {
+    "index": 4,
+    "text": " down"
+   },
+   {
+    "index": 5,
+    "text": " behind"
+   },
+   {
+    "index": 6,
+    "text": " the"
+   },
+   {
+    "index": 7,
+    "text": " hill"
+   },
+   {
+    "index": 8,
+    "text": ","
+   },
+   {
+    "index": 9,
+    "text": "\n"
+   },
+   {
+    "index": 10,
+    "text": "The"
+   },
+   {
+    "index": 11,
+    "text": " night"
+   },
+   {
+    "index": 12,
+    "text": " was"
+   },
+   {
+    "index": 13,
+    "text": " dark"
+   },
+   {
+    "index": 14,
+    "text": " and"
+   },
+   {
+    "index": 15,
+    "text": " very"
+   }
+  ],
+  "grid": [
+   [
+    {
+     "predicted_token": "\n",
+     "probability": 0.34442171454429626,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "ories",
+     "probability": 0.06339085102081299,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " sun",
+     "probability": 0.9634982347488403,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " to",
+     "probability": 0.1177988275885582,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "stairs",
+     "probability": 0.31858202815055847,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " behind",
+     "probability": 0.9885411262512207,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.5457181930541992,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " hill",
+     "probability": 0.62428879737854,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.21354569494724274,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "\n",
+     "probability": 0.8591222763061523,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "resa",
+     "probability": 0.08030123263597488,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " night",
+     "probability": 0.8745713829994202,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " also",
+     "probability": 0.3532511293888092,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " dark",
+     "probability": 0.9201751351356506,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.6001502275466919,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " rare",
+     "probability": 0.4486725926399231,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": "\n",
+     "probability": 0.08009959012269974,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " latest",
+     "probability": 0.1390518695116043,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " sun",
+     "probability": 0.7915756106376648,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " ahead",
+     "probability": 0.29832011461257935,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "stairs",
+     "probability": 0.3112811744213104,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " behind",
+     "probability": 0.9200412034988403,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.7678415775299072,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "side",
+     "probability": 0.9009316563606262,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.36938953399658203,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "\n",
+     "probability": 0.5218226313591003,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "resa",
+     "probability": 0.5271912217140198,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " night",
+     "probability": 0.6185389757156372,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " not",
+     "probability": 0.3904532194137573,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "ening",
+     "probability": 0.4745221436023712,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.7510292530059814,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " rare",
+     "probability": 0.36614730954170227,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.026910267770290375,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " latest",
+     "probability": 0.22088511288166046,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " sun",
+     "probability": 0.46950533986091614,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " ahead",
+     "probability": 0.21825839579105377,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "cast",
+     "probability": 0.2243267148733139,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " behind",
+     "probability": 0.4375164210796356,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.9109904766082764,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "side",
+     "probability": 0.7697877883911133,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.6099220514297485,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "\n",
+     "probability": 0.4695166051387787,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "resa",
+     "probability": 0.35893282294273376,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "fall",
+     "probability": 0.4486250877380371,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " not",
+     "probability": 0.26860883831977844,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "ening",
+     "probability": 0.46206530928611755,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.8602873086929321,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " rare",
+     "probability": 0.258201539516449,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.027061179280281067,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " latest",
+     "probability": 0.1754426509141922,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " sun",
+     "probability": 0.5949904322624207,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " ahead",
+     "probability": 0.19749312102794647,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "wind",
+     "probability": 0.25882089138031006,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.582459568977356,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.8633139729499817,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "side",
+     "probability": 0.9353107213973999,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.7242387533187866,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "                ",
+     "probability": 0.06488992273807526,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "resa",
+     "probability": 0.3696434199810028,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "fall",
+     "probability": 0.5296264886856079,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " not",
+     "probability": 0.23144425451755524,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "ened",
+     "probability": 0.4634205102920532,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.817509651184082,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " much",
+     "probability": 0.190920889377594,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.026887336745858192,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "resa",
+     "probability": 0.16250868141651154,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "flower",
+     "probability": 0.17984382808208466,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " down",
+     "probability": 0.08664539456367493,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "cast",
+     "probability": 0.4957009255886078,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.7393501996994019,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.4283617436885834,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "side",
+     "probability": 0.9783204793930054,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.7402129173278809,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " un",
+     "probability": 0.18837079405784607,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "resa",
+     "probability": 0.6647666692733765,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " sky",
+     "probability": 0.4800195097923279,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " not",
+     "probability": 0.3082466423511505,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "ened",
+     "probability": 0.3420417308807373,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.5936046838760376,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " much",
+     "probability": 0.2506464719772339,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.02654830552637577,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "resa",
+     "probability": 0.46772581338882446,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "flower",
+     "probability": 0.393375962972641,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " down",
+     "probability": 0.15577813982963562,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "cast",
+     "probability": 0.3383070230484009,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.8329722881317139,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " horizon",
+     "probability": 0.25197312235832214,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "side",
+     "probability": 0.9790048599243164,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.6413869857788086,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "\n",
+     "probability": 0.08795669674873352,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "resa",
+     "probability": 0.42936307191848755,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " sky",
+     "probability": 0.5189027190208435,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " not",
+     "probability": 0.4150087833404541,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "ening",
+     "probability": 0.31363797187805176,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.4725204408168793,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " much",
+     "probability": 0.33958736062049866,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.0264239814132452,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "resa",
+     "probability": 0.5889462232589722,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "flower",
+     "probability": 0.19017024338245392,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " cold",
+     "probability": 0.2888345420360565,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "cast",
+     "probability": 0.25015988945961,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.9017579555511475,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " horizon",
+     "probability": 0.385420024394989,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "side",
+     "probability": 0.9858176112174988,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " where",
+     "probability": 0.4447382390499115,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "And",
+     "probability": 0.12818650901317596,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "oret",
+     "probability": 0.3281894624233246,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "fall",
+     "probability": 0.49639806151390076,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " not",
+     "probability": 0.22318337857723236,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "ening",
+     "probability": 0.40581655502319336,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " dark",
+     "probability": 0.2319742888212204,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " dark",
+     "probability": 0.17406222224235535,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.026436978951096535,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "resa",
+     "probability": 0.5736754536628723,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "burst",
+     "probability": 0.23723165690898895,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " dark",
+     "probability": 0.22862188518047333,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " on",
+     "probability": 0.23205921053886414,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.826036274433136,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " horizon",
+     "probability": 0.5327304005622864,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "side",
+     "probability": 0.9516635537147522,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " but",
+     "probability": 0.32126641273498535,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "And",
+     "probability": 0.2124607264995575,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " sun",
+     "probability": 0.7571477293968201,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " sky",
+     "probability": 0.8459099531173706,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " dark",
+     "probability": 0.21786832809448242,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " enough",
+     "probability": 0.877677857875824,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " dark",
+     "probability": 0.4349612891674042,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " dark",
+     "probability": 0.3148345649242401,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.026673292741179466,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "resa",
+     "probability": 0.3950845003128052,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " sun",
+     "probability": 0.1299247443675995,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " dark",
+     "probability": 0.336897611618042,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " on",
+     "probability": 0.23745395243167877,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " him",
+     "probability": 0.4341212511062622,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " horizon",
+     "probability": 0.4729631543159485,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "side",
+     "probability": 0.9021314382553101,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " where",
+     "probability": 0.2562476098537445,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "And",
+     "probability": 0.3723786175251007,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " sun",
+     "probability": 0.9035283327102661,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " sky",
+     "probability": 0.9739500284194946,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " dark",
+     "probability": 0.24318541586399078,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "ening",
+     "probability": 0.5163607597351074,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " gloomy",
+     "probability": 0.5805618166923523,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " cold",
+     "probability": 0.5067483186721802,
+     "matches_final": true
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.026949947699904442,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "resa",
+     "probability": 0.3175196647644043,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " shone",
+     "probability": 0.18094849586486816,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " bright",
+     "probability": 0.40317705273628235,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " on",
+     "probability": 0.47280001640319824,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " him",
+     "probability": 0.44178712368011475,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " clouds",
+     "probability": 0.36195337772369385,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "side",
+     "probability": 0.5714341998100281,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " but",
+     "probability": 0.31602221727371216,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "   ",
+     "probability": 0.5716505646705627,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " sun",
+     "probability": 0.8830814361572266,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " sky",
+     "probability": 0.9697568416595459,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " dark",
+     "probability": 0.29124605655670166,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "ening",
+     "probability": 0.5336823463439941,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " gloomy",
+     "probability": 0.45091527700424194,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " cold",
+     "probability": 0.8390360474586487,
+     "matches_final": true
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.027445368468761444,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " following",
+     "probability": 0.017918653786182404,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " is",
+     "probability": 0.12267670035362244,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " bright",
+     "probability": 0.4052138030529022,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " on",
+     "probability": 0.30073562264442444,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.40428608655929565,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " clouds",
+     "probability": 0.1341545432806015,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "side",
+     "probability": 0.5980409383773804,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " and",
+     "probability": 0.5568643808364868,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "\n",
+     "probability": 0.9851191639900208,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " sun",
+     "probability": 0.28803667426109314,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " sky",
+     "probability": 0.8142285943031311,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " cloudy",
+     "probability": 0.25386905670166016,
+     "matches_final": false
+    },
+    {
+     "predicted_token": ",",
+     "probability": 0.46030619740486145,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " cold",
+     "probability": 0.5119986534118652,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " cold",
+     "probability": 0.923232913017273,
+     "matches_final": true
+    }
+   ],
+   [
+    {
+     "predicted_token": "\n",
+     "probability": 0.06229811906814575,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " first",
+     "probability": 0.009997429326176643,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " is",
+     "probability": 0.18628939986228943,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " down",
+     "probability": 0.8756402134895325,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " on",
+     "probability": 0.12012603878974915,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.4230559766292572,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " clouds",
+     "probability": 0.03977280110120773,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "side",
+     "probability": 0.2175147831439972,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " and",
+     "probability": 0.346851110458374,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "\n",
+     "probability": 0.9976314306259155,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " wind",
+     "probability": 0.06033021956682205,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " was",
+     "probability": 0.3555804193019867,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " dark",
+     "probability": 0.09714636206626892,
+     "matches_final": true
+    },
+    {
+     "predicted_token": ",",
+     "probability": 0.3678155839443207,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.15516632795333862,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " cold",
+     "probability": 0.4801647663116455,
+     "matches_final": true
+    }
+   ]
+  ],
+  "n_layers": 12,
+  "status": "ok"
+ }
+}

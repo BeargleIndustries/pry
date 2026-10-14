@@ -1,0 +1,216 @@
+{
+ "key": "04f0ea6446c6fcf454a2fab22010b2c0577607e84716eff5b936ce07f1a174db",
+ "variant": "r1",
+ "request": {
+  "endpoint": "/ablate-head",
+  "model": "gpt2-small",
+  "body": {
+   "preset_id": "gpt2-small",
+   "prompt": "The war lasted from the year 1732 to the year 17",
+   "ablations": [
+    {
+     "layer": 6,
+     "head": 1
+    }
+   ]
+  }
+ },
+ "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+ "device": "cpu",
+ "libs": {
+  "python": "3.12.13",
+  "torch": "2.5.1+cpu",
+  "transformer_lens": "2.15.4",
+  "sae_lens": "5.11.0",
+  "transformers": "4.57.6",
+  "numpy": "1.26.4"
+ },
+ "recorded": "2026-10-14",
+ "neuronpedia_fetched": null,
+ "offline": false,
+ "trimmed": [],
+ "response": {
+  "preset_id": "gpt2-small",
+  "prompt": "The war lasted from the year 1732 to the year 17",
+  "original_predictions": [
+   {
+    "token": "49",
+    "probability": 0.05795148387551308,
+    "rank": 1
+   },
+   {
+    "token": "50",
+    "probability": 0.050567593425512314,
+    "rank": 2
+   },
+   {
+    "token": "45",
+    "probability": 0.03358353301882744,
+    "rank": 3
+   },
+   {
+    "token": "43",
+    "probability": 0.031525228172540665,
+    "rank": 4
+   },
+   {
+    "token": "35",
+    "probability": 0.03151242434978485,
+    "rank": 5
+   },
+   {
+    "token": "37",
+    "probability": 0.03084667958319187,
+    "rank": 6
+   },
+   {
+    "token": "48",
+    "probability": 0.03014303557574749,
+    "rank": 7
+   },
+   {
+    "token": "67",
+    "probability": 0.02963329292833805,
+    "rank": 8
+   },
+   {
+    "token": "42",
+    "probability": 0.029260583221912384,
+    "rank": 9
+   },
+   {
+    "token": "44",
+    "probability": 0.02908919006586075,
+    "rank": 10
+   }
+  ],
+  "ablated_predictions": [
+   {
+    "token": "49",
+    "probability": 0.056407246738672256,
+    "rank": 1
+   },
+   {
+    "token": "50",
+    "probability": 0.049832891672849655,
+    "rank": 2
+   },
+   {
+    "token": "45",
+    "probability": 0.032780975103378296,
+    "rank": 3
+   },
+   {
+    "token": "67",
+    "probability": 0.030305303633213043,
+    "rank": 4
+   },
+   {
+    "token": "43",
+    "probability": 0.028640378266572952,
+    "rank": 5
+   },
+   {
+    "token": "48",
+    "probability": 0.028567597270011902,
+    "rank": 6
+   },
+   {
+    "token": "44",
+    "probability": 0.02708478830754757,
+    "rank": 7
+   },
+   {
+    "token": "37",
+    "probability": 0.026826947927474976,
+    "rank": 8
+   },
+   {
+    "token": "42",
+    "probability": 0.02674795687198639,
+    "rank": 9
+   },
+   {
+    "token": "68",
+    "probability": 0.026201503351330757,
+    "rank": 10
+   }
+  ],
+  "prediction_delta": [
+   {
+    "token": "35",
+    "original_prob": 0.03151242434978485,
+    "ablated_prob": 0.0,
+    "delta": -0.03151242434978485
+   },
+   {
+    "token": "68",
+    "original_prob": 0.0,
+    "ablated_prob": 0.026201503351330757,
+    "delta": 0.026201503351330757
+   },
+   {
+    "token": "37",
+    "original_prob": 0.03084667958319187,
+    "ablated_prob": 0.026826947927474976,
+    "delta": -0.004019731655716896
+   },
+   {
+    "token": "43",
+    "original_prob": 0.031525228172540665,
+    "ablated_prob": 0.028640378266572952,
+    "delta": -0.0028848499059677124
+   },
+   {
+    "token": "42",
+    "original_prob": 0.029260583221912384,
+    "ablated_prob": 0.02674795687198639,
+    "delta": -0.002512626349925995
+   },
+   {
+    "token": "44",
+    "original_prob": 0.02908919006586075,
+    "ablated_prob": 0.02708478830754757,
+    "delta": -0.002004401758313179
+   },
+   {
+    "token": "48",
+    "original_prob": 0.03014303557574749,
+    "ablated_prob": 0.028567597270011902,
+    "delta": -0.001575438305735588
+   },
+   {
+    "token": "49",
+    "original_prob": 0.05795148387551308,
+    "ablated_prob": 0.056407246738672256,
+    "delta": -0.0015442371368408203
+   },
+   {
+    "token": "45",
+    "original_prob": 0.03358353301882744,
+    "ablated_prob": 0.032780975103378296,
+    "delta": -0.0008025579154491425
+   },
+   {
+    "token": "50",
+    "original_prob": 0.050567593425512314,
+    "ablated_prob": 0.049832891672849655,
+    "delta": -0.0007347017526626587
+   },
+   {
+    "token": "67",
+    "original_prob": 0.02963329292833805,
+    "ablated_prob": 0.030305303633213043,
+    "delta": 0.0006720107048749924
+   }
+  ],
+  "ablations": [
+   {
+    "layer": 6,
+    "head": 1
+   }
+  ],
+  "feature_ablations": null,
+  "status": "ok"
+ }
+}

@@ -1,0 +1,401 @@
+{
+ "key": "802c5f9fb33197278bcdc2d7d4e675f2f9804ca36106195e7605702726a4763b",
+ "variant": "r1",
+ "request": {
+  "endpoint": "/circuit",
+  "model": "gpt2-small",
+  "body": {
+   "preset_id": "gpt2-small",
+   "prompt": "The war lasted from the year 1650 to the year 16",
+   "source": "dla",
+   "target_token_index": 12
+  }
+ },
+ "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+ "device": "cpu",
+ "libs": {
+  "python": "3.12.13",
+  "torch": "2.5.1+cpu",
+  "transformer_lens": "2.15.4",
+  "sae_lens": "5.11.0",
+  "transformers": "4.57.6",
+  "numpy": "1.26.4"
+ },
+ "recorded": "2026-10-14",
+ "neuronpedia_fetched": null,
+ "offline": false,
+ "trimmed": [],
+ "response": {
+  "preset_id": "gpt2-small",
+  "prompt": "The war lasted from the year 1650 to the year 16",
+  "threshold": 0.10473982989788055,
+  "source": "dla",
+  "nodes": [
+   {
+    "id": "L0.H1",
+    "type": "attention",
+    "layer": 0,
+    "head": 1,
+    "importance": 0.1327541321516037
+   },
+   {
+    "id": "MLP.0",
+    "type": "mlp",
+    "layer": 0,
+    "head": null,
+    "importance": 0.7127512097358704
+   },
+   {
+    "id": "L2.H0",
+    "type": "attention",
+    "layer": 2,
+    "head": 0,
+    "importance": -0.14589962363243103
+   },
+   {
+    "id": "MLP.2",
+    "type": "mlp",
+    "layer": 2,
+    "head": null,
+    "importance": 0.13881658017635345
+   },
+   {
+    "id": "MLP.3",
+    "type": "mlp",
+    "layer": 3,
+    "head": null,
+    "importance": 0.1444559544324875
+   },
+   {
+    "id": "MLP.4",
+    "type": "mlp",
+    "layer": 4,
+    "head": null,
+    "importance": 0.23534798622131348
+   },
+   {
+    "id": "L5.H0",
+    "type": "attention",
+    "layer": 5,
+    "head": 0,
+    "importance": 0.4204739034175873
+   },
+   {
+    "id": "L5.H1",
+    "type": "attention",
+    "layer": 5,
+    "head": 1,
+    "importance": 0.10473982989788055
+   },
+   {
+    "id": "L5.H5",
+    "type": "attention",
+    "layer": 5,
+    "head": 5,
+    "importance": 0.2607157826423645
+   },
+   {
+    "id": "MLP.5",
+    "type": "mlp",
+    "layer": 5,
+    "head": null,
+    "importance": 0.27019521594047546
+   },
+   {
+    "id": "L6.H1",
+    "type": "attention",
+    "layer": 6,
+    "head": 1,
+    "importance": 0.14708808064460754
+   },
+   {
+    "id": "L6.H9",
+    "type": "attention",
+    "layer": 6,
+    "head": 9,
+    "importance": 0.5952367782592773
+   },
+   {
+    "id": "MLP.6",
+    "type": "mlp",
+    "layer": 6,
+    "head": null,
+    "importance": 0.4415523409843445
+   },
+   {
+    "id": "L7.H6",
+    "type": "attention",
+    "layer": 7,
+    "head": 6,
+    "importance": -0.11897891014814377
+   },
+   {
+    "id": "L7.H10",
+    "type": "attention",
+    "layer": 7,
+    "head": 10,
+    "importance": 0.488913357257843
+   },
+   {
+    "id": "L7.H11",
+    "type": "attention",
+    "layer": 7,
+    "head": 11,
+    "importance": 0.355055034160614
+   },
+   {
+    "id": "MLP.7",
+    "type": "mlp",
+    "layer": 7,
+    "head": null,
+    "importance": 0.3169202506542206
+   },
+   {
+    "id": "L8.H6",
+    "type": "attention",
+    "layer": 8,
+    "head": 6,
+    "importance": 0.3350900411605835
+   },
+   {
+    "id": "L8.H7",
+    "type": "attention",
+    "layer": 8,
+    "head": 7,
+    "importance": 0.2579863965511322
+   },
+   {
+    "id": "L8.H8",
+    "type": "attention",
+    "layer": 8,
+    "head": 8,
+    "importance": 0.23281747102737427
+   },
+   {
+    "id": "L8.H10",
+    "type": "attention",
+    "layer": 8,
+    "head": 10,
+    "importance": -0.1680545210838318
+   },
+   {
+    "id": "MLP.8",
+    "type": "mlp",
+    "layer": 8,
+    "head": null,
+    "importance": 1.592275619506836
+   },
+   {
+    "id": "L9.H1",
+    "type": "attention",
+    "layer": 9,
+    "head": 1,
+    "importance": 0.9817478656768799
+   },
+   {
+    "id": "L9.H5",
+    "type": "attention",
+    "layer": 9,
+    "head": 5,
+    "importance": -0.12153452634811401
+   },
+   {
+    "id": "MLP.9",
+    "type": "mlp",
+    "layer": 9,
+    "head": null,
+    "importance": 2.6378865242004395
+   },
+   {
+    "id": "L10.H2",
+    "type": "attention",
+    "layer": 10,
+    "head": 2,
+    "importance": 0.12352298200130463
+   },
+   {
+    "id": "L10.H4",
+    "type": "attention",
+    "layer": 10,
+    "head": 4,
+    "importance": 0.1653270125389099
+   },
+   {
+    "id": "L10.H7",
+    "type": "attention",
+    "layer": 10,
+    "head": 7,
+    "importance": -0.3038352131843567
+   },
+   {
+    "id": "MLP.10",
+    "type": "mlp",
+    "layer": 10,
+    "head": null,
+    "importance": 5.299196243286133
+   },
+   {
+    "id": "L11.H4",
+    "type": "attention",
+    "layer": 11,
+    "head": 4,
+    "importance": -0.1460510939359665
+   },
+   {
+    "id": "L11.H8",
+    "type": "attention",
+    "layer": 11,
+    "head": 8,
+    "importance": 0.4363822638988495
+   },
+   {
+    "id": "MLP.11",
+    "type": "mlp",
+    "layer": 11,
+    "head": null,
+    "importance": 11.308119773864746
+   }
+  ],
+  "edges": [
+   {
+    "source": "MLP.0",
+    "target": "L9.H1",
+    "weight": 0.4553517699241638
+   },
+   {
+    "source": "MLP.0",
+    "target": "L6.H9",
+    "weight": 0.25976797938346863
+   },
+   {
+    "source": "MLP.10",
+    "target": "L11.H8",
+    "weight": 0.18135902285575867
+   },
+   {
+    "source": "MLP.0",
+    "target": "L5.H5",
+    "weight": 0.16102264821529388
+   },
+   {
+    "source": "MLP.0",
+    "target": "L5.H0",
+    "weight": 0.15307702124118805
+   },
+   {
+    "source": "MLP.0",
+    "target": "L7.H11",
+    "weight": 0.1514785885810852
+   },
+   {
+    "source": "MLP.0",
+    "target": "L10.H7",
+    "weight": -0.14497917890548706
+   },
+   {
+    "source": "MLP.0",
+    "target": "L7.H10",
+    "weight": 0.13845627009868622
+   },
+   {
+    "source": "MLP.0",
+    "target": "L8.H6",
+    "weight": 0.10798706859350204
+   },
+   {
+    "source": "MLP.0",
+    "target": "L10.H2",
+    "weight": 0.10370267182588577
+   },
+   {
+    "source": "MLP.0",
+    "target": "L8.H8",
+    "weight": 0.09633461385965347
+   },
+   {
+    "source": "MLP.4",
+    "target": "L7.H10",
+    "weight": 0.09024802595376968
+   },
+   {
+    "source": "MLP.0",
+    "target": "L5.H1",
+    "weight": 0.08836356550455093
+   },
+   {
+    "source": "MLP.5",
+    "target": "L9.H1",
+    "weight": -0.08090770989656448
+   },
+   {
+    "source": "L0.H1",
+    "target": "L9.H1",
+    "weight": 0.07695288956165314
+   },
+   {
+    "source": "MLP.6",
+    "target": "L8.H6",
+    "weight": 0.0701318308711052
+   },
+   {
+    "source": "MLP.8",
+    "target": "L9.H1",
+    "weight": 0.0672629177570343
+   },
+   {
+    "source": "MLP.9",
+    "target": "L10.H4",
+    "weight": 0.06514838337898254
+   },
+   {
+    "source": "MLP.0",
+    "target": "L2.H0",
+    "weight": -0.062223322689533234
+   },
+   {
+    "source": "MLP.4",
+    "target": "L5.H0",
+    "weight": 0.06020096689462662
+   },
+   {
+    "source": "MLP.2",
+    "target": "L11.H4",
+    "weight": -0.05840931460261345
+   },
+   {
+    "source": "L0.H1",
+    "target": "L7.H10",
+    "weight": 0.0582859069108963
+   },
+   {
+    "source": "MLP.4",
+    "target": "L6.H9",
+    "weight": 0.05828063189983368
+   },
+   {
+    "source": "MLP.5",
+    "target": "L8.H6",
+    "weight": 0.0568566657602787
+   },
+   {
+    "source": "MLP.3",
+    "target": "L5.H5",
+    "weight": 0.053246352821588516
+   },
+   {
+    "source": "MLP.9",
+    "target": "L11.H8",
+    "weight": 0.05241219326853752
+   },
+   {
+    "source": "MLP.2",
+    "target": "L9.H1",
+    "weight": 0.050121210515499115
+   }
+  ],
+  "edges_method": "direct_value_path",
+  "edge_threshold": 0.05,
+  "real_weights_verified": true,
+  "status": "ok"
+ }
+}

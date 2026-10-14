@@ -1,0 +1,351 @@
+{
+ "key": "6fbc4ce57ed05bb52c601c11a8b12ef14e81cc2f5927ecd548439e71fac81198",
+ "variant": "r1",
+ "request": {
+  "endpoint": "/circuit",
+  "model": "gpt2-small",
+  "body": {
+   "preset_id": "gpt2-small",
+   "prompt": "The war lasted from the year 1732 to the year 17",
+   "source": "dla",
+   "target_token_index": 12
+  }
+ },
+ "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+ "device": "cpu",
+ "libs": {
+  "python": "3.12.13",
+  "torch": "2.5.1+cpu",
+  "transformer_lens": "2.15.4",
+  "sae_lens": "5.11.0",
+  "transformers": "4.57.6",
+  "numpy": "1.26.4"
+ },
+ "recorded": "2026-10-14",
+ "neuronpedia_fetched": null,
+ "offline": false,
+ "trimmed": [],
+ "response": {
+  "preset_id": "gpt2-small",
+  "prompt": "The war lasted from the year 1732 to the year 17",
+  "threshold": 0.08263050019741058,
+  "source": "dla",
+  "nodes": [
+   {
+    "id": "L0.H1",
+    "type": "attention",
+    "layer": 0,
+    "head": 1,
+    "importance": 0.1257365345954895
+   },
+   {
+    "id": "L0.H7",
+    "type": "attention",
+    "layer": 0,
+    "head": 7,
+    "importance": 0.08502766489982605
+   },
+   {
+    "id": "MLP.0",
+    "type": "mlp",
+    "layer": 0,
+    "head": null,
+    "importance": 0.670872688293457
+   },
+   {
+    "id": "L2.H0",
+    "type": "attention",
+    "layer": 2,
+    "head": 0,
+    "importance": -0.13284382224082947
+   },
+   {
+    "id": "L2.H5",
+    "type": "attention",
+    "layer": 2,
+    "head": 5,
+    "importance": -0.08263050019741058
+   },
+   {
+    "id": "L3.H0",
+    "type": "attention",
+    "layer": 3,
+    "head": 0,
+    "importance": -0.10111481696367264
+   },
+   {
+    "id": "L3.H4",
+    "type": "attention",
+    "layer": 3,
+    "head": 4,
+    "importance": 0.11697202920913696
+   },
+   {
+    "id": "MLP.3",
+    "type": "mlp",
+    "layer": 3,
+    "head": null,
+    "importance": 0.14291416108608246
+   },
+   {
+    "id": "MLP.4",
+    "type": "mlp",
+    "layer": 4,
+    "head": null,
+    "importance": 0.1979552060365677
+   },
+   {
+    "id": "L5.H0",
+    "type": "attention",
+    "layer": 5,
+    "head": 0,
+    "importance": 0.443777471780777
+   },
+   {
+    "id": "L5.H5",
+    "type": "attention",
+    "layer": 5,
+    "head": 5,
+    "importance": 0.14959031343460083
+   },
+   {
+    "id": "MLP.5",
+    "type": "mlp",
+    "layer": 5,
+    "head": null,
+    "importance": 0.10548028349876404
+   },
+   {
+    "id": "L6.H1",
+    "type": "attention",
+    "layer": 6,
+    "head": 1,
+    "importance": 0.1182260736823082
+   },
+   {
+    "id": "L6.H9",
+    "type": "attention",
+    "layer": 6,
+    "head": 9,
+    "importance": 0.207236185669899
+   },
+   {
+    "id": "MLP.6",
+    "type": "mlp",
+    "layer": 6,
+    "head": null,
+    "importance": 0.5567724704742432
+   },
+   {
+    "id": "L7.H6",
+    "type": "attention",
+    "layer": 7,
+    "head": 6,
+    "importance": -0.08682219684123993
+   },
+   {
+    "id": "L7.H10",
+    "type": "attention",
+    "layer": 7,
+    "head": 10,
+    "importance": 0.2487076073884964
+   },
+   {
+    "id": "L7.H11",
+    "type": "attention",
+    "layer": 7,
+    "head": 11,
+    "importance": 0.2632814943790436
+   },
+   {
+    "id": "MLP.7",
+    "type": "mlp",
+    "layer": 7,
+    "head": null,
+    "importance": 0.6837223768234253
+   },
+   {
+    "id": "L8.H6",
+    "type": "attention",
+    "layer": 8,
+    "head": 6,
+    "importance": 0.26716142892837524
+   },
+   {
+    "id": "L8.H7",
+    "type": "attention",
+    "layer": 8,
+    "head": 7,
+    "importance": 0.2474217712879181
+   },
+   {
+    "id": "L8.H8",
+    "type": "attention",
+    "layer": 8,
+    "head": 8,
+    "importance": 0.08474937081336975
+   },
+   {
+    "id": "MLP.8",
+    "type": "mlp",
+    "layer": 8,
+    "head": null,
+    "importance": 1.0790340900421143
+   },
+   {
+    "id": "L9.H1",
+    "type": "attention",
+    "layer": 9,
+    "head": 1,
+    "importance": 0.9057632088661194
+   },
+   {
+    "id": "L9.H5",
+    "type": "attention",
+    "layer": 9,
+    "head": 5,
+    "importance": -0.13332203030586243
+   },
+   {
+    "id": "MLP.9",
+    "type": "mlp",
+    "layer": 9,
+    "head": null,
+    "importance": 2.2722368240356445
+   },
+   {
+    "id": "L10.H4",
+    "type": "attention",
+    "layer": 10,
+    "head": 4,
+    "importance": 0.16559503972530365
+   },
+   {
+    "id": "L10.H7",
+    "type": "attention",
+    "layer": 10,
+    "head": 7,
+    "importance": -0.10171204805374146
+   },
+   {
+    "id": "MLP.10",
+    "type": "mlp",
+    "layer": 10,
+    "head": null,
+    "importance": 4.138849258422852
+   },
+   {
+    "id": "L11.H4",
+    "type": "attention",
+    "layer": 11,
+    "head": 4,
+    "importance": -0.12424317002296448
+   },
+   {
+    "id": "L11.H8",
+    "type": "attention",
+    "layer": 11,
+    "head": 8,
+    "importance": 0.45015648007392883
+   },
+   {
+    "id": "MLP.11",
+    "type": "mlp",
+    "layer": 11,
+    "head": null,
+    "importance": 10.271007537841797
+   }
+  ],
+  "edges": [
+   {
+    "source": "MLP.0",
+    "target": "L9.H1",
+    "weight": 0.3628140985965729
+   },
+   {
+    "source": "MLP.0",
+    "target": "L5.H0",
+    "weight": 0.17595893144607544
+   },
+   {
+    "source": "MLP.0",
+    "target": "L6.H9",
+    "weight": 0.17110571265220642
+   },
+   {
+    "source": "MLP.10",
+    "target": "L11.H8",
+    "weight": 0.17085254192352295
+   },
+   {
+    "source": "MLP.0",
+    "target": "L7.H10",
+    "weight": 0.14856506884098053
+   },
+   {
+    "source": "MLP.0",
+    "target": "L7.H11",
+    "weight": 0.11845660209655762
+   },
+   {
+    "source": "MLP.0",
+    "target": "L8.H6",
+    "weight": 0.11284589022397995
+   },
+   {
+    "source": "MLP.0",
+    "target": "L5.H5",
+    "weight": 0.10859213769435883
+   },
+   {
+    "source": "MLP.7",
+    "target": "L9.H1",
+    "weight": 0.09456802159547806
+   },
+   {
+    "source": "L0.H1",
+    "target": "L9.H1",
+    "weight": 0.0849117711186409
+   },
+   {
+    "source": "MLP.9",
+    "target": "L11.H8",
+    "weight": 0.07659821212291718
+   },
+   {
+    "source": "MLP.6",
+    "target": "L7.H10",
+    "weight": -0.062487851828336716
+   },
+   {
+    "source": "MLP.6",
+    "target": "L8.H6",
+    "weight": 0.06215997412800789
+   },
+   {
+    "source": "MLP.8",
+    "target": "L9.H1",
+    "weight": 0.06017531454563141
+   },
+   {
+    "source": "MLP.0",
+    "target": "L3.H4",
+    "weight": 0.059689491987228394
+   },
+   {
+    "source": "MLP.6",
+    "target": "L7.H11",
+    "weight": 0.05672965198755264
+   },
+   {
+    "source": "MLP.9",
+    "target": "L10.H4",
+    "weight": 0.051955290138721466
+   }
+  ],
+  "edges_method": "direct_value_path",
+  "edge_threshold": 0.05,
+  "real_weights_verified": true,
+  "status": "ok"
+ }
+}

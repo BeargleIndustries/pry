@@ -19,6 +19,35 @@ os.environ.setdefault("PRY_PRESETS_PATH", str(Path(__file__).resolve().parent.pa
 SEED = 1234
 
 
+def pytest_addoption(parser):
+    """Options for test_lessons.py (plan T6a)."""
+    group = parser.getgroup("lessons", "lesson rows (test_lessons.py)")
+    group.addoption(
+        "--record",
+        action="store_true",
+        default=False,
+        help="re-record every verified row's responses and rows.json",
+    )
+    group.addoption(
+        "--diff",
+        action="store_true",
+        default=False,
+        help="with --record: write a diff report of old vs new responses",
+    )
+    group.addoption(
+        "--from-lessons",
+        action="store_true",
+        default=False,
+        help="also send every request in __generated__/expectations.json not covered by a row",
+    )
+    group.addoption(
+        "--network",
+        action="store_true",
+        default=False,
+        help="drift mode also refetches Neuronpedia labels and snippets and compares them",
+    )
+
+
 def _seed_all() -> None:
     random.seed(SEED)
     try:
