@@ -232,7 +232,7 @@ Researchers call this sentence's puzzle, working out who receives the drink, ind
 ## Mary minus John {id=s3-9 outline=P2.4.md#3.9}
 
 :::slots
-top_parts: { read: dla.top_parts, args: { n: 3 }, expect: [{ part: "L9.H6", contribution: 2.1079 }, { part: "L9.H9", contribution: 2.0957 }, { part: "L10.H0", contribution: 0.8185 }] }
+top_parts: { read: dla.top_parts, args: { n: 3 }, expect: [{ part: "L10.H7", contribution: -2.2792 }, { part: "L9.H6", contribution: 2.1079 }, { part: "L9.H9", contribution: 2.0957 }] }
 bars_total: { read: dla.bars_total, expect: 4.564 }
 actual_logit: { read: dla.actual, expect: 3.362 }
 gap: { read: dla.gap, expect: -1.203 }
@@ -261,7 +261,7 @@ Pry runs DLA on ' Mary' with ' John' as the contrast, at the last ' to'. Read :l
 :::
 
 :::observe{id=mary-john-obs}
-The biggest pushes are {top_parts}: heads in the last few layers. The bars total {bars_total}, the real logit difference is {actual_logit}, and the gap is {gap}.
+The three biggest bars by size are {top_parts}, all heads in the last few layers. Read the signs: two push ' Mary' over ' John', and one pushes the other way, against ' Mary'. Parts don't all pull the same way. The bars total {bars_total}, the real logit difference is {actual_logit}, and the gap is {gap}.
 
 ```yaml
 check: { read: dla.target, op: equals, value: { answer: " Mary", contrast: " John" } }
@@ -280,7 +280,7 @@ model_answer: "The embedding's own direct push plus a few fixed numbers the mode
 ## What DLA can and can't show {id=s3-10 outline=P2.4.md#3.10}
 
 :::do{id=open-top-head}
-Pry opens the tallest head bar's head and shows its attention lines from ' to', the view from P2.1.
+Pry opens the head with the biggest push toward ' Mary' and shows its attention lines from ' to', the view from P2.1.
 
 ```actions
 - open_head: { layer: $row.51.top_head_layer, head: $row.51.top_head }

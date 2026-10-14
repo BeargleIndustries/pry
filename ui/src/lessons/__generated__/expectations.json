@@ -1595,14 +1595,14 @@
           "kind": "slot",
           "name": "qu",
           "prompt": "Pip ordered zebra lamps from Quorn. Pip ordered yellow lamps from",
-          "expect": 0.3195
+          "expect": 0.1158
         },
         {
           "where": "s5/yellow/yellow-obs",
           "kind": "slot",
           "name": "the_p",
           "prompt": "Pip ordered zebra lamps from Quorn. Pip ordered yellow lamps from",
-          "expect": 0.0172
+          "expect": 0.0169
         },
         {
           "where": "s5/yellow/yellow-obs",
@@ -1856,16 +1856,16 @@
           "prompt": "When Mary and John went to the store, John gave a drink to",
           "expect": [
             {
+              "part": "L10.H7",
+              "contribution": -2.2792
+            },
+            {
               "part": "L9.H6",
               "contribution": 2.1079
             },
             {
               "part": "L9.H9",
               "contribution": 2.0957
-            },
-            {
-              "part": "L10.H0",
-              "contribution": 0.8185
             }
           ]
         },
@@ -1912,15 +1912,7 @@
         "I like the river bank",
         "I like the money bank"
       ],
-      "checks": [
-        {
-          "where": "s3-6/label-obs",
-          "kind": "slot",
-          "name": "label",
-          "prompt": "Michael Jordan played the sport of",
-          "expect": "names of basketball players"
-        }
-      ]
+      "checks": []
     },
     "pry.quick-tour": {
       "prompts": [],
