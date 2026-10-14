@@ -96,10 +96,10 @@ choices:
 :::
 
 :::do{id=run-key-parts}
-Key parts explains the guess after the word you've selected, the same way Why (DLA) does. With the last word selected, that's the top guess, "49". It doesn't use a contrast token, and it doesn't add up the years above 32. Press **Do it** to select the last "17" and draw :look{at=circuit-graph}[the map].
+Key parts explains the guess after the word you've selected, the same way Why (DLA) does. With the last word selected, that's the top guess, "49". It doesn't use a contrast token, and it doesn't add up the years above 32. Press **Do it** to select the last " 17" and draw :look{at=circuit-graph}[the map].
 
 ```actions
-- focus_token: { text: "17", occurrence: last }
+- focus_token: { text: " 17", occurrence: last }
 - open_panel: { panel: circuit }
 - run_circuit: {}
 ```
@@ -156,7 +156,7 @@ choices:
 Press **Do it** to keep the last word selected, knock out the map head and run again.
 
 ```actions
-- focus_token: { text: "17", occurrence: last }
+- focus_token: { text: " 17", occurrence: last }
 - set_head_ablation: { heads: [{ layer: $row.19.map_head_layer, head: $row.19.map_head_head }], on: true }
 - run_head_ablation: {}
 ```
@@ -244,7 +244,7 @@ constraint:
   - { read: circuit.target, field: token, op: equals, value: $read.top_guess.token }
 learner_actions: [set_prompt, run_circuit, set_head_ablation, run_head_ablation]
 capture: own-control
-reset: { prompt: "The war lasted from the year 1732 to the year 17", focus_token: { text: "17", occurrence: last }, head_ablation: { heads: [], on: false } }
+reset: { prompt: "The war lasted from the year 1732 to the year 17", focus_token: { text: " 17", occurrence: last }, head_ablation: { heads: [], on: false } }
 ```
 :::
 
@@ -261,7 +261,7 @@ constraint:
 max_runs: 3
 predict_before_each_run: true
 learner_actions: [set_prompt, run_circuit, set_head_ablation, run_head_ablation]
-reset: { prompt: "The war lasted from the year 1732 to the year 17", focus_token: { text: "17", occurrence: last }, head_ablation: { heads: [], on: false } }
+reset: { prompt: "The war lasted from the year 1732 to the year 17", focus_token: { text: " 17", occurrence: last }, head_ablation: { heads: [], on: false } }
 ```
 :::
 
@@ -287,12 +287,12 @@ free: true
 :::
 
 :::do{id=war-1650-run}
-Press **Do it** to run the 1650 sentence, select its last "16", draw Key parts and knock out the same map head as before.
+Press **Do it** to run the 1650 sentence, select its last " 16", draw Key parts and knock out the same map head as before.
 
 ```actions
 - set_prompt: { text: "The war lasted from the year 1650 to the year 16" }
 - run: {}
-- focus_token: { text: "16", occurrence: last }
+- focus_token: { text: " 16", occurrence: last }
 - run_circuit: {}
 - set_head_ablation: { heads: [{ layer: $row.19.map_head_layer, head: $row.19.map_head_head }], on: true }
 - run_head_ablation: {}

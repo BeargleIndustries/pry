@@ -45,6 +45,7 @@ Press **Do it** to put the instruction in the prompt box and let :look{at=watch-
 
 ```actions
 - set_prompt: { text: "Write a short poem about the sea." }
+- run: {}
 - write_it: { temperature: 0, seed: 1 }
 ```
 
@@ -100,6 +101,7 @@ Press **Do it** to change :look{at=prompt-input}[the prompt box] and write again
 
 ```actions
 - set_prompt: { text: "Here is a short poem about the sea:\n" }
+- run: {}
 - write_it: { temperature: 0 }
 ```
 
@@ -220,6 +222,7 @@ Press **Do it** to add :look{at=prompt-input}[the first line] and write again in
 
 ```actions
 - set_prompt: { text: "You are a poet. You answer every request with a short poem.\nWrite a short poem about the sea." }
+- run: {}
 - write_it: { temperature: 0 }
 ```
 :::
@@ -312,6 +315,7 @@ Start with the bare question. Press **Do it** to let GPT-2 write after it.
 
 ```actions
 - set_prompt: { text: "What is the opposite of hot?" }
+- run: {}
 - write_it: { temperature: 0 }
 ```
 
