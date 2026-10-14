@@ -178,7 +178,7 @@ corrected_in: [pry.p4-1]
 :::
 
 :::explain{id=two-rounds}
-The second round's more training on example conversations and on people's ratings of replies. It changes the same weights, so a request now tends to be followed by an answer. More training on a smaller, chosen set of examples, after the first round, is called **fine-tuning**. It's how every chat assistant you've used was made from a base model, and you'll see the word in nearly every AI announcement. :look{at=lesson:image:two-rounds}[The picture] shows both rounds.
+The second round's more training on example conversations and on people's ratings of replies. It changes the same weights, so a request now tends to be followed by an answer. More training on a smaller, chosen set of examples, after the first round, is called **fine-tuning**. It's how every chat assistant you've used was made from a base model, and you'll see the word in nearly every AI announcement. See :look{at=lesson:image:two-rounds}[the picture].
 
 Fine-tuning changes which continuations get high probabilities. It doesn't add a fact-checker, so a fluent wrong answer still comes from the same process as a right one.
 
@@ -191,15 +191,14 @@ alt: "Training split into two boxes. First round: guess the next token of real t
 ::::fold{title="Training on people's ratings"}
 
 :::explain
-Training a model on people's ratings of which reply is better has a name: reinforcement learning from human feedback, or **RLHF**. Newer methods do similar jobs in other ways. You don't need the name for anything else here.
-:::
+Training on people's ratings of replies has a name: reinforcement learning from human feedback, or **RLHF**. :::
 
 ::::
 
 :::analogy
 ```yaml
 like: "an actor coached into one role, the helpful assistant"
-because: "The same performer can play lots of parts, and coaching makes one of them come out every time."
+because: "Coaching makes one part come out every time."
 breaks: "there's no actor behind the role. The coaching changed the same numbers that do the guessing; nothing underneath is choosing to play along."
 ```
 :::

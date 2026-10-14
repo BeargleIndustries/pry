@@ -196,7 +196,31 @@ describe('lessons content', () => {
       skeletonActions: ['set_prompt', 'write_it'],
       why: 'write_it writes from the last Run, so each opening runs first',
     })),
+    // Stage 3-4 (lane t6-s3). Each lessonActions list keeps every skeleton action, in order.
+    { lesson: 'pry.p3-2', step: 'movers-knockout', lessonActions: ['reset', 'set_head_ablation', 'run_head_ablation'], skeletonActions: ['set_head_ablation', 'run_head_ablation'], why: 'set_head_ablation adds to the marked heads, so the heavy-line head is cleared before the name movers go off' },
+    { lesson: 'pry.p3-2', step: 'control-knockout', args: true, why: "the control heads are row 26's recorded random three (L9H4, L2H5, L0H1), not the skeleton's placeholders" },
+    { lesson: 'pry.p3-2', step: 'tom-knockout', lessonActions: ['reset', 'set_prompt', 'run', 'set_head_ablation', 'run_head_ablation'], skeletonActions: ['set_prompt', 'run', 'set_head_ablation', 'run_head_ablation'], why: 'knockouts accumulate, so the random control heads are cleared first' },
+    { lesson: 'pry.p3-4', step: 'control-knockout', lessonActions: ['reset', 'set_feature_ablation', 'set_feature_ablation', 'run_feature_ablation'], skeletonActions: ['reset', 'set_feature_ablation', 'run_feature_ablation'], why: 'reset keeps feature knockouts, so the top features are unmarked before the control goes off' },
+    { lesson: 'pry.p3-4', step: 'doctor-knockout', lessonActions: ['reset', 'set_feature_ablation', 'set_prompt', 'run', 'focus_token', 'set_feature_ablation', 'run_feature_ablation'], skeletonActions: ['set_prompt', 'run', 'focus_token', 'set_feature_ablation', 'run_feature_ablation'], why: 'feature knockouts accumulate, so the control feature is unmarked first' },
+    { lesson: 'pry.p3-6', step: 'dla-contrast', lessonActions: ['set_compare_mode', 'ensure_run', 'open_panel', 'run_dla'], skeletonActions: ['open_panel', 'run_dla'], why: 'DLA runs on the main run, so the lesson leaves Compare (on since s3-2) and runs the Jordan prompt first' },
+    ...['run-key-parts', 'map-knockout'].map((step) => ({
+      lesson: 'pry.p3-7',
+      step,
+      args: true as const,
+      why: 'the last token is " 17" with its leading space; "17" matches no token in the run',
+    })),
+    { lesson: 'pry.p3-7', step: 'war-1650-run', lessonActions: ['reset', 'set_prompt', 'run', 'focus_token', 'run_circuit', 'set_head_ablation', 'run_head_ablation'], skeletonActions: ['set_prompt', 'run', 'focus_token', 'run_circuit', 'set_head_ablation', 'run_head_ablation'], why: 'knockouts accumulate, so the control head is cleared first; the selected token is " 16" with its leading space' },
+    ...['write-instruction', 'write-document', 'write-hidden', 'write-translate'].map((step) => ({
+      lesson: 'pry.p4-1',
+      step,
+      lessonActions: ['set_prompt', 'run', 'write_it'],
+      skeletonActions: ['set_prompt', 'write_it'],
+      why: 'write_it writes from the last Run, so each prompt runs first (write-translate also takes row 39\'s fallback prompt)',
+    })),
+    { lesson: 'pry.p4-1', step: 'run-french', args: true, why: "row 39 narrowed: ' merci' isn't in the top 4, so the transfer uses the outline's fallback pair (the opposite of hot)" },
   ];
+  /** Departures that drop a skeleton action on purpose (critic r5); every other departure only adds. */
+  const DROPS = new Set(['pry.p1-5 baker-set']);
 
   const rowsJson = JSON.parse(readFileSync(join(LESSONS, '__generated__/rows.json'), 'utf8')) as {
     rows: { id: number; values?: Record<string, unknown>; constants?: Record<string, { value: unknown }> }[];
@@ -227,6 +251,12 @@ describe('lessons content', () => {
         if (d?.args) actions = s.actions.map((a) => a.name);
         if (d?.lessonActions) {
           expect(s.actions.map((a) => a.name), `${l.meta.id} ${s.id} (${side})`).toEqual(side === 'lesson' ? d.lessonActions : d.skeletonActions);
+          if (!DROPS.has(`${d.lesson} ${d.step}`)) {
+            // Lessons may add actions, never drop one: the skeleton's are an in-order subsequence.
+            let i = 0;
+            for (const a of d.lessonActions) if (a === d.skeletonActions?.[i]) i++;
+            expect(i, `${l.meta.id} ${s.id}: every skeleton action kept`).toBe(d.skeletonActions?.length ?? 0);
+          }
           actions = ['(departure)'];
         }
         return [{ kind: s.kind, id: s.id ?? null, actions, children: s.children.flatMap(one) }];
