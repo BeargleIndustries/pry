@@ -536,11 +536,10 @@ rows:
     outline: [P2.3.md:79]
     lessons: [P2.3]
     requests:
-      - { name: lensjordan, action: logitLens, prompt: "Michael Jordan played the sport of" }
-    record: '" basketball"''s rank in the L5-L7 rows'
+      - { name: lensjordan, action: logitLens, prompt: "Michael Jordan played the sport of", trackTokens: [" basketball"] }
+    record: '" basketball"''s rank in the L5-L7 rows (recorded: L5 rank 9, 0.6%; L6 rank 6, 2.1%; L7 rank 2, 16.9%; L8 rank 1, 42.2%)'
     claim: '" basketball" climbs before L8 (it''s not absent, just not on top)'
-    status: failed
-    note: 'Pry''s /logit-lens returns only the top token and its probability per cell (LogitLensCell: predicted_token, probability, matches_final), so " basketball"''s rank at L5-L7 cannot be read through the sidecar. Recorded top tokens: L5 " course", L6 " course", L7 " baseball".'
+    status: verified
 
   - id: 51
     label: "29"

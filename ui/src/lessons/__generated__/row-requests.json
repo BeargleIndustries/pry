@@ -2189,7 +2189,7 @@
     },
     {
       "id": 50,
-      "status": "failed",
+      "status": "verified",
       "lessons": [
         "P2.3"
       ],
@@ -2203,9 +2203,12 @@
           "endpoint": "/logit-lens",
           "body": {
             "preset_id": "gpt2-small",
-            "prompt": "Michael Jordan played the sport of"
+            "prompt": "Michael Jordan played the sport of",
+            "track_tokens": [
+              " basketball"
+            ]
           },
-          "key": "b20b92ea77cabf5ab888cce7d3cc178029f4ee5d5d88716da97e72049f2a30c1",
+          "key": "8e357c8dda9479a372a2f612d16ef30fcc3353d7a53285b84d5d1e5908f76bd9",
           "repeat": 1,
           "network": false,
           "offline": false

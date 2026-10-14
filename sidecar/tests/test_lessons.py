@@ -902,8 +902,18 @@ def c49(R, REP, OFF):
 
 
 def c50(R, REP, OFF):
-    col = lens_col(R["lensjordan"])
-    return {"L5_L7_top": [(f"L{li}", t, p) for li, t, p in col[5:8]], "rank_available": False}, [("rank readable through the sidecar", False)]
+    r = R["lensjordan"]
+    col = lens_col(r)
+    b = [r["tracked"][li][" basketball"] for li in range(len(r["grid"]))]
+    ranks = [b[li]["rank"] for li in (5, 6, 7)]
+    return {
+        "L5_L7_top": [(f"L{li}", t, p) for li, t, p in col[5:8]],
+        "basketball_L5_L8": [(f"L{li}", b[li]["rank"], b[li]["prob"]) for li in (5, 6, 7, 8)],
+    }, [
+        ('" basketball" not on top at L5-L7', all(k > 1 for k in ranks)),
+        ('" basketball" climbs from L5 to L7', ranks[0] > ranks[1] > ranks[2]),
+        ('" basketball" tops at L8', b[8]["rank"] == 1),
+    ]
 
 
 def c51(R, REP, OFF):

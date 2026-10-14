@@ -97,7 +97,7 @@ function one(model: string, r: RowRequestSpec): { endpoint: string; body: unknow
         }),
       };
     case 'logitLens':
-      return { endpoint: '/logit-lens', body: buildLogitLensRequest({ presetId, prompt: s('prompt') }) };
+      return { endpoint: '/logit-lens', body: buildLogitLensRequest({ presetId, prompt: s('prompt'), trackTokens: r.trackTokens as string[] | undefined }) };
     case 'dla':
       return {
         endpoint: '/dla',
