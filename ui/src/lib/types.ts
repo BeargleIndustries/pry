@@ -32,6 +32,14 @@ export interface TopPrediction {
   token: string;
   probability: number;
   rank: number;
+  /** The raw score before softmax (MF-1): probability = softmax(logits)[token]. */
+  logit?: number | null;
+}
+
+/** Which SAE (feature dictionary) a result came from (MF-5). */
+export interface SAERef {
+  release: string;
+  id: string;
 }
 
 export interface GenerateResponse {
@@ -53,6 +61,10 @@ export interface GenerateResponse {
   temperature_used?: number;
   /** Seed of the random draws; set only when temperature_used > 0. */
   seed_used?: number | null;
+  /** MF-5: resolved Hugging Face snapshot hash of the weights (null if unknown). */
+  model_revision?: string | null;
+  /** MF-5: the SAE in use (null for a custom model). */
+  sae?: SAERef | null;
 }
 
 /**
@@ -78,6 +90,34 @@ export interface SAEFeaturesResponse {
   sae_layer_used: number;
   timing_ms: Record<string, number>;
   status?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Embedding reader (TN-1, POST /embedding)
+// ---------------------------------------------------------------------------
+
+export interface EmbeddingRequest {
+  preset_id: string;
+  prompt: string;
+  /** Positions in the BOS-prepended token list (0 is BOS); 1-64 of them. */
+  positions: number[];
+}
+
+export interface EmbeddingPosition {
+  position: number;
+  token: string;
+  /** hook_embed: the token's own vector (the same wherever the token sits). */
+  embed: number[];
+  /** hook_pos_embed: this position's vector; null for rotary models (no learned positional embedding). */
+  pos_embed: number[] | null;
+}
+
+export interface EmbeddingResponse {
+  preset_id: string;
+  prompt: string;
+  tokens: string[];
+  positions: EmbeddingPosition[];
+  status: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -121,6 +161,25 @@ export interface DLAResponse {
   target_token: string;
   predicted_token: string;
   components: DLAComponent[];
+  /** MF-2: the token whose logit the bars explain. */
+  answer_token?: string;
+  /** MF-2: the token subtracted; null without a contrast. */
+  contrast_token?: string | null;
+  /** MF-2b: sum of every bar, in logits. */
+  bars_total?: number;
+  answer_logit?: number;
+  /** null without a contrast. */
+  contrast_logit?: number | null;
+  /** answer_logit, or answer_logit - contrast_logit with a contrast. */
+  actual?: number;
+  /** actual - bars_total: the part no bar is drawn for. */
+  gap?: number;
+  /**
+   * Named parts of the gap: `embedding_direct` (token + positional embedding's
+   * direct path through the frozen final LayerNorm) and `biases` (b_O and b_U).
+   * schemas.py types it dict[str, float].
+   */
+  gap_parts?: Record<string, number>;
   timing_ms: Record<string, number>;
   status?: string;
   /**
@@ -135,15 +194,64 @@ export interface DLAResponse {
 // Feature Steering (Phase C7)
 // ---------------------------------------------------------------------------
 
+/**
+ * Mean log-probability per token (nats) of each continuation given the prompt,
+ * prompt tokens excluded, scored by the unsteered model. null under 5 tokens.
+ */
+export interface SteerCoherence {
+  original: number | null;
+  steered: number | null;
+}
+
+/** The steering strength beside the feature's activation over this prompt's positions (BOS excluded). */
+export interface SteerScale {
+  strength: number;
+  activation_p50: number;
+  activation_p99: number;
+  activation_max: number;
+}
+
+export interface SteerTopChange {
+  token: string;
+  original_prob: number;
+  steered_prob: number;
+  delta: number;
+}
+
+/** The same steering with a norm-matched control feature in place of the chosen one. */
+export interface SteerControl {
+  feature_id: number;
+  decoder_norm: number;
+  steered_decoder_norm: number;
+  /** Cosine between the control's and the steered feature's decoder directions. */
+  cosine: number;
+  /** "norm_matched_lowest_cos", or "nearest_norm" when no sampled feature was within 20%. */
+  method: string;
+  generation: string;
+  changed_token_indices: number[];
+  coherence: SteerCoherence;
+  top_predictions: TopPrediction[];
+  /** Next-token probabilities that moved most against the original run. */
+  top_changed: SteerTopChange[];
+}
+
 export interface SteerResponse {
   preset_id: string;
   prompt: string;
   feature_id: number;
   alpha: number;
+  /** MF-5 echo: the layer steered. */
+  sae_layer?: number | null;
   original_generation: string;
   steered_generation: string;
   original_top_predictions: TopPrediction[];
   steered_top_predictions: TopPrediction[];
+  /** Indices (0 = first new token) of steered tokens that differ from the original at the same index. */
+  changed_token_indices?: number[];
+  coherence?: SteerCoherence;
+  scale?: SteerScale | null;
+  /** Set only when the request asked for `control: true`. */
+  control?: SteerControl | null;
   timing_ms: Record<string, number>;
   status?: string;
 }
@@ -156,6 +264,16 @@ export interface AblationPrediction {
   token: string;
   probability: number;
   rank: number;
+}
+
+export interface AblationTarget {
+  layer: number;
+  head: number;
+}
+
+export interface FeatureAblationTarget {
+  feature_index: number;
+  layer: number;
 }
 
 export interface PredictionDelta {
@@ -171,6 +289,10 @@ export interface AblateResponse {
   original_predictions: AblationPrediction[];
   ablated_predictions: AblationPrediction[];
   prediction_delta: PredictionDelta[];
+  /** MF-5 echo: the heads knocked out (head ablation only, else null). */
+  ablations?: AblationTarget[] | null;
+  /** MF-5 echo: the features knocked out (feature ablation only, else null). */
+  feature_ablations?: FeatureAblationTarget[] | null;
   timing_ms: Record<string, number>;
   status?: string;
 }
@@ -189,6 +311,8 @@ export interface PatchComponent {
   clean_logit: number;
   corrupted_logit: number;
   patched_logit: number;
+  /** (patched - corrupted) / (clean - corrupted); null when clean and corrupted are within 0.1 logits. */
+  share?: number | null;
 }
 
 export interface PatchResponse {
@@ -199,6 +323,12 @@ export interface PatchResponse {
   target_token_index: number;
   clean_predicted_token: string;
   corrupted_predicted_token: string;
+  /** MF-3: the token whose logit is measured (the clean run's top guess). */
+  target_token?: string;
+  /** MF-3: target_token's logit in the clean run. */
+  clean_logit?: number;
+  /** MF-3: target_token's logit in the corrupted run. */
+  corrupted_logit?: number;
   /** Clean prompt's tokens; labels the residual layer x position grid. */
   tokens?: string[];
   components: PatchComponent[];
@@ -317,4 +447,8 @@ export interface SidecarHealth {
   hf_token_present?: boolean;
   /** GPU memory the engine holds for the loaded model (MB); freed on a model switch. */
   vram_reserved_mb?: number | null;
+  /** MF-5: analysis library versions (null when not installed). */
+  transformer_lens?: string | null;
+  sae_lens?: string | null;
+  transformers?: string | null;
 }

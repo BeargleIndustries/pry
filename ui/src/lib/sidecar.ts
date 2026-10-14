@@ -158,7 +158,7 @@ export function _setConnectionRetryForTests(attempts: number, delayMs: number): 
 // ---------------------------------------------------------------------------
 
 // Re-export shared types so callers can import from either sidecar or types
-export type { FeatureHit, TokenFeatures, TokenInfo, AttentionLayer, GenerateResponse, SAEFeaturesResponse, LogitLensResponse, DLAResponse, SteerResponse, AblateResponse, PatchResponse, CircuitResponse } from './types';
+export type { FeatureHit, TokenFeatures, TokenInfo, AttentionLayer, GenerateResponse, SAEFeaturesResponse, LogitLensResponse, DLAResponse, SteerResponse, AblateResponse, PatchResponse, CircuitResponse, EmbeddingRequest, EmbeddingResponse, EmbeddingPosition, SAERef } from './types';
 
 /**
  * Whether a DLA or circuit result was checked against the real model weights.
@@ -211,6 +211,183 @@ export interface LoadProgress {
   /** Older engines name the byte count this way. */
   bytes_downloaded?: number;
   bytes_total?: number;
+  /** MF-5, on ready / already_loaded only: resolved snapshot hash of the weights (omitted when unknown). */
+  model_revision?: string;
+  /** MF-5, on ready / already_loaded only: the SAE in use (omitted for a custom model). */
+  sae?: import('./types').SAERef;
+}
+
+// ---------------------------------------------------------------------------
+// Request body builders (plan T4-ts, C4-9)
+//
+// One pure function per analysis endpoint, returning the JSON body exactly as
+// the app sends it (KEEP IN SYNC: sidecar/pry_sidecar/schemas.py *Request).
+// The app's calls below use them, and lessons:compile / T6a's row requests
+// import them, so a row request and the app's request for the same action
+// produce the same request key (lessons/registry/request-key.ts). Optional
+// fields are left out unless set, so the bodies match 0.3.8's byte for byte.
+// No cache here: calls with Lessons off go straight to the engine.
+// ---------------------------------------------------------------------------
+
+export interface GenerateRequestArgs {
+  presetId: string;
+  prompt: string;
+  /** 0 = analyse only (the Run button). */
+  maxNewTokens?: number;
+  topKFeatures?: number;
+  saeLayer?: number;
+  temperature?: number;
+  seed?: number | null;
+}
+
+export function buildGenerateRequest(a: GenerateRequestArgs) {
+  return {
+    preset_id: a.presetId,
+    prompt: a.prompt,
+    max_new_tokens: a.maxNewTokens ?? 0,
+    ...(a.temperature !== undefined ? { temperature: a.temperature } : {}),
+    ...(a.seed != null ? { seed: a.seed } : {}),
+    top_k_features: a.topKFeatures ?? 5,
+    ...(a.saeLayer !== undefined ? { sae_layer: a.saeLayer } : {}),
+  };
+}
+
+export function buildSaeFeaturesRequest(a: {
+  presetId: string;
+  prompt: string;
+  saeLayer: number;
+  topKFeatures?: number;
+}) {
+  return {
+    preset_id: a.presetId,
+    prompt: a.prompt,
+    sae_layer: a.saeLayer,
+    top_k_features: a.topKFeatures ?? 5,
+  };
+}
+
+export function buildLogitLensRequest(a: { presetId: string; prompt: string }) {
+  return { preset_id: a.presetId, prompt: a.prompt };
+}
+
+export interface DLARequestArgs {
+  presetId: string;
+  prompt: string;
+  targetTokenIndex?: number;
+  /** MF-2: the token whose logit the bars explain (default: the top guess). */
+  answerToken?: string | null;
+  /** MF-2: a token to subtract; the bars then explain the difference. */
+  contrastToken?: string | null;
+}
+
+export function buildDLARequest(a: DLARequestArgs) {
+  return {
+    preset_id: a.presetId,
+    prompt: a.prompt,
+    ...(a.targetTokenIndex !== undefined ? { target_token_index: a.targetTokenIndex } : {}),
+    ...(a.answerToken != null ? { answer_token: a.answerToken } : {}),
+    ...(a.contrastToken != null ? { contrast_token: a.contrastToken } : {}),
+  };
+}
+
+export function buildEmbeddingRequest(a: {
+  presetId: string;
+  prompt: string;
+  /** Positions in the BOS-prepended token list (0 is BOS). */
+  positions: number[];
+}): import('./types').EmbeddingRequest {
+  return { preset_id: a.presetId, prompt: a.prompt, positions: [...a.positions] };
+}
+
+export interface SteerRequestArgs {
+  presetId: string;
+  prompt: string;
+  featureId: number;
+  saeLayer: number;
+  alpha: number;
+  maxNewTokens?: number;
+  /** MF-4: also steer a norm-matched control feature at the same strength. */
+  control?: boolean;
+}
+
+export function buildSteerRequest(a: SteerRequestArgs) {
+  return {
+    preset_id: a.presetId,
+    prompt: a.prompt,
+    feature_id: a.featureId,
+    sae_layer: a.saeLayer,
+    alpha: a.alpha,
+    max_new_tokens: a.maxNewTokens ?? 50,
+    ...(a.control ? { control: true } : {}),
+  };
+}
+
+export function buildAblateHeadsRequest(a: {
+  presetId: string;
+  prompt: string;
+  ablations: { layer: number; head: number }[];
+}) {
+  return {
+    preset_id: a.presetId,
+    prompt: a.prompt,
+    ablations: a.ablations.map((t) => ({ layer: t.layer, head: t.head })),
+  };
+}
+
+export function buildAblateFeaturesRequest(a: {
+  presetId: string;
+  prompt: string;
+  featureAblations: { feature_index: number; layer: number }[];
+}) {
+  return {
+    preset_id: a.presetId,
+    prompt: a.prompt,
+    feature_ablations: a.featureAblations.map((t) => ({ feature_index: t.feature_index, layer: t.layer })),
+  };
+}
+
+export function buildPatchRequest(a: {
+  presetId: string;
+  cleanPrompt: string;
+  corruptedPrompt: string;
+  patchType?: 'head' | 'mlp' | 'resid';
+  targetTokenIndex?: number;
+}) {
+  return {
+    preset_id: a.presetId,
+    clean_prompt: a.cleanPrompt,
+    corrupted_prompt: a.corruptedPrompt,
+    patch_type: a.patchType ?? 'head',
+    ...(a.targetTokenIndex !== undefined ? { target_token_index: a.targetTokenIndex } : {}),
+  };
+}
+
+export function buildCircuitRequest(a: {
+  presetId: string;
+  prompt: string;
+  source?: 'dla' | 'patching';
+  threshold?: number;
+  targetTokenIndex?: number;
+}) {
+  return {
+    preset_id: a.presetId,
+    prompt: a.prompt,
+    source: a.source ?? 'dla',
+    ...(a.threshold !== undefined ? { threshold: a.threshold } : {}),
+    ...(a.targetTokenIndex !== undefined ? { target_token_index: a.targetTokenIndex } : {}),
+  };
+}
+
+export function buildHeadScoresRequest(a: { presetId: string }) {
+  return { preset_id: a.presetId };
+}
+
+function postJson(body: unknown): RequestInit {
+  return {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -303,16 +480,7 @@ export async function switchSaeLayer(
   saeLayer: number,
   topKFeatures: number = 5,
 ): Promise<import('./types').SAEFeaturesResponse> {
-  return request('/sae-features', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      preset_id: presetId,
-      prompt,
-      sae_layer: saeLayer,
-      top_k_features: topKFeatures,
-    }),
-  });
+  return request('/sae-features', postJson(buildSaeFeaturesRequest({ presetId, prompt, saeLayer, topKFeatures })));
 }
 
 export async function unloadPreset(
@@ -329,27 +497,25 @@ export async function fetchLogitLens(
   presetId: string,
   prompt: string,
 ): Promise<import('./types').LogitLensResponse> {
-  return request('/logit-lens', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ preset_id: presetId, prompt }),
-  });
+  return request('/logit-lens', postJson(buildLogitLensRequest({ presetId, prompt })));
 }
 
 export async function fetchDLA(
   presetId: string,
   prompt: string,
   targetTokenIndex?: number,
+  opts: { answerToken?: string | null; contrastToken?: string | null } = {},
 ): Promise<import('./types').DLAResponse> {
-  return request('/dla', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      preset_id: presetId,
-      prompt,
-      ...(targetTokenIndex !== undefined ? { target_token_index: targetTokenIndex } : {}),
-    }),
-  });
+  return request('/dla', postJson(buildDLARequest({ presetId, prompt, targetTokenIndex, ...opts })));
+}
+
+/** TN-1: token and positional embedding vectors at `positions` (0 is BOS). */
+export async function fetchEmbedding(
+  presetId: string,
+  prompt: string,
+  positions: number[],
+): Promise<import('./types').EmbeddingResponse> {
+  return request('/embedding', postJson(buildEmbeddingRequest({ presetId, prompt, positions })));
 }
 
 export async function steerGenerate(
@@ -359,19 +525,12 @@ export async function steerGenerate(
   saeLayer: number,
   alpha: number,
   maxNewTokens: number = 50,
+  control: boolean = false,
 ): Promise<import('./types').SteerResponse> {
-  return request('/steer', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      preset_id: presetId,
-      prompt,
-      feature_id: featureId,
-      sae_layer: saeLayer,
-      alpha,
-      max_new_tokens: maxNewTokens,
-    }),
-  });
+  return request(
+    '/steer',
+    postJson(buildSteerRequest({ presetId, prompt, featureId, saeLayer, alpha, maxNewTokens, control })),
+  );
 }
 
 /** T26: write a continuation and get each step's chosen token + runner-up. */
@@ -380,18 +539,19 @@ export async function generateStepwise(
   prompt: string,
   opts: { maxNewTokens: number; temperature: number; seed?: number | null },
 ): Promise<import('./types').GenerateResponse> {
-  return request('/generate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      preset_id: presetId,
-      prompt,
-      max_new_tokens: opts.maxNewTokens,
-      temperature: opts.temperature,
-      ...(opts.seed != null ? { seed: opts.seed } : {}),
-      top_k_features: 1,
-    }),
-  });
+  return request(
+    '/generate',
+    postJson(
+      buildGenerateRequest({
+        presetId,
+        prompt,
+        maxNewTokens: opts.maxNewTokens,
+        temperature: opts.temperature,
+        seed: opts.seed,
+        topKFeatures: 1,
+      }),
+    ),
+  );
 }
 
 /**
@@ -416,15 +576,7 @@ export async function ablateHeads(
   prompt: string,
   ablations: { layer: number; head: number }[],
 ): Promise<import('./types').AblateResponse> {
-  return request('/ablate-head', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      preset_id: presetId,
-      prompt,
-      ablations,
-    }),
-  });
+  return request('/ablate-head', postJson(buildAblateHeadsRequest({ presetId, prompt, ablations })));
 }
 
 export async function ablateFeatures(
@@ -432,15 +584,7 @@ export async function ablateFeatures(
   prompt: string,
   featureAblations: { feature_index: number; layer: number }[],
 ): Promise<import('./types').AblateResponse> {
-  return request('/ablate-feature', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      preset_id: presetId,
-      prompt,
-      feature_ablations: featureAblations,
-    }),
-  });
+  return request('/ablate-feature', postJson(buildAblateFeaturesRequest({ presetId, prompt, featureAblations })));
 }
 
 export async function runPatching(
@@ -450,17 +594,10 @@ export async function runPatching(
   patchType: 'head' | 'mlp' | 'resid' = 'head',
   targetTokenIndex?: number,
 ): Promise<import('./types').PatchResponse> {
-  return request('/patch', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      preset_id: presetId,
-      clean_prompt: cleanPrompt,
-      corrupted_prompt: corruptedPrompt,
-      patch_type: patchType,
-      ...(targetTokenIndex !== undefined ? { target_token_index: targetTokenIndex } : {}),
-    }),
-  });
+  return request(
+    '/patch',
+    postJson(buildPatchRequest({ presetId, cleanPrompt, corruptedPrompt, patchType, targetTokenIndex })),
+  );
 }
 
 export async function fetchCircuit(
@@ -470,28 +607,14 @@ export async function fetchCircuit(
   threshold?: number,
   targetTokenIndex?: number,
 ): Promise<import('./types').CircuitResponse> {
-  return request('/circuit', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      preset_id: presetId,
-      prompt,
-      source,
-      ...(threshold !== undefined ? { threshold } : {}),
-      ...(targetTokenIndex !== undefined ? { target_token_index: targetTokenIndex } : {}),
-    }),
-  });
+  return request('/circuit', postJson(buildCircuitRequest({ presetId, prompt, source, threshold, targetTokenIndex })));
 }
 
 /** Induction + previous-token score for every head, on the sidecar's fixed repeated test sequence. */
 export async function fetchHeadScores(
   presetId: string,
 ): Promise<import('./types').HeadScoresResponse> {
-  return request('/head-scores', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ preset_id: presetId }),
-  });
+  return request('/head-scores', postJson(buildHeadScoresRequest({ presetId })));
 }
 
 // ---------------------------------------------------------------------------
