@@ -1150,21 +1150,23 @@
         <BookOpen class="h-4 w-4" />
         Notebook
       </button>
+      <!-- §P-layout: the Experiments button (re-purposed by T7b) gives its label's width to the
+           Lessons toggle, so the header row and the prompt keep their 0.3.8 geometry (Step 0). -->
       <button
         onclick={() => (experimentsOpen = true)}
         title="Try a guided experiment"
+        aria-label="Experiments"
         data-tip="experiments-button"
-        class="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+        class="flex w-7 items-center justify-center rounded-md py-1 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
       >
         <FlaskConical class="h-4 w-4" />
-        Experiments
       </button>
       <button
         onclick={() => (lessonsOn ? closeLessons() : openLessons())}
         aria-pressed={lessonsOn}
         data-tour="lessons-toggle"
         title={lessonsOn ? lessonsCopy.toggleCloseTitle : lessonsCopy.toggleOpenTitle}
-        class="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs {lessonsOn
+        class="flex w-[70.55px] items-center justify-center gap-1.5 rounded-md py-1 text-xs {lessonsOn
           ? 'bg-indigo-950/60 text-indigo-300 hover:bg-indigo-900/60'
           : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100'}"
       >
