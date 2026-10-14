@@ -127,13 +127,9 @@ const PANEL_OF: Record<string, string> = {
   'steering-coherence': 'steering',
 };
 
-// Anchors whose element doesn't exist yet locate to null until it does:
-// TODO(pry-learning T4-ui): mark `everything-else-row` (Predictions),
-// `patch-three-logits` (Swap test), `dla-total-line` (Why (DLA)) and the
-// steering coherence line's hideable wrapper `steering-coherence`
-// (data-tour + data-lesson-hidden={isHidden('steering-coherence') || undefined}),
-// and hide the feature label in the histogram tooltip while
-// isHidden('feature-labels').
+// Anchors whose element doesn't exist yet locate to null until it does
+// (`dla-total-line` on an engine without the total, `steering-coherence`
+// under 5 tokens).
 // TODO(pry-learning T3): mark the Lessons button `lessons-toggle`; the
 // presenter draws `highlight` from pryUi.highlight.
 

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { pryUi } from '$lib/lessons/registry/pry-state.svelte';
+  import { hasPryHost, pryHost, pryUi } from '$lib/lessons/registry/pry-state.svelte';
   import Term from './Term.svelte';
   import Readout from './Readout.svelte';
   import type { CircuitResponse, CircuitNode, CircuitEdge } from '$lib/types';
-  import { circuitReadout, explainingLabel } from '$lib/readouts';
+  import { circuitReadout, explainingLabel, keyPartsHeader } from '$lib/readouts';
   import { realWeightsVerified } from '$lib/sidecar';
   import { clampCell, handleGridKey, type GridCell } from '$lib/grid-nav';
   import { NEGATIVE_HEX, POSITIVE_HEX, signedColor, signedHex, signedNumber, signGlyph, signOf } from '$lib/signed-color';
@@ -23,6 +23,17 @@
   }
 
   let { response, loading = false, onRun, targetLabel = null }: Props = $props();
+
+  // The top guess at the selected word: Why (DLA)'s answer when it explains the
+  // same word, else the run's top guess when the selected word is the last.
+  const topGuess = $derived.by((): string | null => {
+    if (!targetLabel || !response || !hasPryHost()) return null;
+    const st = pryHost().analysis.state;
+    if (st.dlaResponse && st.dlaResponse.target_token_index === targetLabel.index) return st.dlaResponse.predicted_token;
+    const run = st.response;
+    if (run && targetLabel.index === run.tokens.length - 1) return run.top_predictions?.[0]?.token ?? null;
+    return null;
+  });
 
   // The threshold box lives in the Pry scene state (plan T2b state lift).
   const cs = pryUi.circuit;
@@ -211,7 +222,7 @@
 
     <!-- Info -->
     <div class="flex flex-wrap items-center gap-2 rounded-md border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-xs">
-      <span class="text-zinc-300">{explainingLabel(targetLabel)}</span>
+      <span class="text-zinc-300">{topGuess ? keyPartsHeader(topGuess, targetLabel) : explainingLabel(targetLabel)}</span>
       <span class="mx-1 text-zinc-700">|</span>
       <span class="text-zinc-500">Parts:</span>
       <span class="text-zinc-300">{nodes.length}</span>

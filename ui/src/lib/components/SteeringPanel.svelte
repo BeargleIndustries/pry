@@ -3,7 +3,16 @@
   import Term from './Term.svelte';
   import Readout from './Readout.svelte';
   import type { GenerateResponse, SteerResponse, FeatureHit } from '$lib/types';
-  import { steeringReadout } from '$lib/readouts';
+  import {
+    coherenceLine,
+    CONTROL_EXPLAINED,
+    controlHeading,
+    STEERING_LIMIT,
+    steeringPersistLine,
+    steeringReadout,
+    steeringScaleLine,
+    steeringSections,
+  } from '$lib/readouts';
   import { diffTokens } from '$lib/token-diff';
   import { searchConcepts, SidecarError } from '$lib/sidecar';
   import { isHidden, pryUi } from '$lib/lessons/registry/pry-state.svelte';
@@ -146,6 +155,10 @@
     steerResponse
       ? diffTokens(steerResponse.original_generation, steerResponse.steered_generation)
       : null,
+  );
+
+  const controlDiff = $derived(
+    steerResponse?.control ? diffTokens(steerResponse.original_generation, steerResponse.control.generation) : null,
   );
 
   const highAlphaWarning = $derived(Math.abs(steering.alpha) > 20);
@@ -313,46 +326,81 @@
       {/if}
     </button>
 
-    <!-- Results: side-by-side comparison -->
+    <!-- Results, in the pinned order (plan T4-ui): what changed, coherence,
+         the control feature, scale. -->
     {#if steerResponse}
       <Readout text={steeringReadout(steerResponse)} />
-      <div class="grid grid-cols-2 gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
-        <!-- Original -->
-        <div class="flex flex-col gap-1.5">
-          <h4 class="text-xs font-semibold text-zinc-400">Original</h4>
-          <div class="whitespace-pre-wrap rounded bg-zinc-950 p-2 text-sm text-zinc-300 leading-relaxed"><span class="text-zinc-600">{steerResponse.prompt}</span>{#if diff}{#each diff.left as tok}<span class={tok.changed ? 'bg-red-900/40 text-red-300' : ''}>{tok.text}</span>{/each}{:else}{steerResponse.original_generation}{/if}</div>
-          <!-- Original top predictions -->
-          <div class="mt-1">
-            <p class="mb-1 text-[10px] font-medium text-zinc-500">Next-word guesses (top 5)</p>
-            {#each steerResponse.original_top_predictions.slice(0, 5) as pred (pred.rank)}
-              <div class="flex items-center gap-2 text-[11px]">
-                <span class="w-5 text-right text-zinc-600">{pred.rank}</span>
-                <span class="flex-1 font-mono text-zinc-300">{showToken(pred.token)}</span>
-                <span class="tabular-nums text-zinc-500">{(pred.probability * 100).toFixed(1)}%</span>
+      {#each steeringSections(steerResponse) as section (section)}
+        {#if section === 'changed'}
+          <div class="grid grid-cols-2 gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
+            <!-- Original -->
+            <div class="flex flex-col gap-1.5">
+              <h4 class="text-xs font-semibold text-zinc-400">Original</h4>
+              <div class="whitespace-pre-wrap rounded bg-zinc-950 p-2 text-sm text-zinc-300 leading-relaxed"><span class="text-zinc-600">{steerResponse.prompt}</span>{#if diff}{#each diff.left as tok}<span class={tok.changed ? 'bg-red-900/40 text-red-300' : ''}>{tok.text}</span>{/each}{:else}{steerResponse.original_generation}{/if}</div>
+              <!-- Original top predictions -->
+              <div class="mt-1">
+                <p class="mb-1 text-[10px] font-medium text-zinc-500">Next-word guesses (top 5)</p>
+                {#each steerResponse.original_top_predictions.slice(0, 5) as pred (pred.rank)}
+                  <div class="flex items-center gap-2 text-[11px]">
+                    <span class="w-5 text-right text-zinc-600">{pred.rank}</span>
+                    <span class="flex-1 font-mono text-zinc-300">{showToken(pred.token)}</span>
+                    <span class="tabular-nums text-zinc-500">{(pred.probability * 100).toFixed(1)}%</span>
+                  </div>
+                {/each}
               </div>
-            {/each}
-          </div>
-        </div>
+            </div>
 
-        <!-- Steered -->
-        <div class="flex flex-col gap-1.5">
-          <h4 class="text-xs font-semibold text-indigo-400">
-            Steered (strength {steerResponse.alpha})
-          </h4>
-          <div class="whitespace-pre-wrap rounded bg-zinc-950 p-2 text-sm text-zinc-300 leading-relaxed"><span class="text-zinc-600">{steerResponse.prompt}</span>{#if diff}{#each diff.right as tok}<span class={tok.changed ? 'bg-indigo-900/40 text-indigo-300' : ''}>{tok.text}</span>{/each}{:else}{steerResponse.steered_generation}{/if}</div>
-          <!-- Steered top predictions -->
-          <div class="mt-1">
-            <p class="mb-1 text-[10px] font-medium text-zinc-500">Next-word guesses (top 5)</p>
-            {#each steerResponse.steered_top_predictions.slice(0, 5) as pred (pred.rank)}
-              <div class="flex items-center gap-2 text-[11px]">
-                <span class="w-5 text-right text-zinc-600">{pred.rank}</span>
-                <span class="flex-1 font-mono text-zinc-300">{showToken(pred.token)}</span>
-                <span class="tabular-nums text-zinc-500">{(pred.probability * 100).toFixed(1)}%</span>
+            <!-- Steered -->
+            <div class="flex flex-col gap-1.5">
+              <h4 class="text-xs font-semibold text-indigo-400">
+                Steered (strength {steerResponse.alpha})
+              </h4>
+              <div class="whitespace-pre-wrap rounded bg-zinc-950 p-2 text-sm text-zinc-300 leading-relaxed"><span class="text-zinc-600">{steerResponse.prompt}</span>{#if diff}{#each diff.right as tok}<span class={tok.changed ? 'bg-indigo-900/40 text-indigo-300' : ''}>{tok.text}</span>{/each}{:else}{steerResponse.steered_generation}{/if}</div>
+              <!-- Steered top predictions -->
+              <div class="mt-1">
+                <p class="mb-1 text-[10px] font-medium text-zinc-500">Next-word guesses (top 5)</p>
+                {#each steerResponse.steered_top_predictions.slice(0, 5) as pred (pred.rank)}
+                  <div class="flex items-center gap-2 text-[11px]">
+                    <span class="w-5 text-right text-zinc-600">{pred.rank}</span>
+                    <span class="flex-1 font-mono text-zinc-300">{showToken(pred.token)}</span>
+                    <span class="tabular-nums text-zinc-500">{(pred.probability * 100).toFixed(1)}%</span>
+                  </div>
+                {/each}
               </div>
-            {/each}
+            </div>
           </div>
-        </div>
-      </div>
+          {#if pryUi.steerAcross.length > 0}
+            <div class="flex flex-col gap-1 rounded-lg border border-zinc-800 bg-zinc-900/30 p-3 text-xs">
+              <p class="text-zinc-300">{steeringPersistLine(pryUi.steerAcross)}</p>
+              {#each pryUi.steerAcross as run, i (i)}
+                <p class="whitespace-pre-wrap text-zinc-400"><span class="text-zinc-600">{run.prompt}</span>{run.response.steered_generation}</p>
+              {/each}
+            </div>
+          {/if}
+        {:else if section === 'coherence'}
+          <div
+            data-tour="steering-coherence"
+            data-lesson-hidden={isHidden('steering-coherence') || undefined}
+            class="flex flex-col gap-1 rounded-lg border border-zinc-800 bg-zinc-900/30 p-3 text-xs"
+          >
+            <p class="text-zinc-300">{coherenceLine(steerResponse.coherence)}</p>
+            <p class="text-[11px] text-zinc-500">{STEERING_LIMIT}</p>
+          </div>
+        {:else if section === 'control' && steerResponse.control}
+          {@const control = steerResponse.control}
+          {@const controlCoherence = coherenceLine(control.coherence, ['Original', 'Control'])}
+          <div class="flex flex-col gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/30 p-3 text-xs">
+            <h4 class="font-semibold text-zinc-400">{controlHeading(control, steerResponse.alpha)}</h4>
+            <p class="text-[11px] text-zinc-500">{CONTROL_EXPLAINED}</p>
+            <div class="whitespace-pre-wrap rounded bg-zinc-950 p-2 text-sm leading-relaxed text-zinc-300"><span class="text-zinc-600">{steerResponse.prompt}</span>{#if controlDiff}{#each controlDiff.right as tok}<span class={tok.changed ? 'bg-zinc-700/60 text-zinc-100' : ''}>{tok.text}</span>{/each}{:else}{control.generation}{/if}</div>
+            {#if controlCoherence}
+              <p class="text-zinc-400">{controlCoherence}</p>
+            {/if}
+          </div>
+        {:else if section === 'scale'}
+          <p class="text-xs text-zinc-400">{steeringScaleLine(steerResponse)}</p>
+        {/if}
+      {/each}
     {/if}
   {/if}
 </div>
