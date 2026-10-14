@@ -579,6 +579,19 @@ export const pryReadouts: Record<string, ReadoutDef> = {
     doc: 'How much one token\'s probability changed with the heads knocked out.',
     read: reader((s, a) => s.headAblate?.prediction_delta.find((d) => d.token === a.token)?.delta),
   },
+  'ablation.top_delta': {
+    type: 'number',
+    unit: 'probability',
+    doc: 'How much the original top token\'s probability changed with the heads knocked out (knocked out minus original).',
+    read: reader((s) => {
+      const r = s.headAblate;
+      const top = r ? [...r.original_predictions].sort((a, b) => a.rank - b.rank)[0] : undefined;
+      if (!r || !top) return undefined;
+      const after = r.ablated_predictions.find((p) => p.token === top.token);
+      if (after) return after.probability - top.probability;
+      return r.prediction_delta.find((d) => d.token === top.token)?.delta;
+    }),
+  },
   'ablation.prediction': {
     args: ablPredArgs,
     type: 'record',
