@@ -44,7 +44,9 @@
     "resources": [
       "../sidecar/pyproject.toml",
       "../sidecar/presets.json",
-      "../sidecar/pry_sidecar/*.py"
+      "../sidecar/pry_sidecar/*.py",
+      "../ui/build-cli/lessons-lint.mjs",
+      "../docs/lessons/AUTHORING.md"
     ],
     "windows": {
       "certificateThumbprint": null,
