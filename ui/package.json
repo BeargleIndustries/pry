@@ -18,7 +18,8 @@
     "@tauri-apps/plugin-updater": "~2.10.0",
     "d3-interpolate": "^3",
     "d3-scale": "^4",
-    "lucide-svelte": "^0.460"
+    "lucide-svelte": "^0.460",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3",

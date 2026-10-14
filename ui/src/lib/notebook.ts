@@ -89,6 +89,78 @@ export interface NotebookEntry {
   run: RunSnapshot;
 }
 
+/**
+ * How a lesson result was produced (plan T5). Types only (T5a); notebook v2
+ * (T5b) fills and stores it with each journal entry.
+ */
+export interface Provenance {
+  appVersion: string | null;
+  sidecarVersion: string | null;
+  torchVersion: string | null;
+  cudaVersion: string | null;
+  device: string | null;
+  transformerLensVersion: string | null;
+  saeLensVersion: string | null;
+  transformersVersion: string | null;
+  modelPreset: string | null;
+  modelRevision: string | null;
+  sae: { release: string; id: string; layer: number } | null;
+  prompt: string | null;
+  temperature: number | null;
+  seed: number | null;
+  knockouts: { heads: { layer: number; head: number }[]; features: number[] };
+  steering: {
+    featureId: number;
+    strength: number;
+    layer: number;
+    control: boolean;
+    persistencePrompts: string[];
+  } | null;
+  dla: { answer: string; contrast: string | null } | null;
+  patch: { clean: string; corrupted: string; type: 'head' | 'mlp' | 'resid' } | null;
+  circuitThreshold: number | null;
+  compare: { a: string; b: string } | null;
+  /** The tool's `snapshot()` view state when the entry was written. */
+  snapshot: unknown;
+}
+
+export type JournalKind =
+  | 'recall'
+  | 'question'
+  | 'predict'
+  | 'observe'
+  | 'transfer'
+  | 'compare'
+  | 'task'
+  | 'explain-chain'
+  | 'capture';
+
+/**
+ * One learner step recorded by the Lessons runner (plan T5). Types only (T5a).
+ * `remember` keys are indexed so `:earlier` and `$earlier` read the latest
+ * entry per key; captures are indexed per (lesson, name).
+ */
+export interface JournalEntry {
+  id: string;
+  /** ISO time the entry was written. */
+  at: string;
+  lesson: { id: string; version: string; source: string };
+  sectionId: string;
+  stepId: string;
+  kind: JournalKind;
+  question: string;
+  answer: { choice?: string; text?: string; pick?: unknown; value?: unknown };
+  remember?: string;
+  capture?: { name: string; readouts: Record<string, unknown> };
+  skipped: boolean;
+  /** ISO time the learner committed the answer; precedes the run it predicts. */
+  committedAt: string;
+  check?: { read: string; op: string; binding: string; expected: unknown; actual: unknown; agrees: boolean };
+  slots?: Record<string, { live: unknown; expect: unknown }>;
+  runEntryId?: string;
+  provenance: Provenance;
+}
+
 export interface Notebook {
   schemaVersion: number;
   entries: NotebookEntry[];

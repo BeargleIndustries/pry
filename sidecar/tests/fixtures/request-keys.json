@@ -1,0 +1,178 @@
+{
+  "_about": "Request-key vectors (plan T2, R3-12). key = sha256 hex of UTF-8 canonical JSON of {endpoint, model, body}. Computed by an independent Python reference; ui request-key.test.ts and sidecar test_request_key.py both reproduce every vector.",
+  "vectors": [
+    {
+      "name": "plain prompt",
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "prompt": "The capital of France is",
+        "max_new_tokens": 1
+      },
+      "canonical": "{\"body\":{\"max_new_tokens\":1,\"prompt\":\"The capital of France is\"},\"endpoint\":\"/generate\",\"model\":\"gpt2-small\"}",
+      "key": "d56cf5326c97f58f13181f665fb3ba17d2ba500aab03c6e45afabaecc38aa76f"
+    },
+    {
+      "name": "unicode prompt",
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "prompt": "Café ñandú — 東京 😀 naïve",
+        "max_new_tokens": 1
+      },
+      "canonical": "{\"body\":{\"max_new_tokens\":1,\"prompt\":\"Café ñandú — 東京 😀 naïve\"},\"endpoint\":\"/generate\",\"model\":\"gpt2-small\"}",
+      "key": "5ca971e2f400bed6821279952cd1d6a779b75b63b7d1fa6c782815417e879f65"
+    },
+    {
+      "name": "key order by code point",
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "z": 1,
+        "a": 2,
+        "B": 3,
+        "é": 4,
+        "￿": 5,
+        "😀": 6,
+        "_": 7
+      },
+      "canonical": "{\"body\":{\"B\":3,\"_\":7,\"a\":2,\"z\":1,\"é\":4,\"￿\":5,\"😀\":6},\"endpoint\":\"/generate\",\"model\":\"gpt2-small\"}",
+      "key": "f210dcb172d4271694d2780fff7000f24bf18bf1648bc66882d36b3f4c446a28"
+    },
+    {
+      "name": "nested args",
+      "endpoint": "/patch",
+      "model": "gpt2-small",
+      "body": {
+        "clean": "When Mary and John went to the store, John gave a drink to",
+        "corrupted": "When Mary and John went to the store, Mary gave a drink to",
+        "patch_type": "head",
+        "options": {
+          "positions": [
+            0,
+            3,
+            7
+          ],
+          "nested": {
+            "deep": {
+              "ok": true,
+              "none": null
+            }
+          }
+        }
+      },
+      "canonical": "{\"body\":{\"clean\":\"When Mary and John went to the store, John gave a drink to\",\"corrupted\":\"When Mary and John went to the store, Mary gave a drink to\",\"options\":{\"nested\":{\"deep\":{\"none\":null,\"ok\":true}},\"positions\":[0,3,7]},\"patch_type\":\"head\"},\"endpoint\":\"/patch\",\"model\":\"gpt2-small\"}",
+      "key": "7685d841b2db450ee058e816d5f7b888b966e6fdebd82c0b1f519673898ecac5"
+    },
+    {
+      "name": "float temperatures",
+      "endpoint": "/generate-stepwise",
+      "model": "gpt2-small",
+      "body": {
+        "prompt": "Once upon a time",
+        "temperature": 0.7,
+        "top_p": 0.95,
+        "seed": 42,
+        "max_tokens": 20
+      },
+      "canonical": "{\"body\":{\"max_tokens\":20,\"prompt\":\"Once upon a time\",\"seed\":42,\"temperature\":0.7,\"top_p\":0.95},\"endpoint\":\"/generate-stepwise\",\"model\":\"gpt2-small\"}",
+      "key": "fa3993a03c8db4b8178887922a9733eb958cb6ffce2dcef4b06591a73d88a54b"
+    },
+    {
+      "name": "integral float 1.0",
+      "endpoint": "/generate-stepwise",
+      "model": "gpt2-small",
+      "body": {
+        "prompt": "Once upon a time",
+        "temperature": 1.0,
+        "seed": 7
+      },
+      "canonical": "{\"body\":{\"prompt\":\"Once upon a time\",\"seed\":7,\"temperature\":1},\"endpoint\":\"/generate-stepwise\",\"model\":\"gpt2-small\"}",
+      "key": "5e3d7daee8c8022607e78bcc21f22e9ce7761420b0b93b2a7c099ebd729ff4d5"
+    },
+    {
+      "name": "negative zero",
+      "endpoint": "/steer",
+      "model": "gpt2-small",
+      "body": {
+        "prompt": "I think",
+        "feature_id": 1234,
+        "alpha": -0.0,
+        "layer": 8
+      },
+      "canonical": "{\"body\":{\"alpha\":0,\"feature_id\":1234,\"layer\":8,\"prompt\":\"I think\"},\"endpoint\":\"/steer\",\"model\":\"gpt2-small\"}",
+      "key": "3aa12b15c45140d6237bd70db32a8bc4bfb06abfc2b6833e918b9527620db87a"
+    },
+    {
+      "name": "empty lists and objects",
+      "endpoint": "/ablate-heads",
+      "model": "gpt2-small",
+      "body": {
+        "prompt": "x",
+        "heads": [],
+        "extra": {},
+        "ids": [
+          []
+        ]
+      },
+      "canonical": "{\"body\":{\"extra\":{},\"heads\":[],\"ids\":[[]],\"prompt\":\"x\"},\"endpoint\":\"/ablate-heads\",\"model\":\"gpt2-small\"}",
+      "key": "a65c6ccf6d80a2412f54b5d7274664547b9d1aaa169ce340707f9b02c3531c61"
+    },
+    {
+      "name": "small and exponent floats",
+      "endpoint": "/circuit",
+      "model": "gpt2-small",
+      "body": {
+        "threshold": 1e-05,
+        "tiny": 1e-07,
+        "tinier": 1.5e-10,
+        "third": 0.30000000000000004,
+        "big": 1e+21,
+        "neg": -2.5
+      },
+      "canonical": "{\"body\":{\"big\":1000000000000000000000,\"neg\":-2.5,\"third\":0.30000000000000004,\"threshold\":0.00001,\"tinier\":1.5e-10,\"tiny\":1e-7},\"endpoint\":\"/circuit\",\"model\":\"gpt2-small\"}",
+      "key": "e2a9139361360e211dd00c3d3a184b172b26bfce7181a72f0e7d09b4fae71fda"
+    },
+    {
+      "name": "escapes and control characters",
+      "endpoint": "/generate",
+      "model": "pythia-70m",
+      "body": {
+        "prompt": "line1\nline2\t\"quoted\" back\\slash \u0001 \u001f  /slash"
+      },
+      "canonical": "{\"body\":{\"prompt\":\"line1\\nline2\\t\\\"quoted\\\" back\\\\slash \\u0001 \\u001f  /slash\"},\"endpoint\":\"/generate\",\"model\":\"pythia-70m\"}",
+      "key": "c44162439a8031839938867a1e9ff133f8f592d84f3a41c07a02cc543f2501ec"
+    },
+    {
+      "name": "nulls kept, bools",
+      "endpoint": "/dla",
+      "model": "gemma-2-2b",
+      "body": {
+        "prompt": "The nurse said that",
+        "answer": " she",
+        "contrast": null,
+        "flag": false
+      },
+      "canonical": "{\"body\":{\"answer\":\" she\",\"contrast\":null,\"flag\":false,\"prompt\":\"The nurse said that\"},\"endpoint\":\"/dla\",\"model\":\"gemma-2-2b\"}",
+      "key": "5dbbbf9f8eae2683a287045dbf856402c35ac82a03d4e556ce20157c5c868fca"
+    },
+    {
+      "name": "feature ids and negative numbers",
+      "endpoint": "/ablate-features",
+      "model": "gemma-2-9b",
+      "body": {
+        "prompt": "The Eiffel Tower is in",
+        "feature_ids": [
+          17,
+          4096,
+          16383
+        ],
+        "layer": 20,
+        "strength": -12.75,
+        "delta": -1
+      },
+      "canonical": "{\"body\":{\"delta\":-1,\"feature_ids\":[17,4096,16383],\"layer\":20,\"prompt\":\"The Eiffel Tower is in\",\"strength\":-12.75},\"endpoint\":\"/ablate-features\",\"model\":\"gemma-2-9b\"}",
+      "key": "eb756ec6d4d2bc49ed4f97dbc8a35cabb7bd8054a199556c5ad1651f59dac4eb"
+    }
+  ]
+}
