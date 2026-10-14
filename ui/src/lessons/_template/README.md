@@ -18,5 +18,5 @@ Writing your own lessons is a preview in Pry 0.4.x. Format 1 lessons will keep o
 For autocomplete in editors that read YAML schemas, keep this line at the top of the front matter in `lesson.md`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/BeargleIndustries/pry/master/docs/lessons/schema/front-matter.v1.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/BeargleIndustries/pry/master/docs/lessons/schema/pry-front-matter.v1.schema.json
 ```
