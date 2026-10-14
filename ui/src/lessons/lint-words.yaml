@@ -1,0 +1,134 @@
+# Word lists for the copy lint (plan T1 "Copy lint"). First version written by
+# T1 from style guide sections 3, 5 and 6, concept map sections 5.2 and 7.1,
+# and the quick tour outline; T6 owns this file from here. Matching is
+# whole-word and case-insensitive.
+
+# Style guide section 3 "Retired" and map section 5.2 (model verbs are below,
+# under banned_model_verbs). Errors anywhere in prose, choices included.
+retired:
+  - makes up its mind
+  - make up its mind
+  - change its mind
+  - changes its mind
+  - slow motion
+  - the model's confidence
+  - 90% sure
+  - debugging by swapping
+  - brings the answer back
+  - carries the answer
+  - volume knob
+  - concepts lit up
+  - opens the black box
+  - open the black box
+  - scratchpad
+  - inner state
+  - internal state
+  - half-built answer
+  - work in progress
+  - processing block
+  - processing layer
+  - feature detector
+  - feature dictionary
+  - lookers
+  - readers
+  - word lookup
+  - word-piece
+  - word-pieces
+  - picking rule
+  - starting numbers
+  - direct pushes
+  - copying head
+  - previous-word head
+  - bare model
+  - filing cabinet
+  - reverse-engineering the source code
+  - Concepts inside
+
+# Style guide section 5 "Words we don't use for the model". Allowed only in a
+# predict or question choice, its feedback, a :refutes[...] span or code.
+banned_model_verbs:
+  - thinks
+  - thinking about
+  - believes
+  - knows
+  - knew
+  - remembers
+  - wants
+  - tries
+  - decides
+  - understands
+  - lies
+  - is confident
+  - is unsure
+  - plans
+  - thought of
+  - pays attention to
+  - focuses on
+
+# Metaphors from map section 5 that must never stand in as names. Allowed only
+# inside an analogy step.
+metaphor_names:
+  - running notes
+  - assembly line
+  - mixing desk
+  - spare parts
+  - parking spot
+
+# Qualitative claims (style guide section 4) that need an assert's say / else.
+qualitative:
+  - a lot
+  - most
+  - barely
+  - almost all
+  - small leftover
+  - by a mile
+  - a good chunk
+  - hardly
+
+# Causal and interpretive verbs the tour can't use (map 7.1; quick-tour.md:32).
+tour_banned:
+  - shows why
+  - causes
+  - caused
+  - cause
+  - decides
+  - thinks
+  - knows
+  - matters
+  - responsible
+  - means
+
+# The explain-result `tool:` keys and their pinned caveat phrases, copied from
+# ui/src/lib/copy/caveats.test.ts (a test checks each phrase is still pinned
+# there). One of a tool's phrases must sit beside its result. Tools with no
+# pinned caveat have an empty list.
+pinned_caveats:
+  dla:
+    - most directly
+    - Only direct pushes count
+    - Help through other parts isn't counted
+    - Help that goes through other parts isn't counted.
+  circuit:
+    - direct value path
+  compare:
+    - On their own they don’t show what causes the model’s answer.
+    - This view only shows what changed, not why.
+  features:
+    - Labels are best guesses from Neuronpedia, not certainties.
+    - which means they're a best guess, not a guarantee.
+    - Labels are written by an AI and can be wrong
+    - written by an AI
+  neuronpedia:
+    - "Searching sends the words you type to Neuronpedia (neuronpedia.org), a public site that labels these features. Only your search words and which model and layer you are using are sent."
+  logit-lens:
+    - a hint, not proof
+    - So read the early rows as a rough hint.
+    - It's an approximation, since the middle layers weren't built to be read this way.
+  predictions: []
+  attention: []
+  patching: []
+  ablation: []
+  feature-ablation: []
+  steering: []
+  write-it: []
+  embedding: []

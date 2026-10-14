@@ -1,0 +1,2918 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/BeargleIndustries/pry/master/docs/lessons/schema/lesson.v1.schema.json",
+  "title": "Compiled lesson, format 1",
+  "type": "object",
+  "properties": {
+    "file": {
+      "type": "string"
+    },
+    "meta": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "number",
+          "const": 1
+        },
+        "id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9-]*(\\.[a-z0-9][a-z0-9-]*)+$"
+        },
+        "title": {
+          "type": "string"
+        },
+        "tool": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "minutes": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "draft": {
+          "type": "boolean"
+        },
+        "presentation": {
+          "type": "string",
+          "enum": [
+            "sidebar",
+            "overlay"
+          ]
+        },
+        "stage": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "spine": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "new_terms": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "term_budget_exception": {
+          "type": "string"
+        },
+        "prerequisites": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "cold_entry": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "baseline": {},
+        "permissions": {
+          "type": "object",
+          "properties": {
+            "download": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "network": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "external": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "cost": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "verified_rows": {
+          "type": "array",
+          "items": {
+            "type": [
+              "number",
+              "string"
+            ]
+          }
+        },
+        "tool_min": {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "limits": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "authors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "license": {
+          "type": "string"
+        },
+        "version": {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "slots": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z_][a-z0-9_]*$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "read": {
+                "type": "string"
+              },
+              "args": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              },
+              "field": {
+                "type": "string"
+              },
+              "from_capture": {
+                "type": "string"
+              },
+              "expect": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "array",
+                    "items": {}
+                  },
+                  {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  }
+                ]
+              },
+              "tolerance": {
+                "type": "number"
+              },
+              "row": {
+                "type": "string"
+              },
+              "from": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "formula": {
+                "type": "string",
+                "enum": [
+                  "share",
+                  "difference",
+                  "sum",
+                  "abs"
+                ]
+              },
+              "format": {
+                "type": "string",
+                "enum": [
+                  "probability",
+                  "logit",
+                  "layer",
+                  "count",
+                  "position",
+                  "string",
+                  "number"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "format",
+        "id",
+        "title",
+        "tool",
+        "summary",
+        "minutes"
+      ],
+      "additionalProperties": false
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/section"
+      }
+    },
+    "authorNotes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "meta",
+    "sections",
+    "authorNotes"
+  ],
+  "$defs": {
+    "prose": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "line": {
+          "type": "integer"
+        },
+        "inline": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "start": {
+                "type": "integer"
+              },
+              "end": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "type",
+              "start",
+              "end"
+            ]
+          }
+        }
+      },
+      "required": [
+        "text",
+        "line",
+        "inline"
+      ]
+    },
+    "action": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "args": {
+          "type": "object"
+        },
+        "line": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "name",
+        "args",
+        "line"
+      ]
+    },
+    "fields-explain": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "when": {
+          "type": "object",
+          "properties": {
+            "read": {
+              "type": "string"
+            },
+            "args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "op": {
+              "type": "string",
+              "enum": [
+                "equals",
+                "in",
+                "changed_from",
+                "gt",
+                "lt",
+                "increased",
+                "decreased",
+                "within",
+                "contains",
+                "starts_with"
+              ]
+            },
+            "value": {},
+            "value_args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "not": {
+              "type": "boolean"
+            },
+            "expect": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "array",
+                  "items": {}
+                },
+                {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {}
+                }
+              ]
+            },
+            "tolerance": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "read",
+            "op"
+          ],
+          "additionalProperties": false
+        },
+        "image": {
+          "type": "string"
+        },
+        "alt": {
+          "type": "string"
+        },
+        "assert": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "require": {
+                "type": "object",
+                "properties": {
+                  "slot": {
+                    "type": "string"
+                  },
+                  "op": {
+                    "type": "string",
+                    "enum": [
+                      "equals",
+                      "in",
+                      "changed_from",
+                      "gt",
+                      "lt",
+                      "increased",
+                      "decreased",
+                      "within",
+                      "contains",
+                      "starts_with"
+                    ]
+                  },
+                  "value": {},
+                  "slot2": {
+                    "type": "string"
+                  },
+                  "abs": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "slot",
+                  "op"
+                ],
+                "additionalProperties": false
+              },
+              "say": {
+                "type": "string"
+              },
+              "else": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "require",
+              "say",
+              "else"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "fields-analogy": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "when": {
+          "type": "object",
+          "properties": {
+            "read": {
+              "type": "string"
+            },
+            "args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "op": {
+              "type": "string",
+              "enum": [
+                "equals",
+                "in",
+                "changed_from",
+                "gt",
+                "lt",
+                "increased",
+                "decreased",
+                "within",
+                "contains",
+                "starts_with"
+              ]
+            },
+            "value": {},
+            "value_args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "not": {
+              "type": "boolean"
+            },
+            "expect": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "array",
+                  "items": {}
+                },
+                {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {}
+                }
+              ]
+            },
+            "tolerance": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "read",
+            "op"
+          ],
+          "additionalProperties": false
+        },
+        "like": {
+          "type": "string"
+        },
+        "because": {
+          "type": "string"
+        },
+        "breaks": {
+          "type": "string"
+        },
+        "withdrawn_in": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "like",
+        "because"
+      ],
+      "additionalProperties": false
+    },
+    "fields-simplification": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "when": {
+          "type": "object",
+          "properties": {
+            "read": {
+              "type": "string"
+            },
+            "args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "op": {
+              "type": "string",
+              "enum": [
+                "equals",
+                "in",
+                "changed_from",
+                "gt",
+                "lt",
+                "increased",
+                "decreased",
+                "within",
+                "contains",
+                "starts_with"
+              ]
+            },
+            "value": {},
+            "value_args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "not": {
+              "type": "boolean"
+            },
+            "expect": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "array",
+                  "items": {}
+                },
+                {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {}
+                }
+              ]
+            },
+            "tolerance": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "read",
+            "op"
+          ],
+          "additionalProperties": false
+        },
+        "corrected_in": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "corrected_in"
+      ],
+      "additionalProperties": false
+    },
+    "fields-fold": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "when": {
+          "type": "object",
+          "properties": {
+            "read": {
+              "type": "string"
+            },
+            "args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "op": {
+              "type": "string",
+              "enum": [
+                "equals",
+                "in",
+                "changed_from",
+                "gt",
+                "lt",
+                "increased",
+                "decreased",
+                "within",
+                "contains",
+                "starts_with"
+              ]
+            },
+            "value": {},
+            "value_args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "not": {
+              "type": "boolean"
+            },
+            "expect": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "array",
+                  "items": {}
+                },
+                {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {}
+                }
+              ]
+            },
+            "tolerance": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "read",
+            "op"
+          ],
+          "additionalProperties": false
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "title"
+      ],
+      "additionalProperties": false
+    },
+    "fields-recall": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "when": {
+          "type": "object",
+          "properties": {
+            "read": {
+              "type": "string"
+            },
+            "args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "op": {
+              "type": "string",
+              "enum": [
+                "equals",
+                "in",
+                "changed_from",
+                "gt",
+                "lt",
+                "increased",
+                "decreased",
+                "within",
+                "contains",
+                "starts_with"
+              ]
+            },
+            "value": {},
+            "value_args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "not": {
+              "type": "boolean"
+            },
+            "expect": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "array",
+                  "items": {}
+                },
+                {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {}
+                }
+              ]
+            },
+            "tolerance": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "read",
+            "op"
+          ],
+          "additionalProperties": false
+        },
+        "from": {
+          "type": "string"
+        },
+        "question": {
+          "type": "string"
+        },
+        "choices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string"
+              },
+              "feedback": {
+                "type": "string"
+              },
+              "reveal": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "text"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "free": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "from"
+      ],
+      "additionalProperties": false
+    },
+    "fields-question": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "when": {
+          "type": "object",
+          "properties": {
+            "read": {
+              "type": "string"
+            },
+            "args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "op": {
+              "type": "string",
+              "enum": [
+                "equals",
+                "in",
+                "changed_from",
+                "gt",
+                "lt",
+                "increased",
+                "decreased",
+                "within",
+                "contains",
+                "starts_with"
+              ]
+            },
+            "value": {},
+            "value_args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "not": {
+              "type": "boolean"
+            },
+            "expect": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "array",
+                  "items": {}
+                },
+                {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {}
+                }
+              ]
+            },
+            "tolerance": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "read",
+            "op"
+          ],
+          "additionalProperties": false
+        },
+        "choices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string"
+              },
+              "feedback": {
+                "type": "string"
+              },
+              "reveal": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "text"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "free": {
+          "type": "boolean"
+        },
+        "model_answer": {
+          "type": "string"
+        },
+        "pick": {
+          "type": "string"
+        },
+        "remember": {
+          "type": "string"
+        },
+        "on_skip": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "fields-predict": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "when": {
+          "type": "object",
+          "properties": {
+            "read": {
+              "type": "string"
+            },
+            "args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "op": {
+              "type": "string",
+              "enum": [
+                "equals",
+                "in",
+                "changed_from",
+                "gt",
+                "lt",
+                "increased",
+                "decreased",
+                "within",
+                "contains",
+                "starts_with"
+              ]
+            },
+            "value": {},
+            "value_args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "not": {
+              "type": "boolean"
+            },
+            "expect": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "array",
+                  "items": {}
+                },
+                {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {}
+                }
+              ]
+            },
+            "tolerance": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "read",
+            "op"
+          ],
+          "additionalProperties": false
+        },
+        "choices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string"
+              },
+              "target": {
+                "type": "string"
+              },
+              "feedback": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "text"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "free": {
+          "type": "boolean"
+        },
+        "pick": {
+          "type": "string"
+        },
+        "hides": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "skip_check": {
+          "type": "object",
+          "properties": {
+            "when": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "step": {
+                    "type": "string"
+                  },
+                  "choice": {
+                    "type": [
+                      "number",
+                      "string"
+                    ]
+                  }
+                },
+                "required": [
+                  "step",
+                  "choice"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "skip": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "reason_step": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "when",
+            "skip"
+          ],
+          "additionalProperties": false
+        },
+        "remember": {
+          "type": "string"
+        },
+        "on_skip": {
+          "type": "string"
+        },
+        "checks": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "fields-do": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "when": {
+          "type": "object",
+          "properties": {
+            "read": {
+              "type": "string"
+            },
+            "args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "op": {
+              "type": "string",
+              "enum": [
+                "equals",
+                "in",
+                "changed_from",
+                "gt",
+                "lt",
+                "increased",
+                "decreased",
+                "within",
+                "contains",
+                "starts_with"
+              ]
+            },
+            "value": {},
+            "value_args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "not": {
+              "type": "boolean"
+            },
+            "expect": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "array",
+                  "items": {}
+                },
+                {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {}
+                }
+              ]
+            },
+            "tolerance": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "read",
+            "op"
+          ],
+          "additionalProperties": false
+        },
+        "capture": {
+          "type": "string"
+        },
+        "fresh": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "fields-observe": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "when": {
+          "type": "object",
+          "properties": {
+            "read": {
+              "type": "string"
+            },
+            "args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "op": {
+              "type": "string",
+              "enum": [
+                "equals",
+                "in",
+                "changed_from",
+                "gt",
+                "lt",
+                "increased",
+                "decreased",
+                "within",
+                "contains",
+                "starts_with"
+              ]
+            },
+            "value": {},
+            "value_args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "not": {
+              "type": "boolean"
+            },
+            "expect": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "array",
+                  "items": {}
+                },
+                {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {}
+                }
+              ]
+            },
+            "tolerance": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "read",
+            "op"
+          ],
+          "additionalProperties": false
+        },
+        "check": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "read": {
+                  "type": "string"
+                },
+                "args": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {}
+                },
+                "op": {
+                  "type": "string",
+                  "enum": [
+                    "equals",
+                    "in",
+                    "changed_from",
+                    "gt",
+                    "lt",
+                    "increased",
+                    "decreased",
+                    "within",
+                    "contains",
+                    "starts_with"
+                  ]
+                },
+                "value": {},
+                "value_args": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {}
+                },
+                "not": {
+                  "type": "boolean"
+                },
+                "expect": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "array",
+                      "items": {}
+                    },
+                    {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {}
+                    }
+                  ]
+                },
+                "tolerance": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "read",
+                "op"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "read": {
+                    "type": "string"
+                  },
+                  "args": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  },
+                  "op": {
+                    "type": "string",
+                    "enum": [
+                      "equals",
+                      "in",
+                      "changed_from",
+                      "gt",
+                      "lt",
+                      "increased",
+                      "decreased",
+                      "within",
+                      "contains",
+                      "starts_with"
+                    ]
+                  },
+                  "value": {},
+                  "value_args": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  },
+                  "not": {
+                    "type": "boolean"
+                  },
+                  "expect": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "array",
+                        "items": {}
+                      },
+                      {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {}
+                      }
+                    ]
+                  },
+                  "tolerance": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "read",
+                  "op"
+                ],
+                "additionalProperties": false
+              }
+            }
+          ]
+        },
+        "journal": {
+          "type": "boolean"
+        },
+        "assert": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "require": {
+                "type": "object",
+                "properties": {
+                  "slot": {
+                    "type": "string"
+                  },
+                  "op": {
+                    "type": "string",
+                    "enum": [
+                      "equals",
+                      "in",
+                      "changed_from",
+                      "gt",
+                      "lt",
+                      "increased",
+                      "decreased",
+                      "within",
+                      "contains",
+                      "starts_with"
+                    ]
+                  },
+                  "value": {},
+                  "slot2": {
+                    "type": "string"
+                  },
+                  "abs": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "slot",
+                  "op"
+                ],
+                "additionalProperties": false
+              },
+              "say": {
+                "type": "string"
+              },
+              "else": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "require",
+              "say",
+              "else"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "expect": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "array",
+              "items": {}
+            },
+            {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "fields-compare": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "when": {
+          "type": "object",
+          "properties": {
+            "read": {
+              "type": "string"
+            },
+            "args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "op": {
+              "type": "string",
+              "enum": [
+                "equals",
+                "in",
+                "changed_from",
+                "gt",
+                "lt",
+                "increased",
+                "decreased",
+                "within",
+                "contains",
+                "starts_with"
+              ]
+            },
+            "value": {},
+            "value_args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "not": {
+              "type": "boolean"
+            },
+            "expect": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "array",
+                  "items": {}
+                },
+                {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {}
+                }
+              ]
+            },
+            "tolerance": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "read",
+            "op"
+          ],
+          "additionalProperties": false
+        },
+        "columns": {
+          "minItems": 2,
+          "maxItems": 5,
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "read": {
+                    "type": "string"
+                  },
+                  "args": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  },
+                  "from": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "read"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "view": {
+                    "type": "string"
+                  },
+                  "args": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "view"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "text"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "same_question": {
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "journal"
+            },
+            {
+              "type": "string",
+              "const": "pick"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "assert": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "require": {
+                "type": "object",
+                "properties": {
+                  "slot": {
+                    "type": "string"
+                  },
+                  "op": {
+                    "type": "string",
+                    "enum": [
+                      "equals",
+                      "in",
+                      "changed_from",
+                      "gt",
+                      "lt",
+                      "increased",
+                      "decreased",
+                      "within",
+                      "contains",
+                      "starts_with"
+                    ]
+                  },
+                  "value": {},
+                  "slot2": {
+                    "type": "string"
+                  },
+                  "abs": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "slot",
+                  "op"
+                ],
+                "additionalProperties": false
+              },
+              "say": {
+                "type": "string"
+              },
+              "else": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "require",
+              "say",
+              "else"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "columns"
+      ],
+      "additionalProperties": false
+    },
+    "fields-explain-result": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "when": {
+          "type": "object",
+          "properties": {
+            "read": {
+              "type": "string"
+            },
+            "args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "op": {
+              "type": "string",
+              "enum": [
+                "equals",
+                "in",
+                "changed_from",
+                "gt",
+                "lt",
+                "increased",
+                "decreased",
+                "within",
+                "contains",
+                "starts_with"
+              ]
+            },
+            "value": {},
+            "value_args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "not": {
+              "type": "boolean"
+            },
+            "expect": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "array",
+                  "items": {}
+                },
+                {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {}
+                }
+              ]
+            },
+            "tolerance": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "read",
+            "op"
+          ],
+          "additionalProperties": false
+        },
+        "supports": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "leaves_open": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "tool": {
+          "type": "string"
+        },
+        "skeptic": {
+          "type": "object",
+          "properties": {
+            "says": {
+              "type": "string"
+            },
+            "check": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "says",
+            "check"
+          ],
+          "additionalProperties": false
+        },
+        "limits": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "assert": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "require": {
+                "type": "object",
+                "properties": {
+                  "slot": {
+                    "type": "string"
+                  },
+                  "op": {
+                    "type": "string",
+                    "enum": [
+                      "equals",
+                      "in",
+                      "changed_from",
+                      "gt",
+                      "lt",
+                      "increased",
+                      "decreased",
+                      "within",
+                      "contains",
+                      "starts_with"
+                    ]
+                  },
+                  "value": {},
+                  "slot2": {
+                    "type": "string"
+                  },
+                  "abs": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "slot",
+                  "op"
+                ],
+                "additionalProperties": false
+              },
+              "say": {
+                "type": "string"
+              },
+              "else": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "require",
+              "say",
+              "else"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "fields-transfer": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "when": {
+          "type": "object",
+          "properties": {
+            "read": {
+              "type": "string"
+            },
+            "args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "op": {
+              "type": "string",
+              "enum": [
+                "equals",
+                "in",
+                "changed_from",
+                "gt",
+                "lt",
+                "increased",
+                "decreased",
+                "within",
+                "contains",
+                "starts_with"
+              ]
+            },
+            "value": {},
+            "value_args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "not": {
+              "type": "boolean"
+            },
+            "expect": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "array",
+                  "items": {}
+                },
+                {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {}
+                }
+              ]
+            },
+            "tolerance": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "read",
+            "op"
+          ],
+          "additionalProperties": false
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "expect_if_explanation_holds": {
+          "type": "string"
+        },
+        "limits": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "assert": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "require": {
+                "type": "object",
+                "properties": {
+                  "slot": {
+                    "type": "string"
+                  },
+                  "op": {
+                    "type": "string",
+                    "enum": [
+                      "equals",
+                      "in",
+                      "changed_from",
+                      "gt",
+                      "lt",
+                      "increased",
+                      "decreased",
+                      "within",
+                      "contains",
+                      "starts_with"
+                    ]
+                  },
+                  "value": {},
+                  "slot2": {
+                    "type": "string"
+                  },
+                  "abs": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "slot",
+                  "op"
+                ],
+                "additionalProperties": false
+              },
+              "say": {
+                "type": "string"
+              },
+              "else": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "require",
+              "say",
+              "else"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "prompt",
+        "expect_if_explanation_holds",
+        "limits"
+      ],
+      "additionalProperties": false
+    },
+    "fields-task": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "when": {
+          "type": "object",
+          "properties": {
+            "read": {
+              "type": "string"
+            },
+            "args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "op": {
+              "type": "string",
+              "enum": [
+                "equals",
+                "in",
+                "changed_from",
+                "gt",
+                "lt",
+                "increased",
+                "decreased",
+                "within",
+                "contains",
+                "starts_with"
+              ]
+            },
+            "value": {},
+            "value_args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "not": {
+              "type": "boolean"
+            },
+            "expect": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "array",
+                  "items": {}
+                },
+                {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {}
+                }
+              ]
+            },
+            "tolerance": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "read",
+            "op"
+          ],
+          "additionalProperties": false
+        },
+        "target": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "read": {
+                "type": "string"
+              },
+              "args": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              },
+              "op": {
+                "type": "string",
+                "enum": [
+                  "equals",
+                  "in",
+                  "changed_from",
+                  "gt",
+                  "lt",
+                  "increased",
+                  "decreased",
+                  "within",
+                  "contains",
+                  "starts_with"
+                ]
+              },
+              "value": {},
+              "value_args": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              },
+              "not": {
+                "type": "boolean"
+              },
+              "expect": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "array",
+                    "items": {}
+                  },
+                  {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  }
+                ]
+              },
+              "tolerance": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "read",
+              "op"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "constraint": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "read": {
+                "type": "string"
+              },
+              "args": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              },
+              "op": {
+                "type": "string",
+                "enum": [
+                  "equals",
+                  "in",
+                  "changed_from",
+                  "gt",
+                  "lt",
+                  "increased",
+                  "decreased",
+                  "within",
+                  "contains",
+                  "starts_with"
+                ]
+              },
+              "value": {},
+              "value_args": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              },
+              "not": {
+                "type": "boolean"
+              },
+              "expect": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "array",
+                    "items": {}
+                  },
+                  {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  }
+                ]
+              },
+              "tolerance": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "read",
+              "op"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "max_runs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "predict_before_each_run": {
+          "type": "boolean"
+        },
+        "one_change": {
+          "type": "string"
+        },
+        "reset": {},
+        "remember": {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string"
+            },
+            "read": {
+              "type": "string"
+            },
+            "args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            }
+          },
+          "required": [
+            "key",
+            "read"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "target"
+      ],
+      "additionalProperties": false
+    },
+    "fields-explain-chain": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "when": {
+          "type": "object",
+          "properties": {
+            "read": {
+              "type": "string"
+            },
+            "args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "op": {
+              "type": "string",
+              "enum": [
+                "equals",
+                "in",
+                "changed_from",
+                "gt",
+                "lt",
+                "increased",
+                "decreased",
+                "within",
+                "contains",
+                "starts_with"
+              ]
+            },
+            "value": {},
+            "value_args": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "not": {
+              "type": "boolean"
+            },
+            "expect": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "array",
+                  "items": {}
+                },
+                {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {}
+                }
+              ]
+            },
+            "tolerance": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "read",
+            "op"
+          ],
+          "additionalProperties": false
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "model_answer": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "model_answer"
+      ],
+      "additionalProperties": false
+    },
+    "step": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "explain",
+            "analogy",
+            "simplification",
+            "fold",
+            "recall",
+            "question",
+            "predict",
+            "do",
+            "observe",
+            "compare",
+            "explain-result",
+            "transfer",
+            "task",
+            "explain-chain"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "line": {
+          "type": "integer"
+        },
+        "fields": {
+          "type": "object"
+        },
+        "prose": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/prose"
+          }
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/action"
+          }
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/step"
+          }
+        },
+        "implicit": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "kind",
+        "line",
+        "fields",
+        "prose",
+        "actions",
+        "children"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "explain"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "$ref": "#/$defs/fields-explain"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "analogy"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "$ref": "#/$defs/fields-analogy"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "simplification"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "$ref": "#/$defs/fields-simplification"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "fold"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "$ref": "#/$defs/fields-fold"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "recall"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "$ref": "#/$defs/fields-recall"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "question"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "$ref": "#/$defs/fields-question"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "predict"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "$ref": "#/$defs/fields-predict"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "do"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "$ref": "#/$defs/fields-do"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "observe"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "$ref": "#/$defs/fields-observe"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "compare"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "$ref": "#/$defs/fields-compare"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "explain-result"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "$ref": "#/$defs/fields-explain-result"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "transfer"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "$ref": "#/$defs/fields-transfer"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "task"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "$ref": "#/$defs/fields-task"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "explain-chain"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fields": {
+                "$ref": "#/$defs/fields-explain-chain"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "section": {
+      "type": "object",
+      "properties": {
+        "index": {
+          "type": "integer"
+        },
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "depth": {
+          "enum": [
+            "core",
+            "optional"
+          ]
+        },
+        "line": {
+          "type": "integer"
+        },
+        "outline": {
+          "type": "string"
+        },
+        "enter": {
+          "type": "object",
+          "properties": {
+            "value": {},
+            "line": {
+              "type": "integer"
+            }
+          }
+        },
+        "slots": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z_][a-z0-9_]*$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "read": {
+                "type": "string"
+              },
+              "args": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              },
+              "field": {
+                "type": "string"
+              },
+              "from_capture": {
+                "type": "string"
+              },
+              "expect": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "array",
+                    "items": {}
+                  },
+                  {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  }
+                ]
+              },
+              "tolerance": {
+                "type": "number"
+              },
+              "row": {
+                "type": "string"
+              },
+              "from": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "formula": {
+                "type": "string",
+                "enum": [
+                  "share",
+                  "difference",
+                  "sum",
+                  "abs"
+                ]
+              },
+              "format": {
+                "type": "string",
+                "enum": [
+                  "probability",
+                  "logit",
+                  "layer",
+                  "count",
+                  "position",
+                  "string",
+                  "number"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "slotsLine": {
+          "type": "integer"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/step"
+          }
+        }
+      },
+      "required": [
+        "index",
+        "id",
+        "title",
+        "depth",
+        "line",
+        "steps"
+      ]
+    }
+  }
+}
