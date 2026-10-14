@@ -128,6 +128,8 @@ export const MESSAGES: Record<string, (d: D) => string> = {
   'model-verb': (d) => `"${d.verb}" describes the model like a person. Say what the numbers do, such as "gives X a higher probability".`,
   'metaphor-name': (d) => `"${d.phrase}" is a metaphor, so it can only sit in an analogy block, never stand in as a name.`,
   'bare-number': (d) => `"${d.text}" is a number in the prose. Put it in a slot bound to a readout, or a row constant, so it matches the screen.`,
+  'frequency-literal': (d) => `\`{${d.name}}\` already shows "about 1 in N", so the one written beside it will go stale. Remove it.`,
+  'assert-say-missing': (d) => `This assert's \`say\` ("${d.say}") isn't in the model answer, so it gates nothing. Copy the clause from the model answer exactly.`,
   'percent-slot': (d) => `\`{${d.name}}%\` writes a percentage without "about 1 in N". Write \`{${d.name}}\`; the slot adds it.`,
   'derived-sources': (d) => `\`{${d.name}}\` is worked out from ${quoteList(d.missing)}, so show those in the same step.`,
   qualitative: (d) => `"${d.word}" makes a claim about size. Put it in an assert's \`say\` line, with an \`else\` for when the numbers don't back it.`,

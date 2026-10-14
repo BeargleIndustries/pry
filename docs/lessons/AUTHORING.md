@@ -141,9 +141,9 @@ remember: first-guess
 | `observe` | `check:` (one item or a list, all must hold) or `journal: true`. Optional `assert`, `expect`. | Compares what the app shows with the prediction or the lesson's expected value. |
 | `compare` | `columns:` with 2 to 5 entries, each a readout `{read, args, from?}`, a view `{view, args}` or `{text}`. Optional `same_question`. | Results next to each other. |
 | `explain-result` | `supports` and `leaves_open` (both required). `tool:` when the section or the one before ran a tool action. `skeptic: {says, check}` at stage 2 and 3. Optional `limits`. | What the result supports, and what it leaves open. |
-| `transfer` | `prompt`, `expect_if_explanation_holds`, `limits`, and its own predict and observe. | Tries the idea on a new case. |
+| `transfer` | `prompt`, `expect_if_explanation_holds`, `limits`, and its own predict and observe (or a `task`, when the learner sets it up). | Tries the idea on a new case. |
 | `task` | `target` and `constraint` (lists of check items), runner rules, `reset`, optional `remember`. | The learner works toward a goal. See [Tasks](#tasks). |
-| `explain-chain` | A free-text prompt plus `model_answer`. | The learner writes out the whole chain. Skipping asks once: "Writing it down is what makes it stick. Skip anyway?" |
+| `explain-chain` | A free-text prompt plus `model_answer`. Optional `assert`: its `say` is a clause of the model answer, and `else` replaces it when the numbers don't back it. | The learner writes out the whole chain. Skipping asks once: "Writing it down is what makes it stick. Skip anyway?" |
 
 **`predict` in more detail.** `hides` keeps a region hidden until the learner commits or skips. `skip_check: {when: [{step, choice}, ...], skip: [section ids], reason_step?}` lets a learner who got several predicts right skip ahead; every `when` entry has to match. `remember: <key>` saves the answer for later (see `:earlier` and `$earlier`). `on_skip` is text shown only to a learner who pressed **Skip, just show me**.
 
@@ -151,11 +151,11 @@ remember: first-guess
 
 | Mark | What it does |
 |---|---|
-| `:look{at=prediction-bar token=" Paris"}[the bar]` | Points at part of the app. Anchor arguments are checked like action arguments. `at=[a, b]` points at each in turn. `at=lesson:spine`, `at=lesson:step:<id>` and `at=lesson:image:<id>` point inside the sidebar. |
+| `:look{at=prediction-bar token=" Paris"}[the bar]` | Points at part of the app. Anchor arguments are checked like action arguments. `at=[a, b]` points at each in turn. `at=lesson:spine` (add `box=training` for one box), `at=lesson:step:<id>` and `at=lesson:image:<id>` point inside the sidebar. |
 | `{name}` | A live number from a slot. |
 | `:earlier{key="yourname.first-lesson.first-guess"}[fallback]` | The learner's earlier answer, or "skipped", or "You haven't done that lesson yet". |
 | `:spine{mask=embedding}` or `:spine{mask=embedding..logits}` | Masks one spine box, or a range, as a single "?" until the section reveals it. |
-| `:refutes[text]` | Marks a line that tests the everyday picture and knocks it down. The copy rules treat it differently (see below). |
+| `:refutes[text]` or `:refutes{target=M4}[text]` | Marks a line that tests the everyday picture and knocks it down. A `target` (one id or a list) tags the misconception it answers. The copy rules treat it differently (see below). |
 
 Links in prose may be `http` or `https` only, plus `lesson:<id>#<section>` to point at another lesson. Every link host must be listed in `permissions.external`.
 
@@ -226,7 +226,7 @@ check: { read: top_guess.token, op: equals, value: $prediction }
 A check item can also take:
 
 - `from: <capture>` to read the readout from an earlier capture instead of the live app, so one observe can compare two stored runs: `{ read: write_it.text, from: a, op: equals, value: $capture.b.write_it.text }`.
-- `field: <name>` to check one field of a record readout: `{ read: prediction, args: { token: " Sam" }, field: rank, op: lt, value: 11 }`.
+- `field: <name>` (and `value_field` for the value's readout) to check one field of a record readout: `{ read: prediction, args: { token: " Sam" }, field: rank, op: lt, value: 11 }`.
 - `value_args` to give the readout in the value its arguments, for `$read`, `$capture`, `$before` and `$baseline` alike.
 - `tolerance` (for `within`) as a number or a `$slot.<name>` / `$row.<id>.<field>` binding.
 
@@ -279,6 +279,7 @@ A `task` gives the learner a goal and lets them work toward it.
 - `target`: check items that mean "done". Values may read captures or `$earlier`.
 - `constraint`: check items that must hold before every run. For "one head at a time", use `{ read: ablation.head_count, op: equals, value: 1 }`: stacking heads is refused, and swapping one head for another is fine.
 - Runner rules: `max_runs: n`, `predict_before_each_run: true`, and `one_change: <action>` (between runs the learner changes exactly one argument of that action; for `set_compare`, one word of one prompt).
+- `capture: <name>`: stores the readouts of the learner's last run, for a later check or slot (`expect: learner`).
 - `learner_actions: [names]`: the actions the learner drives during the task, like `[set_head_ablation, run_head_ablation]`. The checker makes sure each one exists.
 - `reset`: the `enter`-style state to return to.
 - `remember: { key, read }`: stores a readout's value when the target is met or the learner moves on.

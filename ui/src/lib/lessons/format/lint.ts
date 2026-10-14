@@ -144,7 +144,7 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
       if (stepIds.has(o.step.id)) err('duplicate-id', { id: o.step.id }, at(o));
       else stepIds.set(o.step.id, o);
     }
-    if (o.step.kind === 'do' && typeof f.capture === 'string') captures.set(f.capture, o);
+    if ((o.step.kind === 'do' || o.step.kind === 'task') && typeof f.capture === 'string') captures.set(f.capture, o);
   }
   const sectionIds = new Set(lesson.sections.map((s) => s.id));
   const slotsFor = (section: Section): Record<string, Slot> => ({ ...(meta.slots ?? {}), ...(section.slots ?? {}) });
@@ -160,8 +160,14 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
   if (meta.draft) err('draft', {}, fm, opts.release ? 'error' : 'warning');
   for (const box of meta.spine ?? []) if (!tool.spine.some((s) => s.id === box)) err('spine-unknown', { name: box }, fm);
   for (const t of meta.targets ?? []) {
-    // A predict choice, or a question choice (an "ask before telling" pick, P1.4:74).
-    const tagged = steps.some((o) => (o.step.kind === 'predict' || o.step.kind === 'question') && Array.isArray(o.step.fields.choices) && o.step.fields.choices.some((c: any) => c?.target === t));
+    // A predict or question choice (P1.4:74), or a `:refutes{target=...}` span: outlines answer some
+    // misconceptions with a refutation, not a choice (map 8; P2.4:86, P4.1:97). Either may list several.
+    const has = (v: unknown) => (Array.isArray(v) ? v.includes(t) : v === t);
+    const tagged = steps.some(
+      (o) =>
+        ((o.step.kind === 'predict' || o.step.kind === 'question') && Array.isArray(o.step.fields.choices) && o.step.fields.choices.some((c: any) => has(c?.target))) ||
+        o.step.prose.some((p) => p.inline.some((n) => n.type === 'refutes' && has(n.attrs?.target))),
+    );
     if (!tagged) err('targets-untagged', { target: t }, fm);
   }
 
@@ -191,7 +197,11 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
   };
 
   const checkAnchor = (name: string, args: Record<string, unknown>, where: Where) => {
-    if (name === 'lesson:spine') return;
+    if (name === 'lesson:spine') {
+      // `box=` points at one spine box, like the training bracket (P1.1:62).
+      if (typeof args.box === 'string' && !tool.spine.some((s) => s.id === args.box)) err('spine-unknown', { name: args.box }, where);
+      return;
+    }
     const step = /^lesson:step:(.+)$/.exec(name);
     if (step) {
       if (!stepIds.has(step[1])) err('step-unknown', { name: step[1] }, where);
@@ -260,8 +270,16 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
     if (def) {
       if (def.type === 'prose') err('prose-check', { read: c.read }, where);
       else if (c.field !== undefined && def.type !== 'record') err('bad-readout-args', { name: c.read, detail: '`field` only applies to a record readout' }, where);
-      // A record field's type isn't in the registry, so any operator may read it.
-      else if (c.field === undefined && !OPS_BY_TYPE[def.type]?.includes(c.op)) err('op-type', { op: c.op, read: c.read, type: def.type, ops: OPS_BY_TYPE[def.type] }, where);
+      else if (c.field !== undefined && !def.fields?.[c.field]) err('bad-readout-args', { name: c.read, detail: `it has no field \`${c.field}\`` }, where);
+      else {
+        // A field's own type picks the operators (`rank` is a number).
+        const type = c.field !== undefined ? def.fields![c.field] : def.type;
+        if (!OPS_BY_TYPE[type]?.includes(c.op)) err('op-type', { op: c.op, read: c.field ? `${c.read}.${c.field}` : c.read, type, ops: OPS_BY_TYPE[type] }, where);
+      }
+    }
+    if (c.value_field !== undefined && typeof c.value === 'string' && /^\$(read|capture|before|baseline)\./.test(c.value)) {
+      const name = c.value.replace(/^\$capture\.[^.]+\./, '').replace(/^\$(read|before|baseline)\./, '');
+      if (!tool.readouts[name]?.fields?.[c.value_field]) err('bad-readout-args', { name, detail: `it has no field \`${c.value_field}\`` }, where);
     }
     const slots = slotsFor(o.section);
     if (typeof c.from === 'string') {
@@ -446,7 +464,9 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
       for (const n of p.inline) {
         const w = at(o, p.line);
         if (n.type === 'look') {
-          const { at: target, ...rest } = n.attrs ?? {};
+          const { at: target, ...raw } = n.attrs ?? {};
+          // Attribute values are text; a number-looking one is a number (`head-cell layer=9`, P3.2:51).
+          const rest = Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, typeof v === 'string' && /^-?\d+(?:\.\d+)?$/.test(v) ? Number(v) : v]));
           const targets = Array.isArray(target) ? target : typeof target === 'string' ? [target] : [];
           for (const t of targets) checkAnchor(t, rest, w);
         } else if (n.type === 'earlier') {
@@ -470,6 +490,11 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
           if (!opts.bundled && !match) err('link-host', { host }, w);
         }
       }
+    }
+    for (const a of Array.isArray(f.assert) ? f.assert : []) {
+      for (const s of [a?.require?.slot, a?.require?.slot2]) if (typeof s === 'string' && !slots[s]) err('slot-unknown', { name: s }, where);
+      // On an explain-chain, `say` is the clause in the model answer that `else` replaces (P3.2:87).
+      if (step.kind === 'explain-chain' && typeof a?.say === 'string' && !String(f.model_answer ?? '').includes(a.say)) err('assert-say-missing', { say: a.say }, where);
     }
     for (const t of stepTexts(step)) {
       for (const m of t.text.matchAll(/\{([a-z_][a-z0-9_]*)\}/g)) {
@@ -514,7 +539,7 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
     let learnerOk = false;
     if (slot.from_capture) {
       const cap = captures.get(slot.from_capture);
-      learnerOk = !!cap && cap.step.actions.some((a) => findBindings(a.args).earlier.length > 0);
+      learnerOk = !!cap && (cap.step.kind === 'task' || cap.step.actions.some((a) => findBindings(a.args).earlier.length > 0));
     } else {
       const secs = section ? [section] : lesson.sections;
       learnerOk = secs.some((s) => taskReads(s).has(slot.read!));
@@ -533,9 +558,12 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
         const slot = slots[m[1]];
         if (!slot || slot.row !== undefined || slot.formula) continue;
         let before = false;
+        // A predict choice's feedback shows when its observe answers it, after the run (P1.1:87).
+        const checks = o.step.kind === 'predict' && t.role === 'feedback' ? stepIds.get(o.step.fields.checks) : undefined;
+        const shownAt = checks ? checks.order : o.order;
         if (slot.from_capture) {
           const cap = captures.get(slot.from_capture);
-          before = !!cap && o.order < cap.order;
+          before = !!cap && shownAt < cap.order;
         } else if (slot.read) {
           const ran = (firstCompute && firstCompute.order < o.order) || meta.baseline !== undefined || (firstEnter && firstEnter.index <= o.section.index);
           before = !ran;

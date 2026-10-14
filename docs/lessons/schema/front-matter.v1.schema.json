@@ -215,7 +215,9 @@
               "share",
               "difference",
               "sum",
-              "abs"
+              "abs",
+              "ratio",
+              "ln"
             ]
           },
           "format": {

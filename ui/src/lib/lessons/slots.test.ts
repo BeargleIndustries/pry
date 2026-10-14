@@ -60,5 +60,10 @@ describe('slots', () => {
     const src = source({ 'r.clean': 4, 'r.corrupted': 0, 'r.patched': 3 });
     expect(renderSlot('share', slots, src)).toBe('75% (about 3 in 4)');
     expect(derive('share', [1, 1, 2])).toBeUndefined();
+    // P2.4:72: 67.7% over 2.3% is about 29 times as likely, a logit difference of about 3.4.
+    expect(derive('ratio', [0.677, 0.023])).toBeCloseTo(29.43, 1);
+    expect(derive('ln', [29.43])).toBeCloseTo(3.38, 2);
+    expect(derive('ratio', [1, 0])).toBeUndefined();
+    expect(derive('ln', [0])).toBeUndefined();
   });
 });

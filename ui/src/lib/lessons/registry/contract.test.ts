@@ -51,7 +51,8 @@ const EXISTING_ANCHORS = ['ablation-head-toggle', 'patching-panel', 'circuit-gra
 
 const PLAN_VIEWS = ['embedding-compare', 'text-diff', 'top5-pair', 'three-logits', 'summary-table'];
 const PLAN_PICKERS = ['token', 'head'];
-const PLAN_SPINE = ['text', 'tokens', 'embedding', 'residual-stream', 'logits', 'probabilities', 'sampling', 'append', 'repeat'];
+// `training` is the bracket over every box (map 76; T1 gate critic B2, P1.1:62, P1.6:50).
+const PLAN_SPINE = ['text', 'tokens', 'embedding', 'residual-stream', 'logits', 'probabilities', 'sampling', 'append', 'repeat', 'training'];
 const PLAN_STATEFUL = ['switch_model', 'switch_sae_layer'];
 
 const set = pryToolSet;

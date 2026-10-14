@@ -41,6 +41,8 @@ export interface ReadoutDef {
   args?: ZodType;
   type: ReadoutType;
   unit?: ReadoutUnit;
+  /** A record's field types, so a check's `field` gets its operator checked (lint). */
+  fields?: Record<string, ReadoutType>;
   doc: string;
   read(args?: any): unknown | undefined;
 }
