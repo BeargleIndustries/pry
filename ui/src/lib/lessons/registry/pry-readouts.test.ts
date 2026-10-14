@@ -241,6 +241,32 @@ describe('Pry readouts: one test per readout', () => {
     expect(r('lens.final_prob', { token: ' the' })).toBe(0.3);
   });
 
+  it('lens.* read a token that is never the top guess from tracked', async () => {
+    await ran();
+    await act('run_logit_lens');
+    const s = h.analysis.state;
+    // ' ball' is never a cell's top token; tracked carries it at the last position
+    expect(r('lens.peak_prob', { token: ' ball' })).toBeUndefined();
+    s.logitLensResponse = {
+      ...s.logitLensResponse!,
+      tracked: [
+        { ' ball': { prob: 0.05, logit: 1, rank: 9 } },
+        { ' ball': { prob: 0.2, logit: 2, rank: 2 } },
+        { ' ball': { prob: 0.1, logit: 1.5, rank: 3 } },
+      ],
+    };
+    expect(r('lens.first_top_layer', { token: ' ball' })).toBeUndefined();
+    expect(r('lens.peak_layer', { token: ' ball' })).toBe(1);
+    expect(r('lens.peak_prob', { token: ' ball' })).toBe(0.2);
+    expect(r('lens.final_prob', { token: ' ball' })).toBe(0.1);
+    // the top token still reads from the grid
+    expect(r('lens.first_top_layer', { token: ' the' })).toBe(1);
+    expect(r('lens.final_prob', { token: ' the' })).toBe(0.3);
+    // tracked is last-position only: a focus on another token can't use it
+    s.focusTokenIndex = 1;
+    expect(r('lens.peak_prob', { token: ' ball' })).toBeUndefined();
+  });
+
   async function dlaRan(contrast = true) {
     await ran();
     await act('run_dla', contrast ? { answer: ' Mary', contrast: ' John' } : {});

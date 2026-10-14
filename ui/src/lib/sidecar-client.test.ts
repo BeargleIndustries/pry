@@ -98,7 +98,7 @@ describe('sidecar request bodies', () => {
     const cases: [string, Record<string, unknown>][] = [
       ['GenerateRequest', buildGenerateRequest({ presetId: 'p', prompt: 'x', maxNewTokens: 3, topKFeatures: 2, saeLayer: 1, temperature: 0.7, seed: 1 })],
       ['SAEFeaturesRequest', buildSaeFeaturesRequest({ presetId: 'p', prompt: 'x', saeLayer: 2 })],
-      ['LogitLensRequest', buildLogitLensRequest({ presetId: 'p', prompt: 'x' })],
+      ['LogitLensRequest', buildLogitLensRequest({ presetId: 'p', prompt: 'x', trackTokens: [' a'] })],
       ['DLARequest', buildDLARequest({ presetId: 'p', prompt: 'x', targetTokenIndex: 1, answerToken: 'a', contrastToken: 'b' })],
       ['EmbeddingRequest', buildEmbeddingRequest({ presetId: 'p', prompt: 'x', positions: [1] })],
       ['SteerRequest', buildSteerRequest({ presetId: 'p', prompt: 'x', featureId: 1, saeLayer: 2, alpha: 3, control: true })],
@@ -111,6 +111,17 @@ describe('sidecar request bodies', () => {
     for (const [model, body] of cases) {
       expect(schemaFields(model), model).toEqual(expect.arrayContaining(Object.keys(body)));
     }
+  });
+
+  it('logit lens track_tokens is sent only when there are tokens to track', () => {
+    // 0.3.8's body: no track_tokens key at all
+    expect(buildLogitLensRequest({ presetId: 'p', prompt: 'x' })).toEqual({ preset_id: 'p', prompt: 'x' });
+    expect(buildLogitLensRequest({ presetId: 'p', prompt: 'x', trackTokens: [] })).toEqual({ preset_id: 'p', prompt: 'x' });
+    expect(buildLogitLensRequest({ presetId: 'p', prompt: 'x', trackTokens: [' basketball'] })).toEqual({
+      preset_id: 'p',
+      prompt: 'x',
+      track_tokens: [' basketball'],
+    });
   });
 
   it('every request-key fixture endpoint is a route registered in main.py', () => {

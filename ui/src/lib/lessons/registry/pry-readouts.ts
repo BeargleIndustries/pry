@@ -230,10 +230,20 @@ const lensPos = (src: PrySource) => {
   return i >= 0 ? i : toks.length - 1;
 };
 
-function lensLayers(src: PrySource, tok: string): { layer: number; prob: number }[] {
-  const g = src.logitLens?.grid ?? [];
+/** The token's probability at each layer where it is known: from the grid
+ *  when it is the cell's top token, else from `tracked` (last position only,
+ *  when the request sent it as a track token). */
+function lensLayers(src: PrySource, tok: string): { layer: number; prob: number; top: boolean }[] {
+  const lens = src.logitLens;
+  const g = lens?.grid ?? [];
   const pos = lensPos(src);
-  return g.flatMap((row, l) => (row[pos]?.predicted_token === tok ? [{ layer: l, prob: row[pos].probability }] : []));
+  const last = pos === (lens?.tokens.length ?? 0) - 1;
+  return g.flatMap((row, l) => {
+    const cell = row[pos];
+    if (cell?.predicted_token === tok) return [{ layer: l, prob: cell.probability, top: true }];
+    const t = last ? lens?.tracked?.[l]?.[tok] : undefined;
+    return t ? [{ layer: l, prob: t.prob, top: t.rank === 1 }] : [];
+  });
 }
 
 /** share = (patched − corrupted) ÷ (clean − corrupted), unless the sidecar sent it. */
@@ -469,7 +479,7 @@ export const pryReadouts: Record<string, ReadoutDef> = {
     ),
   },
 
-  'lens.first_top_layer': { args: token, type: 'number', unit: 'layer', doc: 'The first layer where the token is the logit lens top guess.', read: reader((s, a) => lensLayers(s, a.token)[0]?.layer) },
+  'lens.first_top_layer': { args: token, type: 'number', unit: 'layer', doc: 'The first layer where the token is the logit lens top guess.', read: reader((s, a) => lensLayers(s, a.token).find((x) => x.top)?.layer) },
   'lens.peak_layer': {
     args: token,
     type: 'number',
@@ -493,9 +503,8 @@ export const pryReadouts: Record<string, ReadoutDef> = {
     unit: 'probability',
     doc: 'The token\'s probability at the last layer.',
     read: reader((s, a) => {
-      const g = s.logitLens?.grid ?? [];
-      const cell = g[g.length - 1]?.[lensPos(s)];
-      return cell && cell.predicted_token === a.token ? cell.probability : undefined;
+      const n = s.logitLens?.grid.length ?? 0;
+      return lensLayers(s, a.token).find((x) => x.layer === n - 1)?.prob;
     }),
   },
 

@@ -130,12 +130,21 @@ export interface LogitLensCell {
   matches_final: boolean;
 }
 
+/** A tracked token at one layer, last position. rank 1 = the layer's top token. */
+export interface LogitLensTracked {
+  prob: number;
+  logit: number;
+  rank: number;
+}
+
 export interface LogitLensResponse {
   preset_id: string;
   prompt: string;
   tokens: TokenInfo[];
   /** grid[layer][token_pos] */
   grid: LogitLensCell[][];
+  /** tracked[layer][token], last position; only when the request sent track_tokens. */
+  tracked?: Record<string, LogitLensTracked>[];
   n_layers: number;
   timing_ms: Record<string, number>;
   status?: string;
