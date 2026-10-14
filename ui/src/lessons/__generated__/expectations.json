@@ -59,6 +59,20 @@
       ]
     },
     {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Humans only use ten percent of their",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "2cc2c967430f3864aef8886a8138954c04826ae8dc7c7271d99d174c5042ef97",
+      "lessons": [
+        "pry.p1-4"
+      ]
+    },
+    {
       "endpoint": "/tokenize",
       "model": "gpt2-small",
       "body": {
@@ -82,6 +96,20 @@
       "key": "3ed191ba1aa90230b88e8122abe85ef5e4e12fc8f1618793789badf4e0985117",
       "lessons": [
         "pry.p1-3"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Two plus two equals",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "6cbfa01a0cf51537e015464b871062ea6755335522325630603b56a1bf055d3e",
+      "lessons": [
+        "pry.p1-4"
       ]
     },
     {
@@ -151,7 +179,8 @@
       },
       "key": "a468eb96531897079e4892b2e22c4d4216db580be59c17633a37b5b61e4de64a",
       "lessons": [
-        "pry.p1-1"
+        "pry.p1-1",
+        "pry.p1-4"
       ]
     },
     {
@@ -590,6 +619,205 @@
             "read": "top_guess.token",
             "op": "equals",
             "value": " golf"
+          }
+        }
+      ]
+    },
+    "pry.p1-4": {
+      "prompts": [
+        "Two plus two equals",
+        "The capital of France is the city of",
+        "Humans only use ten percent of their"
+      ],
+      "checks": [
+        {
+          "where": "s3-2/one-obs",
+          "kind": "check",
+          "name": "top_guess.token equals \" one\"",
+          "prompt": "Two plus two equals",
+          "check": {
+            "read": "top_guess.token",
+            "op": "equals",
+            "value": " one"
+          }
+        },
+        {
+          "where": "s3-2/one-obs",
+          "kind": "check",
+          "name": "prediction contains {\"rank\":3}",
+          "prompt": "Two plus two equals",
+          "check": {
+            "read": "prediction",
+            "args": {
+              "token": " four"
+            },
+            "op": "contains",
+            "value": {
+              "rank": 3
+            },
+            "expect": {
+              "rank": 3
+            }
+          }
+        },
+        {
+          "where": "s3-2/explain",
+          "kind": "slot",
+          "name": "one_p",
+          "prompt": "Two plus two equals",
+          "expect": 0.34206
+        },
+        {
+          "where": "s3-2/explain",
+          "kind": "slot",
+          "name": "two_p",
+          "prompt": "Two plus two equals",
+          "expect": 0.16224
+        },
+        {
+          "where": "s3-2/explain",
+          "kind": "slot",
+          "name": "four_p",
+          "prompt": "Two plus two equals",
+          "expect": 0.069509
+        },
+        {
+          "where": "s3-2/explain",
+          "kind": "slot",
+          "name": "three_p",
+          "prompt": "Two plus two equals",
+          "expect": 0.068916
+        },
+        {
+          "where": "s3-2/explain",
+          "kind": "slot",
+          "name": "rest",
+          "prompt": "Two plus two equals",
+          "expect": 0.2446
+        },
+        {
+          "where": "s3-3/explain",
+          "kind": "slot",
+          "name": "shape",
+          "prompt": "Two plus two equals",
+          "expect": "few"
+        },
+        {
+          "where": "s3-3/explain",
+          "kind": "assert",
+          "name": "shape equals \"few\"",
+          "prompt": "Two plus two equals"
+        },
+        {
+          "where": "s3-4/bigger-obs",
+          "kind": "check",
+          "name": "prediction.logit gt \"$read.prediction\"",
+          "prompt": "Two plus two equals",
+          "check": {
+            "read": "prediction",
+            "args": {
+              "token": " one"
+            },
+            "field": "logit",
+            "op": "gt",
+            "value": "$read.prediction",
+            "value_args": {
+              "token": " four"
+            },
+            "value_field": "logit"
+          }
+        },
+        {
+          "where": "s3-5/paris-obs",
+          "kind": "slot",
+          "name": "paris",
+          "prompt": "The capital of France is the city of",
+          "expect": 0.097184
+        },
+        {
+          "where": "s3-5/paris-obs",
+          "kind": "slot",
+          "name": "marse",
+          "prompt": "The capital of France is the city of",
+          "expect": 0.089123
+        },
+        {
+          "where": "s3-5/paris-obs",
+          "kind": "slot",
+          "name": "saint",
+          "prompt": "The capital of France is the city of",
+          "expect": 0.030925
+        },
+        {
+          "where": "s3-5/paris-obs",
+          "kind": "slot",
+          "name": "st",
+          "prompt": "The capital of France is the city of",
+          "expect": 0.027857
+        },
+        {
+          "where": "s3-5/paris-obs",
+          "kind": "check",
+          "name": "prediction contains {\"rank\":1}",
+          "prompt": "The capital of France is the city of",
+          "check": {
+            "read": "prediction",
+            "args": {
+              "token": " Paris"
+            },
+            "op": "contains",
+            "value": {
+              "rank": 1
+            },
+            "expect": {
+              "rank": 1
+            }
+          }
+        },
+        {
+          "where": "s3-5/paris-obs",
+          "kind": "assert",
+          "name": "paris_lead lt 0.02",
+          "prompt": "The capital of France is the city of"
+        },
+        {
+          "where": "s5/myth/myth-obs",
+          "kind": "slot",
+          "name": "brains",
+          "prompt": "Humans only use ten percent of their",
+          "expect": 0.12701
+        },
+        {
+          "where": "s5/myth/myth-obs",
+          "kind": "slot",
+          "name": "energy",
+          "prompt": "Humans only use ten percent of their",
+          "expect": 0.1146
+        },
+        {
+          "where": "s5/myth/myth-obs",
+          "kind": "slot",
+          "name": "body",
+          "prompt": "Humans only use ten percent of their",
+          "expect": 0.1027
+        },
+        {
+          "where": "s5/myth/myth-obs",
+          "kind": "slot",
+          "name": "bodies",
+          "prompt": "Humans only use ten percent of their",
+          "expect": 0.072989
+        },
+        {
+          "where": "s5/myth/myth-obs",
+          "kind": "check",
+          "name": "top_guess.prob lt 0.5",
+          "prompt": "Humans only use ten percent of their",
+          "check": {
+            "read": "top_guess.prob",
+            "op": "lt",
+            "value": 0.5,
+            "expect": 0.12701
           }
         }
       ]

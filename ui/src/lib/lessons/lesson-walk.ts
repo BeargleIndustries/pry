@@ -214,7 +214,13 @@ export async function walkLesson(
         ok = typeof got === 'number' && typeof want === 'number' && Math.abs(got - want) <= (tol ?? 0);
         break;
       case 'contains':
-        ok = typeof got === 'string' ? typeof want === 'string' && got.includes(want) : Array.isArray(got) && got.some((g) => deepEqual(g, want));
+        // A string holds a substring; a list holds an item; a record holds every field of `value`.
+        ok =
+          typeof got === 'string'
+            ? typeof want === 'string' && got.includes(want)
+            : Array.isArray(got)
+              ? got.some((g) => deepEqual(g, want))
+              : isObj(got) && isObj(want) && Object.entries(want).every(([k, w]) => deepEqual(got[k], w, tol));
         break;
       case 'starts_with':
         ok = typeof got === 'string' && typeof want === 'string' && got.startsWith(want);
