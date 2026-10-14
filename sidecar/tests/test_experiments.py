@@ -27,7 +27,9 @@ EXPECTATIONS_JSON = (
 EXPERIMENTS: dict[str, tuple[str, list[str]]] = {
     "induction": ("Pip ordered zebra lamps from Quorn. Pip ordered zebra lamps from", ["pry.p2-2"]),
     "logit-lens": ("Michael Jordan played the sport of", ["pry.p2-3"]),
-    "he-or-she": ("The nurse said that", ["pry.p2-4", "pry.p3-1"]),
+    # P2.4 also uses the nurse prompt, but only as its transfer: the learner runs
+    # that DLA in a task (expect: learner), so no recorded lesson request has it.
+    "he-or-she": ("The nurse said that", ["pry.p3-1"]),
     "ioi-knockout": ("When Mary and John went to the store, John gave a drink to", ["pry.p3-2"]),
     "ioi-swap": ("When Mary and John went to the store, John gave a drink to", ["pry.p3-3"]),
     "features-steering": ("On our trip we walked along the beach and watched the ocean", ["pry.p3-5"]),
@@ -84,8 +86,17 @@ def test_experiment_lands_in_its_lesson(exp_id):
     waiting = [lid for lid in lesson_ids if lid not in lessons]
     if waiting:
         pytest.skip(f"{exp_id}: waiting for {', '.join(f'{lid} ({LANE[lid]})' for lid in waiting)}")
+    doc = _doc()
     for lid in lesson_ids:
-        assert prompt in lessons[lid]["prompts"], f"{exp_id}: {lid} never sends {prompt!r}"
+        # A /patch request sends its pair as clean_prompt / corrupted_prompt (P3.3).
+        sent = set(lessons[lid]["prompts"]) | {
+            req["body"][f]
+            for req in doc["requests"]
+            if lid in req["lessons"]
+            for f in ("clean_prompt", "corrupted_prompt")
+            if f in req["body"]
+        }
+        assert prompt in sent, f"{exp_id}: {lid} never sends {prompt!r}"
 
 
 def _patch_pairs() -> list[tuple[str, str, str]]:
