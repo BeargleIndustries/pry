@@ -384,7 +384,7 @@ export const pryActions: Record<string, ActionDef> = {
   },
   switch_sae_layer: {
     args: z.object({ layer }).strict(),
-    doc: 'Switches the feature dictionary (SAE) layer.',
+    doc: 'Switches the SAE layer.',
     effect: 'compute',
     stateful: true,
     // Commit-on-complete: layerSwitch records the layer once the engine has it,

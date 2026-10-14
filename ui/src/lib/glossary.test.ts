@@ -37,7 +37,7 @@ describe('glossary', () => {
 
   it('looks up aliases case-insensitively', () => {
     expect(lookupTerm('Head')).toBe(glossary['attention-head']);
-    expect(lookupTerm('word-piece')).toBe(glossary.token);
+    expect(lookupTerm('Tokens')).toBe(glossary.token);
     expect(lookupTerm('knockout')).toBe(glossary.ablation);
     expect(lookupTerm('not a term')).toBeNull();
   });

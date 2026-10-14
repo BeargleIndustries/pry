@@ -194,7 +194,7 @@ describe('Pry actions: one test per action', () => {
     expect(h.analysis.state.dlaResponse?.contrast_token).toBe(' John');
   });
 
-  it('switch_sae_layer switches the feature dictionary layer', async () => {
+  it('switch_sae_layer switches the SAE layer', async () => {
     await ran();
     await run('switch_sae_layer', { layer: 6 });
     expect(h.analysis.state.saeLayer).toBe(6);

@@ -142,7 +142,7 @@ export const ROWS: Row[] = [
     lane: ['T4b', 'T4c'],
     checks: [
       { file: TIPS, has: ['top 10'] },
-      { file: C('PredictionsPanel'), has: ['Next-word guesses (top 10)'], lacks: ['Top-k'], lane: 'T4c' },
+      { file: C('PredictionsPanel'), has: ['Next-token guesses (top 10)'], lacks: ['Top-k', 'Next-word'], lane: 'T4c' },
     ],
   },
   { id: 'copy:P10', lane: 'T4b', checks: [{ file: TIPS, has: ['Run Steered'], lacks: ['rewired'] }] },
@@ -181,7 +181,7 @@ export const ROWS: Row[] = [
     checks: [
       { test: { file: READOUTS_TEST, name: 'patching readout names the best part and its score change' } },
       { test: { file: READOUTS_TEST, name: 'key parts readout says lines show one kind of link' } },
-      // TODO(pry-learning T6): confirm the re-point in the copy pass (T4-ui: MF-4 dropped the changed-word count).
+      // Re-pointed in the 0.4.0 copy pass (T6): MF-4 dropped the changed-word count; this test pins the new wording.
       { test: { file: READOUTS_TEST, name: 'steering readout says the text changed, with no word count' } },
     ],
   },
@@ -193,8 +193,8 @@ export const ROWS: Row[] = [
     checks: [
       {
         file: C('PatchingPanel'),
-        has: ['Swap test', 'Blue squares bring the original answer back', 'raised the score for'],
-        lacks: ['Activation Patching', 'Causal importance', 'Brightness = patching effect magnitude'],
+        has: ['Swap test', "Blue squares raise the original answer's score", 'raised the score for'],
+        lacks: ['Activation Patching', 'Causal importance', 'Brightness = patching effect magnitude', 'bring the original answer back'],
       },
       { screenshot: 'bug-none-swaptest-panel' },
     ],
@@ -208,7 +208,7 @@ export const ROWS: Row[] = [
   {
     id: 'copy:C8',
     lane: 'T4c',
-    checks: [{ file: C('PredictionsPanel'), has: ['Next-word guesses', "the model's chance for each"] }],
+    checks: [{ file: C('PredictionsPanel'), has: ['Next-token guesses', "the model's chance for each"] }],
   },
   {
     id: 'copy:C9',
@@ -222,7 +222,7 @@ export const ROWS: Row[] = [
       { file: [C('DLAPanel'), C('PredictionsPanel')], has: ['Press Run again.'] },
       { file: C('DLAPanel'), lacks: ['No component attributions'] },
       { file: C('CircuitPanel'), has: ['Lower it and press Find key parts'] },
-      { file: C('PanelB'), has: ['concepts inside'] },
+      { file: C('PanelB'), has: ['see which features fire'], lacks: ['concepts inside'] },
     ],
   },
   { id: 'copy:C11', lane: 'T4c', checks: [{ file: C('PanelA'), has: ['Type at least two words'] }] },
