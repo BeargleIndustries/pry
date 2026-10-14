@@ -6,7 +6,7 @@
 // `{slot}`s. Everything else is dropped with an author note; HTML is always
 // dropped. Links run through the tool's `open_link` action (dispatcher, so
 // grants apply); `lesson:<id>#<section>` links navigate inside Lessons.
-// Nothing in ui/src/lib/lessons renders raw HTML: no `{@html}` anywhere.
+// Nothing in ui/src/lib/lessons renders raw HTML: no Svelte html tag anywhere (render.test.ts checks).
 //
 // Also defines `RenderedStep`, the runner -> presenter payload (contract.ts
 // re-exports it): one section with each step's state already resolved.
@@ -311,6 +311,8 @@ export interface RenderedBlock {
     onSkip: RNode[] | null;
     modelAnswer: RNode[] | null;
     canSkip: boolean;
+    /** Labels of the regions this predict hides until the learner answers. */
+    hidden: string[];
   };
   act?: { state: 'ready' | 'running' | 'done' | 'failed' | 'blocked'; message: string | null };
   observe?: { journal: boolean; revealed: boolean; result: CheckView | null; note: string | null; waiting: boolean; asserts: RNode[][] };

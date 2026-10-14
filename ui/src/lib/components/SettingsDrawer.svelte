@@ -7,10 +7,13 @@
     open,
     onClose,
     children,
+    lessonsSection,
   }: {
     open: boolean;
     onClose: () => void;
     children?: Snippet;
+    /** Settings > Lessons (plan T3). */
+    lessonsSection?: Snippet;
   } = $props();
 
   // Esc closes the drawer
@@ -67,6 +70,7 @@
     </header>
     <div class="flex-1 overflow-y-auto px-5 py-5">
       {@render children?.()}
+      {@render lessonsSection?.()}
     </div>
   </div>
 {/if}

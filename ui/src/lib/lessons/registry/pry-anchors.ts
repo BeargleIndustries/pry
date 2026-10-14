@@ -131,8 +131,8 @@ const PANEL_OF: Record<string, string> = {
 // Anchors whose element doesn't exist yet locate to null until it does
 // (`dla-total-line` on an engine without the total, `steering-coherence`
 // under 5 tokens).
-// TODO(pry-learning T3): mark the Lessons button `lessons-toggle`; the
-// presenter draws `highlight` from pryUi.highlight.
+// The Lessons button carries `data-tour="lessons-toggle"` (+page.svelte); the
+// sidebar draws `highlight` from pryUi.highlight (T3).
 
 /** First on-screen element marked `name` whose `attr` equals `value`. */
 function findWith(name: string, attr: string, value: string): HTMLElement | null {
@@ -246,3 +246,9 @@ function build(): Record<string, AnchorDef> {
 }
 
 export const pryAnchors: Record<string, AnchorDef> = build();
+
+/** The anchors 0.4.0 adds (N11) beyond the 0.3.8 tour's targets. */
+export const ADDED_ANCHORS: readonly string[] = Object.keys(added);
+
+/** Anchors that live inside the Lessons sidebar, not the app (the embedding reader). */
+export const SIDEBAR_ANCHORS: readonly string[] = ['embedding-view', 'embedding-values'];

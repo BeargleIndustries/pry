@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy, untrack } from 'svelte';
-  import { Settings, Download, FlaskConical, GitCompareArrows, BookOpen, BookmarkPlus } from 'lucide-svelte';
+  import { Settings, Download, FlaskConical, GitCompareArrows, BookOpen, BookmarkPlus, GraduationCap, MoveHorizontal } from 'lucide-svelte';
   import PryLogo from '$lib/components/icons/PryLogo.svelte';
   import { health, loadPreset, unloadPreset, listModels } from '$lib/sidecar';
   import { withoutEngineMemory } from '$lib/hardware-adjust';
@@ -69,9 +69,17 @@
   import ComparePanel from '$lib/components/ComparePanel.svelte';
   import NotebookPanel from '$lib/components/NotebookPanel.svelte';
   import { createNotebookStore } from '$lib/notebook.svelte';
-  import { bindPryHost, pryMemo, pryUi } from '$lib/lessons/registry/pry-state.svelte';
+  import { bindPryHost, hasPryHost, pryMemo, pryUi } from '$lib/lessons/registry/pry-state.svelte';
   import { buildProvenance, type ProvenanceExtras } from '$lib/notebook';
   import { isTauri } from '$lib/is-tauri';
+  import LessonSidebar from '$lib/lessons/LessonSidebar.svelte';
+  import InstallSheet from '$lib/lessons/InstallSheet.svelte';
+  import LessonsSettings from '$lib/lessons/LessonsSettings.svelte';
+  import { lessonsCopy } from '$lib/lessons/copy';
+  import { clampSidebar, layoutFor, readPrefs, widenShown, widenTarget, writePref, type Side } from '$lib/lessons/layout';
+  import { prySnapshot } from '$lib/lessons/registry/pry-apply';
+  import { pryToolSet } from '$lib/lessons/registry/pry-set';
+  import type { LessonsApp } from '$lib/lessons-app.svelte';
 
   // ---------------------------------------------------------------------------
   // Hardware probe state
@@ -219,15 +227,136 @@
   // Responsive layout state
   // ---------------------------------------------------------------------------
 
-  let isWide = $state(true); // >= 1280px → split mode
+  // §P-layout (plan D2): `windowWide` is 0.3.8's isWide (>= 1280px) and only
+  // places the prompt; `workspaceSplit` decides split vs tabbed. With Lessons
+  // off they're equal and nothing new observes anything.
+  let windowWide = $state(true); // >= 1280px → prompt in the header
 
   $effect(() => {
     const mq = window.matchMedia('(min-width: 1280px)');
-    isWide = mq.matches;
-    const handler = (e: MediaQueryListEvent) => { isWide = e.matches; };
+    windowWide = mq.matches;
+    const handler = (e: MediaQueryListEvent) => { windowWide = e.matches; };
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
   });
+
+  // Lessons beside the app (plan T3 "Layout"): width, side and rail remembered.
+  const lessonPrefs = readPrefs();
+  let lessons = $state<LessonsApp | null>(null);
+  let lessonsOn = $state(false);
+  let lessonSide = $state<Side>(lessonPrefs.side);
+  let lessonWidth = $state<number | null>(lessonPrefs.width);
+  let lessonCollapsed = $state(lessonPrefs.collapsed);
+  let lessonRowEl = $state<HTMLElement | null>(null);
+  let lessonMainEl = $state<HTMLElement | null>(null);
+  let lessonRowWidth = $state(0);
+  let lessonWorkspace = $state<number | null>(null);
+  let lessonWin = $state<{ maximized: boolean; workArea: { width: number; height: number } | null; scale: number }>({ maximized: false, workArea: null, scale: 1 });
+  const lessonLayout = $derived(
+    layoutFor({ on: lessonsOn, windowWidth: lessonRowWidth || 1280, sidebarWidth: lessonWidth, collapsed: lessonCollapsed, measuredWorkspace: lessonWorkspace }),
+  );
+  const workspaceSplit = $derived(lessonsOn ? lessonLayout.workspaceSplit : windowWide);
+  const widenVisible = $derived(
+    lessonsOn &&
+      widenShown({ on: true, workspaceSplit, maximized: lessonWin.maximized, window: { width: lessonRowWidth, height: 0 }, sidebar: lessonLayout.sidebar, workArea: lessonWin.workArea, scale: lessonWin.scale }),
+  );
+
+  // On only: the row and the workspace are measured (ResizeObserver), and the monitor read for "Widen window".
+  $effect(() => {
+    if (!lessonsOn || !lessonRowEl || !lessonMainEl) return;
+    const row = lessonRowEl;
+    const main = lessonMainEl;
+    const measure = () => {
+      lessonRowWidth = row.clientWidth;
+      lessonWorkspace = main.clientWidth;
+      void readMonitor();
+    };
+    const ro = new ResizeObserver(measure);
+    ro.observe(row);
+    ro.observe(main);
+    measure();
+    return () => {
+      ro.disconnect();
+      lessonWorkspace = null;
+    };
+  });
+
+  async function readMonitor() {
+    if (!isTauri()) return;
+    try {
+      const { getCurrentWindow, currentMonitor } = await import('@tauri-apps/api/window');
+      const [maximized, mon] = await Promise.all([getCurrentWindow().isMaximized(), currentMonitor()]);
+      const area = mon ? (mon.workArea?.size ?? mon.size) : null;
+      lessonWin = { maximized, workArea: area ? { width: area.width, height: area.height } : null, scale: mon?.scaleFactor ?? 1 };
+    } catch {
+      /* no window API: no widen button */
+    }
+  }
+
+  /** "Widen window": freeze the sidebar width, then size the window to fit both panels (never setMinSize). */
+  async function widenWindow() {
+    lessonWidth = lessonLayout.sidebar;
+    writePref('width', String(lessonWidth));
+    const t = widenTarget({ on: true, workspaceSplit, maximized: lessonWin.maximized, window: { width: lessonRowWidth, height: window.innerHeight }, sidebar: lessonLayout.sidebar, workArea: lessonWin.workArea, scale: lessonWin.scale });
+    try {
+      const { getCurrentWindow, LogicalSize } = await import('@tauri-apps/api/window');
+      await getCurrentWindow().setSize(new LogicalSize(t.width, t.height));
+    } catch {
+      /* outside Tauri */
+    }
+  }
+
+  async function ensureLessons(watch: boolean): Promise<LessonsApp> {
+    if (!lessons) {
+      const [{ createLessonsApp }, log] = await Promise.all([
+        import('$lib/lessons-app.svelte'),
+        isTauri() ? import('$lib/lessons/log').then((m) => m.openLessonLog()).catch(() => undefined) : Promise.resolve(undefined),
+      ]);
+      const app = createLessonsApp({
+        notebook,
+        provenance: () => buildProvenance({ ...currentRunData(), saeLayer: st.saeLayer ?? null }, { snapshot: prySnapshot() }),
+        modelName: (id) => displayName(id, allCompat),
+        currentModel: () => activePresetId,
+        log,
+      });
+      await app.load();
+      lessons = app;
+    }
+    if (watch) await lessons.watch();
+    return lessons;
+  }
+
+  async function openLessons() {
+    // Quick tour and Lessons are exclusive.
+    if (tutorialState.open) tutorialState.close();
+    lessonsOn = true;
+    const app = await ensureLessons(true);
+    if (app.state.pending.length) app.state.installOpen = true;
+  }
+
+  function closeLessons() {
+    lessons?.closeLesson();
+    lessonsOn = false;
+  }
+
+  $effect(() => {
+    if (tutorialState.open && lessonsOn) closeLessons();
+  });
+
+  function resizeLessons(w: number) {
+    lessonWidth = clampSidebar(w, lessonRowWidth || window.innerWidth);
+    writePref('width', String(lessonWidth));
+  }
+
+  function setLessonSide(side: Side) {
+    lessonSide = side;
+    writePref('side', side);
+  }
+
+  function setLessonCollapsed(on: boolean) {
+    lessonCollapsed = on;
+    writePref('collapsed', String(on));
+  }
 
   // ---------------------------------------------------------------------------
   // Inline prompt handler
@@ -394,7 +523,6 @@
   }
 
   // What provenance needs beyond the run's own responses: app and engine versions.
-  // TODO(pry-learning T3): pass the tool's snapshot() here once T3 provides it.
   async function provenanceExtras(): Promise<ProvenanceExtras> {
     const [h, appVersion] = await Promise.all([
       health().catch(() => null),
@@ -402,7 +530,7 @@
         ? import('@tauri-apps/api/app').then((m) => m.getVersion()).catch(() => null)
         : Promise.resolve(null),
     ]);
-    return { appVersion, health: h, snapshot: undefined };
+    return { appVersion, health: h, snapshot: hasPryHost() ? prySnapshot() : undefined };
   }
 
   async function handleExportJSON() {
@@ -681,11 +809,11 @@
   };
 
   // Lessons (plan T2b): the registry reaches the page only through this host.
-  // `workspaceSplit` (pry-state) is today's isWide until T3's layout drives it;
-  // the two tab-forcing calls above read it. The registry's reset is its own
+  // `workspaceSplit` (pry-state) follows §P-layout's workspaceSplit; the two
+  // tab-forcing calls above read it. The registry's reset is its own
   // (registry/pry-actions.ts): it never calls dismissGuide or endTour.
   $effect(() => {
-    pryUi.workspaceSplit = isWide;
+    pryUi.workspaceSplit = workspaceSplit;
   });
   onMount(() =>
     bindPryHost({
@@ -881,7 +1009,7 @@
     />
     <EngineStatusChip compatibilities={allCompat} refreshKey={healthKey} />
 
-    {#if isWide && !compareMode}
+    {#if windowWide && !compareMode}
       <!-- Inline prompt input (Wireshark filter-bar style) -->
       <div class="flex flex-1 items-center gap-2 ml-3">
         <span class="text-xs text-zinc-500 mr-1">Prompt</span>
@@ -954,6 +1082,24 @@
         Experiments
       </button>
       <button
+        onclick={() => (lessonsOn ? closeLessons() : openLessons())}
+        aria-pressed={lessonsOn}
+        data-tour="lessons-toggle"
+        title={lessonsOn ? lessonsCopy.toggleCloseTitle : lessonsCopy.toggleOpenTitle}
+        class="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs {lessonsOn
+          ? 'bg-indigo-950/60 text-indigo-300 hover:bg-indigo-900/60'
+          : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100'}"
+      >
+        <GraduationCap class="h-4 w-4" />
+        {lessonsCopy.toggle}
+      </button>
+      {#if widenVisible}
+        <button onclick={widenWindow} title={lessonsCopy.widenTitle} data-testid="lessons-widen" class="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100">
+          <MoveHorizontal class="h-4 w-4" />
+          {lessonsCopy.widen}
+        </button>
+      {/if}
+      <button
         onclick={() => (compareMode = !compareMode)}
         aria-pressed={compareMode}
         data-tour="compare-button"
@@ -977,7 +1123,7 @@
   </header>
 
   <!-- Narrow-mode prompt (below header) -->
-  {#if !isWide && !compareMode}
+  {#if !windowWide && !compareMode}
     <div class="flex-shrink-0 border-b border-zinc-800 bg-zinc-900/50 px-4 py-2">
       <div class="flex gap-2">
         <span class="text-xs text-zinc-500 mr-1 self-center">Prompt</span>
@@ -1006,6 +1152,8 @@
     </div>
   {/if}
 
+  <!-- §P-layout: everything below the prompt; with Lessons on it sits beside the sidebar. -->
+  {#snippet mainColumn()}
   <!-- Load progress banner — spans full width below header.
        Note (critic): its sticky top-0 becomes inert inside this flex layout
        since the parent is overflow-hidden. The banner still renders correctly
@@ -1098,7 +1246,7 @@
       <div class="h-full overflow-y-auto p-4">
         <ComparePanel {compare} runDisabled={isRunDisabled} runDisabledReason={runButtonTooltip} />
       </div>
-    {:else if isWide}
+    {:else if workspaceSplit}
       <!-- Split mode -->
       <ResizableSplit>
         {#snippet left()}
@@ -1337,6 +1485,52 @@
       </div>
     {/if}
   </div>
+  {/snippet}
+  {#if lessonsOn && lessons}
+    {@const app = lessons}
+    {#snippet sidebar()}
+      <LessonSidebar
+        model={app.model}
+        anchors={pryToolSet.anchors}
+        views={pryToolSet.views}
+        spine={pryToolSet.spine}
+        captures={app.captures}
+        runAction={app.runAction}
+        highlight={pryUi.highlight}
+        side={lessonSide}
+        width={lessonLayout.sidebar}
+        railed={lessonLayout.railed}
+        picker={app.state.loaded ? app.pickerItems() : []}
+        pending={app.state.pending.length}
+        onPick={(id) => void app.openLesson(id)}
+        onReview={() => (app.state.installOpen = true)}
+        onAllLessons={() => app.closeLesson()}
+        onResize={resizeLessons}
+        onCollapse={() => setLessonCollapsed(true)}
+        onExpand={() => setLessonCollapsed(false)}
+        onClose={closeLessons}
+      />
+    {/snippet}
+    <div class="flex min-h-0 flex-1" bind:this={lessonRowEl} data-lessons-row>
+      {#if lessonSide === 'left'}{@render sidebar()}{/if}
+      <div class="flex min-h-0 min-w-0 flex-1 flex-col" bind:this={lessonMainEl} data-lessons-main>
+        {@render mainColumn()}
+      </div>
+      {#if lessonSide === 'right'}{@render sidebar()}{/if}
+    </div>
+  {:else}
+    {@render mainColumn()}
+  {/if}
+  {#if lessons?.state.installOpen && lessons.state.pending[0]}
+    {@const p = lessons.state.pending[0]}
+    <InstallSheet
+      title={p.entry.lesson?.title ?? p.entry.id}
+      ask={p.ask}
+      services={pryToolSet.services}
+      onAllow={(approved) => void lessons?.answerInstall(p, approved)}
+      onDeny={() => void lessons?.answerInstall(p, null)}
+    />
+  {/if}
 
 
   <!--
@@ -1350,6 +1544,25 @@
 
   <!-- Settings drawer: hardware, presets, custom models -->
   <SettingsDrawer open={settingsOpen} onClose={() => (settingsOpen = false)}>
+    {#snippet lessonsSection()}
+      <LessonsSettings
+        side={lessonSide}
+        onSide={setLessonSide}
+        authorMode={lessons?.state.authorMode ?? false}
+        onAuthorMode={(on) => void ensureLessons(false).then((a) => a.setAuthorMode(on))}
+        pending={lessons?.state.pending.length ?? 0}
+        onReview={() => { if (lessons) lessons.state.installOpen = true; }}
+        userLessons={lessons?.userRows() ?? []}
+        onAdd={isTauri() ? () => void ensureLessons(false).then((a) => a.addLesson()) : undefined}
+        onOpenFolder={isTauri() ? () => void ensureLessons(false).then((a) => a.openFolder()) : undefined}
+        onReload={() => void ensureLessons(false).then((a) => a.reload())}
+        onGuide={() => void ensureLessons(false).then((a) => a.openGuide())}
+        onCopyLinter={() => ensureLessons(false).then((a) => a.copyLinter())}
+        onRevoke={(id) => void lessons?.revokeLesson(id)}
+        onCheck={(id) => (lessons ? lessons.checkLesson(id) : Promise.resolve([]))}
+        onRemove={(id) => void lessons?.removeLesson(id)}
+      />
+    {/snippet}
     <!-- Hardware probe -->
     {#if hardwareLoading && !hardware}
       <!-- Skeleton -->

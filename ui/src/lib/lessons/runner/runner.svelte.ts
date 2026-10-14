@@ -1169,6 +1169,7 @@ export class LessonRunner<VS = unknown> {
           onSkip: st.skipped && f.on_skip ? this.nodes(String(f.on_skip), sec) : null,
           modelAnswer: st.locked && f.model_answer ? this.nodes(String(f.model_answer), sec) : null,
           canSkip: step.kind === 'predict' || step.kind === 'question',
+          hidden: step.kind === 'predict' && !st.locked ? list(f.hides).map((a) => this.set.anchors[a]?.label ?? a) : [],
         };
         break;
       }

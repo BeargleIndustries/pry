@@ -6,14 +6,16 @@ import { lintLesson } from '../../format/lint';
 import { createDispatcher } from '../../registry/dispatcher';
 import { RequestMemo } from '../../registry/memo';
 import { otherApp, otherTool, resetOtherApp } from './tool';
+import { createRunner } from '../../runner/runner.svelte';
+import { memoryJournal } from '../../runner/types';
 
 const SOURCE = readFileSync(fileURLToPath(new URL('./lesson.md', import.meta.url)), 'utf-8');
 
 beforeEach(resetOtherApp);
 
 // Plan T2 acceptance (contract.test.ts names it): a fixture non-Pry
-// ToolActionSet lints and runs fixtures/other-tool/lesson.md. This file is the
-// lint-and-dispatch half; the runner replay half needs T3's runner.
+// ToolActionSet lints and runs fixtures/other-tool/lesson.md: lint, dispatch,
+// and the runner's replay with back/forward (T3).
 describe('a non-Pry tool', () => {
   it('has 2 actions, 1 readout, 1 view and fake state', () => {
     expect(Object.keys(otherTool.actions)).toHaveLength(2);
@@ -45,7 +47,26 @@ describe('a non-Pry tool', () => {
     expect(lesson?.sections.length).toBe(2);
   });
 
-  // TODO(pry-learning T3): the replay half: run lesson.md through the real
-  // runner with back/forward replay (plan T2 acceptance, contract.test.ts).
-  it.todo('runs fixtures/other-tool/lesson.md through the real runner with back/forward replay');
+  it('runs fixtures/other-tool/lesson.md through the real runner with back/forward replay', async () => {
+    const { lesson } = loadLessonSource(SOURCE, { tool: otherTool });
+    const runner = createRunner({ set: otherTool, memo: new RequestMemo(), journal: memoryJournal(), currentModel: () => 'tiny' });
+    await runner.open(lesson!, { source: { kind: 'bundled' } });
+    // Section 1 opens on the baseline; its own do step waits for the learner.
+    expect(otherTool.snapshot()).toEqual({ input: 'hello', output: null });
+    await runner.answer('guess', { choice: 0 });
+    await runner.doStep('go');
+    await runner.showObserve('look');
+    const obs = runner.render().blocks.find((b) => b.key === 'look')!.observe!;
+    expect(obs.result?.agrees).toBe(true);
+    // Section 2: section 1's do step replays, then its own enter applies.
+    await runner.next();
+    expect(otherTool.snapshot()).toEqual({ input: 'bank', output: 'HELLO' });
+    // Back: section 1 again, as it opened.
+    await runner.back();
+    expect(otherTool.snapshot()).toEqual({ input: 'hello', output: null });
+    // Forward cold: the same section 2 state.
+    resetOtherApp();
+    await runner.goto(1);
+    expect(otherTool.snapshot()).toEqual({ input: 'bank', output: 'HELLO' });
+  });
 });
