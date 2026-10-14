@@ -69,6 +69,8 @@
   import ComparePanel from '$lib/components/ComparePanel.svelte';
   import NotebookPanel from '$lib/components/NotebookPanel.svelte';
   import { createNotebookStore } from '$lib/notebook.svelte';
+  import { buildProvenance, type ProvenanceExtras } from '$lib/notebook';
+  import { isTauri } from '$lib/is-tauri';
 
   // ---------------------------------------------------------------------------
   // Hardware probe state
@@ -383,8 +385,27 @@
     };
   }
 
+  // What provenance needs beyond the run's own responses: app and engine versions.
+  // TODO(pry-learning T3): pass the tool's snapshot() here once T3 provides it.
+  async function provenanceExtras(): Promise<ProvenanceExtras> {
+    const [h, appVersion] = await Promise.all([
+      health().catch(() => null),
+      isTauri()
+        ? import('@tauri-apps/api/app').then((m) => m.getVersion()).catch(() => null)
+        : Promise.resolve(null),
+    ]);
+    return { appVersion, health: h, snapshot: undefined };
+  }
+
   async function handleExportJSON() {
-    const data = { ...currentRunData(), exportedAt: new Date().toISOString() };
+    const run = currentRunData();
+    const [extras] = await Promise.all([provenanceExtras(), notebook.load()]);
+    const data = {
+      ...run,
+      provenance: buildProvenance({ ...run, saeLayer: run.saeLayer ?? null }, extras),
+      journal: notebook.state.journal,
+      exportedAt: new Date().toISOString(),
+    };
     saveJsonFile(JSON.stringify(data, null, 2)).catch((e) => {
       st.error = `Export failed: ${e instanceof Error ? e.message : String(e)}`;
     });
@@ -712,9 +733,10 @@
     notebookOpen = true;
   }
 
-  function saveRunToNotebook(title: string, note: string) {
+  async function saveRunToNotebook(title: string, note: string) {
     const { response, saeLayer, ...rest } = currentRunData();
-    if (!response) return Promise.resolve(null);
+    if (!response) return null;
+    const provenance = await provenanceExtras();
     const exp = activeExperiment && activeExperiment.prompt === response.prompt ? activeExperiment : null;
     return notebook.add({
       title,
@@ -723,6 +745,7 @@
       display: presetDisplay,
       experiment: exp ? { id: exp.id, title: exp.title, citations: exp.found.citations } : null,
       run: { ...rest, response, saeLayer: saeLayer ?? null },
+      provenance,
     });
   }
 
