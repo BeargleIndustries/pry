@@ -3630,13 +3630,14 @@
         {
           "where": "s3-5/map-obs",
           "kind": "check",
-          "name": "circuit.target contains {\"token\":\" 17\"}",
+          "name": "circuit.target contains {\"token\":\"49\",\"after\":\" 17\"}",
           "prompt": "The war lasted from the year 1732 to the year 17",
           "check": {
             "read": "circuit.target",
             "op": "contains",
             "value": {
-              "token": " 17"
+              "token": "49",
+              "after": " 17"
             }
           }
         },
