@@ -2,7 +2,16 @@
   import Term from './Term.svelte';
   import Readout from './Readout.svelte';
   import type { PatchResponse, PatchComponent } from '$lib/types';
-  import { patchingReadout, quoteToken } from '$lib/readouts';
+  import {
+    defaultPatchPart,
+    PATCH_EVERY_POSITION,
+    PATCH_LEGEND_FORMULA,
+    patchingReadout,
+    patchLogitsLine,
+    patchShareEdge,
+    patchShareLine,
+    quoteToken,
+  } from '$lib/readouts';
   import {
     patchLengthStatus,
     TOKENIZE_DEBOUNCE_MS,
@@ -105,18 +114,26 @@
     ps.selectedComponent = null;
   }
 
-  // Blue = positive (brings back the original answer), orange = negative.
-  // Colorblind-safe pair from $lib/signed-color; the sign is also in every label.
-  function cellColor(effect: number): string {
-    return signedColor(effect, maxAbsEffect);
+  // Cells are colored by share (MF-3): blue toward the Original value, orange
+  // away from it, full brightness at 100%. Engines without share fall back to
+  // the raw score change. Colorblind-safe pair from $lib/signed-color; the
+  // sign is also in every label.
+  const hasShare = $derived(components.some((c) => c.share !== undefined));
+  function cellColor(comp: PatchComponent | undefined): string {
+    if (!comp) return signedColor(0, 1);
+    if (hasShare) return signedColor(comp.share ?? 0, 1);
+    return signedColor(comp.effect, maxAbsEffect);
   }
+
+  // The three logits above the grid: the clicked square, else the biggest raise.
+  const shownPart = $derived(ps.selectedComponent ?? defaultPatchPart(response));
 
   function effectWords(effect: number): string {
     const s = signOf(effect);
     return s === 'positive'
-      ? 'brings back the original answer'
+      ? 'moves the logit toward the Original value'
       : s === 'negative'
-        ? 'pushes further from the original'
+        ? 'moves the logit away from the Original value'
         : 'no change';
   }
 
@@ -185,8 +202,8 @@
 
   <p class="text-xs text-zinc-400">
     Pry runs the changed prompt, copies one part's work over from the original prompt, and checks how much of the
-    original answer comes back. Researchers call this <Term key="patching">patching</Term>. The numbers here are raw
-    changes in the answer's <Term key="logit">score</Term>, not percentages.
+    original answer comes back. Researchers call this <Term key="patching">patching</Term>. Each square's number is a raw
+    change in the answer's <Term key="logit">score</Term> (its logit); the share works out a percentage from three logits.
   </p>
 
   <!-- Inputs -->
@@ -278,6 +295,21 @@
       <span class="text-zinc-300">{response.patch_type === 'head' ? 'heads' : response.patch_type === 'mlp' ? 'MLPs' : 'residual'}</span>
     </div>
 
+    <!-- MF-3: the target's logit in the three runs, with the share worked out beside it -->
+    {#if shownPart}
+      {@const shareLine = patchShareLine(response, shownPart)}
+      {@const edge = patchShareEdge(shownPart)}
+      <div data-tour="patch-three-logits" class="flex flex-col gap-0.5 rounded-md border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-[11px] text-zinc-300">
+        <p>
+          <span class="font-mono text-zinc-500">{shownPart.name}</span>
+          {patchLogitsLine(response, shownPart)}
+          {#if shareLine}<span class="ml-1 font-mono text-zinc-400">{shareLine}</span>{/if}
+        </p>
+        {#if edge}<p class="text-zinc-400">{edge}</p>{/if}
+        {#if response.patch_type !== 'resid'}<p class="text-zinc-500">{PATCH_EVERY_POSITION}</p>{/if}
+      </div>
+    {/if}
+
     {#if shownPatchType === 'head' && nHeads > 0}
       <!-- Heatmap for head patching -->
       <div class="overflow-x-auto">
@@ -321,7 +353,7 @@
                   onfocus={() => { gridCurrent = { row: l, col: h }; }}
                   onclick={() => { ps.selectedComponent = comp ?? null; }}
                   class="flex h-5 w-5 items-center justify-center rounded-sm border border-zinc-800 text-[10px] font-bold leading-none transition-colors hover:border-zinc-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                  style="background-color: {cellColor(effect)}; color: {glyphColor(effect)};"
+                  style="background-color: {cellColor(comp)}; color: {glyphColor(effect)};"
                   title="L{l} H{h}: {signedNumber(effect, 2)} score change"
                   aria-label={cellLabel(`Layer ${l}, head ${h}`, effect)}
                 ><span aria-hidden="true">{cellGlyph(effect)}</span></button>
@@ -370,7 +402,7 @@
                   onfocus={() => { gridCurrent = { row: l, col: p }; }}
                   onclick={() => { ps.selectedComponent = comp ?? null; }}
                   class="flex h-5 min-w-5 items-center justify-center rounded-sm border border-zinc-800 text-[10px] font-bold leading-none transition-colors hover:border-zinc-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                  style="background-color: {cellColor(effect)}; color: {glyphColor(effect)};"
+                  style="background-color: {cellColor(comp)}; color: {glyphColor(effect)};"
                   title="Layer {l}, {JSON.stringify(tok)}: {signedNumber(effect, 2)} score change"
                   aria-label={cellLabel(`Layer ${l}, word ${p + 1} ${JSON.stringify(tok)}`, effect)}
                 ><span aria-hidden="true">{cellGlyph(effect)}</span></button>
@@ -437,13 +469,14 @@
       <span class="flex items-center gap-1">
         <span class="inline-block h-2 w-4 rounded-sm" style="background-color: {POSITIVE_HEX};" aria-hidden="true"></span>
         <span aria-hidden="true" class="font-mono font-bold">+</span>
-        Positive (blue: brings the original answer back)
+        Positive (blue: moves the logit toward the Original value)
       </span>
       <span class="flex items-center gap-1">
         <span class="inline-block h-2 w-4 rounded-sm" style="background-color: {NEGATIVE_HEX};" aria-hidden="true"></span>
         <span aria-hidden="true" class="font-mono font-bold">−</span>
-        Negative (orange: pushes further from the original)
+        Negative (orange: moves the logit away from the Original value)
       </span>
+      <span>{hasShare ? PATCH_LEGEND_FORMULA : 'Square brightness: score change in logits'}</span>
       {#if response?.timing_ms}
         <span class="ml-auto text-zinc-700">
           {response.timing_ms.total_ms?.toFixed(0) ?? '?'}ms
