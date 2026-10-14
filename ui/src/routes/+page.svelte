@@ -396,16 +396,19 @@
         await r.goto(i);
         const flat = (bs: NonNullable<typeof r.section>['steps']): typeof bs => bs.flatMap((s) => [s, ...flat(s.children)]);
         const steps = flat(lesson.sections[i].steps);
-        const obs = steps.find((s) => s.kind === 'observe' && s.fields.check && s.id);
-        if (!obs) continue;
-        for (const s of steps) {
-          if (s === obs) break;
-          const key = r.keyOf(lesson.sections[i], s);
-          if (s.kind === 'predict') await r.skipStep(key);
-          if (s.kind === 'do') await r.doStep(key);
+        for (const obs of steps.filter((s) => s.kind === 'observe' && s.fields.check && s.id)) {
+          for (const s of steps) {
+            if (s === obs) break;
+            const key = r.keyOf(lesson.sections[i], s);
+            if (s.kind === 'predict') await r.skipStep(key);
+            if (s.kind === 'do') await r.doStep(key);
+          }
+          const key = r.keyOf(lesson.sections[i], obs);
+          await r.showObserve(key);
+          const flat2 = (bs: { key: string; children: unknown[]; observe?: { result: unknown } }[]): typeof bs =>
+            bs.flatMap((b) => [b, ...flat2(b.children as typeof bs)]);
+          if (flat2(r.render().blocks as never).find((b) => b.key === key)?.observe?.result) return true;
         }
-        await r.showObserve(r.keyOf(lesson.sections[i], obs));
-        return true;
       }
       return false;
     },

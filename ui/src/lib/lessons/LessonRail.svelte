@@ -26,7 +26,7 @@
     <GraduationCap class="h-5 w-5" />
   </button>
   {#if title}
-    <span class="pry-rail-title select-none text-[11px] text-zinc-500" aria-hidden="true">{title}</span>
+    <span class="pry-rail-title select-none text-[11px] text-zinc-400" aria-hidden="true">{title}</span>
   {/if}
 </div>
 

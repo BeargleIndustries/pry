@@ -41,13 +41,13 @@
     </button>
   {/if}
   {#if items.length === 0}
-    <p class="text-xs text-zinc-500">{lessonsCopy.noLessons}</p>
+    <p class="text-xs text-zinc-400">{lessonsCopy.noLessons}</p>
   {/if}
   <ul class="flex flex-col gap-1">
     {#each items as it (it.id + it.source)}
       <li>
         {#if it.error}
-          <div class="rounded-md border border-zinc-800 px-3 py-2 text-xs text-zinc-500" aria-disabled="true">
+          <div class="rounded-md border border-zinc-800 px-3 py-2 text-xs text-zinc-400" aria-disabled="true">
             <p class="font-medium text-zinc-400">{it.title}</p>
             <p class="mt-0.5 break-words font-mono text-[11px]">{it.error}</p>
           </div>
@@ -60,7 +60,7 @@
           >
             <span class="min-w-0">
               <span class="block truncate font-medium">{it.title}</span>
-              {#if it.minutes}<span class="text-[11px] text-zinc-500">{lessonsCopy.minutes(it.minutes)}</span>{/if}
+              {#if it.minutes}<span class="text-[11px] text-zinc-400">{lessonsCopy.minutes(it.minutes)}</span>{/if}
             </span>
             <span class="flex flex-shrink-0 items-center gap-1">
               {#if it.draft}<span class="rounded bg-amber-900/50 px-1.5 py-0.5 text-[10px] text-amber-200">{lessonsCopy.draft}</span>{/if}

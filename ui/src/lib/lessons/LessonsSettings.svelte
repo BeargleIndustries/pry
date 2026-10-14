@@ -81,7 +81,7 @@
 </script>
 
 <section class="mb-6" data-testid="settings-lessons" aria-labelledby="settings-lessons-heading">
-  <h3 id="settings-lessons-heading" class="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">{c.settingsHeading}</h3>
+  <h3 id="settings-lessons-heading" class="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-400">{c.settingsHeading}</h3>
 
   <div class="mb-3">
     <p id="lessons-side-label" class="text-sm text-zinc-200">{c.sideLabel}</p>
@@ -96,12 +96,12 @@
         >{label}</button>
       {/each}
     </div>
-    <p class="mt-1 text-xs text-zinc-500">{c.sideHint}</p>
+    <p class="mt-1 text-xs text-zinc-400">{c.sideHint}</p>
   </div>
 
   <label class="mb-3 flex items-start gap-2 text-sm text-zinc-200">
     <input type="checkbox" checked={authorMode} onchange={(e) => onAuthorMode((e.currentTarget as HTMLInputElement).checked)} class="mt-1 accent-indigo-500" />
-    <span>{c.authorMode}<span class="block text-xs text-zinc-500">{c.authorModeHint}</span></span>
+    <span>{c.authorMode}<span class="block text-xs text-zinc-400">{c.authorModeHint}</span></span>
   </label>
 
   {#if pending > 0}
@@ -120,13 +120,13 @@
 
   <p class="text-xs font-medium text-zinc-300">{c.yourLessons}</p>
   {#if userLessons.length === 0}
-    <p class="mt-1 text-xs text-zinc-500">{c.noUserLessons}</p>
+    <p class="mt-1 text-xs text-zinc-400">{c.noUserLessons}</p>
   {/if}
   <ul class="mt-1 flex flex-col gap-2">
     {#each userLessons as l (l.id)}
       <li class="rounded-md border border-zinc-800 p-2 text-xs text-zinc-300">
         <p class="font-medium text-zinc-200">{l.title}</p>
-        {#if l.error}<p class="mt-0.5 break-words font-mono text-[11px] text-zinc-500">{l.error}</p>{/if}
+        {#if l.error}<p class="mt-0.5 break-words font-mono text-[11px] text-zinc-400">{l.error}</p>{/if}
         <p class="mt-1 text-zinc-400">{c.asksFor}: {words(l.declared).join('; ') || c.nothingGated}</p>
         <p class="text-zinc-400">{c.allowed}: {words(l.granted).join('; ') || c.nothingGated}</p>
         <div class="mt-1.5 flex flex-wrap gap-2">

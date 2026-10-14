@@ -57,8 +57,8 @@
       <span class="rounded bg-amber-900/50 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-200" title={lessonsCopy.previewHint}>{lessonsCopy.preview}</span>
     </div>
     <p class="text-sm text-zinc-200">{title}</p>
-    {#if authors.length}<p class="text-xs text-zinc-500">{lessonsCopy.installBy(authors.join(', '))}</p>{/if}
-    <p class="mt-1 text-xs text-zinc-500">{lessonsCopy.previewHint}</p>
+    {#if authors.length}<p class="text-xs text-zinc-400">{lessonsCopy.installBy(authors.join(', '))}</p>{/if}
+    <p class="mt-1 text-xs text-zinc-400">{lessonsCopy.previewHint}</p>
     <p class="mt-4 text-xs font-medium text-zinc-300">{lessonsCopy.installAsks}</p>
     <ul class="mt-2 flex flex-col gap-1.5">
       {#each rows as r (keyOf(r))}

@@ -68,7 +68,7 @@
     <li
       class="rounded border px-1.5 py-0.5 text-[10px] leading-tight {c.lit
         ? 'border-indigo-500/60 bg-indigo-950/60 text-indigo-200'
-        : 'border-zinc-800 bg-zinc-900 text-zinc-500'} {highlightBox && c.ids.includes(highlightBox) ? 'pry-lesson-inplace' : ''}"
+        : 'border-zinc-800 bg-zinc-900 text-zinc-400'} {highlightBox && c.ids.includes(highlightBox) ? 'pry-lesson-inplace' : ''}"
       data-spine-box={c.ids.join(' ')}
       aria-current={c.lit ? 'step' : undefined}
     >

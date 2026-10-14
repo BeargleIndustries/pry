@@ -286,12 +286,12 @@
   {:else if n.t === 'look'}<button type="button" class="font-medium text-indigo-300 hover:text-indigo-200" onclick={() => send({ type: 'look', at: n.at as PointerTarget[] })}>{@render nodes(n.children)}</button>
   {:else if n.t === 'earlier'}<span class="rounded bg-zinc-800/80 px-1 {n.state === 'answer' ? 'text-zinc-100' : 'italic text-zinc-400'}" data-earlier={n.state}>{n.text}</span>
   {:else if n.t === 'refutes'}<span class="text-amber-200">{@render nodes(n.children)}</span>
-  {:else if n.t === 'slot'}<span class="font-mono text-[12px] text-emerald-300" data-slot={n.name}>{n.text}</span>{#if n.expect}<span class="ml-1 text-[10px] text-zinc-500">({n.expect})</span>{/if}
+  {:else if n.t === 'slot'}<span class="font-mono text-[12px] text-emerald-300" data-slot={n.name}>{n.text}</span>{#if n.expect}<span class="ml-1 text-[10px] text-zinc-400">({n.expect})</span>{/if}
   {/if}
 {/snippet}
 
 {#snippet stepId(b: RenderedBlock)}
-  {#if step?.authorMode && b.stepId}<span class="ml-2 font-mono text-[10px] text-zinc-600">{c.stepId(b.stepId)}</span>{/if}
+  {#if step?.authorMode && b.stepId}<span class="ml-2 font-mono text-[10px] text-zinc-400">{c.stepId(b.stepId)}</span>{/if}
 {/snippet}
 
 {#snippet block(b: RenderedBlock)}
@@ -311,7 +311,7 @@
           <p class="mt-2 text-xs text-amber-200/90"><span class="font-medium">{c.analogyBreaks}:</span> {@render nodes(b.analogy.breaks)}</p>
         </div>
       {:else if b.simplification}
-        <aside class="rounded-md border border-dashed border-zinc-700 p-3 text-zinc-400"><p class="text-[11px] font-medium uppercase tracking-wide text-zinc-500">{c.simplification}</p>{@render nodes(b.body)}</aside>
+        <aside class="rounded-md border border-dashed border-zinc-700 p-3 text-zinc-400"><p class="text-[11px] font-medium uppercase tracking-wide text-zinc-400">{c.simplification}</p>{@render nodes(b.body)}</aside>
       {:else}
         {@render nodes(b.body)}
       {/if}
@@ -322,7 +322,7 @@
         {@const a = b.ask}
         {#if a.question}<p class="mt-1">{@render nodes(a.question)}</p>{/if}
         {#if a.hidden.length}
-          <p class="mt-2 text-xs text-zinc-500" role="status">{c.hiddenUntilAnswer}: {a.hidden.join(', ')}</p>
+          <p class="mt-2 text-xs text-zinc-400" role="status">{c.hiddenUntilAnswer}: {a.hidden.join(', ')}</p>
         {/if}
         {#if a.choices}
           <div class="mt-2 flex flex-col gap-1" role="group" aria-label={c.yourAnswer}>
@@ -424,7 +424,7 @@
           {#each r.supports as s, i (i)}<p class="mt-1 first:mt-0"><span class="font-medium text-zinc-200">{c.supports}:</span> {@render nodes(s)}</p>{/each}
           {#each r.leavesOpen as s, i (i)}<p class="mt-1"><span class="font-medium text-zinc-200">{c.leavesOpen}:</span> {@render nodes(s)}</p>{/each}
           {#if r.skeptic}<p class="mt-2 text-zinc-400">{@render nodes(r.skeptic.says)} {@render nodes(r.skeptic.check)}</p>{/if}
-          {#each r.limits as s, i (i)}<p class="mt-1 text-xs text-zinc-500"><span class="font-medium">{c.limits}:</span> {@render nodes(s)}</p>{/each}
+          {#each r.limits as s, i (i)}<p class="mt-1 text-xs text-zinc-400"><span class="font-medium">{c.limits}:</span> {@render nodes(s)}</p>{/each}
           {#each r.asserts as line, i (i)}<p class="mt-2">{@render nodes(line)}</p>{/each}
         </div>
       {/if}
@@ -434,7 +434,7 @@
           <p class="text-xs font-medium text-indigo-200">{c.transferPrompt}</p>
           <p class="mt-1 font-mono text-[12px] text-zinc-100">{b.transfer.prompt}</p>
           <p class="mt-2 text-xs text-zinc-400"><span class="font-medium">{c.expectIfHolds}:</span> {@render nodes(b.transfer.expect)}</p>
-          {#each b.transfer.limits as s, i (i)}<p class="mt-1 text-xs text-zinc-500"><span class="font-medium">{c.limits}:</span> {@render nodes(s)}</p>{/each}
+          {#each b.transfer.limits as s, i (i)}<p class="mt-1 text-xs text-zinc-400"><span class="font-medium">{c.limits}:</span> {@render nodes(s)}</p>{/each}
           {#each b.children as child (child.key)}{@render block(child)}{/each}
         </div>
       {/if}
@@ -458,7 +458,7 @@
             <button type="button" disabled={!t.canRun} onclick={() => send({ type: 'task-run', step: b.key })} class="rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-40">{c.runIt}</button>
             <button type="button" onclick={() => send({ type: 'task-check', step: b.key })} class="rounded-md border border-zinc-700 px-2.5 py-1 text-xs text-zinc-200 hover:bg-zinc-800">{c.checkIt}</button>
             {#if t.canReset}<button type="button" onclick={() => send({ type: 'task-reset', step: b.key })} class="text-xs text-zinc-400 hover:text-zinc-200">{c.startOver}</button>{/if}
-            {#if t.maxRuns !== null}<span class="text-[11px] text-zinc-500">{c.runsLeft(Math.max(0, t.maxRuns - t.runs))}</span>{/if}
+            {#if t.maxRuns !== null}<span class="text-[11px] text-zinc-400">{c.runsLeft(Math.max(0, t.maxRuns - t.runs))}</span>{/if}
           </div>
           <div aria-live="polite" data-check-result>
             {#if t.message}<p class="mt-2 text-sm {t.met ? 'text-emerald-300' : 'text-zinc-300'}">{t.message}</p>{/if}
@@ -484,7 +484,7 @@
           {#if ch.text}<p class="mt-2 rounded-md bg-zinc-900 px-2 py-1.5 text-zinc-200">{ch.text}</p>{/if}
           <p class="mt-2 text-sm" aria-live="polite"><span class="font-medium text-zinc-200">{c.modelAnswer}:</span> {@render nodes(ch.modelAnswer)}</p>
         {/if}
-        {#if b.asserts && (ch.written || ch.skipped)}{#each b.asserts as line, i (i)}<p class="mt-2 text-xs text-zinc-500">{@render nodes(line)}</p>{/each}{/if}
+        {#if b.asserts && (ch.written || ch.skipped)}{#each b.asserts as line, i (i)}<p class="mt-2 text-xs text-zinc-400">{@render nodes(line)}</p>{/each}{/if}
       {/if}
 
       {#if b.kind !== 'transfer'}
@@ -514,7 +514,7 @@
           <p class="text-[10px] font-semibold uppercase tracking-widest text-indigo-400">{c.title}</p>
           {#if step}
             <p class="truncate text-sm font-medium text-zinc-100" title={step.lesson.title}>{step.lesson.title}</p>
-            <p class="text-[11px] text-zinc-500">{c.minutes(step.lesson.minutes)}{#if step.lesson.draft} · {c.draft}{/if}</p>
+            <p class="text-[11px] text-zinc-400">{c.minutes(step.lesson.minutes)}{#if step.lesson.draft} · {c.draft}{/if}</p>
           {/if}
         </div>
         {#if step}<button type="button" onclick={onAllLessons} class="rounded-md px-1.5 py-1 text-[11px] text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100">{c.allLessons}</button>{/if}
@@ -539,7 +539,7 @@
                   <button type="button" onclick={() => send({ type: 'goto', section: i })} aria-current={s.current ? 'step' : undefined} class="flex w-full items-center gap-1.5 rounded px-1.5 py-0.5 text-left text-[11px] {s.current ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400 hover:bg-zinc-900'}">
                     <span class="w-3 text-emerald-400" aria-hidden="true">{s.visited && !s.current ? '✓' : ''}</span>
                     <span class="truncate">{s.title}</span>
-                    {#if s.depth === 'optional'}<span class="text-[10px] text-zinc-600">{c.optional}</span>{/if}
+                    {#if s.depth === 'optional'}<span class="text-[10px] text-zinc-400">{c.optional}</span>{/if}
                   </button>
                 </li>
               {/each}
@@ -572,7 +572,7 @@
 
         <div class="min-h-0 flex-1 overflow-y-auto px-3 py-3">
           {#if step.authorMode && step.authorNotes.length}
-            <div class="mb-3 rounded-md border border-zinc-800 p-2 text-[11px] text-zinc-500">
+            <div class="mb-3 rounded-md border border-zinc-800 p-2 text-[11px] text-zinc-400">
               <p class="font-medium text-zinc-400">{c.authorNotes}</p>
               <ul class="mt-1 list-disc pl-4">{#each step.authorNotes as n, i (i)}<li>{n}</li>{/each}</ul>
             </div>
@@ -580,7 +580,7 @@
           {#if step.authorMode}<button type="button" onclick={() => send({ type: 'rerun-setup' })} class="mb-2 rounded-md border border-zinc-800 px-2 py-0.5 text-[11px] text-zinc-400 hover:bg-zinc-900">{c.rerunSetup}</button>{/if}
           {#if step.coldEntry}
             <div class="mb-3 rounded-md border border-zinc-800 bg-zinc-900/40 p-3 text-sm text-zinc-300">
-              <p class="text-[11px] font-medium uppercase tracking-wide text-zinc-500">{c.coldEntry}</p>
+              <p class="text-[11px] font-medium uppercase tracking-wide text-zinc-400">{c.coldEntry}</p>
               {@render nodes(step.coldEntry)}
             </div>
           {/if}
@@ -602,7 +602,7 @@
           {/if}
           <div class="flex items-center justify-between gap-2 px-3 py-2">
             <button type="button" onclick={() => model.command('back')} disabled={!nav.canBack} class="flex items-center gap-1 rounded-md border border-zinc-700 px-2.5 py-1 text-xs text-zinc-300 hover:bg-zinc-800 disabled:opacity-40"><ChevronLeft class="h-3.5 w-3.5" />{c.back}</button>
-            <span class="text-[11px] text-zinc-500">{nav.index + 1} / {nav.total}</span>
+            <span class="text-[11px] text-zinc-400">{nav.index + 1} / {nav.total}</span>
             <button type="button" onclick={() => model.command('next')} class="flex items-center gap-1 rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500">{nav.index + 1 >= nav.total ? c.finish : c.next}<ChevronRight class="h-3.5 w-3.5" /></button>
           </div>
         </footer>

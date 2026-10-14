@@ -15,7 +15,7 @@ export const lessonsCopy = {
   sections: 'Sections',
   spineLabel: 'Where this lesson sits',
   stepId: (id: string) => `step ${id}`,
-  pointerHidden: (label: string) => `${label} isn't on screen.`,
+  pointerHidden: (label: string) => `${label.charAt(0).toUpperCase()}${label.slice(1)} isn't on screen right now.`,
   optional: 'optional',
   back: 'Back',
   next: 'Next',
