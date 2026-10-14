@@ -3,6 +3,9 @@
 // changed_from, gt, lt, increased, decreased, within, contains, starts_with,
 // each negatable with `not: true`; a list of items must all hold.
 //
+// The operators (compareOp) are shared with lesson-walk.ts, which checks every
+// bundled lesson's authored checks against the recorded responses.
+//
 // Values: a constant, `$prediction`, `$before.<readout>`, `$baseline.<readout>`,
 // `$capture.<name>.<readout>`, `$earlier.<key>`, `$read.<readout>` (with
 // `value_args`), `$row.<id>.<field>`, `$slot.<name>` (the slot's expect), or,
@@ -69,10 +72,23 @@ export function deepEqual(a: unknown, b: unknown): boolean {
   return false;
 }
 
-/** A needle record matches an item when every key it names is equal (a head {layer, head} in a node list). */
-function matches(item: unknown, needle: unknown): boolean {
-  if (isObj(needle) && isObj(item)) return Object.keys(needle).every((k) => deepEqual(item[k], needle[k]));
-  return deepEqual(item, needle);
+/** Numbers within `tol`; everything else structurally equal. */
+function near(a: unknown, b: unknown, tol: number): boolean {
+  if (typeof a === 'number' && typeof b === 'number') return Math.abs(a - b) <= tol;
+  return deepEqual(a, b);
+}
+
+/**
+ * Every field the expected record names equals the same field in `got`; extra
+ * fields in `got` are ignored (a head `{layer, head}` against a map part, or
+ * against a `head_scores.top` entry that also carries `induction`).
+ */
+export function subsetMatch(got: unknown, want: Record<string, unknown>, tol = 0): boolean {
+  return isObj(got) && Object.entries(want).every(([k, w]) => near(got[k], w, tol));
+}
+
+function matches(item: unknown, needle: unknown, tol = 0): boolean {
+  return isObj(needle) ? subsetMatch(item, needle, tol) : near(item, needle, tol);
 }
 
 function pickField(v: unknown, field?: string): unknown {
@@ -112,11 +128,11 @@ export function compareOp(op: string, actual: unknown, value: unknown, tolerance
         return typeof value === 'string' && actual.includes(value);
       }
       if (Array.isArray(actual)) {
-        if (Array.isArray(value)) return value.length > 0 && value.every((n) => actual.some((x) => matches(x, n)));
-        return actual.some((x) => matches(x, value));
+        if (Array.isArray(value)) return value.length > 0 && value.every((n) => actual.some((x) => matches(x, n, tolerance)));
+        return actual.some((x) => matches(x, value, tolerance));
       }
-      if (isObj(actual)) return typeof value === 'string' ? value in actual : Object.values(actual).some((x) => matches(x, value));
-      return false;
+      // A record matches on the fields the expected record names.
+      return isObj(actual) && isObj(value) && subsetMatch(actual, value, tolerance);
     case 'starts_with':
       return typeof actual === 'string' && typeof value === 'string' && actual.startsWith(value);
     default:

@@ -95,7 +95,12 @@ export function createLessonsApp(deps: LessonsAppDeps) {
     // The harness build keeps its journal in memory: a debug run never writes the learner's notebook.
     journal: POPUP_AUDIT ? memoryJournal() : journalOver(deps.notebook, deps.provenance),
     progress,
-    rows: (id) => (rowsData[id] as { values?: unknown } | undefined)?.values,
+    // `$row.<id>.<field>`: the row's recorded values, with its authored constants (rows.json `constants`) on top.
+    rows: (id) => {
+      const r = rowsData[id] as { values?: Record<string, unknown>; constants?: Record<string, { value: unknown }> } | undefined;
+      if (!r) return undefined;
+      return { ...(r.values ?? {}), ...Object.fromEntries(Object.entries(r.constants ?? {}).map(([k, c]) => [k, c.value])) };
+    },
     currentModel: deps.currentModel,
     modelName: deps.modelName,
     debug: import.meta.env.DEV,

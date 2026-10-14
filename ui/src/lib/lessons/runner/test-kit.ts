@@ -23,6 +23,7 @@ import { createRunner, type LessonRunner, type RunnerCommand } from './runner.sv
 import { memoryJournal } from './types';
 import type { PryViewState } from '../registry/pry-state.svelte';
 import { createHash } from 'node:crypto';
+import { loadRows } from '../lesson-walk';
 
 const LESSONS = fileURLToPath(new URL('..', import.meta.url));
 const RESPONSES = fileURLToPath(new URL('../../../lessons/__generated__/responses/', import.meta.url));
@@ -45,11 +46,10 @@ export function recordedResponses(): Map<string, unknown[]> {
   return recorded;
 }
 
-const rowsJson = JSON.parse(readFileSync(ROWS, 'utf-8')) as { rows: { id: number; values: Record<string, unknown> }[] };
-
-/** rows.json values for a row id. */
+/** rows.json values for a row id, with its constants on top (as lesson-walk.ts loadRows). */
+const rowsMap = loadRows(ROWS);
 export function rowValues(id: string): unknown {
-  return rowsJson.rows.find((r) => String(r.id) === String(id))?.values;
+  return rowsMap.get(String(id));
 }
 
 function keyOf(endpoint: string, body: any): string {

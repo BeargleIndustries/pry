@@ -70,6 +70,12 @@ describe('checks', () => {
     expect(check({ read: 'text', op: 'starts_with', value: 'great' }).agrees).toBe(false);
   });
 
+  it('› contains on a record matches only the fields the expected record names', () => {
+    expect(compareOp('contains', { layer: 1, head: 4, induction: 0.93 }, { layer: 1, head: 4 }, 0)).toBe(true);
+    expect(compareOp('contains', [{ layer: 1, head: 4, induction: 0.93 }], { layer: 1, head: 4 }, 0)).toBe(true);
+    expect(compareOp('contains', { layer: 1, head: 4 }, { layer: 2, head: 4 }, 0)).toBe(false);
+  });
+
   it('› not contains', () => {
     expect(check({ read: 'text', op: 'contains', value: 'ocean', not: true }).agrees).toBe(true);
     expect(check({ read: 'text', op: 'contains', value: 'great', not: true }).agrees).toBe(false);

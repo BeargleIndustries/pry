@@ -19,6 +19,7 @@ import { RequestMemo } from './registry/memo';
 import { requestKey } from './registry/request-key';
 import { answer, makeHost } from './registry/pry-test-host';
 import { evaluateAssert, slotValue, type SlotSource } from './slots';
+import { compareOp } from './runner/checks';
 import type { AssertItem, CheckItem, Lesson, Slot, Step } from './format/schema';
 
 export interface WalkRequest {
@@ -100,11 +101,6 @@ function pick(v: unknown, field?: string): unknown {
 function deepEqual(a: unknown, b: unknown, tol?: number): boolean {
   if (typeof a === 'number' && typeof b === 'number') return Math.abs(a - b) <= (tol ?? 1e-9);
   return JSON.stringify(a) === JSON.stringify(b);
-}
-
-/** Every field `want` names equals the same field in `got` (extra fields in `got` are fine). */
-function subset(got: unknown, want: Record<string, unknown>, tol?: number): boolean {
-  return isObj(got) && Object.entries(want).every(([k, w]) => deepEqual(got[k], w, tol));
 }
 
 /** Default tolerance for a slot's live value against its authored expect. */
@@ -214,43 +210,9 @@ export async function walkLesson(
     if (r.skip) return { got, want: undefined, skip: r.skip };
     const want = r.value;
     const tol = tolOf(item);
-    let ok: boolean;
-    switch (item.op) {
-      case 'equals':
-        ok = deepEqual(got, want, tol);
-        break;
-      case 'in':
-        ok = Array.isArray(want) && want.some((w) => deepEqual(got, w, tol));
-        break;
-      case 'changed_from':
-        ok = got !== undefined && !deepEqual(got, want, tol);
-        break;
-      case 'gt':
-      case 'increased':
-        ok = typeof got === 'number' && typeof want === 'number' && got > want;
-        break;
-      case 'lt':
-      case 'decreased':
-        ok = typeof got === 'number' && typeof want === 'number' && got < want;
-        break;
-      case 'within':
-        ok = typeof got === 'number' && typeof want === 'number' && Math.abs(got - want) <= (tol ?? 0);
-        break;
-      case 'contains':
-        // A record `want` matches on the fields it names (`{ position: 0 }` against a top-source record).
-        ok =
-          typeof got === 'string'
-            ? typeof want === 'string' && got.includes(want)
-            : Array.isArray(got)
-              ? got.some((g) => (isObj(want) ? subset(g, want, tol) : deepEqual(g, want, tol)))
-              : isObj(got) && isObj(want) && subset(got, want, tol);
-        break;
-      case 'starts_with':
-        ok = typeof got === 'string' && typeof want === 'string' && got.startsWith(want);
-        break;
-      default:
-        ok = false;
-    }
+    // The runner's operators (runner/checks.ts), with this walker's tolerances: exact unless the item names one.
+    if (item.op === 'changed_from' && got === undefined) return { ok: !!item.not === (typeof item.expect === 'boolean' ? item.expect : true), got, want };
+    let ok = compareOp(item.op, got, want, tol ?? (item.op === 'within' ? 0 : 1e-9));
     if (item.not) ok = !ok;
     const expected = typeof item.expect === 'boolean' ? item.expect : true;
     return { ok: ok === expected, got, want };
