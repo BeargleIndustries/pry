@@ -262,6 +262,10 @@ export class AnalysisController {
       // A model switch while this Run is in flight makes its result stale.
       const startPreset = this.deps.getActivePresetId();
       const startSwitch = this.modelSwitchSeq;
+      // TODO(pry-learning T2b): build this body with buildGenerateRequest from
+      // sidecar.ts (same bytes; its defaults are this body) so the Run action and
+      // lesson row requests share one builder; analysis.test.ts's './sidecar' mock
+      // then needs the real builder.
       const resp = await sidecarFetch('/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
