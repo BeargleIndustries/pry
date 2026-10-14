@@ -3,7 +3,7 @@ import {
   bundledEntries,
   createLessonLibrary,
   formatError,
-  standInFormat,
+  realFormat,
   type DirEntryLike,
   type LoaderFs,
 } from './loader';
@@ -83,12 +83,12 @@ const DIR = `${APP}/lessons`;
 
 function library(fs: ReturnType<typeof fakeFs>, extra: Partial<Parameters<typeof createLessonLibrary>[0]> = {}) {
   return createLessonLibrary({
-    format: standInFormat,
+    format: realFormat,
     fs,
     appDataDir: APP,
     lessonDir: 'lessons',
     idPrefix: 'pry.',
-    bundled: bundledEntries(standInFormat, { '/src/lessons/p1-1/lesson.md': lesson('pry.p1-1') }, {}, undefined),
+    bundled: bundledEntries(realFormat, { '/src/lessons/p1-1/lesson.md': lesson('pry.p1-1') }, {}, undefined),
     template: { 'lesson.md': lesson('my.template'), 'README.md': '# Template' },
     now: () => new Date('2026-10-13T00:00:00Z'),
     urls: { create: () => 'blob:x', revoke: () => {} },
@@ -122,7 +122,7 @@ describe('lesson loader', () => {
     const listed = lib.list({ authorMode: false });
     const bad = listed.find((e) => e.id === 'my.broken')!;
     expect(bad.lesson).toBeNull();
-    expect(formatError(bad.error!)).toBe(`${DIR}/my.broken/lesson.md:1: The file must start with front matter between --- lines.`);
+    expect(formatError(bad.error!)).toBe(`${DIR}/my.broken/lesson.md:1: The lesson needs front matter between \`---\` lines at the very top.`);
   });
 
   it('› reload keeps the section id', async () => {
@@ -215,7 +215,7 @@ describe('lesson loader', () => {
 
   it('› bundled order follows index.yaml', () => {
     const entries = bundledEntries(
-      standInFormat,
+      realFormat,
       {
         '/src/lessons/a/lesson.md': lesson('pry.a'),
         '/src/lessons/b/lesson.md': lesson('pry.b'),

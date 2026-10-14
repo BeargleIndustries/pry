@@ -17,6 +17,7 @@ import {
   type LessonManifest,
   type Permissions,
 } from './grants';
+import { parseIndex, parseLessonForLoader } from './format/parse';
 import type { LessonLog } from './log';
 
 // ---------------------------------------------------------------------------
@@ -45,72 +46,8 @@ export interface LessonFormat {
   parseIndex(text: string): string[];
 }
 
-// TODO(pry-learning T1-format): replace with `parseLessonForLoader` and
-// `parseIndex` from `format/parse.ts` (+ `format/lint.ts` errors) when the
-// format lane lands. This stand-in reads only the front matter fields and H2
-// sections the loader uses, so the loader and its tests run today.
-export const standInFormat: LessonFormat = {
-  parseLesson(text) {
-    const lines = text.split(/\r?\n/);
-    if (lines[0]?.trim() !== '---') return { ok: false, error: { line: 1, message: 'The file must start with front matter between --- lines.' } };
-    const end = lines.indexOf('---', 1);
-    if (end < 0) return { ok: false, error: { line: 1, message: 'The front matter has no closing --- line.' } };
-    const fm: Record<string, string> = {};
-    const permissions: Permissions = {};
-    let inPermissions = false;
-    for (let i = 1; i < end; i++) {
-      const m = /^(\s*)([A-Za-z_]+):\s*(.*)$/.exec(lines[i]);
-      if (!m) continue;
-      const [, indent, key, raw] = m;
-      if (indent && inPermissions) {
-        (permissions as Record<string, string[]>)[key] = flowList(raw);
-        continue;
-      }
-      if (indent) continue;
-      inPermissions = key === 'permissions' && raw === '';
-      if (key === 'permissions' && raw.startsWith('{')) {
-        for (const pm of raw.matchAll(/([a-z]+):\s*\[([^\]]*)\]/g)) {
-          (permissions as Record<string, string[]>)[pm[1]] = flowList(`[${pm[2]}]`);
-        }
-      }
-      fm[key] = unquote(raw);
-    }
-    if (!fm.id) return { ok: false, error: { line: 1, message: 'The front matter needs an id.' } };
-    if (!fm.title) return { ok: false, error: { line: 1, message: 'The front matter needs a title.' } };
-    const sections: { id: string }[] = [];
-    const images: string[] = [];
-    for (let i = end + 1; i < lines.length; i++) {
-      const h = /^##\s+(.+?)\s*(?:\{([^}]*)\})?\s*$/.exec(lines[i]);
-      if (h) {
-        const id = /(?:^|\s)id=([^\s}]+)/.exec(h[2] ?? '')?.[1] ?? slug(h[1]);
-        sections.push({ id });
-      }
-      const img = /^\s*image:\s*["']?([^"'\s]+)/.exec(lines[i]);
-      if (img) images.push(img[1]);
-    }
-    return { ok: true, lesson: { id: fm.id, title: fm.title, draft: fm.draft === 'true', permissions, sections, images } };
-  },
-  parseIndex(text) {
-    return text
-      .split(/\r?\n/)
-      .map((l) => /^\s*-\s*["']?([^"'\s#]+)/.exec(l)?.[1])
-      .filter((x): x is string => !!x);
-  },
-};
-
-function unquote(s: string): string {
-  const t = s.trim();
-  return /^(["']).*\1$/.test(t) ? t.slice(1, -1) : t;
-}
-
-function flowList(raw: string): string[] {
-  const inner = /^\s*\[(.*)\]\s*$/.exec(raw)?.[1];
-  return inner === undefined ? [] : inner.split(',').map(unquote).filter(Boolean);
-}
-
-function slug(heading: string): string {
-  return heading.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-}
+/** The real format: lenient parse and lint errors from `format/parse.ts`. */
+export const realFormat: LessonFormat = { parseLesson: parseLessonForLoader, parseIndex };
 
 // ---------------------------------------------------------------------------
 // Entries
@@ -492,7 +429,7 @@ export async function openLessonLibrary(o: {
 }): Promise<LessonLibrary> {
   const { appDataDir } = await import('@tauri-apps/api/path');
   const pfs = await import('@tauri-apps/plugin-fs');
-  const format = o.format ?? standInFormat;
+  const format = o.format ?? realFormat;
   const src = bundledSources();
   const fs: LoaderFs = {
     exists: (p) => pfs.exists(p),
