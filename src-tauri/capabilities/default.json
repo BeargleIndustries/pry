@@ -12,6 +12,7 @@
     "core:webview:default",
     "core:webview:allow-internal-toggle-devtools",
     "core:window:default",
+    "core:window:allow-set-size",
     "core:path:default",
     "core:app:default",
     "dialog:default",
@@ -25,7 +26,12 @@
       "identifier": "fs:allow-write-file",
       "allow": [
         { "path": "$LOCALDATA/Pry/**" },
-        { "path": "$DOWNLOAD/**" }
+        { "path": "$DOWNLOAD/**" },
+        { "path": "$APPDATA/lessons/**" },
+        { "path": "$APPDATA/lesson-grants.json" },
+        { "path": "$APPDATA/notebook.v1.json" },
+        { "path": "$APPLOG/lessons.log" },
+        { "path": "$APPLOG/lessons.log.1" }
       ]
     },
     {
@@ -33,20 +39,66 @@
       "allow": [
         { "path": "$LOCALDATA/Pry/**" },
         { "path": "$DOWNLOAD/**" },
-        { "path": "$APPDATA/notebook.json" }
+        { "path": "$APPDATA/notebook.json" },
+        { "path": "$APPDATA/lessons/**" },
+        { "path": "$APPDATA/lesson-grants.json" },
+        { "path": "$APPDATA/notebook.v1.json" },
+        { "path": "$APPLOG/lessons.log" },
+        { "path": "$APPLOG/lessons.log.1" }
       ]
     },
     {
       "identifier": "fs:allow-read-text-file",
-      "allow": [{ "path": "$APPDATA/notebook.json" }]
+      "allow": [
+        { "path": "$APPDATA/notebook.json" },
+        { "path": "$APPDATA/lessons" },
+        { "path": "$APPDATA/lessons/**" }
+      ]
     },
     {
       "identifier": "fs:allow-exists",
-      "allow": [{ "path": "$APPDATA" }, { "path": "$APPDATA/notebook.json" }]
+      "allow": [
+        { "path": "$APPDATA" },
+        { "path": "$APPDATA/notebook.json" },
+        { "path": "$APPDATA/lessons" },
+        { "path": "$APPDATA/lessons/**" }
+      ]
     },
     {
       "identifier": "fs:allow-mkdir",
-      "allow": [{ "path": "$APPDATA" }]
+      "allow": [
+        { "path": "$APPDATA" },
+        { "path": "$APPDATA/lessons" },
+        { "path": "$APPDATA/lessons/**" }
+      ]
+    },
+    {
+      "identifier": "fs:allow-read-dir",
+      "allow": [{ "path": "$APPDATA/lessons" }, { "path": "$APPDATA/lessons/**" }]
+    },
+    {
+      "identifier": "fs:allow-read-file",
+      "allow": [{ "path": "$APPDATA/lessons" }, { "path": "$APPDATA/lessons/**" }]
+    },
+    {
+      "identifier": "fs:allow-stat",
+      "allow": [{ "path": "$APPDATA/lessons" }, { "path": "$APPDATA/lessons/**" }]
+    },
+    {
+      "identifier": "fs:allow-watch",
+      "allow": [{ "path": "$APPDATA/lessons" }, { "path": "$APPDATA/lessons/**" }]
+    },
+    {
+      "identifier": "fs:allow-unwatch",
+      "allow": [{ "path": "$APPDATA/lessons" }, { "path": "$APPDATA/lessons/**" }]
+    },
+    {
+      "identifier": "fs:allow-copy-file",
+      "allow": [{ "path": "$APPDATA/lessons/**" }]
+    },
+    {
+      "identifier": "fs:allow-remove",
+      "allow": [{ "path": "$APPDATA/lessons/*" }]
     }
   ]
 }
