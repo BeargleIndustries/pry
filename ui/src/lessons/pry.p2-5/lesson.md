@@ -246,7 +246,7 @@ Pry puts both sentences side by side in :look{at=compare-panel}[Compare] and foc
 - set_compare_mode: { on: true }
 - set_compare: { a: "I like the river bank", b: "I like the money bank" }
 - run_compare: {}
-- focus_token: { text: " bank" }
+- focus_token: { text: " bank", side: b }
 ```
 :::
 
