@@ -65,6 +65,14 @@
     "basketball": {
      "value": 0.42208388447761536,
      "unit": "probability"
+    },
+    "fid": {
+     "value": 12472,
+     "unit": "number"
+    },
+    "sae_layer": {
+     "value": 8,
+     "unit": "layer"
     }
    },
    "checks": [
@@ -518,6 +526,14 @@
     "to_position": {
      "value": 14,
      "unit": "position"
+    },
+    "mary_head_layer": {
+     "value": 10,
+     "unit": "layer"
+    },
+    "mary_head": {
+     "value": 7,
+     "unit": "head"
     }
    },
    "checks": [
@@ -574,6 +590,25 @@
     },
     "last_from_position": {
      "value": 16,
+     "unit": "position"
+    },
+    "top_induction_layer": {
+     "value": 5,
+     "unit": "layer"
+    },
+    "top_induction_head": {
+     "value": 5,
+     "unit": "head"
+    },
+    "top_induction_head_ref": {
+     "value": {
+      "layer": 5,
+      "head": 5
+     },
+     "unit": "record"
+    },
+    "qu_position": {
+     "value": 8,
      "unit": "position"
     }
    },
@@ -784,6 +819,32 @@
     ],
     "top10_total": 0.3541130442172289,
     "tokens": 13
+   },
+   "constants": {
+    "map_head": {
+     "value": "L0H7",
+     "unit": "string"
+    },
+    "map_head_layer": {
+     "value": 0,
+     "unit": "layer"
+    },
+    "map_head_head": {
+     "value": 7,
+     "unit": "head"
+    },
+    "control_head": {
+     "value": "L9H9",
+     "unit": "string"
+    },
+    "control_head_layer": {
+     "value": 9,
+     "unit": "layer"
+    },
+    "control_head_head": {
+     "value": 9,
+     "unit": "head"
+    }
    },
    "checks": [
     {
@@ -1532,6 +1593,15 @@
     "control_id": {
      "value": 7698,
      "unit": "number"
+    },
+    "doctor_top_ids": {
+     "value": [
+      7195,
+      11067,
+      19093
+     ],
+     "unit": "list",
+     "of": "number"
     }
    },
    "checks": [
@@ -1670,6 +1740,10 @@
      "value": 25,
      "unit": "number"
     },
+    "strength_high": {
+     "value": 30,
+     "unit": "number"
+    },
     "concept_words": {
      "value": [
       "rain"
@@ -1727,6 +1801,16 @@
     ],
     "L9H9_argmax": " Mary",
     "L9H9_weight_on_mary": 0.6651334762573242
+   },
+   "constants": {
+    "task_threshold": {
+     "value": 0.3,
+     "unit": "probability"
+    },
+    "task_threshold_negative": {
+     "value": -0.3,
+     "unit": "probability"
+    }
    },
    "checks": [
     {
@@ -2386,6 +2470,12 @@
     "bars_total": 3.119221771368757,
     "actual": 2.191035270690918,
     "gap": -0.9281865006778389
+   },
+   "constants": {
+    "last_position": {
+     "value": 6,
+     "unit": "position"
+    }
    },
    "checks": [
     {
@@ -3334,6 +3424,20 @@
      ]
     ]
    },
+   "constants": {
+    "rank_L5": {
+     "value": 9,
+     "unit": "count"
+    },
+    "rank_L6": {
+     "value": 6,
+     "unit": "count"
+    },
+    "rank_L7": {
+     "value": 2,
+     "unit": "count"
+    }
+   },
    "checks": [
     {
      "claim": "\" basketball\" not on top at L5-L7",
@@ -3379,6 +3483,16 @@
     "actual": 3.361577033996582,
     "gap": -1.202643062453717,
     "logit_difference": 3.361577033996582
+   },
+   "constants": {
+    "top_head_layer": {
+     "value": 9,
+     "unit": "layer"
+    },
+    "top_head": {
+     "value": 6,
+     "unit": "head"
+    }
    },
    "checks": [
     {
@@ -3483,6 +3597,16 @@
      "famous names or personalities"
     ],
     "uncovered_snippet": "ETAIRIE, La. -- Drew Brees was critical Wednesday of the way NFL commissioner"
+   },
+   "constants": {
+    "fid": {
+     "value": 12472,
+     "unit": "number"
+    },
+    "sae_layer": {
+     "value": 8,
+     "unit": "layer"
+    }
    },
    "checks": [
     {

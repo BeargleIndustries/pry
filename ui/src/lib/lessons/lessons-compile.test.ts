@@ -25,6 +25,9 @@ describe('lessons-compile --rows', () => {
     expect(values.get(23).pick.head).toBe('L2H8');
     expect(committed['27'].peak_layer.value).toBe(values.get(27).peak[0].layer);
     expect(committed['14'].to_position.value).toBe(values.get(14).tokens - 1);
+    // from_row reads another row's record: row 14's " Mary" head is row 47's.
+    expect(values.get(47).head).toBe(`L${committed['14'].mary_head_layer.value}H${committed['14'].mary_head.value}`);
+    expect(committed['26'].task_threshold.value).toBe(values.get(57).suggested_threshold / 100);
   });
 
   it('› each derivation reads the recorded value and refuses a missing one', () => {
@@ -48,6 +51,8 @@ describe('lessons-compile --rows', () => {
     expect(d({ count: 'top4', unit: 'count' })).toBe(2);
     expect(d({ list: ['word'], unit: 'list', of: 'string' })).toEqual(['rain']);
     expect(d({ request: 'river.positions.0', unit: 'position' })).toBe(5);
+    expect(d({ points: 'tokens', unit: 'probability' })).toBe(0.15);
+    expect(d({ points: 'tokens', negate: true, unit: 'probability' })).toBe(-0.15);
     expect(() => d({ path: 'pick.layer', unit: 'layer' })).toThrow(/row x: no recorded value at `pick.layer`/);
     expect(() => d({ token_prob: 'top4', token: ' John', unit: 'probability' })).toThrow(/isn't in/);
     expect(() => d({ path: 'tokens', count: 'top4', unit: 'count' })).toThrow(/exactly one/);

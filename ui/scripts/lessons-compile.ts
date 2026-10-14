@@ -83,10 +83,17 @@ export interface RowSpec {
  *   argmax: grid, by: share            the record with the largest `by`; `take`, `exclude_layer`
  *   count: top3                        a list's length
  *   list: [a, b]                       the values at those paths, as a list
+ *   points: suggested_threshold        percentage points -> a probability (30 -> 0.3)
+ * Modifiers: `negate: true` flips the sign; `from_row: n` reads row n's recorded
+ * values instead (a row that recorded the same run, named in `note`).
  */
 export interface ConstantSpec {
   unit: RowUnit;
   of?: RowUnit;
+  from_row?: number;
+  negate?: boolean;
+  note?: string;
+  points?: string;
   path?: string;
   token_prob?: string;
   token?: string;
@@ -102,7 +109,7 @@ export interface ConstantSpec {
   take?: string;
 }
 
-const DERIVATIONS = ['path', 'token_prob', 'last_position', 'request', 'parse_head', 'first_mlp_layer', 'argmax', 'count', 'list'] as const;
+const DERIVATIONS = ['path', 'token_prob', 'last_position', 'request', 'parse_head', 'first_mlp_layer', 'argmax', 'count', 'list', 'points'] as const;
 
 function at(v: unknown, dotted: string, where: string): unknown {
   let x = v;
@@ -172,8 +179,15 @@ export function deriveConstant(spec: ConstantSpec, values: unknown, requests: Ro
     case 'list':
       value = spec.list!.map((p) => at(values, p, where));
       break;
+    case 'points':
+      value = (at(values, spec.points!, where) as number) / 100;
+      break;
   }
   if (value === undefined) throw new Error(`${where}: derived nothing`);
+  if (spec.negate) {
+    if (typeof value !== 'number') throw new Error(`${where}: negate needs a number`);
+    value = -value;
+  }
   return { value, unit: spec.unit, ...(spec.of ? { of: spec.of } : {}) };
 }
 
@@ -186,7 +200,11 @@ export function deriveRowConstants(yamlText: string, rowsJsonText: string): Map<
     if (!row.constants) continue;
     const c: RowConstants = {};
     for (const [field, spec] of Object.entries(row.constants)) {
-      c[field] = deriveConstant(spec, recorded.get(row.id), row.requests ?? [], `verified-rows.yaml row ${row.id} constant ${field}`);
+      const where = `verified-rows.yaml row ${row.id} constant ${field}`;
+      const src = spec.from_row ?? row.id;
+      if (!recorded.has(src)) throw new Error(`${where}: rows.json has no row ${src}`);
+      const requests = spec.from_row === undefined ? (row.requests ?? []) : (doc.rows.find((r) => r.id === src)?.requests ?? []);
+      c[field] = deriveConstant(spec, recorded.get(src), requests, where);
     }
     out.set(row.id, c);
   }
