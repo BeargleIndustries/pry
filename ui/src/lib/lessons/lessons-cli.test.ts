@@ -1,8 +1,10 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isBundledTarget } from '../../../scripts/lessons-lint';
 
 const uiDir = fileURLToPath(new URL('../../..', import.meta.url));
 const cli = join(uiDir, 'build-cli', 'lessons-lint.mjs');
@@ -37,5 +39,21 @@ describe('lessons-cli', () => {
       const { code, out } = lintCli(t);
       expect(code, out).toBe(0);
     }
+  });
+
+  it('› the app lesson folder lints as bundled without --bundled; a copy elsewhere does not', () => {
+    const tour = join(uiDir, 'src/lessons/pry.quick-tour');
+    expect(isBundledTarget(join(uiDir, 'src/lessons'))).toBe(true);
+    expect(isBundledTarget(tour)).toBe(true);
+    expect(isBundledTarget(join(uiDir, 'src/lessons/_template'))).toBe(false);
+    const inApp = lintCli(tour);
+    expect(inApp.code, inApp.out).toBe(0);
+    const dir = join(mkdtempSync(join(tmpdir(), 'pry-lint-')), 'pry.quick-tour');
+    mkdirSync(dir);
+    copyFileSync(join(tour, 'lesson.md'), join(dir, 'lesson.md'));
+    expect(isBundledTarget(dir)).toBe(false);
+    const elsewhere = lintCli(dir);
+    expect(elsewhere.code).toBe(1);
+    expect(elsewhere.out).toMatch(/belong to the app's own lessons/);
   });
 });
