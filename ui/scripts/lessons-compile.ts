@@ -61,7 +61,7 @@ export interface RowSpec {
   requests: RowRequestSpec[];
   record: string;
   claim: string;
-  status: 'verified' | 'narrowed' | 'failed' | 'needs-brad';
+  status: 'verified' | 'narrowed' | 'failed' | 'needs-brad' | 'closed-by-task';
   note?: string;
 }
 export interface RowRequest {

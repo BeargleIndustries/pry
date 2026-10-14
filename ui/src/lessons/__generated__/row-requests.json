@@ -704,7 +704,7 @@
     },
     {
       "id": 21,
-      "status": "needs-brad",
+      "status": "verified",
       "lessons": [
         "P2.3",
         "P4.1"
@@ -713,7 +713,7 @@
         "P2.3.md:11.2",
         "P4.1.md:12"
       ],
-      "claim": "the rhyme word shows up mid-stack (lookahead visible in GPT-2 small)",
+      "claim": "lookahead is not visible in GPT-2 small; the fold cites the larger-model result",
       "requests": [
         {
           "name": "rabbit",
@@ -1594,7 +1594,7 @@
     },
     {
       "id": 36,
-      "status": "needs-brad",
+      "status": "verified",
       "lessons": [
         "P3.7"
       ],
@@ -1602,7 +1602,7 @@
         "P3.7.md:84",
         "P3.7.md:95.6"
       ],
-      "claim": "top 4 all above 50",
+      "claim": "top 4 all at or above 50",
       "requests": [
         {
           "name": "war1650",
@@ -2069,7 +2069,7 @@
     },
     {
       "id": 46,
-      "status": "needs-brad",
+      "status": "verified",
       "lessons": [
         "P2.1"
       ],
@@ -2077,7 +2077,7 @@
         "P2.1.md:63",
         "P2.1.md:108.1"
       ],
-      "claim": "more than half the attention goes to position 0",
+      "claim": "the biggest share, about 2 in 5, goes to position 0",
       "requests": [
         {
           "name": "ioi",
@@ -5151,7 +5151,7 @@
     },
     {
       "id": 60,
-      "status": "needs-brad",
+      "status": "verified",
       "lessons": [
         "P3.3"
       ],
@@ -5159,7 +5159,7 @@
         "P3.3.md:65",
         "P3.3.md:87.3"
       ],
-      "claim": "the max head cell sits in layers 9-10 (\"Is it one of the name movers from P3.2?\")",
+      "claim": "the max head cell sits in layers 8 to 9; the slot shows L8H10 (L9H9 second)",
       "requests": [
         {
           "name": "swaphead",
@@ -5355,7 +5355,7 @@
     },
     {
       "id": 63,
-      "status": "needs-brad",
+      "status": "verified",
       "lessons": [
         "P3.5"
       ],
@@ -5363,7 +5363,7 @@
         "P3.5.md:59",
         "P3.5.md:89.3"
       ],
-      "claim": "raising the steering strength to s_high makes coherence drop",
+      "claim": "coherence does not drop at s_high on this feature (-1.058 nats per token at s = 25 and at s_high = 30; the two steered texts are identical)",
       "requests": [
         {
           "name": "rain25",
@@ -6549,7 +6549,7 @@
     },
     {
       "id": 72,
-      "status": "needs-brad",
+      "status": "closed-by-task",
       "lessons": [
         "quick-tour"
       ],

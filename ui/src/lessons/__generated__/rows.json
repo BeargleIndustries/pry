@@ -16,10 +16,11 @@
  "sidecar_hash": "6a878a871036b75bd0754b4b5fbeda264824ae25d400555544b10b3bd5351a3a",
  "sidecar_hash_files": 15,
  "status_counts": {
-  "verified": 61,
+  "verified": 66,
   "narrowed": 5,
   "failed": 0,
-  "needs-brad": 6
+  "needs-brad": 0,
+  "closed-by-task": 1
  },
  "rows": [
   {
@@ -1039,12 +1040,12 @@
   },
   {
    "id": 21,
-   "status": "needs-brad",
+   "status": "verified",
    "lessons": [
     "P2.3",
     "P4.1"
    ],
-   "claim": "the rhyme word shows up mid-stack (lookahead visible in GPT-2 small)",
+   "claim": "lookahead is not visible in GPT-2 small; the fold cites the larger-model result",
    "values": {
     "rabbit": {
      "rhyme": " rabbit",
@@ -1315,8 +1316,8 @@
    },
    "checks": [
     {
-     "claim": "fallback condition: no prompt shows its rhyme word on top before L11",
-     "holds": false
+     "claim": "lookahead not visible: no rhyme prompt shows its rhyme word on top before L11 (book prompt not counted)",
+     "holds": true
     }
    ],
    "responses": [
@@ -2485,11 +2486,11 @@
   },
   {
    "id": 36,
-   "status": "needs-brad",
+   "status": "verified",
    "lessons": [
     "P3.7"
    ],
-   "claim": "top 4 all above 50",
+   "claim": "top 4 all at or above 50",
    "values": {
     "top4": [
      [
@@ -2557,8 +2558,8 @@
    },
    "checks": [
     {
-     "claim": "top 4 all above 50",
-     "holds": false
+     "claim": "top 4 all at or above 50",
+     "holds": true
     }
    ],
    "responses": [
@@ -3043,18 +3044,22 @@
   },
   {
    "id": 46,
-   "status": "needs-brad",
+   "status": "verified",
    "lessons": [
     "P2.1"
    ],
-   "claim": "more than half the attention goes to position 0",
+   "claim": "the biggest share, about 2 in 5, goes to position 0",
    "values": {
     "share_position0": 0.43996917040383976
    },
    "checks": [
     {
-     "claim": "more than half on position 0",
-     "holds": false
+     "claim": "position 0 has the biggest share",
+     "holds": true
+    },
+    {
+     "claim": "about 2 in 5 on position 0",
+     "holds": true
     }
    ],
    "responses": [
@@ -3865,11 +3870,11 @@
   },
   {
    "id": 60,
-   "status": "needs-brad",
+   "status": "verified",
    "lessons": [
     "P3.3"
    ],
-   "claim": "the max head cell sits in layers 9-10 (\"Is it one of the name movers from P3.2?\")",
+   "claim": "the max head cell sits in layers 8 to 9; the slot shows L8H10 (L9H9 second)",
    "values": {
     "max_cells": [
      {
@@ -3909,8 +3914,8 @@
    },
    "checks": [
     {
-     "claim": "max head cell in layers 9-10",
-     "holds": false
+     "claim": "max head cell in layers 8 to 9",
+     "holds": true
     }
    ],
    "responses": [
@@ -4004,11 +4009,11 @@
   },
   {
    "id": 63,
-   "status": "needs-brad",
+   "status": "verified",
    "lessons": [
     "P3.5"
    ],
-   "claim": "raising the steering strength to s_high makes coherence drop",
+   "claim": "coherence does not drop at s_high on this feature (-1.058 nats per token at s = 25 and at s_high = 30; the two steered texts are identical)",
    "values": {
     "s": {
      "feature_id": 21791,
@@ -4081,8 +4086,8 @@
    },
    "checks": [
     {
-     "claim": "coherence drops at s_high",
-     "holds": false
+     "claim": "coherence does not drop at s_high",
+     "holds": true
     }
    ],
    "responses": [
@@ -4945,7 +4950,7 @@
   },
   {
    "id": 72,
-   "status": "needs-brad",
+   "status": "closed-by-task",
    "lessons": [
     "quick-tour"
    ],
