@@ -144,8 +144,8 @@ Both texts changed. The steered one fills up with sun, clouds, wind and rain. Th
 
 ```yaml
 check:
-  - { read: steer.text, args: { which: steered }, op: contains, value: $row.25.concept_words }
-  - { read: steer.text, args: { which: control }, op: contains, value: $row.25.concept_words, not: true }
+  - { read: steer.text, args: { which: steered }, op: contains, value: "rain" }
+  - { read: steer.text, args: { which: control }, op: contains, value: "rain", not: true }
   - { read: steer.text, args: { which: control }, op: equals, value: $read.steer.text, value_args: { which: original }, not: true }
 ```
 :::
@@ -289,7 +289,7 @@ Find a steering strength where the label's idea shows up in the text. Then read 
 
 ```yaml
 target:
-  - { read: steer.text, args: { which: steered }, op: contains, value: $row.25.concept_words }
+  - { read: steer.text, args: { which: steered }, op: contains, value: "rain" }
 max_runs: 4
 predict_before_each_run: true
 one_change: set_steering

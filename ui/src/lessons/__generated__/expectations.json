@@ -1232,28 +1232,28 @@
           "kind": "slot",
           "name": "n",
           "prompt": "Michael Jordan played the sport of",
-          "expect": 7
+          "expect": 2
         },
         {
           "where": "s3-6/explain-result",
           "kind": "slot",
           "name": "bars_total",
           "prompt": "Michael Jordan played the sport of",
-          "expect": 2.823
+          "expect": 14.799
         },
         {
           "where": "s3-6/explain-result",
           "kind": "slot",
           "name": "actual_logit",
           "prompt": "Michael Jordan played the sport of",
-          "expect": 2.12
+          "expect": 15.962
         },
         {
           "where": "s3-6/explain-result",
           "kind": "slot",
           "name": "gap",
           "prompt": "Michael Jordan played the sport of",
-          "expect": -0.703
+          "expect": 1.163
         },
         {
           "where": "s3-6/explain-result",
@@ -1406,20 +1406,6 @@
             "value": -0.01,
             "expect": -0.002849757671356201
           }
-        },
-        {
-          "where": "s3-4/heavy-obs",
-          "kind": "slot",
-          "name": "mary_before",
-          "prompt": "When Mary and John went to the store, John gave a drink to",
-          "expect": 0.6769932508468628
-        },
-        {
-          "where": "s3-4/heavy-obs",
-          "kind": "slot",
-          "name": "mary_after",
-          "prompt": "When Mary and John went to the store, John gave a drink to",
-          "expect": 0.6741434931755066
         },
         {
           "where": "s3-7/three-obs",
@@ -1688,7 +1674,7 @@
         {
           "where": "s3-4/changed-obs",
           "kind": "check",
-          "name": "steer.text contains \"$row.25.concept_words\"",
+          "name": "steer.text contains \"rain\"",
           "prompt": "On our trip we walked along the beach and watched the ocean",
           "check": {
             "read": "steer.text",
@@ -1696,13 +1682,13 @@
               "which": "steered"
             },
             "op": "contains",
-            "value": "$row.25.concept_words"
+            "value": "rain"
           }
         },
         {
           "where": "s3-4/changed-obs",
           "kind": "check",
-          "name": "steer.text not contains \"$row.25.concept_words\"",
+          "name": "steer.text not contains \"rain\"",
           "prompt": "On our trip we walked along the beach and watched the ocean",
           "check": {
             "read": "steer.text",
@@ -1710,7 +1696,7 @@
               "which": "control"
             },
             "op": "contains",
-            "value": "$row.25.concept_words",
+            "value": "rain",
             "not": true
           }
         },

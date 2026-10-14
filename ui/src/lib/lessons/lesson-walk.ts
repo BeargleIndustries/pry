@@ -14,7 +14,7 @@ import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { vi } from 'vitest';
 import { pryToolSet } from './registry/pry-set';
-import { createDispatcher } from './registry/dispatcher';
+import { createDispatcher, resolveBindings } from './registry/dispatcher';
 import { RequestMemo } from './registry/memo';
 import { requestKey } from './registry/request-key';
 import { answer, makeHost } from './registry/pry-test-host';
@@ -102,6 +102,11 @@ function deepEqual(a: unknown, b: unknown, tol?: number): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
+/** Every field `want` names equals the same field in `got` (extra fields in `got` are fine). */
+function subset(got: unknown, want: Record<string, unknown>, tol?: number): boolean {
+  return isObj(got) && Object.entries(want).every(([k, w]) => deepEqual(got[k], w, tol));
+}
+
 /** Default tolerance for a slot's live value against its authored expect. */
 function slotTolerance(expect: number, slot: Slot): number {
   return slot.tolerance ?? Math.max(1e-3, Math.abs(expect) * 1e-3);
@@ -147,13 +152,18 @@ export async function walkLesson(
   let before: unknown;
   let baseline: unknown;
 
+  // A section sees the lesson's slots plus its own (lint's slotsFor); refilled per section below.
   const slots: Record<string, Slot> = { ...(lesson.meta.slots ?? {}) };
-  for (const s of lesson.sections) Object.assign(slots, s.slots ?? {});
+
+  const bindings = { earlier: () => undefined, row: (id: string, field: string) => pick(opts.rows?.get(id), field) };
+  /** `$row.<id>.<field>` anywhere in readout args or a check value, resolved from rows.json. */
+  const bind = <T>(v: T): T => resolveBindings(v, bindings) as T;
 
   const read = (name: string, args?: Record<string, unknown>, capture?: unknown) => {
     const def = readouts[name];
     if (!def) return undefined;
-    return def.read(capture !== undefined ? { ...(args ?? {}), from_capture: capture } : args);
+    const a = args === undefined ? undefined : bind(args);
+    return def.read(capture !== undefined ? { ...(a ?? {}), from_capture: capture } : a);
   };
   const src: SlotSource = {
     read: (name, args, capture) => read(name, args, capture !== undefined ? captures.get(capture) : undefined),
@@ -164,12 +174,13 @@ export async function walkLesson(
     },
     readouts,
   };
-  const bindings = { earlier: () => undefined, row: (id: string, field: string) => pick(opts.rows?.get(id), field) };
 
   /** A check's right-hand side; `skip` when it needs the learner. */
   function rhs(item: CheckItem): { value?: unknown; skip?: string } {
     const v = item.value;
-    if (typeof v !== 'string' || !v.startsWith('$')) return { value: v };
+    // A record or list value may hold `$row` constants (`{ token: $row.23.token }`).
+    if (typeof v !== 'string') return { value: bind(v) };
+    if (!v.startsWith('$')) return { value: v };
     let m: RegExpExecArray | null;
     if (v === '$prediction') return { skip: 'compares with the learner\'s prediction' };
     if ((m = /^\$slot\.(.+)$/.exec(v))) return { value: slots[m[1]]?.expect };
@@ -226,7 +237,13 @@ export async function walkLesson(
         ok = typeof got === 'number' && typeof want === 'number' && Math.abs(got - want) <= (tol ?? 0);
         break;
       case 'contains':
-        ok = typeof got === 'string' ? typeof want === 'string' && got.includes(want) : Array.isArray(got) && got.some((g) => deepEqual(g, want));
+        // A record `want` matches on the fields it names (`{ position: 0 }` against a top-source record).
+        ok =
+          typeof got === 'string'
+            ? typeof want === 'string' && got.includes(want)
+            : Array.isArray(got)
+              ? got.some((g) => (isObj(want) ? subset(g, want, tol) : deepEqual(g, want, tol)))
+              : isObj(got) && isObj(want) && subset(got, want, tol);
         break;
       case 'starts_with':
         ok = typeof got === 'string' && typeof want === 'string' && got.startsWith(want);
@@ -359,6 +376,8 @@ export async function walkLesson(
   let state: unknown;
   for (const section of lesson.sections) {
     const where = section.id;
+    for (const k of Object.keys(slots)) delete slots[k];
+    Object.assign(slots, lesson.meta.slots ?? {}, section.slots ?? {});
     const overlay = section.enter?.value as Record<string, unknown> | undefined;
     state = !state || overlay?.reset ? set.target(lesson.meta.baseline, overlay ?? {}) : set.target(lesson.meta.baseline, overlay ?? {}, state as any);
     try {
