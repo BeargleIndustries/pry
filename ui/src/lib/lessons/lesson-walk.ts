@@ -139,8 +139,9 @@ export async function walkLesson(
   let before: unknown;
   let baseline: unknown;
 
-  const slots: Record<string, Slot> = { ...(lesson.meta.slots ?? {}) };
-  for (const s of lesson.sections) Object.assign(slots, s.slots ?? {});
+  // Slots in scope: the front matter's plus the current section's own `:::slots`
+  // (a section's slots are its own; P3.1 reuses a name across sections).
+  let slots: Record<string, Slot> = { ...(lesson.meta.slots ?? {}) };
 
   const read = (name: string, args?: Record<string, unknown>, capture?: unknown) => {
     const def = readouts[name];
@@ -315,7 +316,14 @@ export async function walkLesson(
   }
 
   /** Predict feedback is shown at the reveal: evaluated at the observe it `checks`, or at section end. */
-  const pendingFeedback = new Map<string, unknown[]>();
+  const pendingFeedback = new Map<string, { texts: unknown[]; scope: Record<string, Slot> }>();
+  /** Checks feedback slots in the scope of the section that holds the predict. */
+  function checkFeedback(fb: { texts: unknown[]; scope: Record<string, Slot> }, at: string, done: Set<string>) {
+    const here = slots;
+    slots = fb.scope;
+    for (const s of slotsIn(fb.texts)) checkSlot(s, at, done);
+    slots = here;
+  }
   /**
    * Inside a transfer, a faded do step leaves Run to the learner (P1.3:5 "the
    * learner presses Run"). With no action that runs anything, the walk plays
@@ -359,13 +367,12 @@ export async function walkLesson(
         runCheckItems(f.check, at);
         runAsserts(f.assert, at, done);
         if (step.id && pendingFeedback.has(step.id)) {
-          for (const s of slotsIn(pendingFeedback.get(step.id)!)) checkSlot(s, at, done);
+          checkFeedback(pendingFeedback.get(step.id)!, at, done);
           pendingFeedback.delete(step.id);
         }
         break;
       case 'predict':
-        if (typeof f.checks === 'string') pendingFeedback.set(f.checks, [f.choices]);
-        else pendingFeedback.set(`__end:${at}`, [f.choices]);
+        pendingFeedback.set(typeof f.checks === 'string' ? f.checks : `__end:${at}`, { texts: [f.choices], scope: slots });
         for (const s of slotsIn([step.prose.map((p) => p.text)])) checkSlot(s, at, done);
         break;
       case 'task': {
@@ -407,17 +414,18 @@ export async function walkLesson(
       res.errors.push(`${where}: apply threw ${String(e)}`);
     }
     if (baseline === undefined) baseline = read('result');
+    slots = { ...(lesson.meta.slots ?? {}), ...(section.slots ?? {}) };
     const done = new Set<string>();
     for (const step of section.steps) await walkStep(step, where, done);
-    for (const [k, texts] of pendingFeedback) {
+    for (const [k, fb] of pendingFeedback) {
       // A predict whose reveal is an observe in a later section waits for it.
       if (!k.startsWith('__end:')) continue;
-      for (const s of slotsIn(texts)) checkSlot(s, `${where}/feedback`, done);
+      checkFeedback(fb, `${where}/feedback`, done);
       pendingFeedback.delete(k);
     }
     state = set.snapshot();
   }
-  for (const texts of pendingFeedback.values()) for (const s of slotsIn(texts)) checkSlot(s, 'end/feedback', new Set());
+  for (const fb of pendingFeedback.values()) checkFeedback(fb, 'end/feedback', new Set());
   vi.unstubAllGlobals();
   return res;
 }

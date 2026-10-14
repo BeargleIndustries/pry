@@ -76,7 +76,7 @@ export function runLint(argv: string[]): LintRun {
   const indexText = readIf(join(setRoot, 'index.yaml'));
   const rowsText = readIf(join(setRoot, 'verified-rows.yaml'));
   const verifiedRows = rowsText ? collectRowIds(parse(rowsText)) : undefined;
-  const recordedPrompts = ['rows.json', 'expectations.json']
+  const recordedPrompts = ['rows.json', 'row-requests.json', 'expectations.json']
     .map((f) => readIf(join(setRoot, '__generated__', f)))
     .filter((t): t is string => t !== undefined)
     .reduce((acc, t) => strings(JSON.parse(t), acc), new Set<string>());

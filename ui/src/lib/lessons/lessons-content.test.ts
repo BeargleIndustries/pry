@@ -13,7 +13,6 @@ import { parse as parseYaml } from 'yaml';
 import { loadLessonSource } from './format/normalise';
 import { parseIndex } from './format/parse';
 import { pryToolSet } from './registry/pry-set';
-import { glossary } from '../glossary';
 import type { Lesson, Step } from './format/schema';
 
 const UI = fileURLToPath(new URL('../../..', import.meta.url));
@@ -212,13 +211,22 @@ describe('lessons content', () => {
     }
   });
 
-  const withIntro = Object.values(glossary).filter((g) => (g as { introducedIn?: string }).introducedIn !== undefined);
+  // glossary.ts gains `introducedIn` in lane/t6-copy. Read as text: the lessons
+  // folder doesn't import Pry modules (registry/boundary.test.ts).
+  const glossaryText = readFileSync(join(UI, 'src/lib/glossary.ts'), 'utf8');
+  const withIntro = glossaryText
+    .split(/\n\s*(?=['"]?[\w -]+['"]?:\s*\{)/)
+    .map((block) => ({
+      term: /\bterm:\s*['"]([^'"]+)['"]/.exec(block)?.[1],
+      introducedIn: /\bintroducedIn:\s*['"]([^'"]+)['"]/.exec(block)?.[1],
+    }))
+    .filter((g): g is { term: string; introducedIn: string } => !!g.term && !!g.introducedIn);
   it.skipIf(withIntro.length === 0)(
     `› glossary introducedIn matches terms.yaml${withIntro.length === 0 ? ' (waiting for lane/t6-copy to add introducedIn to glossary.ts)' : ''}`,
     () => {
       const terms = (parseYaml(readFileSync(join(LESSONS, 'terms.yaml'), 'utf8')) as { terms: { term: string; aliases?: string[]; introduced_in: string }[] }).terms;
       const find = (name: string) => terms.find((t) => [t.term, ...(t.aliases ?? [])].some((n) => n.toLowerCase() === name.toLowerCase()));
-      for (const g of withIntro as { term: string; introducedIn: string }[]) {
+      for (const g of withIntro) {
         const t = find(g.term);
         expect(t, `glossary "${g.term}" isn't in terms.yaml`).toBeDefined();
         expect(g.introducedIn, g.term).toBe(t!.introduced_in);
