@@ -175,7 +175,9 @@ export interface Kit {
   progress: ReturnType<typeof createProgress>;
 }
 
-export function makeKit(opts: { latency?: (endpoint: string, body: any) => number; prompt?: string; useRecorded?: boolean } = {}): Kit {
+export function makeKit(
+  opts: { latency?: (endpoint: string, body: any) => number; prompt?: string; useRecorded?: boolean; rows?: (id: string) => unknown } = {},
+): Kit {
   const host = makeHost(opts.prompt);
   const sidecar = fakeSidecar({ latency: opts.latency, useRecorded: opts.useRecorded });
   const journal = memoryJournal();
@@ -186,7 +188,7 @@ export function makeKit(opts: { latency?: (endpoint: string, body: any) => numbe
     memo: pryMemo,
     journal,
     progress,
-    rows: rowValues,
+    rows: opts.rows ?? rowValues,
     currentModel: () => host.activePresetId(),
     modelName: (id) => (id === 'gpt2-small' ? 'GPT-2 small' : id),
     now: () => new Date((t += 1000)),

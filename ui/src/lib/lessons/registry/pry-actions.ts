@@ -300,6 +300,11 @@ export const pryActions: Record<string, ActionDef> = {
       const w = pryUi.writeIt;
       w.temperature = a.temperature;
       if (a.max_tokens !== undefined) w.newTokens = a.max_tokens;
+      // Watch it write continues a run: run the prompt first when it hasn't been (T3: P1.5's steps).
+      const h = pryHost();
+      const r = h.analysis.state.response;
+      if (!r || r.prompt !== h.getPrompt() || r.preset_id !== h.activePresetId()) await h.analysis.generate(h.getPrompt(), callerOf(ctx));
+      abortIf(ctx);
       await runWriteIt(
         pryHost().analysis.state.response,
         { temperature: a.temperature, seed: a.seed ?? null, maxTokens: a.max_tokens },

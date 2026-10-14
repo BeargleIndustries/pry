@@ -170,6 +170,8 @@ export class LessonRunner<VS = unknown> {
   #before: unknown = undefined;
   #baseline: unknown = undefined;
   #stateful: Promise<unknown> | null = null;
+  /** Runner-issued work still in flight (folds, do steps, task runs). */
+  #pending = new Set<Promise<unknown>>();
   #presenters: Presenter[] = [];
   #notes: string[] = [];
   #looks: PointerTarget[] = [];
@@ -392,8 +394,20 @@ export class LessonRunner<VS = unknown> {
     this.hide.reveal();
   }
 
+  /** Tracks runner-issued work so the next navigation can let it settle first. */
+  private track<T>(p: Promise<T>): Promise<T> {
+    this.#pending.add(p);
+    void p.finally(() => this.#pending.delete(p)).catch(() => {});
+    return p;
+  }
+
   /** Enters section `i` (0-based). Newest navigation wins. */
   async goto(i: number): Promise<void> {
+    const before = [...this.#pending];
+    return this.track(this.enter(i, before));
+  }
+
+  private async enter(i: number, before: Promise<unknown>[]): Promise<void> {
     const lesson = this.lesson;
     if (!lesson) return;
     const target = Math.min(Math.max(0, i), lesson.sections.length - 1);
@@ -423,6 +437,13 @@ export class LessonRunner<VS = unknown> {
         this.busy = lessonsCopy.waitingForModel;
         this.refresh();
         await this.#stateful.catch(() => {});
+        if (!this.#nav.current(ticket)) return;
+      }
+      // Work the last navigation started is aborted; let its in-flight requests
+      // land before this fold, so a late answer can't overwrite this section's
+      // scene (apply then puts every field where this section wants it).
+      if (before.length) {
+        await Promise.allSettled(before);
         if (!this.#nav.current(ticket)) return;
       }
       const r = await foldTo(lesson, target + 1, this.foldDeps(), ticket.signal);
@@ -673,7 +694,7 @@ export class LessonRunner<VS = unknown> {
     try {
       for (const a of step.actions) {
         const def = this.set.actions[a.name];
-        const run = this.#dispatcher.dispatch(a.name, a.args, {
+        const run = this.track(this.#dispatcher.dispatch(a.name, a.args, {
           signal: ticket.signal,
           bindings: this.bindings(),
           fresh: step.fields.fresh === true,
@@ -681,7 +702,7 @@ export class LessonRunner<VS = unknown> {
             this.busy = m;
             this.refresh();
           },
-        });
+        }));
         if (def?.stateful) {
           this.#stateful = run;
           void run.finally(() => {
@@ -874,7 +895,7 @@ export class LessonRunner<VS = unknown> {
     this.markBefore();
     try {
       for (const a of runActions(task, this.set, ts.pendingArgs)) {
-        const r = await this.#dispatcher.dispatch(a.name, a.args, { signal: ticket.signal, bindings: this.bindings() });
+        const r = await this.track(this.#dispatcher.dispatch(a.name, a.args, { signal: ticket.signal, bindings: this.bindings() }));
         if (r.status === 'blocked') {
           ts.message = lessonsCopy.blocked;
           this.refresh();
