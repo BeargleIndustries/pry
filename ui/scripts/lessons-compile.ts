@@ -10,7 +10,10 @@
 // src/lessons/__generated__/row-requests.json: every row's requests as
 // {endpoint, body, key}, bodies built by the app's own builders in
 // src/lib/sidecar.ts (C4-9), keys by registry/request-key.ts.
-// sidecar/tests/test_lessons.py sends them.
+// sidecar/tests/test_lessons.py sends them. It also derives every row's
+// `constants:` (row constants, plan:297/:299) from that row's recorded values
+// in rows.json and writes them back as `rows[].constants`; nothing else in
+// rows.json changes. Re-run it after `pytest ... --record`.
 
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
@@ -20,6 +23,7 @@ import { pryToolSet } from '../src/lib/lessons/registry/pry-set';
 import { formatIssue, hasErrors } from '../src/lib/lessons/format/errors';
 import { loadLessonSource } from '../src/lib/lessons/format/normalise';
 import { requestKey } from '../src/lib/lessons/registry/request-key';
+import { ROW_UNITS, type RowConstant, type RowConstants, type RowUnit } from '../src/lib/lessons/row-constants';
 import {
   buildAblateFeaturesRequest,
   buildAblateHeadsRequest,
@@ -36,6 +40,7 @@ import {
 const UI = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const ROWS_YAML = join(UI, 'src/lessons/verified-rows.yaml');
 export const ROW_REQUESTS_JSON = join(UI, 'src/lessons/__generated__/row-requests.json');
+export const ROWS_JSON = join(UI, 'src/lessons/__generated__/rows.json');
 
 /** Watch it write's default length (watch-it-write.ts DEFAULT_NEW_TOKENS). */
 const WRITE_IT_TOKENS = 20;
@@ -63,6 +68,154 @@ export interface RowSpec {
   claim: string;
   status: 'verified' | 'narrowed' | 'failed' | 'needs-brad' | 'closed-by-task';
   note?: string;
+  constants?: Record<string, ConstantSpec>;
+}
+
+/**
+ * One row constant: exactly one derivation over the row's recorded `values`
+ * (dotted paths; list indexes are numbers), plus its unit.
+ *   path: a.b.0                        the value there
+ *   token_prob: top4, token: " Qu"     that token's probability in a [token, p, logit] list
+ *   last_position: tokens              a token count minus one (positions count BOS as 0)
+ *   request: <name>.<arg path>         an argument of the row's own request (what was sent)
+ *   parse_head: pick.head              "L2H8" -> {layer: 2, head: 8}; `take: layer|head` for one
+ *   first_mlp_layer: top3              n of the first "MLP.n" in a [part, push] list
+ *   argmax: grid, by: share            the record with the largest `by`; `take`, `exclude_layer`
+ *   count: top3                        a list's length
+ *   list: [a, b]                       the values at those paths, as a list
+ */
+export interface ConstantSpec {
+  unit: RowUnit;
+  of?: RowUnit;
+  path?: string;
+  token_prob?: string;
+  token?: string;
+  last_position?: string;
+  request?: string;
+  parse_head?: string;
+  first_mlp_layer?: string;
+  argmax?: string;
+  by?: string;
+  exclude_layer?: number;
+  count?: string;
+  list?: string[];
+  take?: string;
+}
+
+const DERIVATIONS = ['path', 'token_prob', 'last_position', 'request', 'parse_head', 'first_mlp_layer', 'argmax', 'count', 'list'] as const;
+
+function at(v: unknown, dotted: string, where: string): unknown {
+  let x = v;
+  for (const k of dotted.split('.')) {
+    if (x === null || typeof x !== 'object' || !(k in x)) throw new Error(`${where}: no recorded value at \`${dotted}\``);
+    x = (x as Record<string, unknown>)[k];
+  }
+  return x;
+}
+
+function headOf(label: unknown, where: string): { layer: number; head: number } {
+  const m = typeof label === 'string' ? /^L(\d+)\.?H(\d+)$/.exec(label) : null;
+  if (!m) throw new Error(`${where}: ${JSON.stringify(label)} isn't a head label like "L2H8"`);
+  return { layer: Number(m[1]), head: Number(m[2]) };
+}
+
+/** Derives one constant from a row's recorded values (and its request specs). Throws naming the row and field. */
+export function deriveConstant(spec: ConstantSpec, values: unknown, requests: RowRequestSpec[], where: string): RowConstant {
+  const ops = DERIVATIONS.filter((d) => spec[d] !== undefined);
+  if (ops.length !== 1) throw new Error(`${where}: give exactly one of ${DERIVATIONS.join(', ')}`);
+  if (!ROW_UNITS.includes(spec.unit)) throw new Error(`${where}: unit must be one of ${ROW_UNITS.join(', ')}`);
+  let value: unknown;
+  switch (ops[0]) {
+    case 'path':
+      value = at(values, spec.path!, where);
+      break;
+    case 'token_prob': {
+      const hit = (at(values, spec.token_prob!, where) as unknown[][]).find((e) => e[0] === spec.token);
+      if (!hit) throw new Error(`${where}: ${JSON.stringify(spec.token)} isn't in \`${spec.token_prob}\``);
+      value = hit[1];
+      break;
+    }
+    case 'last_position':
+      value = (at(values, spec.last_position!, where) as number) - 1;
+      break;
+    case 'request': {
+      const [name, ...rest] = spec.request!.split('.');
+      const r = requests.find((q) => q.name === name);
+      if (!r) throw new Error(`${where}: the row has no request named ${name}`);
+      value = at(r, rest.join('.'), where);
+      break;
+    }
+    case 'parse_head': {
+      const h = headOf(at(values, spec.parse_head!, where), where);
+      value = spec.take ? h[spec.take as 'layer' | 'head'] : h;
+      break;
+    }
+    case 'first_mlp_layer': {
+      const hit = (at(values, spec.first_mlp_layer!, where) as unknown[][]).find((e) => /^MLP\.\d+$/.test(String(e[0])));
+      if (!hit) throw new Error(`${where}: no MLP in \`${spec.first_mlp_layer}\``);
+      value = Number(String(hit[0]).slice(4));
+      break;
+    }
+    case 'argmax': {
+      const by = spec.by!;
+      const xs = (at(values, spec.argmax!, where) as Record<string, number>[]).filter(
+        (x) => spec.exclude_layer === undefined || x.layer !== spec.exclude_layer,
+      );
+      if (!xs.length) throw new Error(`${where}: \`${spec.argmax}\` is empty`);
+      const best = xs.reduce((a, b) => (b[by] > a[by] ? b : a));
+      value = spec.take ? best[spec.take] : best;
+      break;
+    }
+    case 'count':
+      value = (at(values, spec.count!, where) as unknown[]).length;
+      break;
+    case 'list':
+      value = spec.list!.map((p) => at(values, p, where));
+      break;
+  }
+  if (value === undefined) throw new Error(`${where}: derived nothing`);
+  return { value, unit: spec.unit, ...(spec.of ? { of: spec.of } : {}) };
+}
+
+/** Every row's constants, derived from rows.json's recorded values by verified-rows.yaml. */
+export function deriveRowConstants(yamlText: string, rowsJsonText: string): Map<number, RowConstants> {
+  const doc = parseYaml(yamlText) as { rows: RowSpec[] };
+  const recorded = new Map((JSON.parse(rowsJsonText) as { rows: { id: number; values: unknown }[] }).rows.map((r) => [r.id, r.values]));
+  const out = new Map<number, RowConstants>();
+  for (const row of doc.rows) {
+    if (!row.constants) continue;
+    const c: RowConstants = {};
+    for (const [field, spec] of Object.entries(row.constants)) {
+      c[field] = deriveConstant(spec, recorded.get(row.id), row.requests ?? [], `verified-rows.yaml row ${row.id} constant ${field}`);
+    }
+    out.set(row.id, c);
+  }
+  return out;
+}
+
+/**
+ * rows.json with each row's `constants` replaced and every other byte kept
+ * (the file is pytest's json.dumps(indent=1); a JSON round trip would reorder
+ * its integer keys). Constants sit between a row's `values` and `checks`.
+ */
+export function withRowConstants(rowsJsonText: string, constants: Map<number, RowConstants>): string {
+  const eol = rowsJsonText.includes('\r\n') ? '\r\n' : '\n';
+  const text = rowsJsonText.replace(/\r\n/g, '\n');
+  const starts = [...text.matchAll(/\n  \{\n   "id": (\d+),/g)];
+  let out = text.slice(0, starts[0]?.index ?? text.length);
+  starts.forEach((m, i) => {
+    let seg = text.slice(m.index, starts[i + 1]?.index ?? text.length);
+    seg = seg.replace(/\n   "constants": (\{\}|\{\n[\s\S]*?\n   \}),/, '');
+    const c = constants.get(Number(m[1]));
+    if (c && Object.keys(c).length) {
+      const anchor = seg.indexOf('\n   "checks": ');
+      if (anchor < 0) throw new Error(`rows.json row ${m[1]} has no "checks" entry to place constants before`);
+      const block = `\n   "constants": ${JSON.stringify(c, null, 1).replace(/\n/g, '\n   ')},`;
+      seg = seg.slice(0, anchor) + block + seg.slice(anchor);
+    }
+    out += seg;
+  });
+  return out.replace(/\n/g, eol);
 }
 export interface RowRequest {
   name: string;
@@ -245,6 +398,14 @@ if (!process.env.VITEST) {
     const text = await rowRequestsJson(readFileSync(ROWS_YAML, 'utf8'));
     writeFileSync(out ?? ROW_REQUESTS_JSON, text);
     console.log(`wrote ${relative(process.cwd(), out ?? ROW_REQUESTS_JSON)}`);
+    if (existsSync(ROWS_JSON)) {
+      const before = readFileSync(ROWS_JSON, 'utf8');
+      const constants = deriveRowConstants(readFileSync(ROWS_YAML, 'utf8'), before);
+      const after = withRowConstants(before, constants);
+      if (after !== before) writeFileSync(ROWS_JSON, after);
+      const n = [...constants.values()].reduce((a, c) => a + Object.keys(c).length, 0);
+      console.log(`${after === before ? 'kept' : 'wrote'} ${relative(process.cwd(), ROWS_JSON)}: ${n} row constants in ${constants.size} rows`);
+    }
     process.exit(0);
   }
   const target = argv.find((a, i) => !a.startsWith('--') && i !== outAt + 1);

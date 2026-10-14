@@ -21,6 +21,7 @@ import type { RequestMemo } from './memo';
 import type { KeyedRequest } from './request-key';
 import { grantStatus, type GrantStore, type LessonManifest } from '../grants';
 import { hostMatches } from '../format/lint';
+import { rowValue } from '../row-constants';
 
 /** Runs one runner-issued request through the memo. */
 export type MemoCaller = <T>(
@@ -42,8 +43,8 @@ export type LessonSource =
 export interface BindingSources {
   /** The learner's recorded answer for a `remember` key; undefined when skipped. */
   earlier(key: string): unknown | undefined;
-  /** A constant from rows.json (`$row.<id>.<field>`). */
-  row(id: string, field: string): unknown | undefined;
+  /** A row constant (`$row.<id>.<field>`); default: the bundled rows.json `constants`. */
+  row?(id: string, field: string): unknown | undefined;
 }
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -58,7 +59,7 @@ export function resolveBindings(v: unknown, src: BindingSources): unknown {
     const e = /^\$earlier\.(.+)$/.exec(v);
     if (e) return src.earlier(e[1]);
     const r = /^\$row\.([^.]+)\.(.+)$/.exec(v);
-    if (r) return src.row(r[1], r[2]);
+    if (r) return (src.row ?? rowValue)(r[1], r[2]);
     return v;
   }
   if (Array.isArray(v)) return v.map((x) => resolveBindings(x, src));

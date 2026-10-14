@@ -26,6 +26,17 @@
 #   claim     what the lessons say, which the record checks
 #   status    verified | narrowed | failed | needs-brad | closed-by-task (see t6a-rows.md)
 #   note      fallback applied (narrowed), or the contradiction (needs-brad)
+#   constants the row constants lessons cite as `$row.<id>.<field>` and
+#             `{row: <id>.<field>}` (plan:297, :299). Each is derived from this
+#             row's recorded `values` in rows.json (or its own request
+#             arguments) by exactly one of: path, token_prob (+ token),
+#             last_position, request, parse_head (+ take), first_mlp_layer,
+#             argmax (+ by, take, exclude_layer), count, list; and a unit
+#             (layer, head, position, probability, logit, count, number,
+#             string, list (+ of), record). `npm run lessons:compile -- --rows`
+#             derives them into rows.json `rows[].constants`; run it again after
+#             every `--record`. A field with nothing recorded to derive from is
+#             left out (see evidence row-constants.md "Cannot derive").
 #
 # Positions count the start-of-text marker as 0, as Pry's token strip does.
 # Layers use Pry's labels L0-L11. Outline files are never edited (plan C3-10).
@@ -40,6 +51,8 @@ rows:
     record: top 4 with probabilities and logits; top-10 total
     claim: '" basketball" 42.2%, " football" 4.7%, " golf" 4.1%, " the" 2.1%'
     status: verified
+    constants:
+      basketball: { token_prob: top4, token: " basketball", unit: probability }
 
   - id: 2
     outline: [P1.1.md:86, P1.1.md:103, P1.1.md:104, P1.1.md:105]
@@ -97,6 +110,9 @@ rows:
     record: matching numbers out of 768 for embedding and positional embedding; cosine similarity of the summed lists (position 5 vs 2); how many of the 768 summed numbers match
     claim: '" bank" at position 5: embedding identical (768 of 768) in both sentences; position 2 vs 5: embedding identical, positional embedding different; similarity of embedding plus positional embedding 0.957'
     status: verified
+    constants:
+      river_bank_position: { request: river.positions.0, unit: position }
+      the_bank_position: { request: thebank.positions.0, unit: position }
 
   - id: 8
     outline: [P1.6.md:93.2]
@@ -161,6 +177,8 @@ rows:
     record: top 4; token count
     claim: '" Mary" 67.7%, " them" 12.8%, " the" 4.8%, " John" 2.3%'
     status: verified
+    constants:
+      to_position: { last_position: tokens, unit: position }
 
   - id: 15
     outline: [P2.2.md:96.3]
@@ -170,6 +188,9 @@ rows:
     record: top 4
     claim: '" Qu" 31.9%, " the" 1.7%, " Z" 1.6%, " Q" 0.9%'
     status: verified
+    constants:
+      qu_prob: { token_prob: top4, token: " Qu", unit: probability }
+      last_from_position: { last_position: tokens, unit: position }
 
   - id: 16
     outline: [P2.2.md:96.3]
@@ -241,6 +262,8 @@ rows:
     record: top 3 parts by direct push; bars total; real logit; gap
     claim: several parts with large pushes; MLPs appear among the top
     status: verified
+    constants:
+      top_mlp_layer: { first_mlp_layer: top3, unit: layer }
 
   - id: 23
     outline: [P2.1.md:11, P2.1.md:96, P2.1.md:108.3, P3.2.md:44, P3.2.md:94.1]
@@ -253,6 +276,11 @@ rows:
     record: 'heads ranked by their largest last-token weight on a non-first token; the first whose knockout moves p(" Mary") by under 1 point: layer, head, attended token, weight, delta p (the two heads ranked above it are recorded too)'
     claim: a heavy line to a word that doesn't matter (knockout moves p(" Mary") by under 1 point)
     status: verified
+    constants:
+      layer: { parse_head: pick.head, take: layer, unit: layer }
+      head: { parse_head: pick.head, take: head, unit: head }
+      token: { path: pick.token, unit: string }
+      position: { path: pick.position, unit: position }
 
   - id: 24
     outline: [P3.4.md:11, P3.4.md:43, P3.4.md:50, P3.4.md:84.1]
@@ -265,6 +293,11 @@ rows:
     claim: 'knocking out the top features lowers " she"; an active-but-unrelated control moves it less'
     status: verified
     note: 'Control rule: the highest-ranked feature at " nurse" below the top 3 whose Neuronpedia label is not about people, jobs or gender (7698, "words related to processes or actions being performed").'
+    constants:
+      sae_layer: { path: sae_layer, unit: layer }
+      top_ids: { path: top3, unit: list, of: number }
+      n_top: { count: top3, unit: count }
+      control_id: { path: control, unit: number }
 
   - id: 25
     outline: [P3.5.md:11, P3.5.md:47, P3.5.md:89.1, P3.5.md:89.3, P3.5.md:89.4]
@@ -277,6 +310,11 @@ rows:
     claim: both texts change and only the target's moves toward its label
     status: narrowed
     note: 'P3.5.md:91 "If the target feature''s steer doesn''t beat the control on concept present, the lesson needs a different target: pick it during recording". First pick 8548 ("references to the ocean", Pry''s concept search for "the ocean") at strength 20: the unsteered text already says "ocean" 4 times and the control text 3 times, so the target cannot beat the control on concept present. Applied: target 21791 ("references to rain and related weather conditions", concept search "rain"), strength 25, the lowest tried strength (10, 15, 20, 25, 30) where "rain" appears in the steered text and in neither the unsteered nor the control text.'
+    constants:
+      target_id: { path: target.feature_id, unit: number }
+      control_id: { path: target.control_id, unit: number }
+      strength: { path: target.strength, unit: number }
+      concept_words: { list: [target.word], unit: list, of: string }
 
   - id: 26
     outline: [P3.2.md:11, P3.2.md:51, P3.2.md:61, P3.2.md:94.2]
@@ -299,6 +337,10 @@ rows:
     record: clean and corrupted logits of " Mary"; peak cell (layer, word) with clean, corrupted and patched logits and share; per-layer peak word (the (b) pattern)
     claim: 'pattern (b): the logit comes back at the swapped name in early layers, then at " to" in later layers'
     status: verified
+    constants:
+      peak_layer: { path: peak.0.layer, unit: layer }
+      peak_position: { path: peak.0.position, unit: position }
+      peak_word: { path: peak.0.word, unit: string }
 
   - id: 28
     outline: [P1.5.md:69.1, P1.5.md:81, P1.5.md:99, P1.6.md:93.3, P1.6.md:110, P4.1.md:12, P4.1.md:137]
@@ -387,6 +429,8 @@ rows:
     claim: 'another athlete with the same token count; top token " tennis"'
     status: narrowed
     note: 'P3.6.md:79 "If the token count differs, use another athlete with a two-token name and record it." Recorded: "Serena Williams" is 9 tokens ("S", "ere", "na", " Williams"), row 1 is 7. Applied: "Andy Murray", the first two-token athlete in the order tried (Roger Federer 8, Wayne Gretzky 10, Babe Ruth 8, Lionel Messi 9, Andy Murray 7) whose prompt has 7 tokens and whose top token is " tennis", the outline''s expectation.'
+    constants:
+      best_mlp_not_l0: { argmax: mlp_grid, by: share, exclude_layer: 0, take: layer, unit: layer }
 
   - id: 36
     outline: [P3.7.md:84, P3.7.md:95.6]

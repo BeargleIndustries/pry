@@ -31,6 +31,25 @@ describe('slots', () => {
     expect(renderSlot('label', slots, source({ 'features.label{"id":7}': 'sports, especially basketball' }))).toBe('"sports, especially basketball"');
   });
 
+  it('› row-constant slot formats a layer label', () => {
+    // From the bundled rows.json constants: row 27's peak cell is at L2, row 23's head is L2H8.
+    const slots: Record<string, Slot> = {
+      peak: { row: '27.peak_layer' },
+      head: { row: '23.head' },
+      word: { row: '27.peak_word' },
+      p: { row: '1.basketball' },
+      gone: { row: '27.no_such_field' },
+    };
+    expect(renderSlot('peak', slots, source({}))).toBe('L2');
+    expect(renderSlot('head', slots, source({}))).toBe('8');
+    expect(renderSlot('word', slots, source({}))).toBe('" John"');
+    expect(renderSlot('p', slots, source({}))).toBe('42.2% (about 3 in 7)');
+    expect(renderSlot('gone', slots, source({}))).toBe(PLACEHOLDER);
+    // A runner may pass its own lookup.
+    const own: SlotSource = { ...source({}), row: (id, field) => (id === '9' && field === 'top' ? { value: 11, unit: 'layer' } : undefined) };
+    expect(renderSlot('x', { x: { row: '9.top' } }, own)).toBe('L11');
+  });
+
   it('› assert takes the else line when the requirement fails and logs it', () => {
     const slots: Record<string, Slot> = { share: { read: 'dla.actual', expect: 0.8, format: 'number' } };
     const a = { require: { slot: 'share', op: 'gt' as const, value: 0.5 }, say: 'a lot of the difference', else: 'some of the difference' };

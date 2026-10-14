@@ -61,6 +61,12 @@
     "top10_total": 0.6297955038025975,
     "tokens": 7
    },
+   "constants": {
+    "basketball": {
+     "value": 0.42208388447761536,
+     "unit": "probability"
+    }
+   },
    "checks": [
     {
      "claim": "top 4 as the lesson quotes",
@@ -313,6 +319,16 @@
     "summed_cosine_pos5_pos2": 0.9573173025322534,
     "summed_match_pos5_pos2": 0
    },
+   "constants": {
+    "river_bank_position": {
+     "value": 5,
+     "unit": "position"
+    },
+    "the_bank_position": {
+     "value": 2,
+     "unit": "position"
+    }
+   },
    "checks": [
     {
      "claim": "embedding identical at position 5 in both sentences",
@@ -498,6 +514,12 @@
     "top10_total": 0.9260434508323669,
     "tokens": 15
    },
+   "constants": {
+    "to_position": {
+     "value": 14,
+     "unit": "position"
+    }
+   },
    "checks": [
     {
      "claim": "top 4 as the lesson quotes",
@@ -544,6 +566,16 @@
     ],
     "top10_total": 0.3977181608788669,
     "tokens": 17
+   },
+   "constants": {
+    "qu_prob": {
+     "value": 0.3194815218448639,
+     "unit": "probability"
+    },
+    "last_from_position": {
+     "value": 16,
+     "unit": "position"
+    }
    },
    "checks": [
     {
@@ -1355,6 +1387,12 @@
     "gap": 1.163037785794586,
     "answer": " basketball"
    },
+   "constants": {
+    "top_mlp_layer": {
+     "value": 9,
+     "unit": "layer"
+    }
+   },
    "checks": [
     {
      "claim": "MLPs appear among the top 3",
@@ -1402,6 +1440,24 @@
      "position": 11,
      "weight": 0.8083962202072144,
      "delta": -0.002849757671356201
+    }
+   },
+   "constants": {
+    "layer": {
+     "value": 2,
+     "unit": "layer"
+    },
+    "head": {
+     "value": 8,
+     "unit": "head"
+    },
+    "token": {
+     "value": " gave",
+     "unit": "string"
+    },
+    "position": {
+     "value": 11,
+     "unit": "position"
     }
    },
    "checks": [
@@ -1454,6 +1510,29 @@
      0.19061271846294403,
      0.0009149760007858276
     ]
+   },
+   "constants": {
+    "sae_layer": {
+     "value": 8,
+     "unit": "layer"
+    },
+    "top_ids": {
+     "value": [
+      21213,
+      19093,
+      821
+     ],
+     "unit": "list",
+     "of": "number"
+    },
+    "n_top": {
+     "value": 3,
+     "unit": "count"
+    },
+    "control_id": {
+     "value": 7698,
+     "unit": "number"
+    }
    },
    "checks": [
     {
@@ -1576,6 +1655,27 @@
       "steered": 3,
       "control_text": 0
      }
+    }
+   },
+   "constants": {
+    "target_id": {
+     "value": 21791,
+     "unit": "number"
+    },
+    "control_id": {
+     "value": 15662,
+     "unit": "number"
+    },
+    "strength": {
+     "value": 25,
+     "unit": "number"
+    },
+    "concept_words": {
+     "value": [
+      "rain"
+     ],
+     "unit": "list",
+     "of": "string"
     }
    },
    "checks": [
@@ -1707,6 +1807,20 @@
      "L11": " to"
     },
     "to_takes_over_at": 9
+   },
+   "constants": {
+    "peak_layer": {
+     "value": 2,
+     "unit": "layer"
+    },
+    "peak_position": {
+     "value": 10,
+     "unit": "position"
+    },
+    "peak_word": {
+     "value": " John",
+     "unit": "string"
+    }
    },
    "checks": [
     {
@@ -2462,6 +2576,12 @@
       "share": -0.10660722330926438
      }
     ]
+   },
+   "constants": {
+    "best_mlp_not_l0": {
+     "value": 1,
+     "unit": "layer"
+    }
    },
    "checks": [
     {

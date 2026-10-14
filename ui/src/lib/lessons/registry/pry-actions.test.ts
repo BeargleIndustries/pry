@@ -384,6 +384,12 @@ describe('the memo: runner-issued calls only', () => {
     expect(h.page.prompt).toBe('I like the money bank');
   });
 
+  it('› $row argument resolves from the bundled rows.json constants by default', async () => {
+    // Row 23's constants: the head with a heavy line to " gave" is L2H8.
+    await doStep('set_lines_head', { layer: '$row.23.layer', head: '$row.23.head' }, { bindings: { earlier: () => undefined } });
+    expect(pryUi.attention.linesPick).toEqual({ layer: 2, head: 8 });
+  });
+
   it('› memo key differs when only the loaded SAE layer differs', async () => {
     const req = { endpoint: '/generate', model: 'gpt2-small', body: { preset_id: 'gpt2-small', prompt: 'x' } };
     const k = await requestKey(req);
