@@ -1,0 +1,184 @@
+{
+ "key": "95d13b04f4c2fce95d0420c75fdc264c8e1342ff5a85cd3e2f4eefc71bbc8aea",
+ "variant": "r1",
+ "request": {
+  "endpoint": "/patch",
+  "model": "gpt2-small",
+  "body": {
+   "preset_id": "gpt2-small",
+   "clean_prompt": "Michael Jordan played the sport of",
+   "corrupted_prompt": "Andy Murray played the sport of",
+   "patch_type": "mlp"
+  }
+ },
+ "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+ "device": "cpu",
+ "libs": {
+  "python": "3.12.13",
+  "torch": "2.5.1+cpu",
+  "transformer_lens": "2.15.4",
+  "sae_lens": "5.11.0",
+  "transformers": "4.57.6",
+  "numpy": "1.26.4"
+ },
+ "recorded": "2026-10-14",
+ "neuronpedia_fetched": null,
+ "offline": false,
+ "trimmed": [],
+ "response": {
+  "preset_id": "gpt2-small",
+  "clean_prompt": "Michael Jordan played the sport of",
+  "corrupted_prompt": "Andy Murray played the sport of",
+  "patch_type": "mlp",
+  "target_token_index": 6,
+  "clean_predicted_token": " basketball",
+  "corrupted_predicted_token": " tennis",
+  "target_token": " basketball",
+  "clean_logit": 15.96245288848877,
+  "corrupted_logit": 11.889779090881348,
+  "tokens": [
+   "<|endoftext|>",
+   "Michael",
+   " Jordan",
+   " played",
+   " the",
+   " sport",
+   " of"
+  ],
+  "components": [
+   {
+    "name": "MLP.0",
+    "layer": 0,
+    "head": null,
+    "position": null,
+    "effect": 3.683727264404297,
+    "clean_logit": 15.96245288848877,
+    "corrupted_logit": 11.889779090881348,
+    "patched_logit": 15.573506355285645,
+    "share": 0.9044984812111346
+   },
+   {
+    "name": "MLP.1",
+    "layer": 1,
+    "head": null,
+    "position": null,
+    "effect": 1.2182607650756836,
+    "clean_logit": 15.96245288848877,
+    "corrupted_logit": 11.889779090881348,
+    "patched_logit": 13.108039855957031,
+    "share": 0.2991304547374692
+   },
+   {
+    "name": "MLP.3",
+    "layer": 3,
+    "head": null,
+    "position": null,
+    "effect": 1.028365135192871,
+    "clean_logit": 15.96245288848877,
+    "corrupted_logit": 11.889779090881348,
+    "patched_logit": 12.918144226074219,
+    "share": 0.25250368340253665
+   },
+   {
+    "name": "MLP.6",
+    "layer": 6,
+    "head": null,
+    "position": null,
+    "effect": 0.54620361328125,
+    "clean_logit": 15.96245288848877,
+    "corrupted_logit": 11.889779090881348,
+    "patched_logit": 12.435982704162598,
+    "share": 0.13411425525956164
+   },
+   {
+    "name": "MLP.10",
+    "layer": 10,
+    "head": null,
+    "position": null,
+    "effect": 0.4853172302246094,
+    "clean_logit": 15.96245288848877,
+    "corrupted_logit": 11.889779090881348,
+    "patched_logit": 12.375096321105957,
+    "share": 0.11916427741149296
+   },
+   {
+    "name": "MLP.11",
+    "layer": 11,
+    "head": null,
+    "position": null,
+    "effect": -0.4341764450073242,
+    "clean_logit": 15.96245288848877,
+    "corrupted_logit": 11.889779090881348,
+    "patched_logit": 11.455602645874023,
+    "share": -0.10660722330926438
+   },
+   {
+    "name": "MLP.4",
+    "layer": 4,
+    "head": null,
+    "position": null,
+    "effect": 0.35114574432373047,
+    "clean_logit": 15.96245288848877,
+    "corrupted_logit": 11.889779090881348,
+    "patched_logit": 12.240924835205078,
+    "share": 0.0862199532233636
+   },
+   {
+    "name": "MLP.9",
+    "layer": 9,
+    "head": null,
+    "position": null,
+    "effect": 0.08724212646484375,
+    "clean_logit": 15.96245288848877,
+    "corrupted_logit": 11.889779090881348,
+    "patched_logit": 11.977021217346191,
+    "share": 0.021421339100640955
+   },
+   {
+    "name": "MLP.7",
+    "layer": 7,
+    "head": null,
+    "position": null,
+    "effect": -0.07888412475585938,
+    "clean_logit": 15.96245288848877,
+    "corrupted_logit": 11.889779090881348,
+    "patched_logit": 11.810894966125488,
+    "share": -0.019369124235336873
+   },
+   {
+    "name": "MLP.5",
+    "layer": 5,
+    "head": null,
+    "position": null,
+    "effect": 0.04893207550048828,
+    "clean_logit": 15.96245288848877,
+    "corrupted_logit": 11.889779090881348,
+    "patched_logit": 11.938711166381836,
+    "share": 0.01201472986351975
+   },
+   {
+    "name": "MLP.8",
+    "layer": 8,
+    "head": null,
+    "position": null,
+    "effect": -0.04842376708984375,
+    "clean_logit": 15.96245288848877,
+    "corrupted_logit": 11.889779090881348,
+    "patched_logit": 11.841355323791504,
+    "share": -0.011889920356079418
+   },
+   {
+    "name": "MLP.2",
+    "layer": 2,
+    "head": null,
+    "position": null,
+    "effect": -0.0024824142456054688,
+    "clean_logit": 15.96245288848877,
+    "corrupted_logit": 11.889779090881348,
+    "patched_logit": 11.887296676635742,
+    "share": -0.0006095293580997858
+   }
+  ],
+  "status": "ok"
+ }
+}

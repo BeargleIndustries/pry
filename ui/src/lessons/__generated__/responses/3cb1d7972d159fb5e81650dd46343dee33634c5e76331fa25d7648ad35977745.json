@@ -1,0 +1,190 @@
+{
+ "key": "3cb1d7972d159fb5e81650dd46343dee33634c5e76331fa25d7648ad35977745",
+ "variant": "r1",
+ "request": {
+  "endpoint": "/patch",
+  "model": "gpt2-small",
+  "body": {
+   "preset_id": "gpt2-small",
+   "clean_prompt": "The war lasted from the year 1732 to the year 17",
+   "corrupted_prompt": "The war lasted from the year 1701 to the year 17",
+   "patch_type": "mlp"
+  }
+ },
+ "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+ "device": "cpu",
+ "libs": {
+  "python": "3.12.13",
+  "torch": "2.5.1+cpu",
+  "transformer_lens": "2.15.4",
+  "sae_lens": "5.11.0",
+  "transformers": "4.57.6",
+  "numpy": "1.26.4"
+ },
+ "recorded": "2026-10-14",
+ "neuronpedia_fetched": null,
+ "offline": false,
+ "trimmed": [],
+ "response": {
+  "preset_id": "gpt2-small",
+  "clean_prompt": "The war lasted from the year 1732 to the year 17",
+  "corrupted_prompt": "The war lasted from the year 1701 to the year 17",
+  "patch_type": "mlp",
+  "target_token_index": 12,
+  "clean_predicted_token": "49",
+  "corrupted_predicted_token": "20",
+  "target_token": "49",
+  "clean_logit": 25.032711029052734,
+  "corrupted_logit": 23.828460693359375,
+  "tokens": [
+   "<|endoftext|>",
+   "The",
+   " war",
+   " lasted",
+   " from",
+   " the",
+   " year",
+   " 17",
+   "32",
+   " to",
+   " the",
+   " year",
+   " 17"
+  ],
+  "components": [
+   {
+    "name": "MLP.9",
+    "layer": 9,
+    "head": null,
+    "position": null,
+    "effect": 1.6458892822265625,
+    "clean_logit": 25.032711029052734,
+    "corrupted_logit": 23.828460693359375,
+    "patched_logit": 25.474349975585938,
+    "share": 1.3667335050223797
+   },
+   {
+    "name": "MLP.0",
+    "layer": 0,
+    "head": null,
+    "position": null,
+    "effect": 1.3310470581054688,
+    "clean_logit": 25.032711029052734,
+    "corrupted_logit": 23.828460693359375,
+    "patched_logit": 25.159507751464844,
+    "share": 1.1052910002629186
+   },
+   {
+    "name": "MLP.10",
+    "layer": 10,
+    "head": null,
+    "position": null,
+    "effect": -1.2338142395019531,
+    "clean_logit": 25.032711029052734,
+    "corrupted_logit": 23.828460693359375,
+    "patched_logit": 22.594646453857422,
+    "share": -1.0245496330225825
+   },
+   {
+    "name": "MLP.11",
+    "layer": 11,
+    "head": null,
+    "position": null,
+    "effect": -1.0034751892089844,
+    "clean_logit": 25.032711029052734,
+    "corrupted_logit": 23.828460693359375,
+    "patched_logit": 22.82498550415039,
+    "share": -0.8332778986781211
+   },
+   {
+    "name": "MLP.5",
+    "layer": 5,
+    "head": null,
+    "position": null,
+    "effect": -0.9618721008300781,
+    "clean_logit": 25.032711029052734,
+    "corrupted_logit": 23.828460693359375,
+    "patched_logit": 22.866588592529297,
+    "share": -0.7987310215498262
+   },
+   {
+    "name": "MLP.1",
+    "layer": 1,
+    "head": null,
+    "position": null,
+    "effect": 0.8323936462402344,
+    "clean_logit": 25.032711029052734,
+    "corrupted_logit": 23.828460693359375,
+    "patched_logit": 24.66085433959961,
+    "share": 0.6912131319946656
+   },
+   {
+    "name": "MLP.3",
+    "layer": 3,
+    "head": null,
+    "position": null,
+    "effect": -0.4554100036621094,
+    "clean_logit": 25.032711029052734,
+    "corrupted_logit": 23.828460693359375,
+    "patched_logit": 23.373050689697266,
+    "share": -0.37816888246902786
+   },
+   {
+    "name": "MLP.4",
+    "layer": 4,
+    "head": null,
+    "position": null,
+    "effect": -0.3419036865234375,
+    "clean_logit": 25.032711029052734,
+    "corrupted_logit": 23.828460693359375,
+    "patched_logit": 23.486557006835938,
+    "share": -0.28391413013522887
+   },
+   {
+    "name": "MLP.2",
+    "layer": 2,
+    "head": null,
+    "position": null,
+    "effect": 0.2690315246582031,
+    "clean_logit": 25.032711029052734,
+    "corrupted_logit": 23.828460693359375,
+    "patched_logit": 24.097492218017578,
+    "share": 0.2234016605055007
+   },
+   {
+    "name": "MLP.8",
+    "layer": 8,
+    "head": null,
+    "position": null,
+    "effect": 0.11363601684570312,
+    "clean_logit": 25.032711029052734,
+    "corrupted_logit": 23.828460693359375,
+    "patched_logit": 23.942096710205078,
+    "share": 0.09436245394963999
+   },
+   {
+    "name": "MLP.7",
+    "layer": 7,
+    "head": null,
+    "position": null,
+    "effect": -0.10379791259765625,
+    "clean_logit": 25.032711029052734,
+    "corrupted_logit": 23.828460693359375,
+    "patched_logit": 23.72466278076172,
+    "share": -0.08619296961864124
+   },
+   {
+    "name": "MLP.6",
+    "layer": 6,
+    "head": null,
+    "position": null,
+    "effect": 0.06400680541992188,
+    "clean_logit": 25.032711029052734,
+    "corrupted_logit": 23.828460693359375,
+    "patched_logit": 23.892467498779297,
+    "share": 0.05315074741753699
+   }
+  ],
+  "status": "ok"
+ }
+}

@@ -1,0 +1,366 @@
+{
+ "key": "40f7265c3000920be750ca89d5eb57fa4d4996178e3a50dbf49d21d050a5cc4e",
+ "variant": "r1",
+ "request": {
+  "endpoint": "/steer",
+  "model": "gpt2-small",
+  "body": {
+   "preset_id": "gpt2-small",
+   "prompt": "My favourite thing to do on a Saturday is",
+   "feature_id": 21791,
+   "sae_layer": 8,
+   "alpha": 20,
+   "max_new_tokens": 50,
+   "control": true
+  }
+ },
+ "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+ "device": "cpu",
+ "libs": {
+  "python": "3.12.13",
+  "torch": "2.5.1+cpu",
+  "transformer_lens": "2.15.4",
+  "sae_lens": "5.11.0",
+  "transformers": "4.57.6",
+  "numpy": "1.26.4"
+ },
+ "recorded": "2026-10-14",
+ "neuronpedia_fetched": null,
+ "offline": false,
+ "trimmed": [],
+ "response": {
+  "preset_id": "gpt2-small",
+  "prompt": "My favourite thing to do on a Saturday is",
+  "feature_id": 21791,
+  "alpha": 20.0,
+  "sae_layer": 8,
+  "original_generation": " to go to the pub and have a pint of beer. I've been to a lot of pubs and I've never been to a pub before. I've never been to a pub before, but I've been to a pub before. I've",
+  "steered_generation": " to go to the beach and watch the sunset. I love the view of the ocean and the beautiful scenery. I love the fact that the sun is shining on the beach and the clouds are falling. I love the fact that the sun is shining on",
+  "original_top_predictions": [
+   {
+    "token": " to",
+    "probability": 0.3012348413467407,
+    "rank": 1,
+    "logit": null
+   },
+   {
+    "token": " go",
+    "probability": 0.03619842603802681,
+    "rank": 2,
+    "logit": null
+   },
+   {
+    "token": " just",
+    "probability": 0.03073805570602417,
+    "rank": 3,
+    "logit": null
+   },
+   {
+    "token": " take",
+    "probability": 0.026570739224553108,
+    "rank": 4,
+    "logit": null
+   },
+   {
+    "token": " play",
+    "probability": 0.02055433578789234,
+    "rank": 5,
+    "logit": null
+   },
+   {
+    "token": " get",
+    "probability": 0.020220814272761345,
+    "rank": 6,
+    "logit": null
+   },
+   {
+    "token": " sit",
+    "probability": 0.01972888596355915,
+    "rank": 7,
+    "logit": null
+   },
+   {
+    "token": " eat",
+    "probability": 0.018582085147500038,
+    "rank": 8,
+    "logit": null
+   },
+   {
+    "token": " watch",
+    "probability": 0.017809530720114708,
+    "rank": 9,
+    "logit": null
+   },
+   {
+    "token": " make",
+    "probability": 0.016346730291843414,
+    "rank": 10,
+    "logit": null
+   }
+  ],
+  "steered_top_predictions": [
+   {
+    "token": " to",
+    "probability": 0.25884079933166504,
+    "rank": 1,
+    "logit": null
+   },
+   {
+    "token": " go",
+    "probability": 0.033195823431015015,
+    "rank": 2,
+    "logit": null
+   },
+   {
+    "token": " just",
+    "probability": 0.03238160163164139,
+    "rank": 3,
+    "logit": null
+   },
+   {
+    "token": " take",
+    "probability": 0.027599599212408066,
+    "rank": 4,
+    "logit": null
+   },
+   {
+    "token": " make",
+    "probability": 0.023910626769065857,
+    "rank": 5,
+    "logit": null
+   },
+   {
+    "token": " get",
+    "probability": 0.021241072565317154,
+    "rank": 6,
+    "logit": null
+   },
+   {
+    "token": " sit",
+    "probability": 0.016263093799352646,
+    "rank": 7,
+    "logit": null
+   },
+   {
+    "token": " watch",
+    "probability": 0.014388899318873882,
+    "rank": 8,
+    "logit": null
+   },
+   {
+    "token": " eat",
+    "probability": 0.013769767247140408,
+    "rank": 9,
+    "logit": null
+   },
+   {
+    "token": " play",
+    "probability": 0.013744892552495003,
+    "rank": 10,
+    "logit": null
+   }
+  ],
+  "changed_token_indices": [
+   4,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29,
+   30,
+   31,
+   32,
+   33,
+   34,
+   35,
+   36,
+   37,
+   38,
+   39,
+   41,
+   42,
+   43,
+   44,
+   45,
+   46,
+   47,
+   48,
+   49
+  ],
+  "coherence": {
+   "original": -1.2590718269348145,
+   "steered": -1.5084513425827026
+  },
+  "scale": {
+   "strength": 20.0,
+   "activation_p50": 0.0,
+   "activation_p99": 0.0,
+   "activation_max": 0.0
+  },
+  "control": {
+   "feature_id": 15662,
+   "decoder_norm": 1.000022530555725,
+   "steered_decoder_norm": 1.0000394582748413,
+   "cosine": 8.002545072660724e-05,
+   "method": "norm_matched_lowest_cos",
+   "generation": " to go to the pub and have a pint of beer. I'm not sure if I'm going to be able to get a pint of beer, but I'm sure I'll be able to get a pint of beer.\n\nI'm not",
+   "changed_token_indices": [
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49
+   ],
+   "coherence": {
+    "original": -1.2590718269348145,
+    "steered": -1.29985773563385
+   },
+   "top_predictions": [
+    {
+     "token": " to",
+     "probability": 0.23149438202381134,
+     "rank": 1,
+     "logit": null
+    },
+    {
+     "token": " go",
+     "probability": 0.04050324112176895,
+     "rank": 2,
+     "logit": null
+    },
+    {
+     "token": " just",
+     "probability": 0.028459077700972557,
+     "rank": 3,
+     "logit": null
+    },
+    {
+     "token": " take",
+     "probability": 0.023731103166937828,
+     "rank": 4,
+     "logit": null
+    },
+    {
+     "token": " get",
+     "probability": 0.023296838626265526,
+     "rank": 5,
+     "logit": null
+    },
+    {
+     "token": " watch",
+     "probability": 0.02181207202374935,
+     "rank": 6,
+     "logit": null
+    },
+    {
+     "token": " eat",
+     "probability": 0.01800631545484066,
+     "rank": 7,
+     "logit": null
+    },
+    {
+     "token": " I",
+     "probability": 0.016365302726626396,
+     "rank": 8,
+     "logit": null
+    },
+    {
+     "token": " make",
+     "probability": 0.0160838570445776,
+     "rank": 9,
+     "logit": null
+    },
+    {
+     "token": " sit",
+     "probability": 0.014747671782970428,
+     "rank": 10,
+     "logit": null
+    }
+   ],
+   "top_changed": [
+    {
+     "token": " to",
+     "original_prob": 0.3012348413467407,
+     "steered_prob": 0.23149438202381134,
+     "delta": -0.06974045932292938
+    },
+    {
+     "token": " play",
+     "original_prob": 0.02055433578789234,
+     "steered_prob": 0.0,
+     "delta": -0.02055433578789234
+    },
+    {
+     "token": " I",
+     "original_prob": 0.0,
+     "steered_prob": 0.016365302726626396,
+     "delta": 0.016365302726626396
+    },
+    {
+     "token": " sit",
+     "original_prob": 0.01972888596355915,
+     "steered_prob": 0.014747671782970428,
+     "delta": -0.004981214180588722
+    },
+    {
+     "token": " go",
+     "original_prob": 0.03619842603802681,
+     "steered_prob": 0.04050324112176895,
+     "delta": 0.004304815083742142
+    }
+   ]
+  },
+  "status": "ok"
+ }
+}
