@@ -142,7 +142,7 @@ hides: [feature-labels]
 ## The label, and where it comes from {id=s3-6 outline=P2.5.md#3.6}
 
 :::slots
-label: { read: features.label, args: { id: $row.53.fid }, expect: "names of basketball players" }
+label: { row: "53.label", format: string }
 :::
 
 :::observe{id=label-obs}
