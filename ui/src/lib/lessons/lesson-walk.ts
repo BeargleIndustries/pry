@@ -306,6 +306,7 @@ export async function walkLesson(
     }
     switch (step.kind) {
       case 'do': {
+        for (const s of slotsIn([step.prose.map((p) => p.text)])) checkSlot(s, at, done);
         before = read('result');
         for (const a of step.actions) {
           try {
@@ -319,6 +320,7 @@ export async function walkLesson(
         break;
       }
       case 'observe':
+        for (const s of slotsIn([step.prose.map((p) => p.text)])) checkSlot(s, at, done);
         runCheckItems(f.check, at);
         runAsserts(f.assert, at, done);
         if (step.id && pendingFeedback.has(step.id)) {

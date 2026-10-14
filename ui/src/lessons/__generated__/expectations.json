@@ -3,6 +3,100 @@
   "model": "gpt2-small",
   "requests": [
     {
+      "endpoint": "/tokenize",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "text": "The bank"
+      },
+      "key": "089f0187c7441f95bce02cd25aab1faa7afdc60dc84954823fd7adc5aefbbf6f",
+      "lessons": [
+        "pry.p1-2"
+      ]
+    },
+    {
+      "endpoint": "/embedding",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "I like the river bank",
+        "positions": [
+          5
+        ]
+      },
+      "key": "0c6da7fe2049f4fffc0f47391ccb302cda6b663d217479bef20dc9dbc537e93d",
+      "lessons": [
+        "pry.p1-2"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The bank",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "0d120d2788b65930e678a404e3ebdda82fc0ac874021e80b49fd9f4e3400f56e",
+      "lessons": [
+        "pry.p1-2"
+      ]
+    },
+    {
+      "endpoint": "/tokenize",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "text": "I like the money bank"
+      },
+      "key": "3788d18a0e048d081bb49e4f933c674259bda60fd50b214776807c23efea90a8",
+      "lessons": [
+        "pry.p1-2"
+      ]
+    },
+    {
+      "endpoint": "/tokenize",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "text": "I like the river bank"
+      },
+      "key": "8a0e92c780f4c5a2d585c679a7fea5d0989c85af581bfc7de956e2d330ac8328",
+      "lessons": [
+        "pry.p1-2"
+      ]
+    },
+    {
+      "endpoint": "/embedding",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The bank",
+        "positions": [
+          2
+        ]
+      },
+      "key": "9ad506fa2031af5443fb7b61904c04369b2bc5ff71009ea61094dc637c558f7f",
+      "lessons": [
+        "pry.p1-2"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "I like the river bank",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "a1cde7500b758505f02e0c8a0866a651fda4a6366cf2f8b77a8df71f778c403b",
+      "lessons": [
+        "pry.p1-2"
+      ]
+    },
+    {
       "endpoint": "/generate",
       "model": "gpt2-small",
       "body": {
@@ -14,6 +108,21 @@
       "key": "a468eb96531897079e4892b2e22c4d4216db580be59c17633a37b5b61e4de64a",
       "lessons": [
         "pry.p1-1"
+      ]
+    },
+    {
+      "endpoint": "/embedding",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "I like the money bank",
+        "positions": [
+          5
+        ]
+      },
+      "key": "a883b4e2f0564349c3dc86298053e6a06ee99085611e4684b7e6435dded5f4f1",
+      "lessons": [
+        "pry.p1-2"
       ]
     },
     {
@@ -42,6 +151,20 @@
       "key": "de870ae59653d02cb64f39674c39b3f8f7af8b94ef5ec7ae3a2b11e14a70226d",
       "lessons": [
         "pry.p1-1"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "It was unbelievable, said Leclerc",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "e22911d27439eb6ce2557062982928b6ee3b0e01677fe8da5a9c98b45d2911b3",
+      "lessons": [
+        "pry.p1-2"
       ]
     }
   ],
@@ -183,6 +306,173 @@
           "kind": "assert",
           "name": "paris_lead lt 0.02",
           "prompt": "The capital of France is the city of"
+        }
+      ]
+    },
+    "pry.p1-2": {
+      "prompts": [
+        "It was unbelievable, said Leclerc",
+        "I like the river bank",
+        "I like the money bank",
+        "The bank"
+      ],
+      "checks": [
+        {
+          "where": "s3-2/pieces-obs",
+          "kind": "check",
+          "name": "word_tokens equals 1",
+          "prompt": "It was unbelievable, said Leclerc",
+          "check": {
+            "read": "word_tokens",
+            "args": {
+              "word": " unbelievable"
+            },
+            "op": "equals",
+            "value": 1,
+            "expect": 1
+          }
+        },
+        {
+          "where": "s3-2/pieces-obs",
+          "kind": "check",
+          "name": "word_tokens equals 3",
+          "prompt": "It was unbelievable, said Leclerc",
+          "check": {
+            "read": "word_tokens",
+            "args": {
+              "word": " Leclerc"
+            },
+            "op": "equals",
+            "value": 3,
+            "expect": 3
+          }
+        },
+        {
+          "where": "s3-6/identical-obs",
+          "kind": "slot",
+          "name": "bank_matches",
+          "prompt": "It was unbelievable, said Leclerc",
+          "expect": 768
+        },
+        {
+          "where": "s3-6/identical-obs",
+          "kind": "check",
+          "name": "embedding.matches equals 768",
+          "prompt": "It was unbelievable, said Leclerc",
+          "check": {
+            "read": "embedding.matches",
+            "args": {
+              "part": "sum"
+            },
+            "op": "equals",
+            "value": 768,
+            "expect": 768
+          }
+        },
+        {
+          "where": "s3-7/explain",
+          "kind": "slot",
+          "name": "bank_word",
+          "prompt": "I like the river bank",
+          "expect": 6
+        },
+        {
+          "where": "s3-7/the-bank-pos",
+          "kind": "slot",
+          "name": "bank_pos",
+          "prompt": "I like the river bank",
+          "expect": 5
+        },
+        {
+          "where": "s3-7/the-bank-obs",
+          "kind": "slot",
+          "name": "the_bank_pos",
+          "prompt": "The bank",
+          "expect": 2
+        },
+        {
+          "where": "s3-7/the-bank-obs",
+          "kind": "check",
+          "name": "focus.position equals 2",
+          "prompt": "The bank",
+          "check": {
+            "read": "focus.position",
+            "op": "equals",
+            "value": 2,
+            "expect": 2
+          }
+        },
+        {
+          "where": "s5/bank-two-five/match-or-not",
+          "kind": "slot",
+          "name": "pos_two",
+          "prompt": "The bank",
+          "expect": 2
+        },
+        {
+          "where": "s5/bank-two-five/match-or-not",
+          "kind": "slot",
+          "name": "pos_five",
+          "prompt": "The bank",
+          "expect": 5
+        },
+        {
+          "where": "s5/bank-two-five/split-obs",
+          "kind": "slot",
+          "name": "embed_matches",
+          "prompt": "The bank",
+          "expect": 768
+        },
+        {
+          "where": "s5/bank-two-five/split-obs",
+          "kind": "slot",
+          "name": "pos_matches",
+          "prompt": "The bank",
+          "expect": 0
+        },
+        {
+          "where": "s5/bank-two-five/split-obs",
+          "kind": "slot",
+          "name": "cosine",
+          "prompt": "The bank",
+          "expect": 0.95732
+        },
+        {
+          "where": "s5/bank-two-five/split-obs",
+          "kind": "check",
+          "name": "embedding.matches equals 768",
+          "prompt": "The bank",
+          "check": {
+            "read": "embedding.matches",
+            "args": {
+              "part": "embed"
+            },
+            "op": "equals",
+            "value": 768,
+            "expect": 768
+          }
+        },
+        {
+          "where": "s5/bank-two-five/split-obs",
+          "kind": "check",
+          "name": "embedding.matches not equals 768",
+          "prompt": "The bank",
+          "check": {
+            "read": "embedding.matches",
+            "args": {
+              "part": "pos"
+            },
+            "op": "equals",
+            "value": 768,
+            "not": true,
+            "expect": 0
+          }
+        },
+        {
+          "where": "s5/bank-two-five/split-obs",
+          "kind": "assert",
+          "name": "cosine gt 0.9",
+          "prompt": "The bank"
         }
       ]
     },
