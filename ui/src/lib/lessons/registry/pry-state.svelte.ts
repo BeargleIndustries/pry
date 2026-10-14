@@ -23,7 +23,8 @@ import { directCall, type AnalysisController, type SidecarCaller } from '../../a
 import { buildGenerateRequest, generateStepwise } from '../../sidecar';
 import type { CompareController } from '../../compare-run';
 import type { Aggregation } from '../../attention-agg';
-import type { EmbeddingResponse, GenerateResponse, PatchComponent, SteerResponse } from '../../types';
+import type { EmbeddingResponse, GenerateResponse, PatchComponent, PatchResponse, SteerResponse } from '../../types';
+import type { ConceptSearchResult } from '../../concept-search';
 import {
   DEFAULT_NEW_TOKENS,
   clampNewTokens,
@@ -69,7 +70,13 @@ function initialUi() {
     workspaceSplit: true,
     /** Hideable regions currently hidden (hide-until-predict). */
     hidden: {} as Record<string, boolean>,
-    steering: { selectedFeatureId: null as number | null, alpha: 5.0 },
+    steering: {
+      selectedFeatureId: null as number | null,
+      alpha: 5.0,
+      /** Find a concept: the query box and the last result. */
+      conceptQuery: '',
+      conceptResult: null as ConceptSearchResult | null,
+    },
     attention: {
       view: 'lines' as 'lines' | 'expert',
       /** Head picked for the Lines view; null = pick automatically. */
@@ -83,6 +90,8 @@ function initialUi() {
       corruptedPrompt: IOI_CHANGED,
       patchType: 'head' as PatchType,
       selectedComponent: null as PatchComponent | null,
+      /** The last result of each type, so set_patch_view switches without a new run. */
+      byType: {} as Partial<Record<PatchType, PatchResponse>>,
     },
     circuit: { thresholdInput: '' },
     writeIt: {
@@ -104,6 +113,8 @@ function initialUi() {
     steerAcross: [] as { prompt: string; response: SteerResponse }[],
     /** run_steer{control: true} asked for the control feature. */
     steerControl: false,
+    /** What `highlight` asked the presenter to point at, in order (seq bumps per call). */
+    highlight: null as { anchors: string[]; seq: number } | null,
   };
 }
 

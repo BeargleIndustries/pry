@@ -89,7 +89,7 @@
         {#each visibleComponents as comp, i (comp.name)}
           {@const isPositive = comp.contribution >= 0}
           {@const width = barWidth(comp)}
-          <li class="group flex items-center gap-2 rounded px-2 py-1 hover:bg-zinc-900/60">
+          <li class="group flex items-center gap-2 rounded px-2 py-1 hover:bg-zinc-900/60" data-tour="dla-bar" data-part={comp.name}>
             <span class="sr-only">{i + 1}. {rowLabel(comp)}</span>
             <!-- Rank -->
             <span aria-hidden="true" class="w-5 shrink-0 text-right font-mono text-[10px] text-zinc-700">

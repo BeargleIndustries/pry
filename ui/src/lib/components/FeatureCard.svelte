@@ -3,6 +3,7 @@
 </script>
 
 <script lang="ts">
+  import { isHidden, pryUi } from '$lib/lessons/registry/pry-state.svelte';
   import Term from './Term.svelte';
   import type { FeatureHit, TokenFeatures, PresetDisplay } from '$lib/types';
   import { neuronpediaUrl as buildNeuronpediaUrl } from '$lib/preset-display';
@@ -21,6 +22,10 @@
   let { hit, maxActivation, layer, presetDisplay = null, allTokenFeatures = [] }: Props = $props();
 
   let expanded = $state(false);
+  // A lesson's open_feature opens this card.
+  $effect(() => {
+    if (pryUi.openFeatureId === hit.id) expanded = true;
+  });
 
   const barPct = $derived(maxActivation > 0 ? (hit.activation / maxActivation) * 100 : 0);
 
@@ -142,7 +147,7 @@
 
   <!-- Description subtitle -->
   {#if isNamed && hit.description}
-    <p class="mb-2 text-xs text-zinc-300">
+    <p class="mb-2 text-xs text-zinc-300" data-lesson-hidden={isHidden('feature-labels') || undefined}>
       "{hit.description}"
       {#if labelDetail !== 'none'}
         <span class="ml-1 text-zinc-600">· {labelDetail === 'detailed' ? 'detailed label' : 'short label'}</span>

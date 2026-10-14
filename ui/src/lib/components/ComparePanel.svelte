@@ -94,7 +94,7 @@
         class="rounded px-2 py-1 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100">⇄</button>
       <label class="flex items-center gap-2">
         <span class="w-4 text-xs font-semibold text-amber-400">B</span>
-        <input type="text" bind:value={s.promptB} onkeydown={onKey} aria-label="Prompt B"
+        <input type="text" bind:value={s.promptB} onkeydown={onKey} aria-label="Prompt B" data-tour="compare-prompt-b"
           class="flex-1 rounded border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-100 focus:border-amber-500 focus:outline-none" />
       </label>
       <button type="button" onclick={() => compare.run()} disabled={runDisabled || s.running} title={runDisabledReason}

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { isHidden } from '$lib/lessons/registry/pry-state.svelte';
   import Term from './Term.svelte';
   import type { GenerateResponse, TopPrediction } from '$lib/types';
   import { predictionsReadout } from '$lib/readouts';
@@ -38,6 +39,7 @@
 <section
   class="flex flex-col gap-4 rounded-lg border border-zinc-800 bg-zinc-950 p-5"
   data-tip="predictions-panel"
+  data-lesson-hidden={isHidden('predictions-panel') || undefined}
 >
   <div class="flex items-baseline gap-2">
     <h2 class="text-sm font-semibold text-zinc-100">Next-word guesses (top 10)</h2>
@@ -68,6 +70,8 @@
       {#each predictions as pred (pred.rank)}
         {@const barWidth = maxProb > 0 ? (pred.probability / maxProb) * 100 : 0}
         <div
+          data-tour="prediction-bar"
+          data-token={pred.token}
           class="group flex items-center gap-3 rounded-md px-3 py-1.5 transition-colors {pred.rank === 1 ? 'bg-zinc-900/80' : 'hover:bg-zinc-900/50'}"
         >
           <!-- Rank badge -->

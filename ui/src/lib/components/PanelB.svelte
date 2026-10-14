@@ -272,7 +272,7 @@
       {:else}
         <div class="flex flex-col gap-3 transition-opacity {layerSwitching ? 'opacity-50 pointer-events-none' : ''}" data-tour="panel-b-features-list">
           {#each sortedHits as hit, i (hit.id)}
-            <div data-tip={i === 0 ? 'panel-b-feature-row' : undefined} class="flex items-start gap-2">
+            <div data-tip={i === 0 ? 'panel-b-feature-row' : undefined} data-tour="feature-row" data-feature-id={hit.id} class="flex items-start gap-2">
               {#if ablationMode}
                 <button
                   onclick={() => onToggleFeatureAblation?.(hit.id, response.sae_layer_used ?? 0)}

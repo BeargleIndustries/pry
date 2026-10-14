@@ -6,7 +6,7 @@
   import { steeringReadout } from '$lib/readouts';
   import { diffTokens } from '$lib/token-diff';
   import { searchConcepts, SidecarError } from '$lib/sidecar';
-  import { pryUi } from '$lib/lessons/registry/pry-state.svelte';
+  import { isHidden, pryUi } from '$lib/lessons/registry/pry-state.svelte';
   import {
     NEURONPEDIA_NOTICE,
     isNeuronpediaUnavailable,
@@ -64,16 +64,14 @@
   const steering = pryUi.steering;
 
   // --- Concept search (T24): any feature of the loaded SAE, found by label ---
-  let conceptQuery = $state('');
   let searching = $state(false);
-  let conceptResult = $state<ConceptSearchResult | null>(null);
   let conceptError = $state<string | null>(null);
   /** Neuronpedia unreachable or no labels for this model: search is switched off. */
   let searchOff = $state<string | null>(null);
   /** A searched feature picked for steering; overrides the dropdown while set. */
   let concept = $state<ConceptHit | null>(null);
 
-  const queryIssue = $derived(queryProblem(conceptQuery));
+  const queryIssue = $derived(queryProblem(steering.conceptQuery));
 
   async function runConceptSearch(e?: SubmitEvent) {
     e?.preventDefault();
@@ -81,12 +79,12 @@
     searching = true;
     conceptError = null;
     try {
-      const res = await searchConcepts(conceptQuery, response?.preset_id);
+      const res = await searchConcepts(steering.conceptQuery, response?.preset_id);
       if (res.status === 'no_coverage') {
         searchOff = "This model's features have no Neuronpedia labels, so concept search isn't available for it.";
-        conceptResult = null;
+        steering.conceptResult = null;
       } else {
-        conceptResult = res;
+        steering.conceptResult = res;
       }
     } catch (err) {
       const se = err instanceof SidecarError ? err : null;
@@ -112,7 +110,7 @@
     seenResetKey = resetKey;
     steering.selectedFeatureId = null;
     concept = null;
-    conceptResult = null;
+    steering.conceptResult = null;
   });
 
   // Auto-select first feature when available features change; drop a
@@ -132,7 +130,7 @@
 
   /** Searched results belong to the layer they were searched on. */
   const conceptUsable = $derived(
-    concept !== null && conceptResult !== null && conceptResult.sae_layer === currentSaeLayer,
+    concept !== null && steering.conceptResult !== null && steering.conceptResult.sae_layer === currentSaeLayer,
   );
   const steerFeatureId = $derived(conceptUsable ? concept!.feature_id : steering.selectedFeatureId);
 
@@ -181,7 +179,7 @@
         <input
           id="concept-query"
           type="text"
-          bind:value={conceptQuery}
+          bind:value={steering.conceptQuery}
           maxlength="200"
           placeholder="e.g. the ocean, anger, French"
           disabled={searchOff !== null}
@@ -197,17 +195,17 @@
       {#if conceptError}
         <p class="text-xs text-red-400">{conceptError}</p>
       {/if}
-      {#if conceptResult}
-        {#if conceptResult.results.length === 0}
-          <p class="text-xs text-zinc-500">No labelled features matched "{conceptResult.query}".</p>
+      {#if steering.conceptResult}
+        {#if steering.conceptResult.results.length === 0}
+          <p class="text-xs text-zinc-500">No labelled features matched "{steering.conceptResult.query}".</p>
         {:else}
           <p class="text-[11px] text-zinc-500">
-            Closest <Term key="neuronpedia">Neuronpedia</Term> labels for "{conceptResult.query}". The search ranks by how similar the words of a
+            Closest <Term key="neuronpedia">Neuronpedia</Term> labels for "{steering.conceptResult.query}". The search ranks by how similar the words of a
             label are to yours, so there's always a top result, even when nothing really fits. Labels
             were written by another AI and can be wrong.
           </p>
           <ul class="flex max-h-56 flex-col gap-1 overflow-y-auto">
-            {#each conceptResult.results as hit (hit.feature_id)}
+            {#each steering.conceptResult.results as hit (hit.feature_id)}
               <li>
                 <button
                   type="button"
@@ -260,7 +258,7 @@
       >
         {#each availableFeatures as feat (feat.id)}
           <option value={feat.id}>
-            #{feat.id} {feat.description ? `- ${feat.description}` : '(no label yet)'} (fires at {feat.activation.toFixed(1)} on your prompt)
+            #{feat.id} {isHidden('feature-labels') ? '' : feat.description ? `- ${feat.description}` : '(no label yet)'} (fires at {feat.activation.toFixed(1)} on your prompt)
           </option>
         {/each}
       </select>
@@ -268,7 +266,7 @@
         Labels are written by an AI and can be wrong. The number after each one is its
         <Term key="activation">activation</Term>: how strongly it fired on your prompt.
       </p>
-      {#if !conceptUsable && selectedFeature?.description}
+      {#if !conceptUsable && selectedFeature?.description && !isHidden('feature-labels')}
         <p class="text-xs text-zinc-500">{selectedFeature.description}</p>
       {/if}
     </div>
