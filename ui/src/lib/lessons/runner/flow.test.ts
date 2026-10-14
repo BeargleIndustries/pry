@@ -128,10 +128,13 @@ describe('flow', () => {
     const t = block(kit, 'make-pair').task!;
     expect(t.met).toBe(false);
     expect(t.message).toBe(lessonsCopy.constraintFails('how many words differ between the two Compare prompts'));
-    // One word changed: the change is allowed (this stub's top guess doesn't move, so the target isn't met).
+    // Refused before the run (C5-1): the two-word pair never reaches the sidecar.
+    expect(t.runs).toBe(0);
+    expect(kit.sidecar.calls.some((c) => c.endpoint === '/generate' && c.body.prompt.includes('the park'))).toBe(false);
+    // One word changed: the run is allowed, and the recorded top guesses (" Mary" for A, " John" for B) differ.
     await send(kit, { type: 'task-args', step: 'make-pair', args: { b: 'When Mary and John went to the store, Mary gave a drink to' } });
     await send(kit, { type: 'task-run', step: 'make-pair' });
-    expect(block(kit, 'make-pair').task!.message).toBe(lessonsCopy.targetNotMet);
+    expect(block(kit, 'make-pair').task!.message).toBe(lessonsCopy.targetMet);
     expect(kit.sidecar.calls.filter((c) => c.endpoint === '/generate').some((c) => c.body.prompt.includes('Mary gave'))).toBe(true);
   });
 
