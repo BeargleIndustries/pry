@@ -39,6 +39,7 @@
   import { placePopup, type Placement, type RectLike } from '$lib/popup/place';
   import { placementAttrs, viewportSize } from '$lib/popup/measure';
   import { occupied } from '$lib/popup/occupied.svelte';
+  import { notifyPick, pryUi } from '$lib/lessons/registry/pry-state.svelte';
 
   // ---------------------------------------------------------------------------
   // Props
@@ -106,7 +107,10 @@
   // ---------------------------------------------------------------------------
 
   let internalFocus = $state<number | undefined>(undefined);
-  let focusMode = $state<'from' | 'to'>('from');
+  // View, Lines head, FROM / TO and the open head live in the Pry scene state,
+  // so a lesson can set them while this tab is closed (plan T2b state lift).
+  const att = pryUi.attention;
+  const focusMode = $derived(att.focusMode);
 
   // When response changes, reset internal focus (M1 fix: both branches were identical)
   $effect(() => {
@@ -142,8 +146,6 @@
   // Expanded view state
   // ---------------------------------------------------------------------------
 
-  let expandedLayer = $state<number | null>(null);
-  let expandedHead = $state<number | null>(null);
   let canvasEl = $state<HTMLCanvasElement | null>(null);
 
   // ---------------------------------------------------------------------------
@@ -160,11 +162,11 @@
       : undefinedCellMessage(focusMode),
   );
 
-  const aggOptions = $derived(focusMode === 'from' ? FROM_OPTIONS : TO_OPTIONS);
+  const aggOptions = $derived(att.focusMode === 'from' ? FROM_OPTIONS : TO_OPTIONS);
 
   // If the current aggregation isn't valid for this mode, fall back to the default.
   $effect(() => {
-    if (!isValidAgg(focusMode, aggregation)) aggregation = DEFAULT_AGG;
+    if (!isValidAgg(att.focusMode, aggregation)) aggregation = DEFAULT_AGG;
   });
 
   // nLayers x nHeads grid of aggregated values (raw, before normalizing); null = undefined
@@ -180,7 +182,7 @@
       const row: (number | null)[] = [];
       for (let h = 0; h < nHeads; h++) {
         const headMatrix = attention[l]?.heads?.[h];
-        row.push(headMatrix ? aggregateHead(headMatrix, fi, focusMode, aggregation) : null);
+        row.push(headMatrix ? aggregateHead(headMatrix, fi, att.focusMode, aggregation) : null);
       }
       grid.push(row);
     }
@@ -273,18 +275,19 @@
 
   async function onCellClick(l: number, h: number) {
     gridCurrent = { row: l, col: h };
-    expandedLayer = l;
-    expandedHead = h;
+    att.expandedLayer = l;
+    att.expandedHead = h;
     // Remember the pick so the lines view shows the same head if the user switches.
-    linesPick = { layer: l, head: h };
+    att.linesPick = { layer: l, head: h };
+    notifyPick('head', { layer: l, head: h });
     // The grid unmounts; move focus into the detail view so keyboard users aren't stranded.
     await tick();
     closeBtn?.focus();
   }
 
   async function closeExpanded() {
-    expandedLayer = null;
-    expandedHead = null;
+    att.expandedLayer = null;
+    att.expandedHead = null;
     // Back to the cell that was opened.
     await tick();
     focusGridCell(gridSvg, gridCurrent);
@@ -417,9 +420,9 @@
 
   // Trigger canvas render when expanded view data is available
   $effect(() => {
-    if (expandedLayer === null || expandedHead === null || !canvasEl) return;
-    const layer = expandedLayer;
-    const head = expandedHead;
+    if (att.expandedLayer === null || att.expandedHead === null || !canvasEl) return;
+    const layer = att.expandedLayer;
+    const head = att.expandedHead;
     const headMatrix = attention[layer]?.heads?.[head];
     if (!headMatrix) return;
     const tokenTexts = tokens.map((t) => t.text);
@@ -468,16 +471,15 @@
   // Lines view (T28): the default. The layer x head grid is the "Expert view".
   // ---------------------------------------------------------------------------
 
-  let view = $state<'lines' | 'expert'>('lines');
   // The guided tour picks the view for the step it's on (Lines first, then the
   // grid when it explains heads). The user can still switch afterwards.
   $effect(() => {
     const req = tutorialState.open ? tutorialState.attentionRequest : null;
-    if (req) view = req.view;
+    if (req) att.view = req.view;
   });
   // Ablation picks heads on the grid, so it shows the Expert view while on.
   const forcedExpert = $derived(ablationMode);
-  const showExpert = $derived(view === 'expert' || forcedExpert);
+  const showExpert = $derived(att.view === 'expert' || forcedExpert);
   // If forcing the Expert view removed the focused control (the Lines button or
   // a lines-view word), keep keyboard users in place on the Expert view button.
   let expertBtn: HTMLButtonElement | undefined = $state();
@@ -491,10 +493,9 @@
 
   type HeadPick = { layer: number; head: number };
   /** Head the user picked for the lines view; null = pick automatically. */
-  let linesPick = $state<HeadPick | null>(null);
 
   const validPick = $derived(
-    linesPick && linesPick.layer < nLayers && linesPick.head < nHeads ? linesPick : null,
+    att.linesPick && att.linesPick.layer < nLayers && att.linesPick.head < nHeads ? att.linesPick : null,
   );
 
   // Auto: the head the current aggregation scores highest for the focused word,
@@ -523,8 +524,8 @@
   const linesArcs = $derived(buildArcs(linesMatrix, linesN, LINES_GEOM));
   const linesHidden = $derived(hiddenCount(linesMatrix, linesN));
   const linesFocus = $derived(effectiveFocusArrayPos < linesN ? effectiveFocusArrayPos : -1);
-  const focusArcs = $derived(linesArcs.filter((a) => isFocusArc(a, linesFocus, focusMode)));
-  const otherArcs = $derived(linesArcs.filter((a) => !isFocusArc(a, linesFocus, focusMode)));
+  const focusArcs = $derived(linesArcs.filter((a) => isFocusArc(a, linesFocus, att.focusMode)));
+  const otherArcs = $derived(linesArcs.filter((a) => !isFocusArc(a, linesFocus, att.focusMode)));
   const linesSvgW = LINES_GEOM.rightX - LINES_GEOM.leftX;
   const linesSvgH = $derived(linesHeight(linesN, LINES_GEOM));
   const linesHeadDesc = $derived(`layer ${linesHead.layer}, head ${linesHead.head}`);
@@ -532,26 +533,26 @@
   // Readout follows whatever head is on screen.
   const readoutHead = $derived<HeadPick | null>(
     showExpert
-      ? expandedLayer !== null && expandedHead !== null
-        ? { layer: expandedLayer, head: expandedHead }
+      ? att.expandedLayer !== null && att.expandedHead !== null
+        ? { layer: att.expandedLayer, head: att.expandedHead }
         : null
       : linesHead,
   );
 
   function setPickLayer(value: string) {
     if (value === 'auto') {
-      linesPick = null;
+      att.linesPick = null;
       return;
     }
-    linesPick = { layer: Number(value), head: validPick?.head ?? linesHead.head };
+    att.linesPick = { layer: Number(value), head: validPick?.head ?? linesHead.head };
   }
 
   function setPickHead(value: string) {
     if (value === 'auto') {
-      linesPick = null;
+      att.linesPick = null;
       return;
     }
-    linesPick = { layer: validPick?.layer ?? linesHead.layer, head: Number(value) };
+    att.linesPick = { layer: validPick?.layer ?? linesHead.layer, head: Number(value) };
   }
 
   function weightPct(w: number): string {
@@ -566,7 +567,7 @@
   function pickLineWord(pos: number, side: 'from' | 'to') {
     const tok = tokens[pos];
     if (!tok) return;
-    focusMode = side;
+    att.focusMode = side;
     handleTokenClick(tok.index);
   }
 
@@ -817,7 +818,7 @@
           response,
           effectiveFocusArrayPos,
           readoutHead,
-          focusMode,
+          att.focusMode,
         )}
       />
       {#if isStartMarker(tokens[0]?.text ?? '')}
@@ -868,7 +869,7 @@
         aria-label="Attention view"
       >
         <button
-          onclick={() => { view = 'lines'; }}
+          onclick={() => { att.view = 'lines'; }}
           disabled={forcedExpert}
           aria-pressed={!showExpert}
           title={forcedExpert
@@ -883,7 +884,7 @@
         </button>
         <button
           bind:this={expertBtn}
-          onclick={() => { view = 'expert'; }}
+          onclick={() => { att.view = 'expert'; }}
           aria-pressed={showExpert}
           title="The grid: every layer and head at once, one cell each."
           class={[
@@ -898,11 +899,11 @@
       <!-- Focus mode toggle -->
       <div class="flex items-center gap-1 rounded-md border border-zinc-700 bg-zinc-800/60 p-0.5">
         <button
-          onclick={() => { focusMode = 'from'; }}
+          onclick={() => { att.focusMode = 'from'; }}
           data-tip="panel-a-from-selector"
           class={[
             'rounded px-3 py-1 text-xs transition-all',
-            focusMode === 'from'
+            att.focusMode === 'from'
               ? 'bg-indigo-500 text-white'
               : 'text-zinc-400 hover:text-zinc-200',
           ].join(' ')}
@@ -910,11 +911,11 @@
           FROM <span class="font-mono opacity-80">{displayToken(tokens[effectiveFocusArrayPos]?.text ?? '')}</span>
         </button>
         <button
-          onclick={() => { focusMode = 'to'; }}
+          onclick={() => { att.focusMode = 'to'; }}
           data-tip="panel-a-to-selector"
           class={[
             'rounded px-3 py-1 text-xs transition-all',
-            focusMode === 'to'
+            att.focusMode === 'to'
               ? 'bg-indigo-500 text-white'
               : 'text-zinc-400 hover:text-zinc-200',
           ].join(' ')}
@@ -966,7 +967,7 @@
       </div>
     </div>
 
-    {#if allUndefined && focusMode === 'to'}
+    {#if allUndefined && att.focusMode === 'to'}
       <p class="mb-3 rounded border border-zinc-700 bg-zinc-800/60 px-3 py-1.5 text-xs text-zinc-300" data-testid="to-last-word-notice">
         {undefinedCellMessage('to')}
       </p>
@@ -1074,7 +1075,7 @@
               <div class="flex w-28 flex-col items-end" role="group" aria-label="Words doing the looking. Use the up and down arrow keys to move.">
                 {#each { length: linesN } as _, i (i)}
                   {@const word = displayToken(tokens[i]?.text ?? '')}
-                  {@const on = i === linesFocus && focusMode === 'from'}
+                  {@const on = i === linesFocus && att.focusMode === 'from'}
                   <button
                     bind:this={leftBtns[i]}
                     onclick={() => pickLineWord(i, 'from')}
@@ -1139,7 +1140,7 @@
               <div class="flex w-28 flex-col items-start" role="group" aria-label="Words being looked at. Use the up and down arrow keys to move.">
                 {#each { length: linesN } as _, i (i)}
                   {@const word = displayToken(tokens[i]?.text ?? '')}
-                  {@const on = i === linesFocus && focusMode === 'to'}
+                  {@const on = i === linesFocus && att.focusMode === 'to'}
                   <button
                     bind:this={rightBtns[i]}
                     onclick={() => pickLineWord(i, 'to')}
@@ -1183,19 +1184,19 @@
             </span>
           </div>
           <p>
-            Highlighted: the lines {focusMode === 'from' ? `from ${focusWord} to the words it looks at` : `into ${focusWord} from the words that look at it`}.
+            Highlighted: the lines {att.focusMode === 'from' ? `from ${focusWord} to the words it looks at` : `into ${focusWord} from the words that look at it`}.
             Click a word, or use the arrow keys, to move. A word can only look at itself and words before it.
             Lines under {weightPct(LINE_THRESHOLD)} of a word's attention are hidden ({linesHidden} hidden).
           </p>
         </div>
       </div>
-    {:else if expandedLayer !== null && expandedHead !== null}
+    {:else if att.expandedLayer !== null && att.expandedHead !== null}
       <!-- Expanded Canvas view -->
       <div class="rounded-lg border border-zinc-700 bg-zinc-950 p-4" data-tip="panel-a-head-detail">
         <div class="mb-3 flex items-center justify-between">
           <div>
             <span class="text-sm font-semibold text-zinc-200">
-              Layer {expandedLayer}, head {expandedHead}
+              Layer {att.expandedLayer}, head {att.expandedHead}
             </span>
             <span class="ml-2 text-xs text-zinc-500">
               Its whole attention pattern, {tokens.length} words by {tokens.length} words
@@ -1215,7 +1216,7 @@
         <div
           class="overflow-auto"
           role="img"
-          aria-label={`Attention matrix for layer ${expandedLayer}, head ${expandedHead}: ${tokens.length} rows of words doing the looking by ${tokens.length} columns of words being looked at. Brighter means more attention.`}
+          aria-label={`Attention matrix for layer ${att.expandedLayer}, head ${att.expandedHead}: ${tokens.length} rows of words doing the looking by ${tokens.length} columns of words being looked at. Brighter means more attention.`}
           aria-describedby={readoutId}
         >
           <canvas bind:this={canvasEl}></canvas>
@@ -1298,7 +1299,7 @@
                   tabindex={isTabStop ? 0 : -1}
                   data-row={l}
                   data-col={h}
-                  aria-selected={ablationMode ? isAbl : expandedLayer === l && expandedHead === h}
+                  aria-selected={ablationMode ? isAbl : att.expandedLayer === l && att.expandedHead === h}
                   aria-label={cellLabel(l, h, rawVal)}
                   onmouseenter={(e) => onCellMouseEnter(l, h, e)}
                   onmouseleave={onCellMouseLeave}

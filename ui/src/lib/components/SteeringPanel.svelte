@@ -1,10 +1,12 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import Term from './Term.svelte';
   import Readout from './Readout.svelte';
   import type { GenerateResponse, SteerResponse, FeatureHit } from '$lib/types';
   import { steeringReadout } from '$lib/readouts';
   import { diffTokens } from '$lib/token-diff';
   import { searchConcepts, SidecarError } from '$lib/sidecar';
+  import { pryUi } from '$lib/lessons/registry/pry-state.svelte';
   import {
     NEURONPEDIA_NOTICE,
     isNeuronpediaUnavailable,
@@ -57,8 +59,9 @@
     return result;
   });
 
-  let selectedFeatureId = $state<number | null>(null);
-  let alpha = $state(5.0);
+  // Feature pick and strength live in the Pry scene state, so a lesson can set
+  // them while this tab is closed (plan T2b state lift).
+  const steering = pryUi.steering;
 
   // --- Concept search (T24): any feature of the loaded SAE, found by label ---
   let conceptQuery = $state('');
@@ -101,10 +104,13 @@
     concept = hit;
   }
 
-  // Clear the selection whenever the parent bumps resetKey.
+  // Clear the selection whenever the parent bumps resetKey (not on mount: the
+  // pick outlives the tab now).
+  let seenResetKey = untrack(() => resetKey);
   $effect(() => {
-    void resetKey;
-    selectedFeatureId = null;
+    if (resetKey === seenResetKey) return;
+    seenResetKey = resetKey;
+    steering.selectedFeatureId = null;
     concept = null;
     conceptResult = null;
   });
@@ -112,27 +118,27 @@
   // Auto-select first feature when available features change; drop a
   // selection that is no longer in the list (e.g. new prompt or SAE layer).
   $effect(() => {
-    if (selectedFeatureId !== null && !availableFeatures.some((f) => f.id === selectedFeatureId)) {
-      selectedFeatureId = null;
+    if (steering.selectedFeatureId !== null && !availableFeatures.some((f) => f.id === steering.selectedFeatureId)) {
+      steering.selectedFeatureId = null;
     }
-    if (availableFeatures.length > 0 && selectedFeatureId === null) {
-      selectedFeatureId = availableFeatures[0].id;
+    if (availableFeatures.length > 0 && steering.selectedFeatureId === null) {
+      steering.selectedFeatureId = availableFeatures[0].id;
     }
   });
 
   const selectedFeature = $derived(
-    availableFeatures.find((f) => f.id === selectedFeatureId) ?? null,
+    availableFeatures.find((f) => f.id === steering.selectedFeatureId) ?? null,
   );
 
   /** Searched results belong to the layer they were searched on. */
   const conceptUsable = $derived(
     concept !== null && conceptResult !== null && conceptResult.sae_layer === currentSaeLayer,
   );
-  const steerFeatureId = $derived(conceptUsable ? concept!.feature_id : selectedFeatureId);
+  const steerFeatureId = $derived(conceptUsable ? concept!.feature_id : steering.selectedFeatureId);
 
   function handleRun() {
     if (steerFeatureId === null || currentSaeLayer === undefined) return;
-    onSteer?.(steerFeatureId, currentSaeLayer, alpha);
+    onSteer?.(steerFeatureId, currentSaeLayer, steering.alpha);
   }
 
   // Generations are continuation-only (the server strips the prompt); the
@@ -144,7 +150,7 @@
       : null,
   );
 
-  const highAlphaWarning = $derived(Math.abs(alpha) > 20);
+  const highAlphaWarning = $derived(Math.abs(steering.alpha) > 20);
 </script>
 
 <div class="flex flex-col gap-4" data-tip="steering-panel">
@@ -247,7 +253,8 @@
       {/if}
       <select
         id={featureSelectId}
-        bind:value={selectedFeatureId}
+        data-tour="steering-feature-menu"
+        bind:value={steering.selectedFeatureId}
         onchange={() => { concept = null; }}
         class="rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-sm text-zinc-200 focus:border-indigo-500 focus:outline-none {conceptUsable ? 'opacity-50' : ''}"
       >
@@ -270,18 +277,19 @@
     <div class="flex flex-col gap-1.5">
       <div class="flex items-center justify-between">
         <label for={alphaId} class="text-xs font-medium text-zinc-400">Steering strength</label>
-        <span class="text-xs tabular-nums text-zinc-300">{alpha.toFixed(1)}</span>
+        <span class="text-xs tabular-nums text-zinc-300">{steering.alpha.toFixed(1)}</span>
       </div>
       <div class="flex items-center gap-2">
         <span class="text-[10px] text-zinc-600">Suppress</span>
         <input
           id={alphaId}
+          data-tour="steering-strength"
           type="range"
-          aria-valuetext="{alpha.toFixed(1)}, {alpha < 0 ? 'suppress' : alpha > 0 ? 'amplify' : 'no change'}"
+          aria-valuetext="{steering.alpha.toFixed(1)}, {steering.alpha < 0 ? 'suppress' : steering.alpha > 0 ? 'amplify' : 'no change'}"
           min="-30"
           max="30"
           step="0.5"
-          bind:value={alpha}
+          bind:value={steering.alpha}
           class="flex-1 accent-indigo-500"
         />
         <span class="text-[10px] text-zinc-600">Amplify</span>
