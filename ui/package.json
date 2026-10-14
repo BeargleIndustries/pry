@@ -5,7 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev --port 5173",
-    "build": "vite build",
+    "build": "vite build && npm run build:cli",
+    "build:cli": "vite build -c vite.cli.config.ts",
+    "lessons:lint": "vite-node -c vite.cli.config.ts scripts/lessons-lint.ts",
+    "lessons:compile": "vite-node -c vite.cli.config.ts scripts/lessons-compile.ts",
+    "lessons:schema": "vite-node -c vite.cli.config.ts scripts/lessons-schema.ts",
+    "lessons:rows": "vite-node -c vite.cli.config.ts scripts/outline-rows.ts",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "lint": "prettier --check .",
@@ -19,6 +24,11 @@
     "d3-interpolate": "^3",
     "d3-scale": "^4",
     "lucide-svelte": "^0.460",
+    "remark-directive": "^3.0.1",
+    "remark-frontmatter": "^5.0.0",
+    "remark-parse": "^11.0.0",
+    "unified": "^11.0.5",
+    "yaml": "^2.9.1",
     "zod": "^4.6.7"
   },
   "devDependencies": {
