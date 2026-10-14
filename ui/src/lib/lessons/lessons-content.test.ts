@@ -1,0 +1,228 @@
+// Plan T6 acceptance (plan:544): the bundled lessons against the approved
+// curriculum. One `it` per row of the acceptance list, plus the index checks.
+//
+// While the T6 lanes run apart, a lane's worktree holds only its own lessons:
+// a check that needs a lesson another lane writes waits for it (named in
+// OTHER_LANES); everything present is checked in full.
+
+import { describe, expect, it } from 'vitest';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { parse as parseYaml } from 'yaml';
+import { loadLessonSource } from './format/normalise';
+import { parseIndex } from './format/parse';
+import { pryToolSet } from './registry/pry-set';
+import { glossary } from '../glossary';
+import type { Lesson, Step } from './format/schema';
+
+const UI = fileURLToPath(new URL('../../..', import.meta.url));
+const LESSONS = join(UI, 'src/lessons');
+const SKELETONS = join(UI, 'src/lib/lessons/fixtures/outline-coverage');
+
+/** Plan:511-534: id, title, minutes, the concept map's rows. */
+const TABLE: { id: string; title: string; minutes: number; map: number[] }[] = [
+  { id: 'pry.quick-tour', title: "What's on Pry's screen?", minutes: 5, map: [] },
+  { id: 'pry.p1-1', title: 'Is there a database in there?', minutes: 10, map: [1, 2, 3] },
+  { id: 'pry.p1-2', title: 'Does the model read words?', minutes: 12, map: [6, 7] },
+  { id: 'pry.p1-3', title: 'What happens between your prompt and the guess?', minutes: 10, map: [1, 18, 30] },
+  { id: 'pry.p1-4', title: 'Is the top guess the right answer?', minutes: 10, map: [3, 4, 5] },
+  { id: 'pry.p1-5', title: "Why doesn't it say the same thing every time?", minutes: 10, map: [1, 8, 28] },
+  { id: 'pry.p1-6', title: 'Does it learn from you? Where did its numbers come from?', minutes: 12, map: [1, 8, 9, 10, 28, 29] },
+  { id: 'pry.p2-1', title: 'Where does each token pull information from?', minutes: 12, map: [14, 23] },
+  { id: 'pry.p2-2', title: 'Can we catch a head doing one job?', minutes: 10, map: [15, 16] },
+  { id: 'pry.p2-3', title: 'What would each layer guess?', minutes: 10, map: [1, 14, 17, 20, 21] },
+  { id: 'pry.p2-4', title: 'Which parts pushed toward the answer?', minutes: 12, map: [1, 14, 17, 22] },
+  { id: 'pry.p2-5', title: 'What patterns can a tool find in the residual stream?', minutes: 12, map: [1, 7] },
+  { id: 'pry.p3-1', title: 'Did the change cause it?', minutes: 10, map: [14, 17, 31] },
+  { id: 'pry.p3-2', title: 'Switch it off: did it matter?', minutes: 12, map: [14, 23, 26] },
+  { id: 'pry.p3-3', title: 'Which part carries the difference?', minutes: 12, map: [14, 27, 32] },
+  { id: 'pry.p3-4', title: 'Switch a feature off: was it doing anything?', minutes: 10, map: [17, 24] },
+  { id: 'pry.p3-5', title: 'Turn one feature up: does the text follow the label?', minutes: 12, map: [25, 33] },
+  { id: 'pry.p3-6', title: 'Case study: where does a fact come from?', minutes: 12, map: [1, 18, 20, 34, 35] },
+  { id: 'pry.p3-7', title: 'Case study: build a case', minutes: 15, map: [14, 19, 36] },
+  { id: 'pry.p4-1', title: "Why doesn't GPT-2 act like ChatGPT?", minutes: 10, map: [11, 12, 21, 28, 37, 38, 39] },
+];
+
+/** Lessons the other T6 lanes write (ralph-t6-brief): allowed to be missing until the lanes merge. */
+const OTHER_LANES: Record<string, string> = Object.fromEntries([
+  ...['pry.p2-1', 'pry.p2-2', 'pry.p2-3', 'pry.p2-4', 'pry.p2-5'].map((id) => [id, 'lane/t6-s2']),
+  ...['pry.p3-1', 'pry.p3-2', 'pry.p3-3', 'pry.p3-4', 'pry.p3-5', 'pry.p3-6', 'pry.p3-7', 'pry.p4-1'].map((id) => [id, 'lane/t6-s3']),
+]);
+
+/** `pry.p1-2` → the skeleton file and the outline label rows use (`P1.2`). */
+const outlineName = (id: string) => (id === 'pry.quick-tour' ? 'quick-tour' : id.replace(/^pry\.p(\d)-(\d)$/, 'P$1.$2'));
+
+function load(file: string): Lesson {
+  const { lesson, issues } = loadLessonSource(readFileSync(file, 'utf8'), { mode: 'strict', tool: pryToolSet, file });
+  const errors = issues.filter((i) => i.severity === 'error');
+  if (!lesson || errors.length) throw new Error(`${file}: ${errors.map((e) => `${e.line}: ${e.message}`).join('; ')}`);
+  return lesson;
+}
+
+const folders = readdirSync(LESSONS).filter((d) => !d.startsWith('_') && existsSync(join(LESSONS, d, 'lesson.md')));
+const lessons = new Map(folders.map((d) => [d, load(join(LESSONS, d, 'lesson.md'))]));
+const all = [...lessons.values()];
+const sidebar = all.filter((l) => l.meta.presentation !== 'overlay');
+const indexIds = parseIndex(readFileSync(join(LESSONS, 'index.yaml'), 'utf8'));
+
+function steps(l: Lesson): Step[] {
+  const out: Step[] = [];
+  const walk = (ss: Step[]) => ss.forEach((s) => (out.push(s), walk(s.children)));
+  l.sections.forEach((sec) => walk(sec.steps));
+  return out;
+}
+const kinds = (l: Lesson) => new Set(steps(l).map((s) => s.kind));
+
+describe('lessons content', () => {
+  it('› index.yaml lists all 20 lessons in the plan order with stages, and every bundled folder', () => {
+    expect(indexIds).toEqual(TABLE.map((t) => t.id));
+    const doc = parseYaml(readFileSync(join(LESSONS, 'index.yaml'), 'utf8')) as { lessons: { id: string; stage: number }[] };
+    for (const e of doc.lessons) expect(typeof e.stage, e.id).toBe('number');
+    for (const l of all) {
+      expect(indexIds, `${l.meta.id} isn't in index.yaml`).toContain(l.meta.id);
+      expect(doc.lessons.find((e) => e.id === l.meta.id)!.stage, l.meta.id).toBe(l.meta.stage ?? 0);
+    }
+    // A listed id with no folder: only another lane's, until the lanes merge.
+    const missing = indexIds.filter((id) => !lessons.has(id));
+    expect(missing.filter((id) => !(id in OTHER_LANES)), 'listed in index.yaml with no folder').toEqual([]);
+  });
+
+  it('› every sidebar lesson has predict, observe, explain-result with leaves_open, transfer, explain-chain', () => {
+    expect(sidebar.length).toBeGreaterThan(0);
+    for (const l of sidebar) {
+      const k = kinds(l);
+      for (const need of ['predict', 'observe', 'explain-result', 'transfer', 'explain-chain']) expect(k.has(need as never), `${l.meta.id} has no ${need}`).toBe(true);
+      for (const s of steps(l).filter((x) => x.kind === 'explain-result')) {
+        const lo = s.fields.leaves_open;
+        expect(typeof lo === 'string' ? lo.trim() : Array.isArray(lo) && lo.length, `${l.meta.id} line ${s.line}: leaves_open`).toBeTruthy();
+      }
+    }
+  });
+
+  it('› stage 2-3 explain-results have skeptic lines', () => {
+    for (const l of sidebar.filter((x) => x.meta.stage === 2 || x.meta.stage === 3)) {
+      for (const s of steps(l).filter((x) => x.kind === 'explain-result')) {
+        expect(s.fields.skeptic?.says?.trim() && s.fields.skeptic?.check?.trim(), `${l.meta.id} line ${s.line}: skeptic`).toBeTruthy();
+      }
+    }
+  });
+
+  it("› each lesson's ids and minutes match the table and its verified_rows equal the union rule", () => {
+    const rowsDoc = parseYaml(readFileSync(join(LESSONS, 'verified-rows.yaml'), 'utf8')) as { rows: { id: number; lessons?: string[] }[] };
+    for (const l of all) {
+      const t = TABLE.find((x) => x.id === l.meta.id);
+      expect(t, `${l.meta.id} isn't in the plan's table`).toBeDefined();
+      expect(l.meta.title).toBe(t!.title);
+      expect(l.meta.minutes, l.meta.id).toBe(t!.minutes);
+      // Union: the map's rows, the outline's own (carried verbatim in its skeleton), rows 40+ citing the lesson.
+      const skeleton = load(join(SKELETONS, `${outlineName(l.meta.id)}.md`));
+      const own = (skeleton.meta.verified_rows ?? []).map(Number);
+      const cited = rowsDoc.rows.filter((r) => r.id >= 40 && (r.lessons ?? []).includes(outlineName(l.meta.id))).map((r) => r.id);
+      const union = [...new Set([...t!.map, ...own, ...cited])].sort((a, b) => a - b);
+      expect((l.meta.verified_rows ?? []).map(Number).sort((a, b) => a - b), `${l.meta.id} verified_rows`).toEqual(union);
+    }
+  });
+
+  it('› every tour step and experiment id is in MAPPING.md', () => {
+    const mapping = readFileSync(join(LESSONS, 'MAPPING.md'), 'utf8');
+    const tour = readFileSync(join(UI, 'src/lib/tutorial/tour-steps.ts'), 'utf8');
+    const stepIds = [...tour.matchAll(/\bid:\s*['"]([a-z-]+\.[a-z-]+)['"]/g)].map((m) => m[1]);
+    expect(stepIds).toHaveLength(38);
+    const exps = (JSON.parse(readFileSync(join(UI, 'src/lib/experiments/experiments.json'), 'utf8')) as { experiments: { id: string }[] }).experiments.map((e) => e.id);
+    expect(exps).toHaveLength(8);
+    const known = new Set(TABLE.map((t) => t.id));
+    for (const id of [...stepIds, ...exps]) {
+      const row = mapping.split('\n').find((line) => line.startsWith(`| \`${id}\` |`));
+      expect(row, `${id} has no row in MAPPING.md`).toBeDefined();
+      const target = row!.split('|')[2].trim();
+      // Each target is `lesson#section` (a known lesson) or "cut".
+      if (target !== 'cut') for (const m of target.matchAll(/`([^`#]+)#[^`]+`/g)) expect(known, `${id} → ${m[1]}`).toContain(m[1]);
+      expect(target === 'cut' || /`[^`#]+#[^`]+`/.test(target), `${id}: ${target}`).toBe(true);
+    }
+  });
+
+  const tn4 = ['pry.p2-1', 'pry.p3-2', 'pry.p3-7'];
+  const tn4Missing = tn4.filter((id) => !lessons.has(id));
+  it.skipIf(tn4Missing.length > 0)(
+    `› TN-4 keys written in P2.1 (question, task) and P3.2 (task) are read in P3.2/P3.7${tn4Missing.length ? ` (waiting for ${tn4Missing.map((id) => `${id} from ${OTHER_LANES[id]}`).join(', ')})` : ''}`,
+    () => {
+      const written = (id: string, kindsOk: string[]) =>
+        steps(lessons.get(id)!)
+          .filter((s) => kindsOk.includes(s.kind) && s.fields.remember !== undefined)
+          .map((s) => `${id}.${typeof s.fields.remember === 'string' ? s.fields.remember : s.fields.remember.key}`);
+      const keys = [...written('pry.p2-1', ['predict', 'question', 'task']), ...written('pry.p3-2', ['task'])];
+      expect(keys.length).toBeGreaterThan(0);
+      const readers = ['pry.p3-2', 'pry.p3-7'].map((id) => readFileSync(join(LESSONS, id, 'lesson.md'), 'utf8')).join('\n');
+      for (const k of keys) expect(readers.includes(`key="${k}"`) || readers.includes(`$earlier: ${k}`) || readers.includes(`$earlier.${k}`), `${k} is never read`).toBe(true);
+    },
+  );
+
+  it('› quick tour has 12 sections, explain only, open_panel only in enter', () => {
+    const tour = lessons.get('pry.quick-tour')!;
+    expect(tour.meta.presentation).toBe('overlay');
+    expect(tour.sections).toHaveLength(12);
+    for (const s of steps(tour)) {
+      expect(s.kind, `line ${s.line}`).toBe('explain');
+      expect(s.actions, `line ${s.line}: a step can't act`).toEqual([]);
+    }
+    for (const sec of tour.sections) {
+      for (const key of Object.keys(sec.enter?.value ?? {})) expect(key, `${sec.id} enter`).toBe('open_panel');
+    }
+    expect(tour.sections.filter((s) => s.enter).map((s) => s.id)).toEqual(['step-4', 'step-6', 'step-8']);
+    // Row 72: step 12 quotes P1.1's title as shipped.
+    const p11 = TABLE.find((t) => t.id === 'pry.p1-1')!.title;
+    expect(tour.sections[11].steps.flatMap((s) => s.prose.map((p) => p.text)).join(' ')).toContain(`"${p11}"`);
+  });
+
+  /**
+   * Where a lesson departs from its skeleton on purpose. Each entry names why;
+   * nothing else may differ in sections, step kinds or actions.
+   */
+  const DEPARTURES: { lesson: string; step: string; lessonActions?: string[]; skeletonActions?: string[]; added?: true; why: string }[] = [
+    { lesson: 'pry.p1-5', step: 'baker-set', lessonActions: ['set_prompt', 'run'], skeletonActions: ['set_prompt', 'write_it'], why: 'critic r5: the transfer write is learner-run, so the lesson only sets and runs the prompt' },
+    { lesson: 'pry.p1-5', step: 'baker-write', added: true, why: 'critic r5: a task with learner_actions: [write_it]' },
+    ...['write-mit', 'write-decl', 'write-baker'].map((step) => ({
+      lesson: 'pry.p1-6',
+      step,
+      lessonActions: ['set_prompt', 'run', 'write_it'],
+      skeletonActions: ['set_prompt', 'write_it'],
+      why: 'write_it writes from the last Run, so each opening runs first',
+    })),
+  ];
+
+  it("› each bundled lesson's sections, step kinds and actions match its outline-coverage skeleton", () => {
+    const sig = (l: Lesson, side: 'lesson' | 'skeleton') => {
+      const dep = DEPARTURES.filter((d) => d.lesson === l.meta.id);
+      const one = (s: Step): unknown[] => {
+        const d = dep.find((x) => x.step === s.id);
+        if (d?.added && side === 'lesson') return [];
+        let actions = s.actions.map((a) => `${a.name} ${JSON.stringify(a.args)}`);
+        if (d?.lessonActions) {
+          expect(s.actions.map((a) => a.name), `${l.meta.id} ${s.id} (${side})`).toEqual(side === 'lesson' ? d.lessonActions : d.skeletonActions);
+          actions = ['(departure)'];
+        }
+        return [{ kind: s.kind, id: s.id ?? null, actions, children: s.children.flatMap(one) }];
+      };
+      return l.sections.map((sec) => ({ id: sec.id, outline: sec.outline ?? null, depth: sec.depth, steps: sec.steps.flatMap(one) }));
+    };
+    for (const l of all) {
+      const skeleton = load(join(SKELETONS, `${outlineName(l.meta.id)}.md`));
+      expect(sig(l, 'lesson'), l.meta.id).toEqual(sig(skeleton, 'skeleton'));
+    }
+  });
+
+  const withIntro = Object.values(glossary).filter((g) => (g as { introducedIn?: string }).introducedIn !== undefined);
+  it.skipIf(withIntro.length === 0)(
+    `› glossary introducedIn matches terms.yaml${withIntro.length === 0 ? ' (waiting for lane/t6-copy to add introducedIn to glossary.ts)' : ''}`,
+    () => {
+      const terms = (parseYaml(readFileSync(join(LESSONS, 'terms.yaml'), 'utf8')) as { terms: { term: string; aliases?: string[]; introduced_in: string }[] }).terms;
+      const find = (name: string) => terms.find((t) => [t.term, ...(t.aliases ?? [])].some((n) => n.toLowerCase() === name.toLowerCase()));
+      for (const g of withIntro as { term: string; introducedIn: string }[]) {
+        const t = find(g.term);
+        expect(t, `glossary "${g.term}" isn't in terms.yaml`).toBeDefined();
+        expect(g.introducedIn, g.term).toBe(t!.introduced_in);
+      }
+    },
+  );
+});

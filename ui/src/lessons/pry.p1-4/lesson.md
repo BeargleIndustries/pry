@@ -13,7 +13,7 @@ prerequisites: [pry.p1-3]
 cold_entry: "What you need from before: the last token's residual stream, after 12 layers, gets turned into a chance for every token in the vocabulary."
 model: gpt2-small
 baseline: { prompt: "Two plus two equals" }
-verified_rows: [1, 3, 4, 5]
+verified_rows: [3, 4, 5]
 slots:
   one_p: { read: prediction, args: { token: " one" }, field: prob, expect: 0.34206 }
   two_p: { read: prediction, args: { token: " two" }, field: prob, expect: 0.16224 }

@@ -7,6 +7,7 @@ summary: "Five minutes on where everything sits on Pry's screen. The tour doesn'
 minutes: 5
 presentation: overlay
 prerequisites: []
+verified_rows: [72]
 ---
 
 ## Welcome {id=step-1 outline=quick-tour.md#3.1}
