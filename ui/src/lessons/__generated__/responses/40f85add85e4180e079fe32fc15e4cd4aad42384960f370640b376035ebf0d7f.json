@@ -1,0 +1,52 @@
+{
+ "key": "40f85add85e4180e079fe32fc15e4cd4aad42384960f370640b376035ebf0d7f",
+ "variant": "r1",
+ "request": {
+  "endpoint": "/feature/15662",
+  "model": "gpt2-small",
+  "body": {}
+ },
+ "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+ "device": "cpu",
+ "libs": {
+  "python": "3.12.13",
+  "torch": "2.5.1+cpu",
+  "transformer_lens": "2.15.4",
+  "sae_lens": "5.11.0",
+  "transformers": "4.57.6",
+  "numpy": "1.26.4"
+ },
+ "recorded": "2026-10-14",
+ "neuronpedia_fetched": "2026-10-14",
+ "offline": false,
+ "trimmed": [],
+ "response": {
+  "feature_id": 15662,
+  "top_activating_snippets": [
+   {
+    "snippet": "puffing.⏎⏎@MurdochPol This is proof stoners are",
+    "activation": 0.0
+   },
+   {
+    "snippet": "ing.⏎⏎@MurdochPol This is proof stoners are dangerous",
+    "activation": 0.0
+   },
+   {
+    "snippet": "toddhampton: @keithlaw Getting into science now huh? Stick to",
+    "activation": 0.0
+   },
+   {
+    "snippet": "important. “@toddhampton: @keithlaw Getting into science",
+    "activation": 0.0
+   },
+   {
+    "snippet": ", 2015⏎⏎@MurdochPol At least you don't have to worry",
+    "activation": 0.0
+   }
+  ],
+  "description": "names of individuals, particularly those involved in politics and science",
+  "label_detail": "detailed",
+  "confidence": "high",
+  "status": "ok"
+ }
+}

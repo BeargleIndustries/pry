@@ -1762,7 +1762,9 @@
       "steered": 3,
       "control_text": 0
      }
-    }
+    },
+    "target_label": "references to rain or rainy conditions",
+    "control_label": "names of individuals, particularly those involved in politics and science"
    },
    "constants": {
     "target_id": {
@@ -1787,6 +1789,14 @@
      ],
      "unit": "list",
      "of": "string"
+    },
+    "target_label": {
+     "value": "references to rain or rainy conditions",
+     "unit": "string"
+    },
+    "control_label": {
+     "value": "names of individuals, particularly those involved in politics and science",
+     "unit": "string"
     }
    },
    "checks": [
@@ -1810,7 +1820,9 @@
    "responses": [
     "05171ed9fc2d25073dc074f2d6590b65a409a289ceb4e308594247617e0cd36b",
     "068739dc2ffd4f8dbc264c479adbc148e5a050aaeb631c19150cb61a1fa8d1f5",
-    "24dc820a86b789420ac3596dcf3be373f6edb7acb64cced8f7aa317563010ce3"
+    "24dc820a86b789420ac3596dcf3be373f6edb7acb64cced8f7aa317563010ce3",
+    "40f85add85e4180e079fe32fc15e4cd4aad42384960f370640b376035ebf0d7f",
+    "c644bd92bfc6324a44a2a981b90f22a24b2f992d668f66f504e48827b5cbc952"
    ]
   },
   {

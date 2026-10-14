@@ -203,7 +203,8 @@ class Session:
         labels = req["network"] and (self.record or self.network)
         guard = _offline() if variant == "offline" else contextlib.nullcontext([])
         with _neuronpedia(labels), guard as blocked:
-            r = self.client.post(endpoint, json=body)
+            # GET /feature/{id} (featureInfo) takes no body; every other endpoint is a POST.
+            r = self.client.get(endpoint) if endpoint.startswith("/feature/") else self.client.post(endpoint, json=body)
         self.calls[key] = self.calls.get(key, 0) + 1
         if variant == "offline":
             assert not blocked, f"offline run tried the network: {blocked}"
@@ -716,7 +717,9 @@ def c25(R, REP, OFF):
     base = R["beachbase"]
     o = steer_view(R["ocean20"], "ocean")
     rn = steer_view(R["rain25"], "rain")
-    v = {"base_top4": top(base), "first_pick": o, "target": rn}
+    v = {"base_top4": top(base), "first_pick": o, "target": rn,
+         # Neuronpedia labels via GET /feature/{id}, fetched when recorded (the response file holds the date).
+         "target_label": R["targetlabel"].get("description"), "control_label": R["controllabel"].get("description")}
     return v, [
         ("unsteered top 4", expect_top(base, [(".", 10.4), (" rise", 4.7), (" breeze", 3.4), (",", 2.9)])),
         ("fallback condition: the ocean target can't beat the control on concept present", o["word_in"]["original"] > 0 and o["word_in"]["control_text"] > 0),
