@@ -126,12 +126,43 @@ class LoadedModel:
         sae: object,  # sae_lens.SAE; None for custom models (T32)
         sae_layer: Optional[int],  # None for custom models (no SAE)
         device: str,
+        model_revision: Optional[str] = None,
+        sae_release: Optional[str] = None,
+        sae_id: Optional[str] = None,
     ) -> None:
         self.preset_id = preset_id
         self.model = model
         self.sae = sae
         self.sae_layer = sae_layer
         self.device = device
+        # MF-5 provenance: the Hugging Face snapshot hash the weights were read
+        # from (recorded, not pinned; None if it can't be resolved) and the SAE.
+        self.model_revision = model_revision
+        self.sae_release = sae_release
+        self.sae_id = sae_id
+
+
+def resolve_model_revision(hf_id: str) -> Optional[str]:
+    """The snapshot hash of ``hf_id`` in the local Hugging Face cache, or None.
+
+    Read from the cached ``config.json`` path (``.../snapshots/<hash>/config.json``),
+    i.e. the revision the weights were actually loaded from. Never touches the
+    network.
+    """
+    try:
+        from huggingface_hub import try_to_load_from_cache
+
+        path = try_to_load_from_cache(hf_id, "config.json")
+    except Exception:
+        return None
+    if not isinstance(path, str):
+        return None
+    parts = path.replace("\\", "/").split("/")
+    if "snapshots" in parts:
+        i = parts.index("snapshots")
+        if i + 1 < len(parts):
+            return parts[i + 1]
+    return None
 
 
 class ModelRegistry:
@@ -292,6 +323,9 @@ class ModelRegistry:
                 sae=sae,
                 sae_layer=sae_layer,
                 device=device,
+                model_revision=resolve_model_revision(manifest.model.hf_id),
+                sae_release=manifest.sae.release,
+                sae_id=sae_id,
             )
             self._loaded[preset_id] = loaded
             self._last_loaded = preset_id
@@ -355,8 +389,10 @@ class ModelRegistry:
             if on_stage is not None:
                 on_stage("model_loaded", device)
 
+            hf_id = preset_id.split(":", 1)[1] if preset_id.startswith("custom:") else tl_name
             loaded = LoadedModel(
                 preset_id=preset_id, model=model, sae=None, sae_layer=None, device=device,
+                model_revision=resolve_model_revision(hf_id),
             )
             self._loaded[preset_id] = loaded
             self._last_loaded = preset_id
@@ -431,6 +467,8 @@ class ModelRegistry:
 
         loaded.sae = sae
         loaded.sae_layer = layer
+        loaded.sae_release = manifest.sae.release
+        loaded.sae_id = sae_id
         del old_sae
         gc.collect()
         if torch.cuda.is_available():
