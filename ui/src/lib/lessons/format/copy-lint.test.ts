@@ -145,6 +145,53 @@ ${step('explain-result{id=er}', yaml('supports: ["The bars show which parts push
   });
 });
 
+// Copy-lint changes forced by the T1 outline-coverage gate (each names the outline line).
+describe('copy lint: outline-coverage additions', () => {
+  it('› term_budget_exception also lifts the one-term-per-section rule (P1.2:27)', () => {
+    expect(run(explain('The token and the vocabulary.'), lesson('pry.p1-2', { term_budget_exception: 'round 7 #17' }))).not.toContain('term-budget-section');
+  });
+
+  it('› a term family counts as one new term in its section (P3.3:8)', () => {
+    expect(run(explain('The clean run and the corrupted run.'), lesson('pry.p3-3'))).not.toContain('term-budget-section');
+  });
+
+  it('› a stand-in name is fine until its term is named, retired after (P1.2:79)', () => {
+    const two = `## A\n\n${step('explain{id=a}', 'The starting numbers are its embedding.')}\n## B\n\n${step('explain{id=b}', 'The starting numbers again.')}`;
+    const errs = errors(copy(two, lesson('pry.p1-2'), OPTS));
+    expect(errs.filter((c) => c === 'retired')).toHaveLength(1);
+    expect(run(explain('The starting numbers.'), lesson('pry.p1-3'))).toContain('retired');
+    expect(run(explain('The starting numbers.'), lesson('pry.p1-1'))).not.toContain('retired');
+  });
+
+  it('› a choice may be a fixed percentage bin, and 100% is the whole (P1.4:34, P1.4:59)', () => {
+    const p = `## A\n\n${step('predict{id=p checks=o}', `How much of the 100% will it get?\n\n${yaml('choices:\n  - { text: "under 10%" }\n  - { text: "over 50%" }')}`)}`;
+    expect(run(p, lesson('pry.p1-4'))).not.toContain('bare-number');
+    expect(run(explain('It got 34% of it.'), lesson('pry.p1-4'))).toContain('bare-number');
+  });
+
+  it('› a predict or question stem asks, so a qualitative word there is fine (P2.1:40)', () => {
+    const p = `## A\n\n${step('predict{id=p checks=o}', `Which earlier word matters most?\n\n${yaml('choices:\n  - { text: "A" }')}`)}`;
+    expect(run(p, lesson('pry.p2-1'))).not.toContain('qualitative');
+    expect(run(explain('Most of it goes there.'), lesson('pry.p2-1'))).toContain('qualitative');
+  });
+
+  it('› exempt phrases: a rank ("the most") and a non-model subject ("temperature decides") (P1.4:93, P1.5:88)', () => {
+    expect(run(explain("' one' got the most, but only about 1 in 3."), lesson('pry.p1-4'))).not.toContain('qualitative');
+    expect(run(explain('Temperature decides how random the pick is.'), lesson('pry.p1-5'))).not.toContain('model-verb');
+    expect(run(explain('The model decides.'), lesson('pry.p1-5'))).toContain('model-verb');
+  });
+
+  it('› the lesson that withdraws a picture may name it (P2.1:49)', () => {
+    const line = explain("That's the assembly line's picture: we're done with it.");
+    expect(run(line, lesson('pry.p2-1'))).not.toContain('metaphor-name');
+    expect(run(line, lesson('pry.p2-2'))).toContain('metaphor-name');
+  });
+
+  it('› inline code inside a refutation is masked (P2.3:58)', () => {
+    expect(run(explain(':refutes[being on top at `L9` settled nothing]'), lesson('pry.p2-3'))).not.toContain('bare-number');
+  });
+});
+
 describe('lint-words.yaml', () => {
   it('keeps every pinned caveat phrase in step with copy/caveats.test.ts', () => {
     const pins = readFileSync(here('../../copy/caveats.test.ts'), 'utf8').replace(/\\u([0-9a-fA-F]{4})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));

@@ -135,7 +135,7 @@ remember: first-guess
 | `simplification` | Prose, plus `corrected_in` (a list of lesson ids). | An aside that admits the picture's simpler than the truth and names the lesson that fixes it. |
 | `fold` | `title`. | Collapsed extra depth: names that aren't needed on the main path, results from larger models. |
 | `recall` | An optional opening question, `from` (a lesson id), choices or free text. | Brings back something from an earlier lesson. Saved to the journal only. |
-| `question` | `choices: [{text, feedback}]` (feedback shows straight after the learner commits; `reveal: false` holds it back), or `free: true` with `model_answer`, or `pick: token` / `pick: head`. Optional `remember`, `on_skip`. | A question with an authored answer. It isn't checked against the app. |
+| `question` | `choices: [{text, target?, feedback}]` (feedback shows straight after the learner commits; `reveal: false` holds it back; `target` tags a misconception, as on a predict), or `free: true` with `model_answer`, or `pick: token` / `pick: head`. Optional `remember`, `on_skip`. | A question with an authored answer. It isn't checked against the app. |
 | `predict` | `choices: [{text, target?, feedback}]`, or `free: true`, or `pick: token` / `pick: head`. Optional `hides: [anchor]`, `skip_check`, `remember`, `on_skip`, and `checks=<observe id>`. | The learner commits to a guess before the app answers. Every predict gets **Skip, just show me** for free. |
 | `do` | An instruction plus an `actions` fence. Optional `capture: <name>`, `fresh: true`. | Drives the app when the learner presses **Do it**. |
 | `observe` | `check:` (one item or a list, all must hold) or `journal: true`. Optional `assert`, `expect`. | Compares what the app shows with the prediction or the lesson's expected value. |
@@ -223,6 +223,13 @@ check: { read: top_guess.token, op: equals, value: $prediction }
 
 **Operators:** `equals`, `in`, `changed_from`, `gt`, `lt`, `increased`, `decreased`, `within`, `contains`, `starts_with`. Add `not: true` to flip any of them. The operator has to suit the readout's type, and prose readouts can never be checked.
 
+A check item can also take:
+
+- `from: <capture>` to read the readout from an earlier capture instead of the live app, so one observe can compare two stored runs: `{ read: write_it.text, from: a, op: equals, value: $capture.b.write_it.text }`.
+- `field: <name>` to check one field of a record readout: `{ read: prediction, args: { token: " Sam" }, field: rank, op: lt, value: 11 }`.
+- `value_args` to give the readout in the value its arguments, for `$read`, `$capture`, `$before` and `$baseline` alike.
+- `tolerance` (for `within`) as a number or a `$slot.<name>` / `$row.<id>.<field>` binding.
+
 **What a value can be:**
 
 | Value | Means |
@@ -272,6 +279,7 @@ A `task` gives the learner a goal and lets them work toward it.
 - `target`: check items that mean "done". Values may read captures or `$earlier`.
 - `constraint`: check items that must hold before every run. For "one head at a time", use `{ read: ablation.head_count, op: equals, value: 1 }`: stacking heads is refused, and swapping one head for another is fine.
 - Runner rules: `max_runs: n`, `predict_before_each_run: true`, and `one_change: <action>` (between runs the learner changes exactly one argument of that action; for `set_compare`, one word of one prompt).
+- `learner_actions: [names]`: the actions the learner drives during the task, like `[set_head_ablation, run_head_ablation]`. The checker makes sure each one exists.
 - `reset`: the `enter`-style state to return to.
 - `remember: { key, read }`: stores a readout's value when the target is met or the learner moves on.
 

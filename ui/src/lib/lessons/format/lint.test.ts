@@ -238,3 +238,49 @@ ${step('explain{id=found}', 'You found {task_head}.')}`;
     expect(errors(lint('## A\n\nHi.\n', { draft: true }, { release: true }))).toContain('draft');
   });
 });
+
+// Format additions forced by the T1 outline-coverage gate (each names the outline line).
+describe('lint: outline-coverage additions', () => {
+  const doWrite = (id: string, seed: number) =>
+    step(`do{id=${id}}`, `Write.\n\n${F}actions\n- write_it: { temperature: 1, seed: ${seed} }\n${F}\n\n${yaml(`capture: ${id}`)}`);
+
+  it('› a check item may read from an earlier capture (P1.5:70)', () => {
+    const body = `## A\n\n${doWrite('a', 1)}\n${doWrite('b', 2)}\n${step('observe{id=o}', yaml('check: { read: write_it.text, from: a, op: equals, value: $capture.b.write_it.text }'))}`;
+    expect(errors(lint(body, BASE))).toEqual([]);
+    const bad = `## A\n\n${step('observe{id=o}', yaml('check: { read: write_it.text, from: zz, op: equals, value: "x" }'))}`;
+    expect(errors(lint(bad, BASE))).toContain('capture-unknown');
+  });
+
+  it('› a check item may read one field of a record readout (P1.6:44)', () => {
+    const ok = `## A\n\n${run('r')}\n${step('observe{id=o}', yaml('check: { read: prediction, args: { token: " Paris" }, field: rank, op: lt, value: 11, expect: 3 }'))}`;
+    expect(errors(lint(ok, BASE))).toEqual([]);
+    const bad = `## A\n\n${run('r')}\n${step('observe{id=o}', yaml('check: { read: top_guess.prob, field: rank, op: lt, value: 1, expect: 1 }'))}`;
+    expect(errors(lint(bad, BASE))).toContain('bad-readout-args');
+  });
+
+  it('› `value_args` give a captured readout its arguments (P3.2:61)', () => {
+    const cap = step('do{id=c}', `Knock out.\n\n${F}actions\n- run_head_ablation: {}\n${F}\n\n${yaml('capture: control')}`);
+    const check = (va: string) => step('observe{id=o}', yaml(`check: { read: ablation.delta, args: { token: " Mary" }, op: lt, value: $capture.control.ablation.delta${va} }`));
+    expect(errors(lint(`## A\n\n${cap}\n${check(', value_args: { token: " Mary" }')}`, BASE))).toEqual([]);
+    expect(errors(lint(`## A\n\n${cap}\n${check('')}`, BASE))).toContain('bad-readout-args');
+  });
+
+  it('› a task names the actions the learner drives, checked by name (P3.2:71)', () => {
+    const task = (a: string) => step('task{id=t}', yaml(`target:\n  - { read: ablation.head_count, op: equals, value: 1, expect: learner }\nlearner_actions: [${a}]`));
+    expect(errors(lint(`## A\n\n${task('set_head_ablation, run_head_ablation')}`, BASE))).toEqual([]);
+    expect(errors(lint(`## A\n\n${task('run_head_ablashun')}`, BASE))).toContain('unknown-action');
+  });
+
+  it('› a check tolerance may bind a slot (P3.5:77)', () => {
+    const t = (tol: string) =>
+      step('task{id=t}', yaml(`target:\n  - { read: steer.coherence, args: { which: steered }, op: within, value: $read.steer.coherence, value_args: { which: original }, tolerance: ${tol} }`));
+    const slots = ':::slots\nband: { row: "25.band", format: number }\n:::\n';
+    expect(errors(lint(`## A\n\n${slots}\n${t('$slot.band')}`, BASE))).toEqual([]);
+    expect(errors(lint(`## A\n\n${t('$slot.nope')}`, BASE))).toContain('slot-unknown');
+  });
+
+  it('› a question choice can carry a target (P1.4:74)', () => {
+    const q = step('question{id=q}', `Why?\n\n${yaml('choices:\n  - { text: "a bug", target: M10 }\n  - { text: "the same process" }')}`);
+    expect(errors(lint(`## A\n\n${q}`, { targets: ['M10'] }))).not.toContain('targets-untagged');
+  });
+});

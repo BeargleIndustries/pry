@@ -346,6 +346,12 @@
               },
               "additionalProperties": {}
             },
+            "from": {
+              "type": "string"
+            },
+            "field": {
+              "type": "string"
+            },
             "op": {
               "type": "string",
               "enum": [
@@ -397,7 +403,15 @@
               ]
             },
             "tolerance": {
-              "type": "number"
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^\\$(row|slot)\\."
+                }
+              ]
             }
           },
           "required": [
@@ -489,6 +503,12 @@
               },
               "additionalProperties": {}
             },
+            "from": {
+              "type": "string"
+            },
+            "field": {
+              "type": "string"
+            },
             "op": {
               "type": "string",
               "enum": [
@@ -540,7 +560,15 @@
               ]
             },
             "tolerance": {
-              "type": "number"
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^\\$(row|slot)\\."
+                }
+              ]
             }
           },
           "required": [
@@ -587,6 +615,12 @@
               },
               "additionalProperties": {}
             },
+            "from": {
+              "type": "string"
+            },
+            "field": {
+              "type": "string"
+            },
             "op": {
               "type": "string",
               "enum": [
@@ -638,7 +672,15 @@
               ]
             },
             "tolerance": {
-              "type": "number"
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^\\$(row|slot)\\."
+                }
+              ]
             }
           },
           "required": [
@@ -678,6 +720,12 @@
               },
               "additionalProperties": {}
             },
+            "from": {
+              "type": "string"
+            },
+            "field": {
+              "type": "string"
+            },
             "op": {
               "type": "string",
               "enum": [
@@ -729,7 +777,15 @@
               ]
             },
             "tolerance": {
-              "type": "number"
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^\\$(row|slot)\\."
+                }
+              ]
             }
           },
           "required": [
@@ -766,6 +822,12 @@
               },
               "additionalProperties": {}
             },
+            "from": {
+              "type": "string"
+            },
+            "field": {
+              "type": "string"
+            },
             "op": {
               "type": "string",
               "enum": [
@@ -817,7 +879,15 @@
               ]
             },
             "tolerance": {
-              "type": "number"
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^\\$(row|slot)\\."
+                }
+              ]
             }
           },
           "required": [
@@ -838,6 +908,9 @@
             "type": "object",
             "properties": {
               "text": {
+                "type": "string"
+              },
+              "target": {
                 "type": "string"
               },
               "feedback": {
@@ -881,6 +954,12 @@
               },
               "additionalProperties": {}
             },
+            "from": {
+              "type": "string"
+            },
+            "field": {
+              "type": "string"
+            },
             "op": {
               "type": "string",
               "enum": [
@@ -932,7 +1011,15 @@
               ]
             },
             "tolerance": {
-              "type": "number"
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^\\$(row|slot)\\."
+                }
+              ]
             }
           },
           "required": [
@@ -947,6 +1034,9 @@
             "type": "object",
             "properties": {
               "text": {
+                "type": "string"
+              },
+              "target": {
                 "type": "string"
               },
               "feedback": {
@@ -999,6 +1089,12 @@
               },
               "additionalProperties": {}
             },
+            "from": {
+              "type": "string"
+            },
+            "field": {
+              "type": "string"
+            },
             "op": {
               "type": "string",
               "enum": [
@@ -1050,7 +1146,15 @@
               ]
             },
             "tolerance": {
-              "type": "number"
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^\\$(row|slot)\\."
+                }
+              ]
             }
           },
           "required": [
@@ -1165,6 +1269,12 @@
               },
               "additionalProperties": {}
             },
+            "from": {
+              "type": "string"
+            },
+            "field": {
+              "type": "string"
+            },
             "op": {
               "type": "string",
               "enum": [
@@ -1216,7 +1326,15 @@
               ]
             },
             "tolerance": {
-              "type": "number"
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^\\$(row|slot)\\."
+                }
+              ]
             }
           },
           "required": [
@@ -1253,6 +1371,12 @@
               },
               "additionalProperties": {}
             },
+            "from": {
+              "type": "string"
+            },
+            "field": {
+              "type": "string"
+            },
             "op": {
               "type": "string",
               "enum": [
@@ -1304,7 +1428,15 @@
               ]
             },
             "tolerance": {
-              "type": "number"
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^\\$(row|slot)\\."
+                }
+              ]
             }
           },
           "required": [
@@ -1327,6 +1459,12 @@
                     "type": "string"
                   },
                   "additionalProperties": {}
+                },
+                "from": {
+                  "type": "string"
+                },
+                "field": {
+                  "type": "string"
                 },
                 "op": {
                   "type": "string",
@@ -1379,7 +1517,15 @@
                   ]
                 },
                 "tolerance": {
-                  "type": "number"
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "^\\$(row|slot)\\."
+                    }
+                  ]
                 }
               },
               "required": [
@@ -1403,6 +1549,12 @@
                       "type": "string"
                     },
                     "additionalProperties": {}
+                  },
+                  "from": {
+                    "type": "string"
+                  },
+                  "field": {
+                    "type": "string"
                   },
                   "op": {
                     "type": "string",
@@ -1455,7 +1607,15 @@
                     ]
                   },
                   "tolerance": {
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string",
+                        "pattern": "^\\$(row|slot)\\."
+                      }
+                    ]
                   }
                 },
                 "required": [
@@ -1571,6 +1731,12 @@
               },
               "additionalProperties": {}
             },
+            "from": {
+              "type": "string"
+            },
+            "field": {
+              "type": "string"
+            },
             "op": {
               "type": "string",
               "enum": [
@@ -1622,7 +1788,15 @@
               ]
             },
             "tolerance": {
-              "type": "number"
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^\\$(row|slot)\\."
+                }
+              ]
             }
           },
           "required": [
@@ -1788,6 +1962,12 @@
               },
               "additionalProperties": {}
             },
+            "from": {
+              "type": "string"
+            },
+            "field": {
+              "type": "string"
+            },
             "op": {
               "type": "string",
               "enum": [
@@ -1839,7 +2019,15 @@
               ]
             },
             "tolerance": {
-              "type": "number"
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^\\$(row|slot)\\."
+                }
+              ]
             }
           },
           "required": [
@@ -1983,6 +2171,12 @@
               },
               "additionalProperties": {}
             },
+            "from": {
+              "type": "string"
+            },
+            "field": {
+              "type": "string"
+            },
             "op": {
               "type": "string",
               "enum": [
@@ -2034,7 +2228,15 @@
               ]
             },
             "tolerance": {
-              "type": "number"
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^\\$(row|slot)\\."
+                }
+              ]
             }
           },
           "required": [
@@ -2144,6 +2346,12 @@
               },
               "additionalProperties": {}
             },
+            "from": {
+              "type": "string"
+            },
+            "field": {
+              "type": "string"
+            },
             "op": {
               "type": "string",
               "enum": [
@@ -2195,7 +2403,15 @@
               ]
             },
             "tolerance": {
-              "type": "number"
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^\\$(row|slot)\\."
+                }
+              ]
             }
           },
           "required": [
@@ -2220,6 +2436,12 @@
                 },
                 "additionalProperties": {}
               },
+              "from": {
+                "type": "string"
+              },
+              "field": {
+                "type": "string"
+              },
               "op": {
                 "type": "string",
                 "enum": [
@@ -2271,7 +2493,15 @@
                 ]
               },
               "tolerance": {
-                "type": "number"
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^\\$(row|slot)\\."
+                  }
+                ]
               }
             },
             "required": [
@@ -2296,6 +2526,12 @@
                 },
                 "additionalProperties": {}
               },
+              "from": {
+                "type": "string"
+              },
+              "field": {
+                "type": "string"
+              },
               "op": {
                 "type": "string",
                 "enum": [
@@ -2347,7 +2583,15 @@
                 ]
               },
               "tolerance": {
-                "type": "number"
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^\\$(row|slot)\\."
+                  }
+                ]
               }
             },
             "required": [
@@ -2367,6 +2611,12 @@
         },
         "one_change": {
           "type": "string"
+        },
+        "learner_actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "reset": {},
         "remember": {
@@ -2417,6 +2667,12 @@
               },
               "additionalProperties": {}
             },
+            "from": {
+              "type": "string"
+            },
+            "field": {
+              "type": "string"
+            },
             "op": {
               "type": "string",
               "enum": [
@@ -2468,7 +2724,15 @@
               ]
             },
             "tolerance": {
-              "type": "number"
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^\\$(row|slot)\\."
+                }
+              ]
             }
           },
           "required": [

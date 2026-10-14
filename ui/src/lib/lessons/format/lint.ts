@@ -160,7 +160,8 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
   if (meta.draft) err('draft', {}, fm, opts.release ? 'error' : 'warning');
   for (const box of meta.spine ?? []) if (!tool.spine.some((s) => s.id === box)) err('spine-unknown', { name: box }, fm);
   for (const t of meta.targets ?? []) {
-    const tagged = steps.some((o) => o.step.kind === 'predict' && Array.isArray(o.step.fields.choices) && o.step.fields.choices.some((c: any) => c?.target === t));
+    // A predict choice, or a question choice (an "ask before telling" pick, P1.4:74).
+    const tagged = steps.some((o) => (o.step.kind === 'predict' || o.step.kind === 'question') && Array.isArray(o.step.fields.choices) && o.step.fields.choices.some((c: any) => c?.target === t));
     if (!tagged) err('targets-untagged', { target: t }, fm);
   }
 
@@ -218,7 +219,8 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
     if ((m = /^\$capture\.([^.]+)\.(.+)$/.exec(value))) {
       const c = captures.get(m[1]);
       if (!c || c.order >= o.order) err('capture-unknown', { name: m[1] }, where);
-      checkReadout(m[2], undefined, where);
+      // `value_args` give a captured, before or baseline readout its arguments (P3.2:61, ' Mary' under the control).
+      checkReadout(m[2], valueArgs, where);
     } else if ((m = /^\$earlier\.(.+)$/.exec(value))) {
       if (!remember.has(m[1])) err('earlier-undeclared', { key: m[1] }, where);
     } else if ((m = /^\$slot\.(.+)$/.exec(value))) {
@@ -226,7 +228,7 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
     } else if ((m = /^\$read\.(.+)$/.exec(value))) {
       checkReadout(m[1], valueArgs, where);
     } else if ((m = /^\$(before|baseline)\.(.+)$/.exec(value))) {
-      checkReadout(m[2], undefined, where);
+      checkReadout(m[2], valueArgs, where);
     } else if ((m = /^\$row\.([^.]+)\./.exec(value))) {
       if (rows && !rows.has(m[1])) err('row-unknown', { id: m[1] }, where);
     }
@@ -257,10 +259,17 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
     const def = checkReadout(c.read, c.args, where);
     if (def) {
       if (def.type === 'prose') err('prose-check', { read: c.read }, where);
-      else if (!OPS_BY_TYPE[def.type]?.includes(c.op)) err('op-type', { op: c.op, read: c.read, type: def.type, ops: OPS_BY_TYPE[def.type] }, where);
+      else if (c.field !== undefined && def.type !== 'record') err('bad-readout-args', { name: c.read, detail: '`field` only applies to a record readout' }, where);
+      // A record field's type isn't in the registry, so any operator may read it.
+      else if (c.field === undefined && !OPS_BY_TYPE[def.type]?.includes(c.op)) err('op-type', { op: c.op, read: c.read, type: def.type, ops: OPS_BY_TYPE[def.type] }, where);
     }
     const slots = slotsFor(o.section);
+    if (typeof c.from === 'string') {
+      const cap = captures.get(c.from);
+      if (!cap || cap.order >= o.order) err('capture-unknown', { name: c.from }, where);
+    }
     checkValueBinding(c.value, c.value_args, o, slots);
+    checkValueBinding(c.tolerance, undefined, o, slots);
     const constant = typeof c.value === 'number';
     if (constant || c.expect !== undefined) checkExpect(c.expect, `The check on \`${c.read}\``, where, inTask, c.read);
   };
@@ -421,6 +430,9 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
         break;
       case 'task':
         for (const c of [...(f.target ?? []), ...(f.constraint ?? [])]) if (isObj(c)) checkItem(c as CheckItem, o, true);
+        for (const name of f.learner_actions ?? []) {
+          if (!tool.actions[name]) err('unknown-action', { name, hint: nearest(name, Object.keys(tool.actions)) }, where);
+        }
         if (typeof f.one_change === 'string' && !tool.actions[f.one_change]) {
           err('unknown-action', { name: f.one_change, hint: nearest(f.one_change, Object.keys(tool.actions)) }, where);
         }
@@ -544,7 +556,7 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
     collect(f.check);
     collect(f.target);
     collect(f.constraint);
-    for (const c of f.columns ?? []) if (isObj(c) && typeof c.from === 'string') reads.push(c.from);
+    for (const c of [...(f.columns ?? []), ...[f.check, f.target, f.constraint].flat()]) if (isObj(c) && typeof c.from === 'string') reads.push(c.from);
     for (const name of reads) {
       const cap = captures.get(name);
       if (!cap || !gatedCaptures.has(name) || cap.section.index === o.section.index) continue;

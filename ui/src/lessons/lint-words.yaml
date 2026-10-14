@@ -16,7 +16,9 @@ retired:
   - debugging by swapping
   - brings the answer back
   - carries the answer
-  - volume knob
+  # Style guide 105 retires "volume knob for a concept"; map 248 keeps
+  # "a volume knob for one feature" as P3.5's analogy (P3.5:35).
+  - volume knob for a concept
   - concepts lit up
   - opens the black box
   - open the black box
@@ -35,14 +37,22 @@ retired:
   - word-piece
   - word-pieces
   - picking rule
-  - starting numbers
-  - direct pushes
+  # "direct pushes" is a stand-in name (map 274) but also DLA's pinned
+  # description ("Only direct pushes count") and approved outline wording
+  # (P2.4:102, P3.6:72, P3.7:46, P3.7:76), so word matching can't retire it.
   - copying head
   - previous-word head
   - bare model
   - filing cabinet
   - reverse-engineering the source code
   - Concepts inside
+
+# Map section 5.2 stand-in names that are plain phrases until the lesson names
+# the real term (P1.2:79 says "starting numbers" in the section that names
+# embedding; outlines-review M1). Retired from the section after the term's
+# first use in its own lesson, and in every later lesson.
+stand_in_names:
+  starting numbers: embedding
 
 # Style guide section 5 "Words we don't use for the model". Allowed only in a
 # predict or question choice, its feedback, a :refutes[...] span or code.
@@ -65,6 +75,11 @@ banned_model_verbs:
   - pays attention to
   - focuses on
 
+# Phrases where a banned verb's subject is a setting or a person, not the model
+# (P1.5:88 "Temperature decides how random the pick is").
+model_verb_exempt:
+  - temperature decides
+
 # Metaphors from map section 5 that must never stand in as names. Allowed only
 # inside an analogy step.
 metaphor_names:
@@ -73,6 +88,12 @@ metaphor_names:
   - mixing desk
   - spare parts
   - parking spot
+
+# The lesson that withdraws each picture (map 5.1); it may name the picture to
+# say it's done with it (P2.1:49, P2.1:76, P3.2:46).
+metaphor_withdrawn_in:
+  assembly line: pry.p2-1
+  mixing desk: [pry.p2-1, pry.p3-2]
 
 # Qualitative claims (style guide section 4) that need an assert's say / else.
 qualitative:
@@ -85,6 +106,11 @@ qualitative:
   - a good chunk
   - hardly
 
+# Phrases with a qualitative word that state a rank, not a size, so they need
+# no assert (P1.4:93 "' one' got the most, but only about 1 in 3").
+qualitative_exempt:
+  - the most
+
 # Causal and interpretive verbs the tour can't use (map 7.1; quick-tour.md:32).
 tour_banned:
   - shows why
@@ -96,7 +122,8 @@ tour_banned:
   - knows
   - matters
   - responsible
-  - means
+  # "means" isn't in quick-tour.md:32's list, and step 12 asks "what all this
+  # means" to send the viewer to Lessons (quick-tour.md:50).
 
 # The explain-result `tool:` keys and their pinned caveat phrases, copied from
 # ui/src/lib/copy/caveats.test.ts (a test checks each phrase is still pinned
@@ -132,3 +159,4 @@ pinned_caveats:
   steering: []
   write-it: []
   embedding: []
+  tokens: []
