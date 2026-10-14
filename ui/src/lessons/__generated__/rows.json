@@ -534,6 +534,34 @@
     "mary_head": {
      "value": 7,
      "unit": "head"
+    },
+    "mary_heads": {
+     "value": [
+      {
+       "layer": 9,
+       "head": 6
+      },
+      {
+       "layer": 9,
+       "head": 9
+      },
+      {
+       "layer": 10,
+       "head": 7
+      },
+      {
+       "layer": 11,
+       "head": 10
+      }
+     ],
+     "unit": "list",
+     "of": "record",
+     "kind": "literature",
+     "source": "Wang et al. 2022 (IOI), name-mover heads"
+    },
+    "store_position": {
+     "value": 8,
+     "unit": "position"
     }
    },
    "checks": [
@@ -844,6 +872,11 @@
     "control_head_head": {
      "value": 9,
      "unit": "head"
+    },
+    "margin_negative": {
+     "value": -0.05,
+     "unit": "probability",
+     "source": "outline P3.7:70"
     }
    },
    "checks": [
@@ -1452,6 +1485,10 @@
     "top_mlp_layer": {
      "value": 9,
      "unit": "layer"
+    },
+    "push_threshold": {
+     "value": 1.75,
+     "unit": "logit"
     }
    },
    "checks": [
@@ -2089,6 +2126,18 @@
       10.93716049194336
      ]
     ]
+   },
+   "constants": {
+    "top_head": {
+     "value": 6,
+     "unit": "head",
+     "alias": 51
+    },
+    "top_head_layer": {
+     "value": 9,
+     "unit": "layer",
+     "alias": 51
+    }
    },
    "checks": [
     {

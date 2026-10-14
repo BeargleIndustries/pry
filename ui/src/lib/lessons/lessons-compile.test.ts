@@ -22,7 +22,16 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadLessonSource } from './format/normalise';
 import { pryToolSet } from './registry/pry-set';
-import { deriveConstant, deriveRowConstants, ROWS_JSON, ROWS_YAML, withRowConstants } from '../../../scripts/lessons-compile';
+import {
+  deriveConstant,
+  deriveRowConstants,
+  recordedResponses,
+  RESPONSES_DIR,
+  ROW_REQUESTS_JSON,
+  ROWS_JSON,
+  ROWS_YAML,
+  withRowConstants,
+} from '../../../scripts/lessons-compile';
 import { constantsByRow } from './row-constants';
 import { loadRecorded, loadRows, walkLesson, type WalkRequest } from './lesson-walk';
 
@@ -89,7 +98,7 @@ describe('lessons-compile --rows', () => {
   it('› row constants derive from recorded values and match the committed rows.json', () => {
     const yamlText = readFileSync(ROWS_YAML, 'utf8');
     const rowsText = readFileSync(ROWS_JSON, 'utf8');
-    const derived = deriveRowConstants(yamlText, rowsText);
+    const derived = deriveRowConstants(yamlText, rowsText, recordedResponses(readFileSync(ROW_REQUESTS_JSON, 'utf8'), RESPONSES_DIR));
     expect(derived.size).toBeGreaterThan(0);
     const committed = constantsByRow(JSON.parse(rowsText));
     expect(committed, 'rows.json constants are stale: run `npm run lessons:compile -- --rows`').toEqual(
@@ -106,6 +115,12 @@ describe('lessons-compile --rows', () => {
     // from_row reads another row's record: row 14's " Mary" head is row 47's.
     expect(values.get(47).head).toBe(`L${committed['14'].mary_head_layer.value}H${committed['14'].mary_head.value}`);
     expect(committed['26'].task_threshold.value).toBe(values.get(57).suggested_threshold / 100);
+    // token_position reads the recorded response: " store" is token 8 of row 14's prompt.
+    expect(committed['14'].store_position.value).toBe(8);
+    // A literal carries its source and says it isn't measured; an alias copies the named row's constant.
+    expect(committed['14'].mary_heads).toMatchObject({ kind: 'literature', source: expect.stringContaining('Wang et al. 2022') });
+    expect(committed['29'].top_head).toEqual({ ...committed['51'].top_head, alias: 51 });
+    expect(committed['22'].push_threshold.value).toBe(Number(values.get(22).top3[2][1].toFixed(2)));
   });
 
   it('› each derivation reads the recorded value and refuses a missing one', () => {

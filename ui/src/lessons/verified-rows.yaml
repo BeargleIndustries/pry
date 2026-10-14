@@ -32,7 +32,10 @@
 #             arguments) by exactly one of: path, token_prob (+ token),
 #             last_position, request, parse_head (+ take), first_mlp_layer,
 #             argmax (+ by, take, exclude_layer), count, list, points
-#             (percentage points -> probability); `negate: true` flips the
+#             (percentage points -> probability), token_position (a token's
+#             position in the row's recorded response), literal (authored,
+#             needs `source`; `kind: literature` when not measured), alias (row
+#             n's constant of the same name); `round: d`; `negate: true` flips the
 #             sign; `from_row: n` reads row n's recorded values instead (a row
 #             that recorded the same run or preset, said in `note`); and a unit
 #             (layer, head, position, probability, logit, count, number,
@@ -186,6 +189,14 @@ rows:
       to_position: { last_position: tokens, unit: position }
       mary_head_layer: { from_row: 47, parse_head: head, take: layer, unit: layer, note: 'row 47 recorded this prompt''s L9-L10 head with the most last-token weight on " Mary"' }
       mary_head: { from_row: 47, parse_head: head, take: head, unit: head, note: "as mary_head_layer" }
+      mary_heads:
+        literal: [{ layer: 9, head: 6 }, { layer: 9, head: 9 }, { layer: 10, head: 7 }, { layer: 11, head: 10 }]
+        unit: list
+        of: record
+        kind: literature
+        source: "Wang et al. 2022 (IOI), name-mover heads"
+        note: "plan:299 (R4-5) allows the literature's name-mover heads as a row constant; not measured here"
+      store_position: { token_position: ioi, token: " store", unit: position, note: "the first \" store\" in the recorded /generate tokens (start marker = 0)" }
 
   - id: 15
     outline: [P2.2.md:96.3]
@@ -247,6 +258,7 @@ rows:
       control_head: { from_row: 69, path: control.0, unit: string, note: "row 69's fixed off-map control head" }
       control_head_layer: { from_row: 69, parse_head: control.0, take: layer, unit: layer, note: "as control_head" }
       control_head_head: { from_row: 69, parse_head: control.0, take: head, unit: head, note: "as control_head" }
+      margin_negative: { literal: -0.05, unit: probability, source: "outline P3.7:70", note: "the own-case target: lowers the top token's probability by at least 5 points more than a control head does" }
 
   - id: 20
     outline: [P2.3.md:11.1, P2.3.md:46, P2.3.md:52, P2.3.md:66, P2.3.md:84, P2.3.md:96, P3.6.md:11.1, P3.6.md:63, P3.6.md:90.4]
@@ -282,6 +294,7 @@ rows:
     status: verified
     constants:
       top_mlp_layer: { first_mlp_layer: top3, unit: layer }
+      push_threshold: { path: top3.2.1, round: 2, unit: logit, note: "P2.4.md:53 leaves {x} open: the push of the third-largest DLA part, rounded to two decimals as the logit slot shows it" }
 
   - id: 23
     outline: [P2.1.md:11, P2.1.md:96, P2.1.md:108.3, P3.2.md:44, P3.2.md:94.1]
@@ -385,6 +398,9 @@ rows:
     record: top ten for both prompts
     claim: '" Sam" high in the first, absent from the top ten in the second'
     status: verified
+    constants:
+      top_head: { alias: 51, unit: head, note: "P2.4's outline labels row 51 \"29\"; $row.29.top_head is row 51's" }
+      top_head_layer: { alias: 51, unit: layer, note: "as top_head" }
 
   - id: 30
     outline: [P1.3.md:84, P1.3.md:101]

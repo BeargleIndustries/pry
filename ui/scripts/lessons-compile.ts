@@ -42,6 +42,7 @@ const UI = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const ROWS_YAML = join(UI, 'src/lessons/verified-rows.yaml');
 export const ROW_REQUESTS_JSON = join(UI, 'src/lessons/__generated__/row-requests.json');
 export const ROWS_JSON = join(UI, 'src/lessons/__generated__/rows.json');
+export const RESPONSES_DIR = join(UI, 'src/lessons/__generated__/responses');
 
 /** Watch it write's default length (watch-it-write.ts DEFAULT_NEW_TOKENS). */
 const WRITE_IT_TOKENS = 20;
@@ -85,15 +86,28 @@ export interface RowSpec {
  *   count: top3                        a list's length
  *   list: [a, b]                       the values at those paths, as a list
  *   points: suggested_threshold        percentage points -> a probability (30 -> 0.3)
- * Modifiers: `negate: true` flips the sign; `from_row: n` reads row n's recorded
- * values instead (a row that recorded the same run, named in `note`).
+ *   token_position: ioi, token: " store"   that token's position in the recorded response of
+ *                                      the row's request `ioi` (`occurrence`: first (default), last, n)
+ *   literal: <value>, source: "..."    an authored value the plan allows (a literature value or
+ *                                      an outline's own number); `source` is required, `kind` tags it
+ *   alias: n                           row n's constant of the same name (an outline's own label for row n)
+ * Modifiers: `negate: true` flips the sign; `round: d` rounds to d decimals;
+ * `from_row: n` reads row n's recorded values instead (a row that recorded the
+ * same run, named in `note`).
  */
 export interface ConstantSpec {
   unit: RowUnit;
   of?: RowUnit;
   from_row?: number;
   negate?: boolean;
+  round?: number;
   note?: string;
+  token_position?: string;
+  occurrence?: 'first' | 'last' | number;
+  literal?: unknown;
+  source?: string;
+  kind?: string;
+  alias?: number;
   points?: string;
   path?: string;
   token_prob?: string;
@@ -110,7 +124,7 @@ export interface ConstantSpec {
   take?: string;
 }
 
-const DERIVATIONS = ['path', 'token_prob', 'last_position', 'request', 'parse_head', 'first_mlp_layer', 'argmax', 'count', 'list', 'points'] as const;
+const DERIVATIONS = ['path', 'token_prob', 'last_position', 'request', 'parse_head', 'first_mlp_layer', 'argmax', 'count', 'list', 'points', 'token_position', 'literal', 'alias'] as const;
 
 function at(v: unknown, dotted: string, where: string): unknown {
   let x = v;
@@ -128,7 +142,13 @@ function headOf(label: unknown, where: string): { layer: number; head: number } 
 }
 
 /** Derives one constant from a row's recorded values (and its request specs). Throws naming the row and field. */
-export function deriveConstant(spec: ConstantSpec, values: unknown, requests: RowRequestSpec[], where: string): RowConstant {
+export function deriveConstant(
+  spec: ConstantSpec,
+  values: unknown,
+  requests: RowRequestSpec[],
+  where: string,
+  response?: (request: string) => unknown,
+): RowConstant {
   const ops = DERIVATIONS.filter((d) => spec[d] !== undefined);
   if (ops.length !== 1) throw new Error(`${where}: give exactly one of ${DERIVATIONS.join(', ')}`);
   if (!ROW_UNITS.includes(spec.unit)) throw new Error(`${where}: unit must be one of ${ROW_UNITS.join(', ')}`);
@@ -183,17 +203,57 @@ export function deriveConstant(spec: ConstantSpec, values: unknown, requests: Ro
     case 'points':
       value = (at(values, spec.points!, where) as number) / 100;
       break;
+    case 'token_position': {
+      const resp = response?.(spec.token_position!);
+      if (resp === undefined) throw new Error(`${where}: no recorded response for request ${spec.token_position}`);
+      const tokens = (at(resp, 'tokens', where) as { index: number; text: string }[]).filter((t) => t.text === spec.token);
+      const occ = spec.occurrence ?? 'first';
+      const hit = occ === 'first' ? tokens[0] : occ === 'last' ? tokens[tokens.length - 1] : tokens[occ - 1];
+      if (!hit) throw new Error(`${where}: ${JSON.stringify(spec.token)} isn't in the recorded tokens`);
+      value = hit.index;
+      break;
+    }
+    case 'literal':
+      if (!spec.source) throw new Error(`${where}: a literal needs a source`);
+      value = spec.literal;
+      break;
+    case 'alias':
+      throw new Error(`${where}: alias is resolved across rows by deriveRowConstants`);
   }
   if (value === undefined) throw new Error(`${where}: derived nothing`);
   if (spec.negate) {
     if (typeof value !== 'number') throw new Error(`${where}: negate needs a number`);
     value = -value;
   }
-  return { value, unit: spec.unit, ...(spec.of ? { of: spec.of } : {}) };
+  if (spec.round !== undefined) {
+    if (typeof value !== 'number') throw new Error(`${where}: round needs a number`);
+    value = Number(value.toFixed(spec.round));
+  }
+  return {
+    value,
+    unit: spec.unit,
+    ...(spec.of ? { of: spec.of } : {}),
+    ...(spec.kind ? { kind: spec.kind } : {}),
+    ...(spec.source ? { source: spec.source } : {}),
+  };
+}
+
+/** A row request's recorded response (first repeat), by row-requests.json keys, from the responses folder. */
+export function recordedResponses(rowRequestsText: string, responsesDir: string): (row: number, request: string) => unknown {
+  const doc = JSON.parse(rowRequestsText) as { rows: { id: number; requests: { name: string; key: string }[] }[] };
+  return (row, request) => {
+    const key = doc.rows.find((r) => r.id === row)?.requests.find((q) => q.name === request)?.key;
+    const file = key && join(responsesDir, `${key}.json`);
+    return file && existsSync(file) ? (JSON.parse(readFileSync(file, 'utf8')) as { response: unknown }).response : undefined;
+  };
 }
 
 /** Every row's constants, derived from rows.json's recorded values by verified-rows.yaml. */
-export function deriveRowConstants(yamlText: string, rowsJsonText: string): Map<number, RowConstants> {
+export function deriveRowConstants(
+  yamlText: string,
+  rowsJsonText: string,
+  response: (row: number, request: string) => unknown = () => undefined,
+): Map<number, RowConstants> {
   const doc = parseYaml(yamlText) as { rows: RowSpec[] };
   const recorded = new Map((JSON.parse(rowsJsonText) as { rows: { id: number; values: unknown }[] }).rows.map((r) => [r.id, r.values]));
   const out = new Map<number, RowConstants>();
@@ -201,13 +261,23 @@ export function deriveRowConstants(yamlText: string, rowsJsonText: string): Map<
     if (!row.constants) continue;
     const c: RowConstants = {};
     for (const [field, spec] of Object.entries(row.constants)) {
+      if (spec.alias !== undefined) continue;
       const where = `verified-rows.yaml row ${row.id} constant ${field}`;
       const src = spec.from_row ?? row.id;
       if (!recorded.has(src)) throw new Error(`${where}: rows.json has no row ${src}`);
       const requests = spec.from_row === undefined ? (row.requests ?? []) : (doc.rows.find((r) => r.id === src)?.requests ?? []);
-      c[field] = deriveConstant(spec, recorded.get(src), requests, where);
+      c[field] = deriveConstant(spec, recorded.get(src), requests, where, (name) => response(src, name));
     }
     out.set(row.id, c);
+  }
+  // Aliases last, so they can name any row's derived constant.
+  for (const row of doc.rows) {
+    for (const [field, spec] of Object.entries(row.constants ?? {})) {
+      if (spec.alias === undefined) continue;
+      const target = out.get(spec.alias)?.[field];
+      if (!target) throw new Error(`verified-rows.yaml row ${row.id} constant ${field}: row ${spec.alias} has no constant ${field}`);
+      out.get(row.id)![field] = { ...target, alias: spec.alias };
+    }
   }
   return out;
 }
@@ -432,7 +502,7 @@ if (!process.env.VITEST) {
     console.log(`wrote ${relative(process.cwd(), out ?? ROW_REQUESTS_JSON)}`);
     if (existsSync(ROWS_JSON)) {
       const before = readFileSync(ROWS_JSON, 'utf8');
-      const constants = deriveRowConstants(readFileSync(ROWS_YAML, 'utf8'), before);
+      const constants = deriveRowConstants(readFileSync(ROWS_YAML, 'utf8'), before, recordedResponses(text, RESPONSES_DIR));
       const after = withRowConstants(before, constants);
       if (after !== before) writeFileSync(ROWS_JSON, after);
       const n = [...constants.values()].reduce((a, c) => a + Object.keys(c).length, 0);

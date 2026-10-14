@@ -15,6 +15,12 @@ export interface RowConstant {
   unit: RowUnit;
   /** A list's element unit. */
   of?: RowUnit;
+  /** `literature` for an authored value that isn't measured (plan:299, R4-5). */
+  kind?: string;
+  /** Where an authored (literal) value comes from. */
+  source?: string;
+  /** The row whose constant this one copies (an outline's own label for that row). */
+  alias?: number;
 }
 export type RowConstants = Record<string, RowConstant>;
 
