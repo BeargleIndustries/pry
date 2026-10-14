@@ -156,6 +156,15 @@ def test_health_reports_real_device(gpt2_client, gpt2_loaded, no_auth_env, monke
         assert body["device"] == gpt2_loaded.device
 
 
+def test_health_reports_lib_versions(client, no_auth_env, monkeypatch):
+    from importlib.metadata import version
+
+    monkeypatch.setattr(main, "REGISTRY", _fake_registry())
+    body = client.get("/health").json()
+    for lib in ("transformer_lens", "sae_lens", "transformers"):
+        assert body[lib] == version(lib), lib
+
+
 def test_health_hf_token_present(client, no_auth_env, monkeypatch):
     monkeypatch.delenv("HF_TOKEN", raising=False)
     assert client.get("/health").json()["hf_token_present"] is False
