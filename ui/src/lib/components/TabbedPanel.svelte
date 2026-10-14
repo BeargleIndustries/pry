@@ -5,16 +5,20 @@
     icon?: string;
     /** Tooltip shown on hover — use for expanded plain-language descriptions. */
     title?: string;
+    /** `data-tour` name on the tab button, for lessons and the tour. */
+    anchor?: string;
   }
 
   interface Props {
     tabs: TabDef[];
     activeTab?: string;
     onTabChange?: (id: string) => void;
+    /** `data-tour` name on the tab row, for lessons and the tour. */
+    stripAnchor?: string;
     children: import('svelte').Snippet<[string]>;
   }
 
-  let { tabs, activeTab = $bindable(), onTabChange, children }: Props = $props();
+  let { tabs, activeTab = $bindable(), onTabChange, stripAnchor, children }: Props = $props();
 
   // Default to first tab if none set (and follow `tabs` if it changes).
   let internal = $state<string | null>(null);
@@ -46,6 +50,7 @@
       role="tablist"
       tabindex="-1"
       aria-label="Panel tabs"
+      data-tour={stripAnchor}
       onkeydown={onTabKey}
       class="flex flex-shrink-0 gap-4 border-b border-zinc-800 px-3"
     >
@@ -58,6 +63,7 @@
           tabindex={isActive ? 0 : -1}
           onclick={() => select(tab.id)}
           title={tab.title}
+          data-tour={tab.anchor}
           class="relative -mb-px border-b-2 px-1 py-1.5 text-xs transition-colors"
           class:border-indigo-400={isActive}
           class:text-indigo-300={isActive}

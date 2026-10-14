@@ -24,3 +24,8 @@
   --ring: 239 84% 67%;
   --radius: 0.5rem;
 } */
+
+/* Lessons: a region hidden until the learner predicts (registry/pry-anchors.ts hide). */
+[data-lesson-hidden='true'] {
+  visibility: hidden;
+}

@@ -17,6 +17,16 @@ import {
   fetchCircuit,
   fetchHeadScores,
   listModels,
+  buildGenerateRequest,
+  buildSaeFeaturesRequest,
+  buildLogitLensRequest,
+  buildDLARequest,
+  buildSteerRequest,
+  buildAblateHeadsRequest,
+  buildAblateFeaturesRequest,
+  buildPatchRequest,
+  buildCircuitRequest,
+  buildHeadScoresRequest,
 } from './sidecar';
 import { sidecarErrorMessage } from './sidecar-errors';
 import type {
@@ -30,6 +40,25 @@ import type {
   HeadScoresResponse,
 } from './types';
 
+/**
+ * How a request reaches the engine. The default goes straight to sidecar.ts.
+ * Lessons pass a caller that looks the request up in the runner's memo first
+ * (lessons/registry/dispatcher.ts); only runner-issued calls do. A learner
+ * pressing a button and every call with Lessons off use the default.
+ */
+export type SidecarCaller = <T>(
+  req: { endpoint: string; model: string; body: unknown },
+  fetcher: () => Promise<T>,
+) => Promise<T>;
+
+export const directCall: SidecarCaller = (_req, fetcher) => fetcher();
+
+/** The DLA answer and contrast tokens; null on either means the default (top guess, no contrast). */
+export interface DlaTarget {
+  answer: string | null;
+  contrast: string | null;
+}
+
 export interface AnalysisState {
   response: GenerateResponse | null;
   generating: boolean;
@@ -42,6 +71,8 @@ export interface AnalysisState {
   logitLensLoading: boolean;
   dlaResponse: DLAResponse | null;
   dlaLoading: boolean;
+  /** What the DLA bars explain; null = the top guess. A lesson scene sets it (dla_target). */
+  dlaTarget: DlaTarget | null;
   steerResponse: SteerResponse | null;
   steerLoading: boolean;
   /** Bumped when the steering feature selection must be cleared (SteeringPanel watches it). */
@@ -77,6 +108,7 @@ export function createInitialAnalysisState(): AnalysisState {
     logitLensLoading: false,
     dlaResponse: null,
     dlaLoading: false,
+    dlaTarget: null,
     steerResponse: null,
     steerLoading: false,
     steeringResetKey: 0,
@@ -165,6 +197,12 @@ export class AnalysisController {
    * bumps them all.
    */
   private seqs = zeroSeqs();
+  /**
+   * A lesson scene set the DLA target. Until the learner moves focus away from
+   * `sceneDlaFocus`, focusChanged keeps it (no 250 ms refresh to the top guess).
+   */
+  private sceneDla = false;
+  private sceneDlaFocus: number | undefined = undefined;
 
   constructor(
     readonly state: AnalysisState,
@@ -252,7 +290,7 @@ export class AnalysisController {
     this.state.steeringResetKey++;
   }
 
-  async generate(textBoxPrompt: string) {
+  async generate(textBoxPrompt: string, call: SidecarCaller = directCall) {
     const s = this.state;
     if (s.generating) return;
     s.error = null;
@@ -262,28 +300,27 @@ export class AnalysisController {
       // A model switch while this Run is in flight makes its result stale.
       const startPreset = this.deps.getActivePresetId();
       const startSwitch = this.modelSwitchSeq;
-      // TODO(pry-learning T2b): build this body with buildGenerateRequest from
-      // sidecar.ts (same bytes; its defaults are this body) so the Run action and
-      // lesson row requests share one builder; analysis.test.ts's './sidecar' mock
-      // then needs the real builder.
-      const resp = await sidecarFetch('/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          preset_id: this.deps.getSelectedPreset(),
-          prompt: textBoxPrompt,
-          max_new_tokens: 0,
-          top_k_features: 5,
-        }),
+      // Same builder as the lesson row requests, so both share one request key.
+      const presetId = this.deps.getSelectedPreset();
+      const body = buildGenerateRequest({ presetId, prompt: textBoxPrompt });
+      const response = await call({ endpoint: '/generate', model: presetId, body }, async () => {
+        const resp = await sidecarFetch('/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!resp.ok) {
+          const text = await resp.text().catch(() => '');
+          throw new Error(sidecarErrorMessage(text) ?? `/generate failed: ${resp.status}`);
+        }
+        return (await resp.json()) as GenerateResponse;
       });
-      if (!resp.ok) {
-        const body = await resp.text().catch(() => '');
-        throw new Error(sidecarErrorMessage(body) ?? `/generate failed: ${resp.status}`);
-      }
-      const response = (await resp.json()) as GenerateResponse;
       if (startSwitch !== this.modelSwitchSeq || this.deps.getActivePresetId() !== startPreset) return;
       s.response = response;
       this.clearAnalyses();
+      // A new run explains its own top guess again.
+      s.dlaTarget = null;
+      this.sceneDla = false;
       s.focusTokenIndex = response.tokens.length > 0
         ? response.tokens[response.tokens.length - 1].index
         : undefined;
@@ -313,15 +350,32 @@ export class AnalysisController {
     }
   }
 
-  async layerSwitch(layer: number) {
+  /**
+   * Switch the feature dictionary (SAE) layer. Commit-on-complete: once the
+   * engine has loaded the layer it is recorded, even when a newer Run replaced
+   * the response meanwhile (that response keeps its own features). Lessons rely
+   * on this: an aborted switch_sae_layer still records the new layer, and
+   * apply reconciles from it.
+   */
+  async layerSwitch(layer: number, call: SidecarCaller = directCall) {
     const s = this.state;
     const presetId = this.deps.getActivePresetId();
     const response = s.response;
     if (s.layerSwitching || !response || !presetId) return;
     s.layerSwitching = true;
     try {
-      const result = await switchSaeLayer(presetId, response.prompt, layer);
-      // A newer Run (or a model switch) replaced the response while this ran.
+      const body = buildSaeFeaturesRequest({ presetId, prompt: response.prompt, saeLayer: layer });
+      const result = await call({ endpoint: '/sae-features', model: presetId, body }, () =>
+        switchSaeLayer(presetId, response.prompt, layer),
+      );
+      // A model switch while this ran: the layer belonged to the old model.
+      if (this.deps.getActivePresetId() !== presetId) return;
+      s.saeLayer = layer;
+      // Feature ids are per-layer: old ablations / steering picks no longer apply.
+      s.featureAblations = [];
+      s.featureAblateResponse = null;
+      s.steeringResetKey++;
+      // A newer Run replaced the response while this ran: it keeps its features.
       if (s.response !== response) return;
       s.response = {
         ...response,
@@ -329,11 +383,6 @@ export class AnalysisController {
         sae_layer_used: result.sae_layer_used,
         timing_ms: { ...response.timing_ms, ...result.timing_ms },
       };
-      s.saeLayer = layer;
-      // Feature ids are per-layer: old ablations / steering picks no longer apply.
-      s.featureAblations = [];
-      s.featureAblateResponse = null;
-      s.steeringResetKey++;
     } catch (e) {
       if (s.response === response) s.error = errMsg(e);
     } finally {
@@ -341,22 +390,34 @@ export class AnalysisController {
     }
   }
 
-  async logitLens() {
+  async logitLens(call: SidecarCaller = directCall) {
     const presetId = this.deps.getActivePresetId();
     const prompt = this.analysisPrompt;
     if (!presetId || prompt === null) return;
-    const out = await this.request('lens', presetId, prompt, () => fetchLogitLens(presetId, prompt));
+    const body = buildLogitLensRequest({ presetId, prompt });
+    const out = await this.request('lens', presetId, prompt, () =>
+      call({ endpoint: '/logit-lens', model: presetId, body }, () => fetchLogitLens(presetId, prompt)),
+    );
     if (out) this.state.logitLensResponse = out.result;
   }
 
-  async dla() {
+  async dla(call: SidecarCaller = directCall) {
     const s = this.state;
     const presetId = this.deps.getActivePresetId();
     const prompt = this.analysisPrompt;
     if (!presetId || prompt === null) return;
     const focus = s.focusTokenIndex;
     this.dlaFocus = focus;
-    const out = await this.request('dla', presetId, prompt, () => fetchDLA(presetId, prompt, focus));
+    const answerToken = s.dlaTarget?.answer ?? null;
+    const contrastToken = s.dlaTarget?.contrast ?? null;
+    const body = buildDLARequest({ presetId, prompt, targetTokenIndex: focus, answerToken, contrastToken });
+    const out = await this.request('dla', presetId, prompt, () =>
+      call({ endpoint: '/dla', model: presetId, body }, () =>
+        answerToken === null && contrastToken === null
+          ? fetchDLA(presetId, prompt, focus)
+          : fetchDLA(presetId, prompt, focus, { answerToken, contrastToken }),
+      ),
+    );
     if (!out) return;
     s.dlaResponse = out.result;
     // Focus moved while this request ran: refresh for the new token.
@@ -371,6 +432,13 @@ export class AnalysisController {
    */
   focusChanged() {
     const s = this.state;
+    if (this.sceneDla) {
+      // The scene's own focus: keep its target and skip the refresh.
+      if (s.focusTokenIndex === this.sceneDlaFocus) return;
+      // The learner moved focus: back to the top guess.
+      this.sceneDla = false;
+      s.dlaTarget = null;
+    }
     this.cancelFocusRefresh();
     // A request still loading re-checks the focus when it lands.
     const dla = !!s.dlaResponse && !s.dlaLoading && s.focusTokenIndex !== this.dlaFocus;
@@ -381,6 +449,19 @@ export class AnalysisController {
       if (dla) void this.dla();
       if (circuit) void this.circuit(this.circuitSource, this.circuitThreshold);
     }, DLA_FOCUS_DEBOUNCE_MS);
+  }
+
+  /**
+   * A lesson scene sets what DLA explains (overlay `dla_target`, action
+   * `run_dla{answer, contrast}`). It holds until the learner moves focus or
+   * runs a new prompt; both reset it to the top guess.
+   */
+  setSceneDlaTarget(answer: string | null, contrast: string | null) {
+    const s = this.state;
+    s.dlaTarget = answer === null && contrast === null ? null : { answer, contrast };
+    this.sceneDla = s.dlaTarget !== null;
+    this.sceneDlaFocus = s.focusTokenIndex;
+    if (this.sceneDla) this.cancelFocusRefresh();
   }
 
   private cancelFocusRefresh() {
@@ -395,28 +476,36 @@ export class AnalysisController {
    * Doesn't touch state or `ensureLoaded`: it's a background counter, so it
    * just returns null when no model is loaded or the call fails.
    */
-  async tokenize(text: string): Promise<TokenizeResponse | null> {
+  async tokenize(text: string, call: SidecarCaller = directCall): Promise<TokenizeResponse | null> {
     const presetId = this.deps.getActivePresetId();
     if (!presetId) return null;
+    const body = { preset_id: presetId, text };
     try {
-      const resp = await sidecarFetch('/tokenize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ preset_id: presetId, text }),
+      return await call({ endpoint: '/tokenize', model: presetId, body }, async () => {
+        const resp = await sidecarFetch('/tokenize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!resp.ok) throw new Error(`/tokenize failed: ${resp.status}`);
+        return (await resp.json()) as TokenizeResponse;
       });
-      if (!resp.ok) return null;
-      return (await resp.json()) as TokenizeResponse;
     } catch {
       return null;
     }
   }
 
-  async steer(featureId: number, saeLayerVal: number, alpha: number) {
+  async steer(featureId: number, saeLayerVal: number, alpha: number, call: SidecarCaller = directCall, control = false) {
     const presetId = this.deps.getActivePresetId();
     const prompt = this.analysisPrompt;
     if (!presetId || prompt === null) return;
+    const body = buildSteerRequest({ presetId, prompt, featureId, saeLayer: saeLayerVal, alpha, control });
     const out = await this.request('steer', presetId, prompt, () =>
-      steerGenerate(presetId, prompt, featureId, saeLayerVal, alpha),
+      call({ endpoint: '/steer', model: presetId, body }, () =>
+        control
+          ? steerGenerate(presetId, prompt, featureId, saeLayerVal, alpha, 50, true)
+          : steerGenerate(presetId, prompt, featureId, saeLayerVal, alpha),
+      ),
     );
     if (out) this.state.steerResponse = out.result;
   }
@@ -429,13 +518,16 @@ export class AnalysisController {
       : [...s.headAblations, { layer, head }];
   }
 
-  async runHeadAblation() {
+  async runHeadAblation(call: SidecarCaller = directCall) {
     const s = this.state;
     const presetId = this.deps.getActivePresetId();
     const prompt = this.analysisPrompt;
     if (!presetId || prompt === null || s.headAblations.length === 0) return;
     const ablations = s.headAblations;
-    const out = await this.request('headAblation', presetId, prompt, () => ablateHeads(presetId, prompt, ablations));
+    const body = buildAblateHeadsRequest({ presetId, prompt, ablations });
+    const out = await this.request('headAblation', presetId, prompt, () =>
+      call({ endpoint: '/ablate-head', model: presetId, body }, () => ablateHeads(presetId, prompt, ablations)),
+    );
     if (out) s.headAblateResponse = out.result;
   }
 
@@ -447,24 +539,33 @@ export class AnalysisController {
       : [...s.featureAblations, { feature_index: featureIndex, layer }];
   }
 
-  async runFeatureAblation() {
+  async runFeatureAblation(call: SidecarCaller = directCall) {
     const s = this.state;
     const presetId = this.deps.getActivePresetId();
     const prompt = this.analysisPrompt;
     if (!presetId || prompt === null || s.featureAblations.length === 0) return;
     const ablations = s.featureAblations;
+    const body = buildAblateFeaturesRequest({ presetId, prompt, featureAblations: ablations });
     const out = await this.request('featureAblation', presetId, prompt, () =>
-      ablateFeatures(presetId, prompt, ablations),
+      call({ endpoint: '/ablate-feature', model: presetId, body }, () => ablateFeatures(presetId, prompt, ablations)),
     );
     if (out) s.featureAblateResponse = out.result;
   }
 
   /** Patching compares two prompts typed into the patching panel, so it does not need a response. */
-  async patching(cleanPrompt: string, corruptedPrompt: string, patchType: 'head' | 'mlp' | 'resid') {
+  async patching(
+    cleanPrompt: string,
+    corruptedPrompt: string,
+    patchType: 'head' | 'mlp' | 'resid',
+    call: SidecarCaller = directCall,
+  ) {
     const presetId = this.deps.getActivePresetId();
     if (!presetId) return;
+    const body = buildPatchRequest({ presetId, cleanPrompt, corruptedPrompt, patchType });
     const out = await this.request('patch', presetId, null, () =>
-      runPatching(presetId, cleanPrompt, corruptedPrompt, patchType),
+      call({ endpoint: '/patch', model: presetId, body }, () =>
+        runPatching(presetId, cleanPrompt, corruptedPrompt, patchType),
+      ),
     );
     if (out) this.state.patchResponse = out.result;
   }
@@ -474,9 +575,9 @@ export class AnalysisController {
    * the first time. Head scores use the sidecar's own test sequence, not the
    * prompt, so this works before the first Run.
    */
-  async showHeadScores() {
+  async showHeadScores(call: SidecarCaller = directCall) {
     this.state.headScoresMode = true;
-    if (!this.state.headScoresResponse) await this.headScores();
+    if (!this.state.headScoresResponse) await this.headScores(call);
   }
 
   hideHeadScores() {
@@ -487,7 +588,7 @@ export class AnalysisController {
   /** Bumped by clearForModelSwitch so a Run started on the old model is dropped. */
   private modelSwitchSeq = 0;
 
-  async headScores() {
+  async headScores(call: SidecarCaller = directCall) {
     const s = this.state;
     if (s.headScoresLoading) return;
     s.headScoresLoading = true;
@@ -496,7 +597,10 @@ export class AnalysisController {
       await this.deps.ensureLoaded();
       const presetId = this.deps.getActivePresetId();
       if (!presetId) return;
-      const result = await fetchHeadScores(presetId);
+      const result = await call(
+        { endpoint: '/head-scores', model: presetId, body: buildHeadScoresRequest({ presetId }) },
+        () => fetchHeadScores(presetId),
+      );
       // Drop a result for a model that was switched away while it ran.
       if (seq === this.headScoresSeq && this.deps.getActivePresetId() === presetId) {
         s.headScoresResponse = result;
@@ -512,7 +616,7 @@ export class AnalysisController {
    * Key parts for the focused word's next-word guess, the same word Why (DLA)
    * explains. Refetched when the focus changes, like DLA.
    */
-  async circuit(source: 'dla' | 'patching', threshold?: number) {
+  async circuit(source: 'dla' | 'patching', threshold?: number, call: SidecarCaller = directCall) {
     const s = this.state;
     const presetId = this.deps.getActivePresetId();
     const prompt = this.analysisPrompt;
@@ -521,8 +625,9 @@ export class AnalysisController {
     this.circuitFocus = focus;
     this.circuitSource = source;
     this.circuitThreshold = threshold;
+    const body = buildCircuitRequest({ presetId, prompt, source, threshold, targetTokenIndex: focus });
     const out = await this.request('circuit', presetId, prompt, () =>
-      fetchCircuit(presetId, prompt, source, threshold, focus),
+      call({ endpoint: '/circuit', model: presetId, body }, () => fetchCircuit(presetId, prompt, source, threshold, focus)),
     );
     if (!out) return;
     s.circuitResponse = out.result;

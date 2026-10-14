@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { pryUi } from '$lib/lessons/registry/pry-state.svelte';
   import Term from './Term.svelte';
   import Readout from './Readout.svelte';
   import type { CircuitResponse, CircuitNode, CircuitEdge } from '$lib/types';
@@ -23,7 +24,8 @@
 
   let { response, loading = false, onRun, targetLabel = null }: Props = $props();
 
-  let thresholdInput = $state('');
+  // The threshold box lives in the Pry scene state (plan T2b state lift).
+  const cs = pryUi.circuit;
 
   const nodes = $derived(response?.nodes ?? []);
 
@@ -108,7 +110,7 @@
   }
 
   function handleRun() {
-    const t = thresholdInput.trim() ? parseFloat(thresholdInput) : undefined;
+    const t = cs.thresholdInput.trim() ? parseFloat(cs.thresholdInput) : undefined;
     onRun?.(t);
     selectedNode = null;
     selectedEdge = null;
@@ -185,7 +187,7 @@
     <input
       id={thresholdId}
       type="text"
-      bind:value={thresholdInput}
+      bind:value={cs.thresholdInput}
       placeholder="auto"
       class="w-16 rounded border border-zinc-700 bg-zinc-900 px-1.5 py-0.5 text-xs text-zinc-200 placeholder-zinc-600 focus:border-indigo-500 focus:outline-none"
     />

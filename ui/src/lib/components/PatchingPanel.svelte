@@ -19,6 +19,7 @@
     signedIntensity,
     signedNumber,
   } from '$lib/signed-color';
+  import { IOI_CHANGED, IOI_CLEAN, isHidden, pryUi } from '$lib/lessons/registry/pry-state.svelte';
 
   interface Props {
     response: PatchResponse | null;
@@ -32,18 +33,15 @@
 
   let { response, loading = false, onRun, tokenize, preset = null }: Props = $props();
 
-  // Default pair: indirect object identification (IOI). Same token length in GPT-2.
-  const IOI_CLEAN = 'When Mary and John went to the store, John gave a drink to';
-  const IOI_CHANGED = 'When Mary and John went to the store, Mary gave a drink to';
-
-  let cleanPrompt = $state(IOI_CLEAN);
-  let corruptedPrompt = $state(IOI_CHANGED);
-  let patchType = $state<'head' | 'mlp' | 'resid'>('head');
+  // The two prompts (default: the IOI pair), the type and the selected cell live
+  // in the Pry scene state, so a lesson can set them while this tab is closed
+  // (plan T2b state lift).
+  const ps = pryUi.patching;
   $effect(() => {
     if (!preset) return;
-    cleanPrompt = preset.clean;
-    corruptedPrompt = preset.corrupted;
-    patchType = preset.patchType;
+    ps.cleanPrompt = preset.clean;
+    ps.corruptedPrompt = preset.corrupted;
+    ps.patchType = preset.patchType;
   });
 
   // Live token counts, debounced. A sequence number drops stale replies.
@@ -51,8 +49,8 @@
   let corruptedCount = $state<number | null>(null);
   let countSeq = 0;
   $effect(() => {
-    const clean = cleanPrompt;
-    const changed = corruptedPrompt;
+    const clean = ps.cleanPrompt;
+    const changed = ps.corruptedPrompt;
     const tk = tokenize;
     if (!tk) return;
     const seq = ++countSeq;
@@ -67,7 +65,7 @@
   const lengthStatus = $derived(patchLengthStatus(cleanCount, corruptedCount));
   const lengthsDiffer = $derived(lengthStatus !== null && !lengthStatus.same);
   // Key the result view on what the server actually ran, not the live toggle.
-  const shownPatchType = $derived(response?.patch_type ?? patchType);
+  const shownPatchType = $derived(response?.patch_type ?? ps.patchType);
 
   const components = $derived(response?.components ?? []);
 
@@ -101,11 +99,10 @@
     shownPatchType === 'resid' && components.some((c) => c.position != null) ? (response?.tokens ?? []) : [],
   );
 
-  let selectedComponent = $state<PatchComponent | null>(null);
 
   function handleRun() {
-    onRun?.(cleanPrompt, corruptedPrompt, patchType);
-    selectedComponent = null;
+    onRun?.(ps.cleanPrompt, ps.corruptedPrompt, ps.patchType);
+    ps.selectedComponent = null;
   }
 
   // Blue = positive (brings back the original answer), orange = negative.
@@ -199,7 +196,7 @@
       <input
         id="patch-clean"
         type="text"
-        bind:value={cleanPrompt}
+        bind:value={ps.cleanPrompt}
         placeholder={IOI_CLEAN}
         class="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-zinc-200 placeholder-zinc-600 focus:border-indigo-500 focus:outline-none"
       />
@@ -212,7 +209,7 @@
       <input
         id="patch-corrupted"
         type="text"
-        bind:value={corruptedPrompt}
+        bind:value={ps.corruptedPrompt}
         placeholder={IOI_CHANGED}
         class="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-zinc-200 placeholder-zinc-600 focus:border-indigo-500 focus:outline-none"
       />
@@ -236,11 +233,11 @@
         {#each ['head', 'mlp', 'resid'] as pt (pt)}
           <button
             type="button"
-            aria-pressed={patchType === pt}
-            onclick={() => { patchType = pt as 'head' | 'mlp' | 'resid'; }}
+            aria-pressed={ps.patchType === pt}
+            onclick={() => { ps.patchType = pt as 'head' | 'mlp' | 'resid'; }}
             class={[
               'rounded px-2 py-0.5 text-[10px] font-medium transition-colors',
-              patchType === pt ? 'bg-indigo-950 text-indigo-300' : 'bg-zinc-800 text-zinc-500',
+              ps.patchType === pt ? 'bg-indigo-950 text-indigo-300' : 'bg-zinc-800 text-zinc-500',
             ].join(' ')}
           >
             {pt === 'head' ? 'Heads' : pt === 'mlp' ? 'MLPs' : 'Residual'}
@@ -250,7 +247,7 @@
       <button
         type="button"
         onclick={handleRun}
-        disabled={loading || lengthsDiffer || !cleanPrompt.trim() || !corruptedPrompt.trim()}
+        disabled={loading || lengthsDiffer || !ps.cleanPrompt.trim() || !ps.corruptedPrompt.trim()}
         class="ml-auto rounded bg-indigo-500 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading ? 'Running...' : 'Run swap test'}
@@ -289,6 +286,8 @@
         </div>
         <div
           bind:this={gridEl}
+          data-tour="patching-grid"
+          data-lesson-hidden={isHidden('patching-grid') || undefined}
           role="grid"
           aria-label="Head patching effects, layer by head"
           aria-describedby="{gridDescId} {legendId}"
@@ -318,9 +317,9 @@
                   data-row={l}
                   data-col={h}
                   tabindex={tabStop?.row === l && tabStop?.col === h ? 0 : -1}
-                  aria-selected={comp !== undefined && selectedComponent?.name === comp.name}
+                  aria-selected={comp !== undefined && ps.selectedComponent?.name === comp.name}
                   onfocus={() => { gridCurrent = { row: l, col: h }; }}
-                  onclick={() => { selectedComponent = comp ?? null; }}
+                  onclick={() => { ps.selectedComponent = comp ?? null; }}
                   class="flex h-5 w-5 items-center justify-center rounded-sm border border-zinc-800 text-[10px] font-bold leading-none transition-colors hover:border-zinc-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
                   style="background-color: {cellColor(effect)}; color: {glyphColor(effect)};"
                   title="L{l} H{h}: {signedNumber(effect, 2)} score change"
@@ -339,6 +338,8 @@
         </div>
         <div
           bind:this={gridEl}
+          data-tour="patching-grid"
+          data-lesson-hidden={isHidden('patching-grid') || undefined}
           role="grid"
           aria-label="Residual patching effects, layer by word"
           aria-describedby="{gridDescId} {legendId}"
@@ -365,9 +366,9 @@
                   data-row={l}
                   data-col={p}
                   tabindex={tabStop?.row === l && tabStop?.col === p ? 0 : -1}
-                  aria-selected={comp !== undefined && selectedComponent?.name === comp.name}
+                  aria-selected={comp !== undefined && ps.selectedComponent?.name === comp.name}
                   onfocus={() => { gridCurrent = { row: l, col: p }; }}
-                  onclick={() => { selectedComponent = comp ?? null; }}
+                  onclick={() => { ps.selectedComponent = comp ?? null; }}
                   class="flex h-5 min-w-5 items-center justify-center rounded-sm border border-zinc-800 text-[10px] font-bold leading-none transition-colors hover:border-zinc-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
                   style="background-color: {cellColor(effect)}; color: {glyphColor(effect)};"
                   title="Layer {l}, {JSON.stringify(tok)}: {signedNumber(effect, 2)} score change"
@@ -380,13 +381,17 @@
       </div>
     {:else}
       <!-- Bar chart for MLP patching -->
-      <div class="flex flex-col gap-0.5">
+      <div
+        class="flex flex-col gap-0.5"
+        data-tour="patching-grid"
+        data-lesson-hidden={isHidden('patching-grid') || undefined}
+      >
         {#each components.slice(0, 30) as comp, i (comp.name)}
           {@const isPositive = comp.effect >= 0}
           {@const width = (Math.abs(comp.effect) / maxAbsEffect) * 100}
           <button
             type="button"
-            onclick={() => { selectedComponent = comp; }}
+            onclick={() => { ps.selectedComponent = comp; }}
             class="group flex items-center gap-2 rounded px-2 py-1 text-left hover:bg-zinc-900/60"
           >
             <span class="w-5 shrink-0 text-right font-mono text-[10px] text-zinc-700">{i + 1}</span>
@@ -416,14 +421,14 @@
     {/if}
 
     <!-- Selected component detail -->
-    {#if selectedComponent}
+    {#if ps.selectedComponent}
       <div class="rounded-md border border-zinc-700 bg-zinc-900/80 px-3 py-2 text-xs" role="status">
         <div class="flex items-center gap-3 text-zinc-300">
-          <span class="font-mono font-semibold">{selectedComponent.name}</span>
+          <span class="font-mono font-semibold">{ps.selectedComponent.name}</span>
           <span class="text-zinc-600">|</span>
-          <span>Score change: <span class="font-mono" style="color: {signedHex(selectedComponent.effect)};">{signedNumber(selectedComponent.effect, 2)}</span> <span class="text-zinc-500">({effectWords(selectedComponent.effect)})</span></span>
+          <span>Score change: <span class="font-mono" style="color: {signedHex(ps.selectedComponent.effect)};">{signedNumber(ps.selectedComponent.effect, 2)}</span> <span class="text-zinc-500">({effectWords(ps.selectedComponent.effect)})</span></span>
         </div>
-        <p class="mt-1 text-zinc-400">{detailSentence(selectedComponent, quoteToken(response.clean_predicted_token))}</p>
+        <p class="mt-1 text-zinc-400">{detailSentence(ps.selectedComponent, quoteToken(response.clean_predicted_token))}</p>
       </div>
     {/if}
 

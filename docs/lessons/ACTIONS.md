@@ -70,6 +70,7 @@ Effects: `view` and `compute` run freely and replay when a section opens; `downl
 | `write_it.text` | string |  | The text Watch it write produced. |
 | `write_it.tokens` | list |  | The tokens Watch it write produced. |
 | `compare.delta` | number (probability) | `{ token: string }` | How much one token's probability changed between the two Compare prompts. |
+| `compare.prediction` | record | `{ side: "a" \| "b", token: string }` | One token's probability, logit and rank on one Compare side. |
 | `compare.tokens` | list | `{ side: "a" \| "b" }` | One Compare side's tokens. |
 | `compare.token_count` | number (count) | `{ side: "a" \| "b" }` | How many tokens one Compare side became. |
 | `compare.top` | record | `{ side: "a" \| "b" }` | One Compare side's top prediction. |
@@ -102,10 +103,14 @@ Effects: `view` and `compute` run freely and replay when a section opens; `downl
 | `ablation.head_count` | number (count) |  | How many heads are knocked out. |
 | `ablation.top_guess.token` | string |  | The top prediction with the heads knocked out. |
 | `ablation.delta` | number (probability) | `{ token: string }` | How much one token's probability changed with the heads knocked out. |
+| `ablation.prediction` | record | `{ side: "original" \| "ablated", token: string }` | One token's probability, logit and rank with the heads knocked out, or in the original run. |
 | `ablation.top5` | list | `{ side: "original" \| "ablated" }` | The top 5 predictions, original or ablated. |
 | `patch.cell` | record | `{ layer: integer, position: integer }` | One Swap test cell: clean, corrupted and patched logits, and the share. |
+| `patch.focused` | record |  | The Swap test cell selected now: its layer, word position or head, the three logits and the share. |
 | `patch.peak` | record | `{ type: "head" \| "mlp" \| "resid" }` | The Swap test cell with the biggest share. |
+| `feature_ablation.count` | number (count) |  | How many features are knocked out. |
 | `feature_ablation.delta` | number (probability) | `{ token: string }` | How much one token's probability changed with the features knocked out. |
+| `feature_ablation.prediction` | record | `{ side: "original" \| "ablated", token: string }` | One token's probability, logit and rank with the features knocked out, or in the original run. |
 | `feature_ablation.top5` | list | `{ side: "original" \| "ablated" }` | The top 5 predictions, original or ablated. |
 | `steer.text` | string | `{ which: "original" \| "steered" \| "control" }` | The original, steered or control text. |
 | `steer.changed_tokens` | number (count) |  | How many tokens steering changed. |
@@ -153,6 +158,7 @@ Effects: `view` and `compute` run freely and replay when a section opens; `downl
 | `engine-chip` |  |  | the engine chip, next to the model menu |
 | `left-tab-strip` |  |  | The tab row above the left panel. |
 | `right-tab-strip` |  |  | The tab row above the right panel. |
+| `tab-features` |  |  | The Features tab in the one-panel layout, next to Attention. |
 | `compare-button` |  |  | The Compare button in the header. |
 | `lessons-toggle` |  |  | The button that opens and closes Lessons. |
 | `settings-button` |  |  | The gear button that opens Settings. |

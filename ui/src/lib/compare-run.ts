@@ -6,7 +6,8 @@
 // 20 instead of 5), so "only in A / only in B" is less likely to just mean "6th
 // place". `/generate` returns predictions, attention and SAE features in one go,
 // which is everything `/sae-features` would add.
-import { sidecarFetch } from './sidecar';
+import { buildGenerateRequest, sidecarFetch } from './sidecar';
+import { directCall, type SidecarCaller } from './analysis-core';
 import { sidecarErrorMessage } from './sidecar-errors';
 import type { GenerateResponse } from './types';
 
@@ -42,23 +43,26 @@ export interface CompareDeps {
   ensureLoaded: () => Promise<void>;
 }
 
-async function generateOne(presetId: string, prompt: string, saeLayer: number | undefined): Promise<GenerateResponse> {
-  const resp = await sidecarFetch('/generate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      preset_id: presetId,
-      prompt,
-      max_new_tokens: 0,
-      top_k_features: COMPARE_TOP_K_FEATURES,
-      ...(saeLayer !== undefined ? { sae_layer: saeLayer } : {}),
-    }),
+async function generateOne(
+  presetId: string,
+  prompt: string,
+  saeLayer: number | undefined,
+  call: SidecarCaller,
+): Promise<GenerateResponse> {
+  // Same bytes as before; the shared builder gives lessons the same request key.
+  const body = buildGenerateRequest({ presetId, prompt, topKFeatures: COMPARE_TOP_K_FEATURES, saeLayer });
+  return call({ endpoint: '/generate', model: presetId, body }, async () => {
+    const resp = await sidecarFetch('/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => '');
+      throw new Error(sidecarErrorMessage(text) ?? `/generate failed: ${resp.status}`);
+    }
+    return (await resp.json()) as GenerateResponse;
   });
-  if (!resp.ok) {
-    const body = await resp.text().catch(() => '');
-    throw new Error(sidecarErrorMessage(body) ?? `/generate failed: ${resp.status}`);
-  }
-  return (await resp.json()) as GenerateResponse;
 }
 
 export class CompareController {
@@ -78,7 +82,8 @@ export class CompareController {
     [s.promptA, s.promptB] = [s.promptB, s.promptA];
   }
 
-  async run() {
+  /** `call`: the runner memo for a lesson's run_compare; the Run button goes direct. */
+  async run(call: SidecarCaller = directCall) {
     const s = this.state;
     if (s.running) return;
     const promptA = s.promptA.trim();
@@ -95,8 +100,8 @@ export class CompareController {
       const preset = this.deps.getSelectedPreset();
       const layer = this.deps.getSaeLayer();
       // One after the other: the engine runs one model call at a time anyway.
-      const a = await generateOne(preset, s.promptA, layer);
-      const b = await generateOne(preset, s.promptB, layer);
+      const a = await generateOne(preset, s.promptA, layer, call);
+      const b = await generateOne(preset, s.promptB, layer, call);
       // A model switch cleared things while this ran: drop the old model's results.
       if (gen !== this.generation) return;
       s.a = a;

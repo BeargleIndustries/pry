@@ -22,16 +22,16 @@ const PLAN_READOUTS = [
   'focus.token', 'focus.position', 'focus.word_number',
   'top_guess.token', 'top_guess.prob', 'top_guess.logit', 'prediction', 'top_k', 'rest_mass', 'shape',
   'write_it.text', 'write_it.tokens',
-  'compare.delta', 'compare.tokens', 'compare.token_count', 'compare.top', 'compare.word_diff_count',
+  'compare.delta', 'compare.prediction', 'compare.tokens', 'compare.token_count', 'compare.top', 'compare.word_diff_count',
   'embedding.matches', 'embedding.cosine',
   'attention.weight', 'attention.top_source', 'attention.avg_top_source', 'attention.avg_share', 'lines_head',
   'head_scores.top',
   'lens.first_top_layer', 'lens.peak_layer', 'lens.peak_prob', 'lens.final_prob',
   'dla.bars_total', 'dla.answer_logit', 'dla.contrast_logit', 'dla.actual', 'dla.gap', 'dla.top_parts', 'dla.target',
   'features.top', 'features.has', 'features.activation', 'features.label', 'features.has_snippets',
-  'ablation.heads', 'ablation.head_count', 'ablation.top_guess.token', 'ablation.delta', 'ablation.top5',
-  'patch.cell', 'patch.peak',
-  'feature_ablation.delta', 'feature_ablation.top5',
+  'ablation.heads', 'ablation.head_count', 'ablation.top_guess.token', 'ablation.delta', 'ablation.prediction', 'ablation.top5',
+  'patch.cell', 'patch.focused', 'patch.peak',
+  'feature_ablation.count', 'feature_ablation.delta', 'feature_ablation.prediction', 'feature_ablation.top5',
   'steer.text', 'steer.changed_tokens', 'steer.coherence', 'steer.control_top_changed', 'steer.persist', 'steer.scale',
   'circuit.nodes', 'circuit.target',
   'readout',
@@ -47,7 +47,7 @@ const PLAN_ADDED_ANCHORS = [
 const PLAN_ANCHORS_WITH_ARGS = ['prediction-bar', 'token-chip', 'feature-row', 'dla-bar'];
 const PLAN_HIDEABLE = ['predictions-panel', 'patching-grid', 'feature-labels', 'embedding-values', 'steering-coherence'];
 // Anchors the outlines name that already exist (N11 "the existing ones").
-const EXISTING_ANCHORS = ['ablation-head-toggle', 'patching-panel', 'circuit-graph', 'steering-panel', 'feature-histogram'];
+const EXISTING_ANCHORS = ['ablation-head-toggle', 'patching-panel', 'circuit-graph', 'steering-panel', 'feature-histogram', 'tab-features'];
 
 const PLAN_VIEWS = ['embedding-compare', 'text-diff', 'top5-pair', 'three-logits', 'summary-table'];
 const PLAN_PICKERS = ['token', 'head'];
@@ -128,12 +128,28 @@ describe('runner contract: the Pry set', () => {
     expect(set.actions.open_panel.args.safeParse({ panel: 'nope' }).success).toBe(false);
   });
 
-  it('stubs throw until T2b', async () => {
-    expect(() => set.actions.run.run({}, { signal: new AbortController().signal, wait() {} })).toThrow('not implemented (T2b)');
-    expect(() => set.readouts.tokens.read()).toThrow('not implemented (T2b)');
-    expect(() => set.anchors['compare-button'].locate()).toThrow('not implemented (T2b)');
-    expect(() => set.views['text-diff'].component).toThrow('not implemented (T2b)');
-    expect(() => set.pickers.token.start(new AbortController().signal)).toThrow('not implemented (T2b)');
+  it('› pry set implements every generic name', () => {
+    // Real implementations (T2b): every generic action has a run, every generic readout a read.
+    for (const a of GENERIC_ACTIONS) expect(set.actions[a].run.toString(), a).not.toContain('notImplemented');
+    for (const r of GENERIC_READOUTS) expect(typeof set.readouts[r].read, r).toBe('function');
+    expect(set.readouts.result.read()).toBeUndefined(); // no page bound in this test
+  });
+
+  it('› every pry anchor has label and locate', () => {
+    for (const [name, a] of Object.entries(set.anchors)) {
+      expect(a.label, name).toBeTruthy();
+      expect(typeof a.locate, name).toBe('function');
+      expect(a.locate(a.args ? {} : undefined), name).toBeNull(); // no DOM here
+    }
+  });
+
+  it('› every hideable anchor implements hide', () => {
+    for (const name of PLAN_HIDEABLE) expect(typeof set.anchors[name].hide, name).toBe('function');
+  });
+
+  it('views and pickers are real', () => {
+    for (const v of PLAN_VIEWS) expect(set.views[v].component, v).toBeTruthy();
+    for (const p of PLAN_PICKERS) expect(typeof set.pickers[p].start, p).toBe('function');
   });
 
   it('models are the preset ids in sidecar/presets.json', () => {

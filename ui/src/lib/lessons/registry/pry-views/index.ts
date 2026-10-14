@@ -1,31 +1,34 @@
-// Pry views (plan T2): tool renderers mounted in compare and observe steps.
-// T2a ships the names and argument schemas; each `component` throws until T2b
-// adds the Svelte components to this folder (e.g. embedding-compare.svelte).
+// Pry views (plan T2): tool renderers the runner mounts in compare and observe
+// steps. Each component takes `args` (checked by its schema) and, for views
+// over captured runs, `captures` (capture name → the `result` readout stored
+// at that do step).
 
 import { z } from 'zod';
-import { notImplemented, type ViewDef } from '../contract';
+import type { ViewDef } from '../contract';
+import EmbeddingCompare from './embedding-compare.svelte';
+import TextDiff from './text-diff.svelte';
+import Top5Pair from './top5-pair.svelte';
+import ThreeLogits from './three-logits.svelte';
+import SummaryTable from './summary-table.svelte';
 
-function stub(doc: string, args: ViewDef['args']): ViewDef {
-  return {
-    doc,
-    args,
-    get component(): unknown {
-      return notImplemented();
-    },
-  };
-}
-
-// TODO(pry-learning T2b): the plan names the views but not their arguments;
-// these shapes are T2a's placeholders.
 const captures = z.object({ a: z.string(), b: z.string() }).strict();
 
 export const pryViews: Record<string, ViewDef> = {
-  'embedding-compare': stub(
-    'Two token positions side by side with the count of matching numbers; rows split into embedding and positional embedding when split; cosine only beside the lists it compares.',
-    z.object({}).strict(),
-  ),
-  'text-diff': stub('Two captured texts with the changed tokens marked.', captures),
-  'top5-pair': stub('Two captured top 5 lists side by side.', captures),
-  'three-logits': stub('Clean, corrupted and patched logits on one line with the share formula.', z.object({}).strict()),
-  'summary-table': stub('The three-tool summary table from P3.6.', z.record(z.string(), z.unknown())),
+  'embedding-compare': {
+    doc: 'Two token positions side by side with the count of matching numbers; rows split into embedding and positional embedding when split; cosine only beside the lists it compares.',
+    args: z.object({}).strict(),
+    component: EmbeddingCompare,
+  },
+  'text-diff': { doc: 'Two captured texts with the changed tokens marked.', args: captures, component: TextDiff },
+  'top5-pair': { doc: 'Two captured top 5 lists side by side.', args: captures, component: Top5Pair },
+  'three-logits': {
+    doc: 'Clean, corrupted and patched logits on one line with the share formula.',
+    args: z.object({}).strict(),
+    component: ThreeLogits,
+  },
+  'summary-table': {
+    doc: 'The three-tool summary table from P3.6.',
+    args: z.record(z.string(), z.unknown()),
+    component: SummaryTable,
+  },
 };

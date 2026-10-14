@@ -69,6 +69,7 @@
   import ComparePanel from '$lib/components/ComparePanel.svelte';
   import NotebookPanel from '$lib/components/NotebookPanel.svelte';
   import { createNotebookStore } from '$lib/notebook.svelte';
+  import { bindPryHost, pryMemo, pryUi } from '$lib/lessons/registry/pry-state.svelte';
   import { buildProvenance, type ProvenanceExtras } from '$lib/notebook';
   import { isTauri } from '$lib/is-tauri';
 
@@ -207,8 +208,11 @@
   function beginLoadTrack(presetId: string) {
     loadTrack = startLoad(presetId, Date.now(), readHistory(presetId));
   }
+  // The loaded weights' revision (MF-5 ready event): part of the Lessons memo key.
+  let loadedRevision: string | null = null;
   function onLoadEvent(ev: LoadProgress) {
     if (loadTrack) loadTrack = recordEvent(loadTrack, ev, Date.now());
+    if (ev.stage === 'ready' || ev.stage === 'already_loaded') loadedRevision = ev.model_revision ?? null;
   }
 
   // ---------------------------------------------------------------------------
@@ -251,7 +255,11 @@
       storage: () => (typeof localStorage === 'undefined' ? null : localStorage),
       displayName: (id) => displayName(id, allCompat),
       analysis: {
-        clearForModelSwitch: () => analysis.clearForModelSwitch(),
+        clearForModelSwitch: () => {
+          analysis.clearForModelSwitch();
+          // The runner memo belongs to the old weights.
+          pryMemo.onModelLoad();
+        },
         setAvailableSaeLayers: (layers) => { st.availableSaeLayers = layers; },
         setError: (message) => { st.error = message; },
       },
@@ -656,11 +664,11 @@
     setPrompt: (t) => { prompt = t; },
     runGenerate: () => handleGenerate(),
     openLeftTab: (tab) => {
-      if (!isWide) activeTab = 'attention';
+      if (!pryUi.workspaceSplit) activeTab = 'attention';
       onLeftTabChange(tab);
     },
     openRightTab: (tab) => {
-      if (!isWide) activeTab = 'features';
+      if (!pryUi.workspaceSplit) activeTab = 'features';
       rightActiveTab = tab;
     },
     setAggregation: (agg) => { panelAAggregation = agg; },
@@ -671,6 +679,42 @@
     },
     endTour: () => tutorialState.endForExperiment(),
   };
+
+  // Lessons (plan T2b): the registry reaches the page only through this host.
+  // `workspaceSplit` (pry-state) is today's isWide until T3's layout drives it;
+  // the two tab-forcing calls above read it. The registry's reset is its own
+  // (registry/pry-actions.ts): it never calls dismissGuide or endTour.
+  $effect(() => {
+    pryUi.workspaceSplit = isWide;
+  });
+  onMount(() =>
+    bindPryHost({
+      analysis,
+      compare,
+      getPrompt: () => prompt,
+      setPrompt: (t) => { prompt = t; },
+      getLeftTab: () => leftActiveTab,
+      openLeftTab: (tab) => experimentActions.openLeftTab(tab as Parameters<ExperimentActions["openLeftTab"]>[0]),
+      getRightTab: () => rightActiveTab,
+      openRightTab: (tab) => experimentActions.openRightTab(tab as Parameters<ExperimentActions["openRightTab"]>[0]),
+      getCompareMode: () => compareMode,
+      setCompareMode: (on) => { compareMode = on; },
+      getAggregation: () => panelAAggregation,
+      setAggregation: (agg) => { panelAAggregation = agg; },
+      setPatchingPreset: (p) => { patchingPreset = p ? { ...p } : null; },
+      activePresetId: () => activePresetId,
+      modelRevision: () => loadedRevision,
+      switchModel: (id) => handleSwitch(id),
+      openLink: async (url) => {
+        try {
+          const { open: shellOpen } = await import('@tauri-apps/plugin-shell');
+          await shellOpen(url);
+        } catch {
+          window.open(url, '_blank', 'noopener,noreferrer');
+        }
+      },
+    }),
+  );
 
   /** Preset the last experiment couldn't load (the guide shows an error instead of its steps). */
   let failedPreset = $state<string | null>(null);
@@ -772,6 +816,7 @@
     {
       id: 'circuit',
       label: 'Key parts',
+      anchor: 'tab-key-parts',
       title: 'The attention heads and layers that pushed this prediction the most, with direct value path lines between them.',
     },
   ];
@@ -911,6 +956,7 @@
       <button
         onclick={() => (compareMode = !compareMode)}
         aria-pressed={compareMode}
+        data-tour="compare-button"
         title={compareMode ? 'Back to the single-prompt view' : 'Compare two prompts side by side'}
         class="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs {compareMode
           ? 'bg-indigo-950/60 text-indigo-300 hover:bg-indigo-900/60'
@@ -920,7 +966,7 @@
         Compare
       </button>
       <TourMenu />
-      <button onclick={openSettings} aria-label="Open settings"
+      <button onclick={openSettings} aria-label="Open settings" data-tour="settings-button"
         class="relative rounded-md p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100">
         <Settings class="h-4 w-4" />
         {#if hardwareError && !settingsHasBeenOpened}
@@ -1056,7 +1102,7 @@
       <!-- Split mode -->
       <ResizableSplit>
         {#snippet left()}
-          <TabbedPanel tabs={leftTabs} bind:activeTab={leftActiveTab} onTabChange={onLeftTabChange}>
+          <TabbedPanel tabs={leftTabs} bind:activeTab={leftActiveTab} onTabChange={onLeftTabChange} stripAnchor="left-tab-strip">
             {#snippet children(tab)}
               <div class="h-full overflow-y-auto p-4">
                 {#if tab === 'attention'}
@@ -1111,7 +1157,7 @@
           </TabbedPanel>
         {/snippet}
         {#snippet right()}
-          <TabbedPanel tabs={rightTabs} bind:activeTab={rightActiveTab}>
+          <TabbedPanel tabs={rightTabs} bind:activeTab={rightActiveTab} stripAnchor="right-tab-strip">
             {#snippet children(tab)}
               <div class="h-full overflow-y-auto p-4">
                 {#if tab === 'features' && noFeatures}
@@ -1190,7 +1236,7 @@
         <div class="flex-1 overflow-y-auto p-4">
           {#if activeTab === 'attention'}
             <!-- Nested left-side tabs for narrow mode -->
-            <TabbedPanel tabs={leftTabs} bind:activeTab={leftActiveTab} onTabChange={onNarrowLeftTabChange}>
+            <TabbedPanel tabs={leftTabs} bind:activeTab={leftActiveTab} onTabChange={onNarrowLeftTabChange} stripAnchor="left-tab-strip">
               {#snippet children(tab)}
                 {#if tab === 'attention'}
                   <PanelA
@@ -1243,7 +1289,7 @@
             </TabbedPanel>
           {:else}
             <!-- Nested right-side tabs for narrow mode -->
-            <TabbedPanel tabs={rightTabs} bind:activeTab={rightActiveTab}>
+            <TabbedPanel tabs={rightTabs} bind:activeTab={rightActiveTab} stripAnchor="right-tab-strip">
               {#snippet children(tab)}
                 {#if tab === 'features' && noFeatures}
                   <NoFeaturesNotice panel="Features" />
