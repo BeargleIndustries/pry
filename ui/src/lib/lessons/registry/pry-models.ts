@@ -24,4 +24,7 @@ export const PRY_SPINE: ToolActionSet<unknown>['spine'] = [
   { id: 'sampling', label: 'sampling' },
   { id: 'append', label: 'append' },
   { id: 'repeat', label: 'repeat' },
+  // The bracket over every box: "training set every number in this box" (map 76; P1.1:62, P1.6:50).
+  // Added by the T1 gate after T2b closed.
+  { id: 'training', label: 'training set these numbers' },
 ];

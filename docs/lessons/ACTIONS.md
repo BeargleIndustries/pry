@@ -94,6 +94,8 @@ Effects: `view` and `compute` run freely and replay when a section opens; `downl
 | `dla.gap` | number (logit) |  | The gap between the bars' total and the real logit. |
 | `dla.top_parts` | list | `{ n: integer }` | The parts with the biggest DLA bars. |
 | `dla.target` | record |  | The DLA answer and contrast tokens. |
+| `dla.parts_above` | number (count) | `{ threshold: number }` | How many DLA bars push harder than a threshold, in logits (P2.4:53). |
+| `dla.target_token_count` | number (count) | `{ which: "answer" \| "contrast" }` | How many tokens the DLA answer or contrast is. The sidecar refuses anything but one token, so a finished run reads 1 (P2.4:95). |
 | `features.top` | list | `{ n: integer }` | The top features, ids and labels. Labels stay hidden while feature-labels is hidden. |
 | `features.has` | boolean | `{ label: string } \| { id: integer }` | Whether a feature with this label or id is in the list. |
 | `features.activation` | number (activation) | `{ id: integer }` | A feature's activation at the focused token. |
@@ -108,6 +110,7 @@ Effects: `view` and `compute` run freely and replay when a section opens; `downl
 | `ablation.top5` | list | `{ side: "original" \| "ablated" }` | The top 5 predictions, original or ablated. |
 | `patch.cell` | record | `{ layer: integer, position: integer }` | One Swap test cell: clean, corrupted and patched logits, and the share. |
 | `patch.focused` | record |  | The Swap test cell selected now: its layer, word position or head, the three logits and the share. |
+| `patch.token_count` | number (count) | `{ side: "clean" \| "corrupted" }` | How many tokens the Swap test's Original (clean) or Changed (corrupted) prompt became. |
 | `patch.peak` | record | `{ type: "head" \| "mlp" \| "resid" }` | The Swap test cell with the biggest share. |
 | `feature_ablation.count` | number (count) |  | How many features are knocked out. |
 | `feature_ablation.delta` | number (probability) | `{ token: string }` | How much one token's probability changed with the features knocked out. |
@@ -178,6 +181,7 @@ Effects: `view` and `compute` run freely and replay when a section opens; `downl
 | `token-chip` | `{ text: string, occurrence?: "first" \| "last" \| integer }` |  | One token chip, picked by its text and which occurrence. |
 | `feature-row` | `{ id: integer }` |  | One row in the feature list, picked by feature id. |
 | `dla-bar` | `{ part: string }` |  | One bar in the DLA chart, picked by its part. |
+| `head-cell` | `{ layer: integer, head: integer }` |  | One cell in the attention head grid, picked by layer and head. |
 | `patching-grid` |  | yes | The Swap test grid. |
 | `feature-labels` |  | yes | Every place a feature label shows: the Features list, feature cards, the steering menu and the histogram tooltip. |
 | `embedding-values` |  | yes | The numbers in the embedding reader. |

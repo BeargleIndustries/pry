@@ -279,6 +279,54 @@ describe('lint: outline-coverage additions', () => {
     expect(errors(lint(`## A\n\n${t('$slot.nope')}`, BASE))).toContain('slot-unknown');
   });
 
+  it('› a refutation or a choice listing several targets tags them (critic B4; P2.4:86, P3.5:21)', () => {
+    const r = step('explain{id=e}', ':refutes{target=[M4, N7]}[Features are patterns a separate tool found.]');
+    expect(errors(lint(`## A\n\n${r}`, { targets: ['M4', 'N7'] }))).not.toContain('targets-untagged');
+    expect(errors(lint(`## A\n\n${r}`, { targets: ['T5'] }))).toContain('targets-untagged');
+    const p = step('predict{id=p checks=o}', `Which?\n\n${yaml('choices:\n  - { text: "only the target", target: [T5, N7] }')}`) + '\n' + step('observe{id=o}', yaml('journal: true'));
+    expect(errors(lint(`## A\n\n${p}`, { targets: ['T5', 'N7'] }))).not.toContain('targets-untagged');
+  });
+
+  it('› the spine has a training box, addressable by `spine` and `:look{at=lesson:spine box=...}` (critic B2)', () => {
+    const look = (box: string) => `## A\n\n${step('explain{id=e}', `:look{at=lesson:spine box=${box}}[The spine]`)}`;
+    expect(errors(lint(look('training'), { spine: ['training'] }))).toEqual([]);
+    expect(errors(lint(look('trainig')))).toContain('spine-unknown');
+  });
+
+  it('› `value_field` reads one field of the value\'s record readout, and fields get their operators checked (P1.4:60)', () => {
+    const c = (extra: string) => `## A\n\n${run('r')}\n${step('observe{id=o}', yaml(`check: { read: prediction, args: { token: " one" }, field: logit, op: gt, value: $read.prediction, value_args: { token: " four" }${extra} }`))}`;
+    expect(errors(lint(c(', value_field: logit'), BASE))).toEqual([]);
+    expect(errors(lint(c(', value_field: nope'), BASE))).toContain('bad-readout-args');
+    const bad = `## A\n\n${run('r')}\n${step('observe{id=o}', yaml('check: { read: prediction, args: { token: " one" }, field: logit, op: starts_with, value: "x" }'))}`;
+    expect(errors(lint(bad, BASE))).toContain('op-type');
+  });
+
+  it('› a task can capture the learner\'s run, and a slot bound to it may be `expect: learner` (P3.7:70)', () => {
+    const body = `## A\n\n:::slots\nown: { read: ablation.top_delta, from_capture: mine, expect: learner }\n:::\n\n${step('task{id=t}', `Pick a control. {own}\n\n${yaml('target:\n  - { read: ablation.head_count, op: equals, value: 1, expect: learner }\nlearner_actions: [run_head_ablation]\ncapture: mine')}`)}`;
+    expect(errors(lint(body, BASE))).toEqual([]);
+  });
+
+  it('› a transfer can hold a faded task (P2.4:95)', () => {
+    const body = `## A\n\n::::transfer{id=t}\n${yaml('prompt: "The capital of France is"\nexpect_if_explanation_holds: "x"\nlimits: "y"')}\n\n${step('predict{id=p checks=o}', `Which?\n\n${yaml('free: true')}`)}\n${step('task{id=k}', yaml('target:\n  - { read: dla.target, op: changed_from, value: $before.dla.target }\nlearner_actions: [run_dla]'))}\n${step('observe{id=o}', yaml('journal: true'))}\n::::\n`;
+    expect(errors(lint(body, BASE))).not.toContain('step-nesting');
+  });
+
+  it('› an explain-chain assert must quote a clause of the model answer, and its slots must exist (P3.2:87)', () => {
+    const chain = (say: string, slot: string) => `## A\n\n:::slots\nd: { read: top_guess.prob, expect: 0.1 }\n:::\n\n${step('explain-chain{id=c}', yaml(`model_answer: "The head barely mattered here."\nassert:\n  - require: { slot: ${slot}, op: lt, value: 0.01 }\n    say: ${JSON.stringify(say)}\n    else: "It moved."`))}`;
+    expect(errors(lint(chain('barely mattered', 'd'), BASE))).toEqual([]);
+    expect(errors(lint(chain('hardly mattered', 'd'), BASE))).toContain('assert-say-missing');
+    expect(errors(lint(chain('barely mattered', 'nope'), BASE))).toContain('slot-unknown');
+  });
+
+  it('› number-looking pointer attributes are numbers (P3.2:51)', () => {
+    expect(errors(lint(`## A\n\n${step('explain{id=e}', ':look{at=head-cell layer=9 head=9}[`L9H9`]')}`))).toEqual([]);
+  });
+
+  it('› a predict choice\'s feedback may use a slot its observe\'s run captures (P1.1:87)', () => {
+    const body = `## A\n\n:::slots\nnow: { read: prediction, args: { token: " now" }, field: prob, from_capture: fr, expect: 0.05 }\n:::\n\n${step('predict{id=p checks=o}', `Which?\n\n${yaml('choices:\n  - { text: "A", feedback: "It got {now}." }')}`)}\n${step('do{id=d}', `Run.\n\n${F}actions\n- run: {}\n${F}\n\n${yaml('capture: fr')}`)}\n${step('observe{id=o}', yaml('journal: true'))}`;
+    expect(errors(lint(body, BASE))).not.toContain('slot-before-readout');
+  });
+
   it('› a question choice can carry a target (P1.4:74)', () => {
     const q = step('question{id=q}', `Why?\n\n${yaml('choices:\n  - { text: "a bug", target: M10 }\n  - { text: "the same process" }')}`);
     expect(errors(lint(`## A\n\n${q}`, { targets: ['M10'] }))).not.toContain('targets-untagged');

@@ -57,7 +57,7 @@ export type StepKind = (typeof STEP_KINDS)[number];
 /** Objects lenient mode may strip unknown keys from (plan:145). */
 export const PRESENTATIONAL_KINDS: readonly string[] = ['explain', 'analogy', 'fold'];
 
-export const FORMULAS = ['share', 'difference', 'sum', 'abs'] as const;
+export const FORMULAS = ['share', 'difference', 'sum', 'abs', 'ratio', 'ln'] as const;
 export const SLOT_FORMATS = ['probability', 'logit', 'layer', 'count', 'position', 'string', 'number'] as const;
 
 const args = z.record(z.string(), z.unknown());
@@ -77,6 +77,8 @@ export const checkItem = z.strictObject({
   op: z.enum(OPS),
   value: z.unknown().optional(),
   value_args: args.optional(),
+  /** One field of the value's record readout (`$read`/`$capture`), like `field` (P1.4:60, ' one' vs ' four' logits). */
+  value_field: str.optional(),
   not: z.boolean().optional(),
   expect: expectValue.optional(),
   /** A number, or a `$row` / `$slot` binding ("within {coh_band}", P3.5:77). */
@@ -155,11 +157,14 @@ const common = {
   when: checkItem.optional(),
 };
 
-const predictChoice = z.strictObject({ text: str, target: str.optional(), feedback: str.optional() });
-const questionChoice = z.strictObject({ text: str, target: str.optional(), feedback: str.optional(), reveal: z.boolean().optional() });
+/** One misconception id, or several when one tempting answer bundles them (P3.5:21). */
+const target = z.union([str, strList]).optional();
+const predictChoice = z.strictObject({ text: str, target, feedback: str.optional() });
+const questionChoice = z.strictObject({ text: str, target, feedback: str.optional(), reveal: z.boolean().optional() });
 
 export const stepSchemas: Record<StepKind, z.ZodObject<any>> = {
-  explain: z.strictObject({ ...common, image: str.optional(), alt: str.optional(), assert: asserts.optional() }),
+  // `withdraws`: the metaphors this step retires, which it may name (map 5.1; P2.1:49, P3.2:46).
+  explain: z.strictObject({ ...common, image: str.optional(), alt: str.optional(), assert: asserts.optional(), withdraws: strList.optional() }),
   // `breaks` is checked by lint (analogy-breaks) so a missing one gets the plain wording.
   analogy: z.strictObject({ ...common, like: str, because: str, breaks: str.optional(), withdrawn_in: str.optional() }),
   simplification: z.strictObject({ ...common, corrected_in: strList }),
@@ -245,16 +250,20 @@ export const stepSchemas: Record<StepKind, z.ZodObject<any>> = {
     one_change: str.optional(),
     /** The actions the learner drives during the task (P3.2:71, learner-driven knockouts). */
     learner_actions: strList.optional(),
+    /** Stores the readouts of the learner's last run when the target is met or they move on (P3.7:70, the learner's control). */
+    capture: str.optional(),
     reset: z.unknown().optional(),
     remember: z.strictObject({ key: str, read: str, args: args.optional() }).optional(),
   }),
-  'explain-chain': z.strictObject({ ...common, prompt: str.optional(), model_answer: str }),
+  // `assert` gates a qualitative word in the model answer (P3.2:87 "barely mattered").
+  'explain-chain': z.strictObject({ ...common, prompt: str.optional(), model_answer: str, assert: asserts.optional() }),
 };
 
 /** Kinds a container may hold (nesting), keyed by parent kind. */
 export const NESTING: Partial<Record<StepKind, readonly StepKind[]>> = {
   fold: STEP_KINDS.filter((k) => k !== 'fold'),
-  transfer: ['predict', 'observe', 'do'],
+  // A transfer can be a faded task (P2.4:95, P3.5:77, P3.6:78).
+  transfer: ['predict', 'observe', 'do', 'task'],
 };
 
 /** A step's `actions` fence: a list of single-key maps, key = action, value = args. */

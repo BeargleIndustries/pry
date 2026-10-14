@@ -102,6 +102,7 @@ const PANEL_OF: Record<string, string> = {
   'write-it-seed': 'watch-it-write',
   'panel-a-lines': 'attention',
   'panel-a-heatmap': 'attention',
+  'head-cell': 'attention',
   'panel-a-agg-selector': 'attention',
   'panel-a-from-selector': 'attention',
   'copying-heads-view': 'attention',
@@ -209,6 +210,14 @@ const added: Record<string, Omit<AnchorDef, 'locate'> & { locate?: AnchorDef['lo
     label: 'a bar in the Why (DLA) chart',
     args: z.object({ part: z.string() }).strict(),
     locate: (a: { part: string }) => findWith('dla-bar', 'data-part', a.part),
+  },
+  // Added by the T1 gate after T2b closed (critic M8, P3.2:51 "cells L9H9, L9H6, L10H0").
+  // TODO(pry-learning T4-ui): mark grid cells as the head-cell anchor with `data-head="L9H9"`.
+  'head-cell': {
+    doc: 'One cell in the attention head grid, picked by layer and head.',
+    label: 'a head in the attention grid, left side',
+    args: z.object({ layer: z.number().int().min(0), head: z.number().int().min(0) }).strict(),
+    locate: (a: { layer: number; head: number }) => findWith('head-cell', 'data-head', `L${a.layer}H${a.head}`),
   },
   'patching-grid': { doc: 'The Swap test grid.', label: 'the Swap test grid, left side' },
   'feature-labels': {

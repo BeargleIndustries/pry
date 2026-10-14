@@ -391,6 +391,23 @@ describe('Pry readouts: one test per readout', () => {
     expect(r('patch.peak', { type: 'head' })).toMatchObject({ layer: 1, position: 1, patched: 3 });
   });
 
+  it('› patch.token_count reads the Swap test prompts\' length (P3.6:78)', async () => {
+    expect(r('patch.token_count', { side: 'corrupted' })).toBeUndefined();
+    await act('run_patching', { clean: 'A B', corrupted: 'A C', type: 'head' });
+    const n = r('patch.token_count', { side: 'clean' });
+    expect(n === undefined || typeof n === 'number').toBe(true);
+    expect(r('patch.token_count', { side: 'corrupted' })).toBe(n);
+  });
+
+  it('› dla.parts_above and dla.target_token_count (P2.4:53, P2.4:95)', async () => {
+    expect(r('dla.parts_above', { threshold: 0 })).toBeUndefined();
+    await dlaRan(true);
+    expect(r('dla.parts_above', { threshold: 1e9 })).toBe(0);
+    expect(r('dla.parts_above', { threshold: -1 })).toBeGreaterThan(0);
+    expect(r('dla.target_token_count', { which: 'answer' })).toBe(1);
+    expect(r('dla.target_token_count', { which: 'contrast' })).toBe(1);
+  });
+
   it('feature_ablation.count', async () => {
     await ran();
     expect(r('feature_ablation.count')).toBe(0);

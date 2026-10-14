@@ -37,7 +37,7 @@ describe('copy lint', () => {
       .join('\n');
     expect(run(body, lesson('pry.p1-2'))).toContain('term-budget-lesson');
     expect(run(body, lesson('pry.p1-2', { term_budget_exception: 'round 7 #17' }))).not.toContain('term-budget-lesson');
-    expect(run(explain('The token and the vocabulary.'), lesson('pry.p1-2'))).toContain('term-budget-section');
+    expect(run(explain('The embedding and the positional embedding.'), lesson('pry.p1-2'))).toContain('term-budget-section');
   });
 
   it('› banned model verb in prose is an error', () => {
@@ -147,12 +147,10 @@ ${step('explain-result{id=er}', yaml('supports: ["The bars show which parts push
 
 // Copy-lint changes forced by the T1 outline-coverage gate (each names the outline line).
 describe('copy lint: outline-coverage additions', () => {
-  it('› term_budget_exception also lifts the one-term-per-section rule (P1.2:27)', () => {
-    expect(run(explain('The token and the vocabulary.'), lesson('pry.p1-2', { term_budget_exception: 'round 7 #17' }))).not.toContain('term-budget-section');
-  });
-
-  it('› a term family counts as one new term in its section (P3.3:8)', () => {
+  it('› a term family counts as one naming moment; term_budget_exception covers the lesson cap only (P1.2:27, P3.3:8)', () => {
     expect(run(explain('The clean run and the corrupted run.'), lesson('pry.p3-3'))).not.toContain('term-budget-section');
+    expect(run(explain('The token and the vocabulary.'), lesson('pry.p1-2'))).not.toContain('term-budget-section');
+    expect(run(explain('The embedding and the positional embedding.'), lesson('pry.p1-2', { term_budget_exception: 'round 7 #17' }))).toContain('term-budget-section');
   });
 
   it('› a stand-in name is fine until its term is named, retired after (P1.2:79)', () => {
@@ -161,34 +159,72 @@ describe('copy lint: outline-coverage additions', () => {
     expect(errs.filter((c) => c === 'retired')).toHaveLength(1);
     expect(run(explain('The starting numbers.'), lesson('pry.p1-3'))).toContain('retired');
     expect(run(explain('The starting numbers.'), lesson('pry.p1-1'))).not.toContain('retired');
+    // Its own lesson never naming the term doesn't let the stand-in through.
+    expect(run(explain('The starting numbers.'), lesson('pry.p1-2'))).toContain('retired');
   });
 
-  it('› a choice may be a fixed percentage bin, and 100% is the whole (P1.4:34, P1.4:59)', () => {
-    const p = `## A\n\n${step('predict{id=p checks=o}', `How much of the 100% will it get?\n\n${yaml('choices:\n  - { text: "under 10%" }\n  - { text: "over 50%" }')}`)}`;
-    expect(run(p, lesson('pry.p1-4'))).not.toContain('bare-number');
-    expect(run(explain('It got 34% of it.'), lesson('pry.p1-4'))).toContain('bare-number');
+  it('› a pre-intro stand-in is retired before its term is named and fine after (map 5.2:274)', () => {
+    expect(run(explain('Each bar is a direct push.'), lesson('pry.p2-3'))).not.toContain('retired');
+    expect(run(explain('These are direct pushes.'), lesson('pry.p2-3'))).toContain('retired');
+    expect(run(explain('DLA counts only direct pushes.'), lesson('pry.p3-6'))).not.toContain('retired');
+    expect(run(explain('Direct pushes.'), TOUR)).toContain('retired');
   });
 
-  it('› a predict or question stem asks, so a qualitative word there is fine (P2.1:40)', () => {
-    const p = `## A\n\n${step('predict{id=p checks=o}', `Which earlier word matters most?\n\n${yaml('choices:\n  - { text: "A" }')}`)}`;
-    expect(run(p, lesson('pry.p2-1'))).not.toContain('qualitative');
-    expect(run(explain('Most of it goes there.'), lesson('pry.p2-1'))).toContain('qualitative');
+  it('› choices may hold percentage bins and layer ranges, not other numbers; 100% only as the whole (P1.4:34, P2.3:45)', () => {
+    const p = (choices: string) => `## A\n\n${step('predict{id=p checks=o}', `How much of the 100% will it get?\n\n${yaml(choices)}`)}`;
+    expect(run(p('choices:\n  - { text: "under 10%" }\n  - { text: "L0-L2" }'), lesson('pry.p2-3'))).not.toContain('bare-number');
+    expect(run(p('choices:\n  - { text: "0.42" }'), lesson('pry.p2-3'))).toContain('bare-number');
+    expect(run(explain('They add up to 100%.'), lesson('pry.p1-4'))).not.toContain('bare-number');
+    expect(run(explain('It rose to 100%.'), lesson('pry.p1-4'))).toContain('bare-number');
   });
 
-  it('› exempt phrases: a rank ("the most") and a non-model subject ("temperature decides") (P1.4:93, P1.5:88)', () => {
+  it('› a quoted phrase inside an analogy is not a measurement (P1.4:51)', () => {
+    const a = (like: string) => `## A\n\n${step('analogy{id=a}', yaml(`like: ${JSON.stringify(like)}\nbecause: "x"\nbreaks: "y"`))}`;
+    expect(run(a('a weather forecast\'s "70% chance of rain"'), lesson('pry.p1-4'))).not.toContain('bare-number');
+    expect(run(a('a weather forecast at 70%'), lesson('pry.p1-4'))).toContain('bare-number');
+  });
+
+  it('› only a question or a hypothetical in a stem is exempt from the qualitative rule (P2.1:40, P3.4:73)', () => {
+    const p = (stem: string) => `## A\n\n${step('predict{id=p checks=o}', `${stem}\n\n${yaml('choices:\n  - { text: "A" }')}`)}`;
+    expect(run(p('Which earlier word matters most?'), lesson('pry.p2-1'))).not.toContain('qualitative');
+    expect(run(p("If ' he' barely moves, list two reasons."), lesson('pry.p3-4'))).not.toContain('qualitative');
+    expect(run(p('This barely matters. Which word?'), lesson('pry.p2-1'))).toContain('qualitative');
+  });
+
+  it('› exempt phrases: a rank ("got the most") and a non-model subject ("temperature decides") (P1.4:93, P1.5:88)', () => {
     expect(run(explain("' one' got the most, but only about 1 in 3."), lesson('pry.p1-4'))).not.toContain('qualitative');
+    expect(run(explain('It holds the most of it.'), lesson('pry.p1-4'))).toContain('qualitative');
     expect(run(explain('Temperature decides how random the pick is.'), lesson('pry.p1-5'))).not.toContain('model-verb');
     expect(run(explain('The model decides.'), lesson('pry.p1-5'))).toContain('model-verb');
   });
 
-  it('› the lesson that withdraws a picture may name it (P2.1:49)', () => {
-    const line = explain("That's the assembly line's picture: we're done with it.");
-    expect(run(line, lesson('pry.p2-1'))).not.toContain('metaphor-name');
-    expect(run(line, lesson('pry.p2-2'))).toContain('metaphor-name');
+  it('› only the step that withdraws a picture may name it, in its withdrawing lesson (P2.1:49)', () => {
+    const line = (w: string) => `## A\n\n${step('explain{id=e}', `That's the assembly line's picture: we're done with it.${w}`)}`;
+    const withdraws = `\n\n${yaml('withdraws: [assembly line]')}`;
+    expect(run(line(withdraws), lesson('pry.p2-1'))).not.toContain('metaphor-name');
+    expect(run(line(''), lesson('pry.p2-1'))).toContain('metaphor-name');
+    expect(run(line(withdraws), lesson('pry.p2-2'))).toContain('metaphor-name');
+  });
+
+  it('› the tour may send people to Lessons with "what all this means" but not use "means" otherwise (quick-tour.md:50)', () => {
+    expect(run(explain('Want to know what all this means? Open Lessons.'), TOUR)).not.toContain('tour-banned');
+    expect(run(explain('This bar means the answer.'), TOUR)).toContain('tour-banned');
+  });
+
+  it('› a natural frequency written beside a slot is an error (critic m11)', () => {
+    const body = `## A\n\n:::slots\nshe: { read: prediction, args: { token: " she" }, field: prob, expect: 0.05 }\n:::\n\n${step('explain{id=e}', "It fell to {she}, about 1 in 22.")}`;
+    expect(run(body, { ...lesson('pry.p3-1'), model: 'gpt2-small' })).toContain('frequency-literal');
   });
 
   it('› inline code inside a refutation is masked (P2.3:58)', () => {
     expect(run(explain(':refutes[being on top at `L9` settled nothing]'), lesson('pry.p2-3'))).not.toContain('bare-number');
+  });
+
+  it('› an explain-chain assert gates its `say` clause inside the model answer (P3.2:87)', () => {
+    const chain = (say: string) =>
+      `## A\n\n:::slots\nd: { read: top_guess.prob, expect: 0.1 }\n:::\n\n${step('explain-chain{id=c}', yaml(`model_answer: "The head barely mattered here."\nassert:\n  - require: { slot: d, op: lt, value: 0.01 }\n    say: ${JSON.stringify(say)}\n    else: "The head moved it by {d}."`))}`;
+    expect(run(chain('barely mattered'), { ...lesson('pry.p3-2'), model: 'gpt2-small' })).not.toContain('qualitative');
+    expect(run(chain('mattered'), { ...lesson('pry.p3-2'), model: 'gpt2-small' })).toContain('qualitative');
   });
 });
 

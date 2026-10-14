@@ -325,6 +325,7 @@ export const pryReadouts: Record<string, ReadoutDef> = {
   'top_guess.prob': { type: 'number', unit: 'probability', doc: 'The top prediction\'s probability.', read: reader((s) => preds(s.response)[0]?.probability) },
   'top_guess.logit': { type: 'number', unit: 'logit', doc: 'The top prediction\'s logit.', read: reader((s) => preds(s.response)[0]?.logit ?? undefined) },
   prediction: {
+    fields: { prob: 'number', logit: 'number', rank: 'number' },
     args: token,
     type: 'record',
     doc: 'One token\'s probability, logit and rank.',
@@ -365,6 +366,7 @@ export const pryReadouts: Record<string, ReadoutDef> = {
     }),
   },
   'compare.prediction': {
+    fields: { prob: 'number', logit: 'number', rank: 'number' },
     args: z.object({ side: z.enum(['a', 'b']), token: z.string() }).strict(),
     type: 'record',
     doc: 'One token\'s probability, logit and rank on one Compare side.',
@@ -373,6 +375,7 @@ export const pryReadouts: Record<string, ReadoutDef> = {
   'compare.tokens': { args: compareSide, type: 'list', doc: 'One Compare side\'s tokens.', read: reader((s, a) => sideResp(s, a.side)?.tokens.map((t) => t.text)) },
   'compare.token_count': { args: compareSide, type: 'number', unit: 'count', doc: 'How many tokens one Compare side became.', read: reader((s, a) => sideResp(s, a.side)?.tokens.length) },
   'compare.top': {
+    fields: { token: 'string', prob: 'number', logit: 'number' },
     args: compareSide,
     type: 'record',
     doc: 'One Compare side\'s top prediction.',
@@ -518,9 +521,29 @@ export const pryReadouts: Record<string, ReadoutDef> = {
     ),
   },
   'dla.target': {
+    fields: { answer: 'string', contrast: 'string' },
     type: 'record',
     doc: 'The DLA answer and contrast tokens.',
     read: reader((s) => (s.dla ? { answer: s.dla.answer_token ?? s.dla.predicted_token, contrast: s.dla.contrast_token ?? null } : undefined)),
+  },
+  // Added by the T1 gate after T2b closed (critic M7, M10).
+  'dla.parts_above': {
+    args: z.object({ threshold: z.number() }).strict(),
+    type: 'number',
+    unit: 'count',
+    doc: 'How many DLA bars push harder than a threshold, in logits (P2.4:53).',
+    read: reader((s, a) => (s.dla ? s.dla.components.filter((c) => Math.abs(c.contribution) > a.threshold).length : undefined)),
+  },
+  'dla.target_token_count': {
+    args: z.object({ which: z.enum(['answer', 'contrast']) }).strict(),
+    type: 'number',
+    unit: 'count',
+    doc: 'How many tokens the DLA answer or contrast is. The sidecar refuses anything but one token, so a finished run reads 1 (P2.4:95).',
+    read: reader((s, a) => {
+      if (!s.dla) return undefined;
+      const tok = a.which === 'answer' ? (s.dla.answer_token ?? s.dla.predicted_token) : s.dla.contrast_token;
+      return tok ? 1 : undefined;
+    }),
   },
 
   'features.top': {
@@ -593,6 +616,7 @@ export const pryReadouts: Record<string, ReadoutDef> = {
     }),
   },
   'ablation.prediction': {
+    fields: { prob: 'number', logit: 'number', rank: 'number' },
     args: ablPredArgs,
     type: 'record',
     doc: 'One token\'s probability, logit and rank with the heads knocked out, or in the original run.',
@@ -601,6 +625,7 @@ export const pryReadouts: Record<string, ReadoutDef> = {
   'ablation.top5': { args: ablationSide, type: 'list', doc: 'The top 5 predictions, original or ablated.', read: reader((s, a) => ablTop5(s.headAblate, a.side)) },
 
   'patch.cell': {
+    fields: { layer: 'number', position: 'number', head: 'number', clean: 'number', corrupted: 'number', patched: 'number', share: 'number' },
     args: z.object({ layer, position }).strict(),
     type: 'record',
     doc: 'One Swap test cell: clean, corrupted and patched logits, and the share.',
@@ -610,6 +635,7 @@ export const pryReadouts: Record<string, ReadoutDef> = {
     }),
   },
   'patch.focused': {
+    fields: { layer: 'number', position: 'number', head: 'number', clean: 'number', corrupted: 'number', patched: 'number', share: 'number' },
     type: 'record',
     doc: 'The Swap test cell selected now: its layer, word position or head, the three logits and the share.',
     read: reader((s) => {
@@ -619,7 +645,17 @@ export const pryReadouts: Record<string, ReadoutDef> = {
       return { layer: c.layer, ...where, clean: c.clean_logit, corrupted: c.corrupted_logit, patched: c.patched_logit, share: shareOf(c) };
     }),
   },
+  // Added by the T1 gate after T2b closed (critic M11, P3.6:78). The sidecar refuses prompts of
+  // different lengths, so a finished run's corrupted count equals its clean count.
+  'patch.token_count': {
+    args: z.object({ side: z.enum(['clean', 'corrupted']) }).strict(),
+    type: 'number',
+    unit: 'count',
+    doc: 'How many tokens the Swap test\'s Original (clean) or Changed (corrupted) prompt became.',
+    read: reader((s) => s.patch?.tokens?.length),
+  },
   'patch.peak': {
+    fields: { layer: 'number', position: 'number', head: 'number', clean: 'number', corrupted: 'number', patched: 'number', share: 'number' },
     args: z.object({ type: z.enum(['head', 'mlp', 'resid']) }).strict(),
     type: 'record',
     doc: 'The Swap test cell with the biggest share.',
@@ -648,6 +684,7 @@ export const pryReadouts: Record<string, ReadoutDef> = {
     read: reader((s, a) => s.featureAblate?.prediction_delta.find((d) => d.token === a.token)?.delta),
   },
   'feature_ablation.prediction': {
+    fields: { prob: 'number', logit: 'number', rank: 'number' },
     args: ablPredArgs,
     type: 'record',
     doc: 'One token\'s probability, logit and rank with the features knocked out, or in the original run.',
@@ -696,6 +733,7 @@ export const pryReadouts: Record<string, ReadoutDef> = {
     read: reader((s) => s.circuit?.nodes.map((x) => ({ id: x.id, type: x.type, layer: x.layer, head: x.head, importance: x.importance }))),
   },
   'circuit.target': {
+    fields: { token: 'string' },
     type: 'record',
     doc: 'The token the Key parts map explains.',
     read: reader((s) => {

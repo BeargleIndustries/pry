@@ -104,6 +104,11 @@ export function derive(formula: NonNullable<Slot['formula']>, xs: (number | unde
       return n.reduce((a, b) => a + b, 0);
     case 'abs':
       return Math.abs(n[0]);
+    // P2.4:72: ' Mary' is about 29 times as likely as ' John', a logit difference of about 3.4 (ln 29.4).
+    case 'ratio':
+      return n[1] === 0 ? undefined : n[0] / n[1];
+    case 'ln':
+      return n[0] > 0 ? Math.log(n[0]) : undefined;
   }
 }
 

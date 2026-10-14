@@ -37,9 +37,6 @@ retired:
   - word-piece
   - word-pieces
   - picking rule
-  # "direct pushes" is a stand-in name (map 274) but also DLA's pinned
-  # description ("Only direct pushes count") and approved outline wording
-  # (P2.4:102, P3.6:72, P3.7:46, P3.7:76), so word matching can't retire it.
   - copying head
   - previous-word head
   - bare model
@@ -53,6 +50,13 @@ retired:
 # first use in its own lesson, and in every later lesson.
 stand_in_names:
   starting numbers: embedding
+
+# Map section 5.2:274 stand-in names that are retired only before the real term
+# is named: on the path before the term's lesson, in the tour, and in the term's
+# lesson before its naming section. After that they're plain descriptions
+# (P2.4:102, P3.6:72, P3.7:46, P3.7:76; pinned "Only direct pushes count").
+pre_intro_retired:
+  direct pushes: direct logit attribution
 
 # Style guide section 5 "Words we don't use for the model". Allowed only in a
 # predict or question choice, its feedback, a :refutes[...] span or code.
@@ -109,7 +113,9 @@ qualitative:
 # Phrases with a qualitative word that state a rank, not a size, so they need
 # no assert (P1.4:93 "' one' got the most, but only about 1 in 3").
 qualitative_exempt:
-  - the most
+  - got the most
+  # P3.4:38 "the {n} most active features": a rank.
+  - most active
 
 # Causal and interpretive verbs the tour can't use (map 7.1; quick-tour.md:32).
 tour_banned:
@@ -122,8 +128,12 @@ tour_banned:
   - knows
   - matters
   - responsible
-  # "means" isn't in quick-tour.md:32's list, and step 12 asks "what all this
-  # means" to send the viewer to Lessons (quick-tour.md:50).
+  - means
+
+# Tour phrases holding a banned word that send the viewer to Lessons instead of
+# interpreting a result (quick-tour.md:50, step 12).
+tour_banned_exempt:
+  - what all this means
 
 # The explain-result `tool:` keys and their pinned caveat phrases, copied from
 # ui/src/lib/copy/caveats.test.ts (a test checks each phrase is still pinned

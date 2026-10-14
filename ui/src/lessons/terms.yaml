@@ -10,8 +10,8 @@ terms:
   - { term: language model, introduced_in: pry.p1-1 }
   - { term: training, introduced_in: pry.p1-1 }
   - { term: interpretability, introduced_in: pry.p1-1 }
-  - { term: token, introduced_in: pry.p1-2 }
-  - { term: vocabulary, introduced_in: pry.p1-2 }
+  - { term: token, introduced_in: pry.p1-2, family: token-vocabulary }
+  - { term: vocabulary, introduced_in: pry.p1-2, family: token-vocabulary }
   - { term: start-of-text marker, introduced_in: pry.p1-2 }
   - { term: embedding, introduced_in: pry.p1-2 }
   - { term: positional embedding, introduced_in: pry.p1-2 }
@@ -44,7 +44,7 @@ terms:
   - { term: activation patching, introduced_in: pry.p3-3 }
   - { term: clean run, introduced_in: pry.p3-3, family: clean-corrupted-run }
   - { term: corrupted run, introduced_in: pry.p3-3, family: clean-corrupted-run }
-  - { term: direction, introduced_in: pry.p3-5 }
+  - { term: direction, introduced_in: pry.p3-4 }
   - { term: steering, introduced_in: pry.p3-5 }
   - { term: coherence, introduced_in: pry.p3-5 }
   - { term: circuit, introduced_in: pry.p3-7 }

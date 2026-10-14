@@ -38,6 +38,10 @@ export interface LintWords {
   model_verb_exempt?: string[];
   /** Metaphor -> the lesson that withdraws it (map 5.1); that lesson may name it to say it's done. */
   metaphor_withdrawn_in?: Record<string, string | string[]>;
+  /** Stand-in name -> its term: retired only before the term is named (map 5.2:274, "direct pushes"). */
+  pre_intro_retired?: Record<string, string>;
+  /** Tour phrases holding a banned word that send the viewer to Lessons (quick-tour.md:50). */
+  tour_banned_exempt?: string[];
 }
 
 export interface CopyLintOptions {
@@ -127,11 +131,14 @@ function units(lesson: Lesson): Unit[] {
   return out;
 }
 
+/** "add up to 100%" and "of the 100%" name the whole distribution, not a measurement (P1.4:34, P1.4:59). */
+const WHOLE_100 = /\b(?:adds?\s+up\s+to|adds?\s+to|of\s+the)\s+100\s?%|\b0\s?-\s?100\s?%\s+scale/gi;
+const PERCENT_RULE = /(?<![\w.])\d+(?:\.\d+)?\s?%/g;
+const LABEL_RULE = /(?<![\w-])L\d+(?:H\d+)?(?![\w])/g;
 const NUMBER_RULES: RegExp[] = [
-  // 100% is the whole distribution ("probabilities that add up to 100%", P1.4:59), not a measurement.
-  /(?<![\w.])(?!100\s?%)\d+(?:\.\d+)?\s?%/g,
+  PERCENT_RULE,
   /(?<![\w.])\d+\.\d+(?![\w.])/g,
-  /(?<![\w-])L\d+(?:H\d+)?(?![\w])/g,
+  LABEL_RULE,
   /\b(?:position|token|word|layer)s?\s+\d+/gi,
   /(?<![\w.])\d+\s+(?:tokens|words)\b/gi,
 ];
@@ -172,7 +179,7 @@ export function copyLint(lesson: Lesson, opts: CopyLintOptions): LessonIssue[] {
     // Terms of one family ("clean run / corrupted run", P3.3:8) count as one naming moment.
     const familyOf = (term: string) => terms.terms.find((t) => t.term === term)?.family ?? term;
     for (const [s, list] of perSection) {
-      if (new Set(list.map(familyOf)).size > 1 && !meta.term_budget_exception) {
+      if (new Set(list.map(familyOf)).size > 1) {
         const sec = lesson.sections[s - 1];
         issues.push(makeIssue('term-budget-section', { terms: list }, { line: sec.line, section: s }));
       }
@@ -192,8 +199,17 @@ export function copyLint(lesson: Lesson, opts: CopyLintOptions): LessonIssue[] {
     for (const [p, term] of Object.entries(words.stand_in_names ?? {})) {
       if (!hits(unpinned, p).length) continue;
       const intro = opts.path.indexOf(terms.terms.find((t) => t.term === term)?.introduced_in ?? '');
-      const named = here < 0 || here > intro || (here === intro && u.section.index > (firstSection.get(term) ?? Infinity));
+      // A lesson that never names its own term can't lean on the stand-in either (critic m6).
+      const named = here < 0 || here > intro || (here === intro && u.section.index > (firstSection.get(term) ?? -Infinity));
       if (named) err('retired', { phrase: p }, u);
+    }
+    // Stand-in names retired only before their term is named: on the path before the term's
+    // lesson, in the tour, and in that lesson before the term's section (map 5.2:274).
+    for (const [p, term] of Object.entries(words.pre_intro_retired ?? {})) {
+      if (!hits(unpinned, p).length) continue;
+      const intro = opts.path.indexOf(terms.terms.find((t) => t.term === term)?.introduced_in ?? '');
+      const early = isTour || (here >= 0 && here < intro) || (here === intro && u.section.index < (firstSection.get(term) ?? Infinity));
+      if (early) err('retired', { phrase: p }, u);
     }
 
     if (u.role !== 'choice' && u.role !== 'feedback') {
@@ -202,19 +218,37 @@ export function copyLint(lesson: Lesson, opts: CopyLintOptions): LessonIssue[] {
     }
     if (u.step.kind !== 'analogy') {
       for (const p of words.metaphor_names) {
-        // The lesson that withdraws a picture names it once to say so (P2.1:49).
-        if ([words.metaphor_withdrawn_in?.[p] ?? []].flat().includes(meta.id)) continue;
+        // The step that withdraws a picture names it to say so, in the lesson map 5.1 withdraws it in (P2.1:49).
+        const withdraws = Array.isArray(u.step.fields.withdraws) && u.step.fields.withdraws.includes(p);
+        if (withdraws && [words.metaphor_withdrawn_in?.[p] ?? []].flat().includes(meta.id)) continue;
         if (hits(u.base, p).length) err('metaphor-name', { phrase: p }, u);
       }
     }
-    // A choice may be a fixed bin the learner picks ("under 10%", P1.4:34), not a measured number.
-    if (u.role !== 'choice') for (const re of NUMBER_RULES) for (const m of labelled.matchAll(re)) err('bare-number', { text: m[0].trim() }, u);
+    // A choice may be a fixed percentage bin or layer range the learner picks ("under 10%" P1.4:34,
+    // "L0-L2" P2.3:45, P2.4:78), and a quoted phrase in an analogy ("70% chance of rain", P1.4:51)
+    // isn't a measurement. Every other number rule still applies to both.
+    let numeric = labelled.replace(WHOLE_100, (m) => ' '.repeat(m.length));
+    if (u.step.kind === 'analogy' && u.role === 'field') numeric = numeric.replace(/"[^"\n]*"/g, (m) => ' '.repeat(m.length));
+    for (const re of NUMBER_RULES) {
+      if (u.role === 'choice' && (re === PERCENT_RULE || re === LABEL_RULE)) continue;
+      for (const m of numeric.matchAll(re)) err('bare-number', { text: m[0].trim() }, u);
+    }
+    // A slot already renders its natural frequency, so a literal one beside it goes stale (critic m11).
+    for (const m of u.text.matchAll(/\{([a-z_][a-z0-9_]*)\}\s*,?\s*\(?about 1 in \d+/g)) err('frequency-literal', { name: m[1] }, u);
     for (const m of u.text.matchAll(/\{([a-z_][a-z0-9_]*)\}\s?%/g)) err('percent-slot', { name: m[1] }, u);
 
-    // A predict or question stem asks; it isn't the lesson's claim ("Which earlier word matters most", P2.1:40).
-    const asks = u.role === 'prose' && (u.step.kind === 'predict' || u.step.kind === 'question');
-    if (u.role !== 'choice' && u.role !== 'feedback' && u.role !== 'say' && !asks) {
-      const claim = maskPhrases(maskSpans(labelled, u.refutes), [...pinned, ...(words.qualitative_exempt ?? [])]);
+    if (u.role !== 'choice' && u.role !== 'feedback' && u.role !== 'say') {
+      let claim = maskPhrases(maskSpans(labelled, u.refutes), [...pinned, ...(words.qualitative_exempt ?? [])]);
+      // An explain-chain assert's `say` is the gated clause inside the model answer (P3.2:87).
+      if (u.step.kind === 'explain-chain' && u.field === 'model_answer' && Array.isArray(u.step.fields.assert)) {
+        for (const a of u.step.fields.assert) if (typeof a?.say === 'string' && a.say) claim = claim.split(a.say).join(' '.repeat(a.say.length));
+      }
+      // A question a predict or question step asks isn't the lesson's claim ("Which earlier word
+      // matters most...?", P2.1:40), and nor is a hypothetical it sets up ("If ' he' barely moves,
+      // list two reasons...", P3.4:73). Only sentences ending in "?" or opening with "If" are masked.
+      if (u.role === 'prose' && (u.step.kind === 'predict' || u.step.kind === 'question')) {
+        claim = claim.replace(/[^.!?\n]*\?|(?<=^|[.!?]\s+)If\b[^.!?\n]*[.!]?/g, (m) => ' '.repeat(m.length));
+      }
       for (const q of words.qualitative) if (hits(claim, q).length) err('qualitative', { word: q }, u);
     }
     if (u.role === 'feedback') {
@@ -223,7 +257,11 @@ export function copyLint(lesson: Lesson, opts: CopyLintOptions): LessonIssue[] {
     const before = bangs;
     bangs += (u.base.match(/!/g) ?? []).length;
     if (before < 2 && bangs >= 2) issues.push(makeIssue('exclamation', {}, where(u)));
-    if (isTour) for (const w of words.tour_banned) if (hits(labelled, w).length) err('tour-banned', { word: w }, u);
+    if (isTour) {
+      // "what all this means" sends the viewer to Lessons; it doesn't interpret a result (quick-tour.md:50).
+      const tour = maskPhrases(labelled, words.tour_banned_exempt ?? []);
+      for (const w of words.tour_banned) if (hits(tour, w).length) err('tour-banned', { word: w }, u);
+    }
   }
 
   // Per step: derived slots need their sources beside them; pinned caveats beside results.

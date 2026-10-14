@@ -221,7 +221,9 @@
                   "share",
                   "difference",
                   "sum",
-                  "abs"
+                  "abs",
+                  "ratio",
+                  "ln"
                 ]
               },
               "format": {
@@ -375,6 +377,9 @@
               },
               "additionalProperties": {}
             },
+            "value_field": {
+              "type": "string"
+            },
             "not": {
               "type": "boolean"
             },
@@ -480,6 +485,12 @@
             ],
             "additionalProperties": false
           }
+        },
+        "withdraws": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "additionalProperties": false
@@ -531,6 +542,9 @@
                 "type": "string"
               },
               "additionalProperties": {}
+            },
+            "value_field": {
+              "type": "string"
             },
             "not": {
               "type": "boolean"
@@ -644,6 +658,9 @@
               },
               "additionalProperties": {}
             },
+            "value_field": {
+              "type": "string"
+            },
             "not": {
               "type": "boolean"
             },
@@ -749,6 +766,9 @@
               },
               "additionalProperties": {}
             },
+            "value_field": {
+              "type": "string"
+            },
             "not": {
               "type": "boolean"
             },
@@ -851,6 +871,9 @@
               },
               "additionalProperties": {}
             },
+            "value_field": {
+              "type": "string"
+            },
             "not": {
               "type": "boolean"
             },
@@ -911,7 +934,17 @@
                 "type": "string"
               },
               "target": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                ]
               },
               "feedback": {
                 "type": "string"
@@ -983,6 +1016,9 @@
               },
               "additionalProperties": {}
             },
+            "value_field": {
+              "type": "string"
+            },
             "not": {
               "type": "boolean"
             },
@@ -1037,7 +1073,17 @@
                 "type": "string"
               },
               "target": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                ]
               },
               "feedback": {
                 "type": "string"
@@ -1118,6 +1164,9 @@
               },
               "additionalProperties": {}
             },
+            "value_field": {
+              "type": "string"
+            },
             "not": {
               "type": "boolean"
             },
@@ -1172,7 +1221,17 @@
                 "type": "string"
               },
               "target": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                ]
               },
               "feedback": {
                 "type": "string"
@@ -1298,6 +1357,9 @@
               },
               "additionalProperties": {}
             },
+            "value_field": {
+              "type": "string"
+            },
             "not": {
               "type": "boolean"
             },
@@ -1400,6 +1462,9 @@
               },
               "additionalProperties": {}
             },
+            "value_field": {
+              "type": "string"
+            },
             "not": {
               "type": "boolean"
             },
@@ -1488,6 +1553,9 @@
                     "type": "string"
                   },
                   "additionalProperties": {}
+                },
+                "value_field": {
+                  "type": "string"
                 },
                 "not": {
                   "type": "boolean"
@@ -1578,6 +1646,9 @@
                       "type": "string"
                     },
                     "additionalProperties": {}
+                  },
+                  "value_field": {
+                    "type": "string"
                   },
                   "not": {
                     "type": "boolean"
@@ -1759,6 +1830,9 @@
                 "type": "string"
               },
               "additionalProperties": {}
+            },
+            "value_field": {
+              "type": "string"
             },
             "not": {
               "type": "boolean"
@@ -1991,6 +2065,9 @@
               },
               "additionalProperties": {}
             },
+            "value_field": {
+              "type": "string"
+            },
             "not": {
               "type": "boolean"
             },
@@ -2200,6 +2277,9 @@
               },
               "additionalProperties": {}
             },
+            "value_field": {
+              "type": "string"
+            },
             "not": {
               "type": "boolean"
             },
@@ -2375,6 +2455,9 @@
               },
               "additionalProperties": {}
             },
+            "value_field": {
+              "type": "string"
+            },
             "not": {
               "type": "boolean"
             },
@@ -2464,6 +2547,9 @@
                   "type": "string"
                 },
                 "additionalProperties": {}
+              },
+              "value_field": {
+                "type": "string"
               },
               "not": {
                 "type": "boolean"
@@ -2555,6 +2641,9 @@
                 },
                 "additionalProperties": {}
               },
+              "value_field": {
+                "type": "string"
+              },
               "not": {
                 "type": "boolean"
               },
@@ -2617,6 +2706,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "capture": {
+          "type": "string"
         },
         "reset": {},
         "remember": {
@@ -2696,6 +2788,9 @@
               },
               "additionalProperties": {}
             },
+            "value_field": {
+              "type": "string"
+            },
             "not": {
               "type": "boolean"
             },
@@ -2746,6 +2841,61 @@
         },
         "model_answer": {
           "type": "string"
+        },
+        "assert": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "require": {
+                "type": "object",
+                "properties": {
+                  "slot": {
+                    "type": "string"
+                  },
+                  "op": {
+                    "type": "string",
+                    "enum": [
+                      "equals",
+                      "in",
+                      "changed_from",
+                      "gt",
+                      "lt",
+                      "increased",
+                      "decreased",
+                      "within",
+                      "contains",
+                      "starts_with"
+                    ]
+                  },
+                  "value": {},
+                  "slot2": {
+                    "type": "string"
+                  },
+                  "abs": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "slot",
+                  "op"
+                ],
+                "additionalProperties": false
+              },
+              "say": {
+                "type": "string"
+              },
+              "else": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "require",
+              "say",
+              "else"
+            ],
+            "additionalProperties": false
+          }
         }
       },
       "required": [
@@ -3140,7 +3290,9 @@
                   "share",
                   "difference",
                   "sum",
-                  "abs"
+                  "abs",
+                  "ratio",
+                  "ln"
                 ]
               },
               "format": {
