@@ -293,6 +293,9 @@ class SAEFeaturesResponse(BaseModel):
 class LogitLensRequest(BaseModel):
     preset_id: str = "gpt2-small"
     prompt: str = Field(..., max_length=4000)
+    # Tokens to follow at every layer (last position only), each a single
+    # token for the model, else a 422. Omitted or empty: no ``tracked``.
+    track_tokens: list[str] = Field(default_factory=list, max_length=16)
 
 
 class LogitLensCell(BaseModel):
@@ -302,11 +305,21 @@ class LogitLensCell(BaseModel):
     matches_final: bool
 
 
+class LogitLensTracked(BaseModel):
+    """A tracked token at one layer, last position: its probability, logit,
+    and rank among the whole vocabulary (1 = the layer's top token)."""
+    prob: float
+    logit: float
+    rank: int
+
+
 class LogitLensResponse(BaseModel):
     preset_id: str
     prompt: str
     tokens: list[TokenInfo] = Field(default_factory=list)
     grid: list[list[LogitLensCell]] = Field(default_factory=list)  # [layer][token_pos]
+    # [layer] -> {token: readout} at the last position; only when track_tokens was sent.
+    tracked: list[dict[str, LogitLensTracked]] | None = None
     n_layers: int = 0
     timing_ms: dict[str, float] = Field(default_factory=dict)
     status: str = "ok"
