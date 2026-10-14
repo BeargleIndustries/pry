@@ -339,7 +339,7 @@
               <div class="whitespace-pre-wrap rounded bg-zinc-950 p-2 text-sm text-zinc-300 leading-relaxed"><span class="text-zinc-600">{steerResponse.prompt}</span>{#if diff}{#each diff.left as tok}<span class={tok.changed ? 'bg-red-900/40 text-red-300' : ''}>{tok.text}</span>{/each}{:else}{steerResponse.original_generation}{/if}</div>
               <!-- Original top predictions -->
               <div class="mt-1">
-                <p class="mb-1 text-[10px] font-medium text-zinc-500">Next-word guesses (top 5)</p>
+                <p class="mb-1 text-[10px] font-medium text-zinc-500">Next-token guesses (top 5)</p>
                 {#each steerResponse.original_top_predictions.slice(0, 5) as pred (pred.rank)}
                   <div class="flex items-center gap-2 text-[11px]">
                     <span class="w-5 text-right text-zinc-600">{pred.rank}</span>
@@ -358,7 +358,7 @@
               <div class="whitespace-pre-wrap rounded bg-zinc-950 p-2 text-sm text-zinc-300 leading-relaxed"><span class="text-zinc-600">{steerResponse.prompt}</span>{#if diff}{#each diff.right as tok}<span class={tok.changed ? 'bg-indigo-900/40 text-indigo-300' : ''}>{tok.text}</span>{/each}{:else}{steerResponse.steered_generation}{/if}</div>
               <!-- Steered top predictions -->
               <div class="mt-1">
-                <p class="mb-1 text-[10px] font-medium text-zinc-500">Next-word guesses (top 5)</p>
+                <p class="mb-1 text-[10px] font-medium text-zinc-500">Next-token guesses (top 5)</p>
                 {#each steerResponse.steered_top_predictions.slice(0, 5) as pred (pred.rank)}
                   <div class="flex items-center gap-2 text-[11px]">
                     <span class="w-5 text-right text-zinc-600">{pred.rank}</span>

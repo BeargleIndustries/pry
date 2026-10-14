@@ -22,6 +22,8 @@ export interface LintOptions {
   rememberKeys?: Iterable<string>;
   /** Row ids in verified-rows.yaml; `$row` references are checked when given. */
   verifiedRows?: Iterable<string>;
+  /** Row id -> its rows.json `constants`; when given, every `$row.<id>.<field>` must name one. */
+  rowConstants?: Record<string, Record<string, unknown>>;
   /** Prompts with a recorded response; bundled prompts are checked when given. */
   recordedPrompts?: Iterable<string>;
   /** The app version `tool_min` is compared with (default: the tool set's version). */
@@ -123,6 +125,12 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
   });
   const err = (code: string, data: Record<string, unknown>, where: Where, severity: Severity = 'error') =>
     issues.push(makeIssue(code, data, where, severity));
+  /** `$row.<id>.<field>` / `{row: <id>.<field>}`: the row exists and has that constant (a warning for skeletons). */
+  const checkRow = (id: string, field: string | undefined, where: Where) => {
+    if (rows && !rows.has(id)) return err('row-unknown', { id }, where);
+    const c = opts.rowConstants;
+    if (c && (!field || !Object.hasOwn(c[id] ?? {}, field))) err('row-field-missing', { id, field: field ?? '' }, where, opts.skeleton ? 'warning' : 'error');
+  };
   /** Error for bundled lessons, warning for user lessons. */
   const bundledErr = (code: string, data: Record<string, unknown>, where: Where) =>
     err(code, data, where, opts.bundled ? 'error' : 'warning');
@@ -193,7 +201,7 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
       if (!e.hasFallback) err('earlier-no-fallback', { key: e.key }, where);
       if (!remember.has(e.key)) err('earlier-undeclared', { key: e.key }, where);
     }
-    if (rows) for (const r of b.rows) if (!rows.has(r.id)) err('row-unknown', { id: r.id }, where);
+    for (const r of b.rows) checkRow(r.id, r.field, where);
   };
 
   const checkAnchor = (name: string, args: Record<string, unknown>, where: Where) => {
@@ -216,6 +224,7 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
     if (def.args) {
       const r = safeParseBound(def.args, args);
       if (!r.success) err('bad-anchor-args', { name, detail: zodDetail(r.error) }, where);
+      checkBindings(r.bindings, where);
     } else if (Object.keys(args).length) {
       err('bad-anchor-args', { name, detail: 'it takes no arguments' }, where);
     }
@@ -239,8 +248,8 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
       checkReadout(m[1], valueArgs, where);
     } else if ((m = /^\$(before|baseline)\.(.+)$/.exec(value))) {
       checkReadout(m[2], valueArgs, where);
-    } else if ((m = /^\$row\.([^.]+)\./.exec(value))) {
-      if (rows && !rows.has(m[1])) err('row-unknown', { id: m[1] }, where);
+    } else if ((m = /^\$row\.([^.]+)\.(.+)$/.exec(value))) {
+      checkRow(m[1], m[2], where);
     }
   };
 
@@ -525,7 +534,8 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
   for (const { name, slot, section, line } of allSlots) {
     const where = { line, section: section?.index ?? 0 };
     if (slot.row !== undefined) {
-      if (rows && !rows.has(slot.row.split('.')[0])) err('row-unknown', { id: slot.row.split('.')[0] }, where);
+      const [id, ...field] = slot.row.split('.');
+      checkRow(id, field.join('.') || undefined, where);
       continue;
     }
     if (slot.formula) {

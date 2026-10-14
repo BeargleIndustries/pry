@@ -86,6 +86,8 @@ export const MESSAGES: Record<string, (d: D) => string> = {
   'tool-missing': () => 'This explain-result follows a tool run, so it needs `tool:` naming the tool, for its pinned caveat.',
   'tool-unknown': (d) => `\`tool: ${d.tool}\` isn't one of ${quoteList(d.tools)}.`,
   'row-unknown': (d) => `\`$row.${d.id}\` isn't a row in verified-rows.yaml.`,
+  'row-field-missing': (d) =>
+    `Row ${d.id} has no constant \`${d.field}\` in rows.json. Add it to row ${d.id}'s \`constants:\` in verified-rows.yaml (derived from what the row recorded) and run \`npm run lessons:compile -- --rows\`.`,
   'fresh-missing': () => 'This do step repeats an earlier one with the same actions. Add `fresh: true` so pressing "Do it" calls the sidecar again.',
   'gated-readout': (d) => `This section reads \`${d.name}\`, which only a do step that downloads or goes online produces, and those don't replay. Add a do step to this section.`,
   'expect-missing': (d) => `${d.what} needs an \`expect\` value from rows.json.`,

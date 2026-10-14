@@ -1,0 +1,381 @@
+{
+ "key": "c4a9ec8f948542cdda097de8df7a2a3768ca602fce4f25927006ccbdb4909aa2",
+ "variant": "r1",
+ "request": {
+  "endpoint": "/sae-features",
+  "model": "gpt2-small",
+  "body": {
+   "preset_id": "gpt2-small",
+   "prompt": "Michael Jordan played the sport of",
+   "sae_layer": 8,
+   "top_k_features": 5
+  }
+ },
+ "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+ "device": "cpu",
+ "libs": {
+  "python": "3.12.13",
+  "torch": "2.5.1+cpu",
+  "transformer_lens": "2.15.4",
+  "sae_lens": "5.11.0",
+  "transformers": "4.57.6",
+  "numpy": "1.26.4"
+ },
+ "recorded": "2026-10-14",
+ "neuronpedia_fetched": null,
+ "offline": false,
+ "trimmed": [],
+ "response": {
+  "preset_id": "gpt2-small",
+  "prompt": "Michael Jordan played the sport of",
+  "tokens": [
+   {
+    "index": 0,
+    "text": "<|endoftext|>"
+   },
+   {
+    "index": 1,
+    "text": "Michael"
+   },
+   {
+    "index": 2,
+    "text": " Jordan"
+   },
+   {
+    "index": 3,
+    "text": " played"
+   },
+   {
+    "index": 4,
+    "text": " the"
+   },
+   {
+    "index": 5,
+    "text": " sport"
+   },
+   {
+    "index": 6,
+    "text": " of"
+   }
+  ],
+  "sae_features": [
+   {
+    "token_index": 0,
+    "top_k": [
+     {
+      "id": 11746,
+      "activation": 501.9688415527344,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 11533,
+      "activation": 466.14398193359375,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 4078,
+      "activation": 450.62896728515625,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 13997,
+      "activation": 427.57275390625,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 7662,
+      "activation": 412.3442687988281,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     }
+    ]
+   },
+   {
+    "token_index": 1,
+    "top_k": [
+     {
+      "id": 9723,
+      "activation": 56.02570724487305,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 658,
+      "activation": 21.683395385742188,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 7920,
+      "activation": 12.615581512451172,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 24371,
+      "activation": 4.691805839538574,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 19249,
+      "activation": 3.8042290210723877,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     }
+    ]
+   },
+   {
+    "token_index": 2,
+    "top_k": [
+     {
+      "id": 13856,
+      "activation": 40.64702224731445,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 13526,
+      "activation": 16.537866592407227,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 19016,
+      "activation": 8.033838272094727,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 12472,
+      "activation": 7.4889349937438965,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 131,
+      "activation": 6.863734722137451,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     }
+    ]
+   },
+   {
+    "token_index": 3,
+    "top_k": [
+     {
+      "id": 12179,
+      "activation": 27.016511917114258,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 12012,
+      "activation": 16.04669189453125,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 13643,
+      "activation": 12.072428703308105,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 12935,
+      "activation": 9.092341423034668,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 2010,
+      "activation": 7.5498480796813965,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     }
+    ]
+   },
+   {
+    "token_index": 4,
+    "top_k": [
+     {
+      "id": 9697,
+      "activation": 24.731782913208008,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 21103,
+      "activation": 9.006413459777832,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 495,
+      "activation": 7.779848098754883,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 21556,
+      "activation": 6.123177528381348,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 9328,
+      "activation": 4.872920036315918,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     }
+    ]
+   },
+   {
+    "token_index": 5,
+    "top_k": [
+     {
+      "id": 10935,
+      "activation": 37.13387680053711,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 11975,
+      "activation": 10.379536628723145,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 7198,
+      "activation": 5.499501705169678,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 12748,
+      "activation": 5.380836486816406,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 6036,
+      "activation": 4.578598976135254,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     }
+    ]
+   },
+   {
+    "token_index": 6,
+    "top_k": [
+     {
+      "id": 4994,
+      "activation": 11.193410873413086,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 1288,
+      "activation": 9.032039642333984,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 843,
+      "activation": 6.9863128662109375,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 535,
+      "activation": 5.4134602546691895,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     },
+     {
+      "id": 23877,
+      "activation": 5.361058235168457,
+      "description": null,
+      "label_detail": "none",
+      "confidence": "none",
+      "top_activating_snippets": []
+     }
+    ]
+   }
+  ],
+  "sae_layer_used": 8,
+  "status": "ok"
+ }
+}

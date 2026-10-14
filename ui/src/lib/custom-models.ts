@@ -1,5 +1,5 @@
 // Custom models (T32): user-added HuggingFace models, loaded without a
-// feature dictionary (SAE). The sidecar addresses one as `custom:<hf_id>`.
+// sparse autoencoder (SAE). The sidecar addresses one as `custom:<hf_id>`.
 // KEEP IN SYNC: sidecar/pry_sidecar/custom_models.py (CUSTOM_PREFIX, NO_SAE_MESSAGE)
 
 import type { CustomPreset, HardwareReport, PresetCompatibility } from './tauri';
@@ -9,7 +9,7 @@ export const CUSTOM_PREFIX = 'custom:';
 
 /** Shown wherever a panel needs features (and returned by the sidecar's 409s). */
 export const NO_SAE_MESSAGE =
-  "Features need a trained feature dictionary (SAE); this model doesn't have one in Pry yet.";
+  "Features need a trained sparse autoencoder (SAE); this model doesn't have one in Pry yet.";
 
 /** Exactly what works on a custom model. The dialog promises this list and nothing more. */
 export const CUSTOM_MODEL_WORKS: readonly string[] = [
@@ -22,7 +22,7 @@ export const CUSTOM_MODEL_WORKS: readonly string[] = [
   'Comparing two prompts, and watching it write',
 ];
 
-/** What doesn't work without a feature dictionary. */
+/** What doesn't work without an SAE. */
 export const CUSTOM_MODEL_MISSING: readonly string[] = [
   'Features',
   'Steering and concept search',
@@ -49,7 +49,7 @@ export const SIZE_UNCHECKED_NOTE =
 export function customDisplay(m: CustomPreset): PresetDisplay {
   return {
     name: m.id,
-    blurb: `${m.architecture} · no feature dictionary`,
+    blurb: `${m.architecture} · no SAE`,
     params: m.params_label ?? '',
     size_label: '',
     n_layers: 0,

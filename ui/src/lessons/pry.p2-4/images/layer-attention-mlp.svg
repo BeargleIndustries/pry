@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 380" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="14">
+  <title>One layer: attention, then MLP, both adding to the residual stream</title>
+  <rect width="640" height="380" fill="#ffffff"/>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#555"/>
+    </marker>
+  </defs>
+  <!-- residual stream -->
+  <line x1="120" y1="360" x2="120" y2="24" stroke="#3b6fb6" stroke-width="5" marker-end="url(#a)"/>
+  <text x="104" y="200" fill="#1f3f6e" font-size="13" text-anchor="middle" transform="rotate(-90 104 200)">residual stream (one token)</text>
+  <!-- attention half -->
+  <rect x="200" y="220" width="380" height="100" rx="10" fill="#eaf1fb" stroke="#3b6fb6"/>
+  <text x="216" y="246" fill="#1f3f6e" font-weight="600">Attention</text>
+  <text x="216" y="268" fill="#333" font-size="12">mixes in information from this token and earlier ones</text>
+  <path d="M470,300 C430,286 400,286 360,300" fill="none" stroke="#3b6fb6" stroke-width="2" marker-end="url(#a)"/>
+  <text x="480" y="304" fill="#555" font-size="11">from earlier tokens</text>
+  <line x1="124" y1="300" x2="196" y2="300" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+  <text x="130" y="292" fill="#555" font-size="11">reads</text>
+  <line x1="196" y1="236" x2="124" y2="236" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+  <text x="140" y="230" fill="#555" font-size="11">adds</text>
+  <!-- MLP half -->
+  <rect x="200" y="60" width="380" height="100" rx="10" fill="#f6f1e7" stroke="#a07a2c"/>
+  <text x="216" y="86" fill="#6b4f16" font-weight="600">MLP</text>
+  <text x="216" y="108" fill="#333" font-size="12">works on this token's residual stream alone, no mixing</text>
+  <line x1="124" y1="140" x2="196" y2="140" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+  <text x="130" y="132" fill="#555" font-size="11">reads</text>
+  <line x1="196" y1="76" x2="124" y2="76" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+  <text x="140" y="70" fill="#555" font-size="11">adds</text>
+</svg>

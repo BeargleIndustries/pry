@@ -152,7 +152,7 @@
       </h2>
       <p class="mb-4 text-xs text-zinc-400">
         Pry can open other text-generating models that TransformerLens (the library Pry uses to look inside
-        models) knows how to load. They come without a feature dictionary, so some panels won't work.
+        models) knows how to load. They come without a sparse autoencoder (SAE), so some panels won't work.
       </p>
 
       <!-- What works / what doesn't -->
@@ -164,7 +164,7 @@
           </ul>
         </div>
         <div>
-          <p class="mb-1 font-medium text-zinc-300">Needs a feature dictionary (not available)</p>
+          <p class="mb-1 font-medium text-zinc-300">Needs an SAE (not available)</p>
           <ul class="list-disc space-y-0.5 pl-4 text-zinc-500">
             {#each CUSTOM_MODEL_MISSING as item}<li>{item}</li>{/each}
           </ul>

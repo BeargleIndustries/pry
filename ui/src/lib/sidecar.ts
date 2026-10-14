@@ -429,7 +429,7 @@ export async function loadPreset(
   const res = await sidecarFetch('/load', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    // T32: a custom model loads by its HF id, without a feature dictionary.
+    // T32: a custom model loads by its HF id, without an SAE.
     body: JSON.stringify(
       isCustomPresetId(presetId) ? { custom: { hf_id: hfIdOf(presetId) } } : { preset_id: presetId },
     ),

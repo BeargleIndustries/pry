@@ -79,7 +79,7 @@ export function clampTemperature(t: number): number {
 /** One sentence for the current step: what it picked, and over what. */
 export function stepSentence(step: GenerationStep): string {
   if (step.text === '') {
-    return `It picked part of a character (${pct(step.probability)}). Some characters, like emoji, take several word-pieces; the next steps finish it.`;
+    return `It picked part of a character (${pct(step.probability)}). Some characters, like emoji, take several tokens; the next steps finish it.`;
   }
   const chosen = `${quoteToken(stepText(step))} (${pct(step.probability)})`;
   if (step.runner_up === null || step.runner_up_probability === null) {

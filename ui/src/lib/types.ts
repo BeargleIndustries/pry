@@ -36,7 +36,7 @@ export interface TopPrediction {
   logit?: number | null;
 }
 
-/** Which SAE (feature dictionary) a result came from (MF-5). */
+/** Which SAE a result came from (MF-5). */
 export interface SAERef {
   release: string;
   id: string;
@@ -50,7 +50,7 @@ export interface GenerateResponse {
   /** True when attention was only captured for the first 64 tokens. */
   attention_truncated?: boolean;
   sae_features: TokenFeatures[];
-  /** null for a custom model (T32): it has no feature dictionary. */
+  /** null for a custom model (T32): it has no SAE. */
   sae_layer_used: number | null;
   top_predictions?: TopPrediction[];
   timing_ms: Record<string, number>;

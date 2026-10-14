@@ -26,6 +26,23 @@
 #   claim     what the lessons say, which the record checks
 #   status    verified | narrowed | failed | needs-brad | closed-by-task (see t6a-rows.md)
 #   note      fallback applied (narrowed), or the contradiction (needs-brad)
+#   constants the row constants lessons cite as `$row.<id>.<field>` and
+#             `{row: <id>.<field>}` (plan:297, :299). Each is derived from this
+#             row's recorded `values` in rows.json (or its own request
+#             arguments) by exactly one of: path, token_prob (+ token),
+#             last_position, request, parse_head (+ take), first_mlp_layer,
+#             argmax (+ by, take, exclude_layer), count, list, points
+#             (percentage points -> probability), token_position (a token's
+#             position in the row's recorded response), literal (authored,
+#             needs `source`; `kind: literature` when not measured), alias (row
+#             n's constant of the same name); `round: d`; `negate: true` flips the
+#             sign; `from_row: n` reads row n's recorded values instead (a row
+#             that recorded the same run or preset, said in `note`); and a unit
+#             (layer, head, position, probability, logit, count, number,
+#             string, list (+ of), record). `npm run lessons:compile -- --rows`
+#             derives them into rows.json `rows[].constants`; run it again after
+#             every `--record`. A field with nothing recorded to derive from is
+#             left out (see evidence row-constants.md "Cannot derive").
 #
 # Positions count the start-of-text marker as 0, as Pry's token strip does.
 # Layers use Pry's labels L0-L11. Outline files are never edited (plan C3-10).
@@ -40,6 +57,10 @@ rows:
     record: top 4 with probabilities and logits; top-10 total
     claim: '" basketball" 42.2%, " football" 4.7%, " golf" 4.1%, " the" 2.1%'
     status: verified
+    constants:
+      basketball: { token_prob: top4, token: " basketball", unit: probability }
+      fid: { from_row: 53, path: fid, unit: number, note: "row 53 recorded the features on this prompt and picked {fid}" }
+      sae_layer: { from_row: 24, path: sae_layer, unit: layer, note: "the preset SAE (gpt2-small-res-jb, blocks.8) that row 24 recorded; row 53's feature run uses the same preset" }
 
   - id: 2
     outline: [P1.1.md:86, P1.1.md:103, P1.1.md:104, P1.1.md:105]
@@ -97,6 +118,9 @@ rows:
     record: matching numbers out of 768 for embedding and positional embedding; cosine similarity of the summed lists (position 5 vs 2); how many of the 768 summed numbers match
     claim: '" bank" at position 5: embedding identical (768 of 768) in both sentences; position 2 vs 5: embedding identical, positional embedding different; similarity of embedding plus positional embedding 0.957'
     status: verified
+    constants:
+      river_bank_position: { request: river.positions.0, unit: position }
+      the_bank_position: { request: thebank.positions.0, unit: position }
 
   - id: 8
     outline: [P1.6.md:93.2]
@@ -161,6 +185,18 @@ rows:
     record: top 4; token count
     claim: '" Mary" 67.7%, " them" 12.8%, " the" 4.8%, " John" 2.3%'
     status: verified
+    constants:
+      to_position: { last_position: tokens, unit: position }
+      mary_head_layer: { from_row: 47, parse_head: head, take: layer, unit: layer, note: 'row 47 recorded this prompt''s L9-L10 head with the most last-token weight on " Mary"' }
+      mary_head: { from_row: 47, parse_head: head, take: head, unit: head, note: "as mary_head_layer" }
+      mary_heads:
+        literal: [{ layer: 9, head: 6 }, { layer: 9, head: 9 }, { layer: 10, head: 7 }, { layer: 11, head: 10 }]
+        unit: list
+        of: record
+        kind: literature
+        source: "Wang et al. 2022 (IOI), name-mover heads"
+        note: "plan:299 (R4-5) allows the literature's name-mover heads as a row constant; not measured here"
+      store_position: { token_position: ioi, token: " store", unit: position, note: "the first \" store\" in the recorded /generate tokens (start marker = 0)" }
 
   - id: 15
     outline: [P2.2.md:96.3]
@@ -170,6 +206,13 @@ rows:
     record: top 4
     claim: '" Qu" 31.9%, " the" 1.7%, " Z" 1.6%, " Q" 0.9%'
     status: verified
+    constants:
+      qu_prob: { token_prob: top4, token: " Qu", unit: probability }
+      last_from_position: { last_position: tokens, unit: position }
+      top_induction_layer: { from_row: 48, parse_head: top_induction.0.0, take: layer, unit: layer, note: "row 48 recorded the induction-score ranking" }
+      top_induction_head: { from_row: 48, parse_head: top_induction.0.0, take: head, unit: head, note: "as top_induction_layer" }
+      top_induction_head_ref: { from_row: 48, parse_head: top_induction.0.0, unit: record, note: "as top_induction_layer" }
+      qu_position: { from_row: 49, path: position, unit: position, note: 'row 49 recorded where that head''s lines from the last " from" land on this prompt (" Qu")' }
 
   - id: 16
     outline: [P2.2.md:96.3]
@@ -208,6 +251,14 @@ rows:
     record: top 4
     claim: '"49" 5.8%, "50" 5.1%, "45" 3.4%, "43" 3.2%, all above 32'
     status: verified
+    constants:
+      map_head: { from_row: 69, path: best.0, unit: string, note: "row 69 knocked out every map head on this prompt; the one with the largest drop in p(\"49\")" }
+      map_head_layer: { from_row: 69, parse_head: best.0, take: layer, unit: layer, note: "as map_head" }
+      map_head_head: { from_row: 69, parse_head: best.0, take: head, unit: head, note: "as map_head" }
+      control_head: { from_row: 69, path: control.0, unit: string, note: "row 69's fixed off-map control head" }
+      control_head_layer: { from_row: 69, parse_head: control.0, take: layer, unit: layer, note: "as control_head" }
+      control_head_head: { from_row: 69, parse_head: control.0, take: head, unit: head, note: "as control_head" }
+      margin_negative: { literal: -0.05, unit: probability, source: "outline P3.7:70", note: "the own-case target: lowers the top token's probability by at least 5 points more than a control head does" }
 
   - id: 20
     outline: [P2.3.md:11.1, P2.3.md:46, P2.3.md:52, P2.3.md:66, P2.3.md:84, P2.3.md:96, P3.6.md:11.1, P3.6.md:63, P3.6.md:90.4]
@@ -241,6 +292,9 @@ rows:
     record: top 3 parts by direct push; bars total; real logit; gap
     claim: several parts with large pushes; MLPs appear among the top
     status: verified
+    constants:
+      top_mlp_layer: { first_mlp_layer: top3, unit: layer }
+      push_threshold: { path: top3.2.1, round: 2, unit: logit, note: "P2.4.md:53 leaves {x} open: the push of the third-largest DLA part, rounded to two decimals as the logit slot shows it" }
 
   - id: 23
     outline: [P2.1.md:11, P2.1.md:96, P2.1.md:108.3, P3.2.md:44, P3.2.md:94.1]
@@ -253,6 +307,11 @@ rows:
     record: 'heads ranked by their largest last-token weight on a non-first token; the first whose knockout moves p(" Mary") by under 1 point: layer, head, attended token, weight, delta p (the two heads ranked above it are recorded too)'
     claim: a heavy line to a word that doesn't matter (knockout moves p(" Mary") by under 1 point)
     status: verified
+    constants:
+      layer: { parse_head: pick.head, take: layer, unit: layer }
+      head: { parse_head: pick.head, take: head, unit: head }
+      token: { path: pick.token, unit: string }
+      position: { path: pick.position, unit: position }
 
   - id: 24
     outline: [P3.4.md:11, P3.4.md:43, P3.4.md:50, P3.4.md:84.1]
@@ -265,6 +324,12 @@ rows:
     claim: 'knocking out the top features lowers " she"; an active-but-unrelated control moves it less'
     status: verified
     note: 'Control rule: the highest-ranked feature at " nurse" below the top 3 whose Neuronpedia label is not about people, jobs or gender (7698, "words related to processes or actions being performed").'
+    constants:
+      sae_layer: { path: sae_layer, unit: layer }
+      top_ids: { path: top3, unit: list, of: number }
+      n_top: { count: top3, unit: count }
+      control_id: { path: control, unit: number }
+      doctor_top_ids: { from_row: 62, path: top3, unit: list, of: number, note: "row 62 recorded the top 3 features at \" doctor\" by row 24's method" }
 
   - id: 25
     outline: [P3.5.md:11, P3.5.md:47, P3.5.md:89.1, P3.5.md:89.3, P3.5.md:89.4]
@@ -277,6 +342,12 @@ rows:
     claim: both texts change and only the target's moves toward its label
     status: narrowed
     note: 'P3.5.md:91 "If the target feature''s steer doesn''t beat the control on concept present, the lesson needs a different target: pick it during recording". First pick 8548 ("references to the ocean", Pry''s concept search for "the ocean") at strength 20: the unsteered text already says "ocean" 4 times and the control text 3 times, so the target cannot beat the control on concept present. Applied: target 21791 ("references to rain and related weather conditions", concept search "rain"), strength 25, the lowest tried strength (10, 15, 20, 25, 30) where "rain" appears in the steered text and in neither the unsteered nor the control text.'
+    constants:
+      target_id: { path: target.feature_id, unit: number }
+      control_id: { path: target.control_id, unit: number }
+      strength: { path: target.strength, unit: number }
+      strength_high: { from_row: 63, path: s_high.strength, unit: number, note: "row 63 recorded the same target at s_high" }
+      concept_words: { list: [target.word], unit: list, of: string }
 
   - id: 26
     outline: [P3.2.md:11, P3.2.md:51, P3.2.md:61, P3.2.md:94.2]
@@ -290,6 +361,9 @@ rows:
     claim: 'the name movers'' knockout drops " Mary" a lot; the random control barely moves it; L9H9''s lines from " to" land on " Mary"'
     status: verified
     note: 'Control heads: random.Random(1234).sample of the 141 heads other than the name movers, layer-major order: L9H4, L2H5, L0H1; the one-head control is the first of them.'
+    constants:
+      task_threshold: { from_row: 57, points: suggested_threshold, unit: probability, note: "row 57's suggested threshold, in points of p(\" Mary\") (about half the largest single-head drop)" }
+      task_threshold_negative: { from_row: 57, points: suggested_threshold, negate: true, unit: probability, note: "as task_threshold, as a drop" }
 
   - id: 27
     outline: [P3.3.md:11, P3.3.md:40, P3.3.md:50, P3.3.md:87.1]
@@ -299,6 +373,10 @@ rows:
     record: clean and corrupted logits of " Mary"; peak cell (layer, word) with clean, corrupted and patched logits and share; per-layer peak word (the (b) pattern)
     claim: 'pattern (b): the logit comes back at the swapped name in early layers, then at " to" in later layers'
     status: verified
+    constants:
+      peak_layer: { path: peak.0.layer, unit: layer }
+      peak_position: { path: peak.0.position, unit: position }
+      peak_word: { path: peak.0.word, unit: string }
 
   - id: 28
     outline: [P1.5.md:69.1, P1.5.md:81, P1.5.md:99, P1.6.md:93.3, P1.6.md:110, P4.1.md:12, P4.1.md:137]
@@ -320,6 +398,9 @@ rows:
     record: top ten for both prompts
     claim: '" Sam" high in the first, absent from the top ten in the second'
     status: verified
+    constants:
+      top_head: { alias: 51, unit: head, note: "P2.4's outline labels row 51 \"29\"; $row.29.top_head is row 51's" }
+      top_head_layer: { alias: 51, unit: layer, note: "as top_head" }
 
   - id: 30
     outline: [P1.3.md:84, P1.3.md:101]
@@ -374,6 +455,8 @@ rows:
     record: top 3 parts by direct push on the logit difference; bars total; real difference; gap
     claim: MLPs appear among the biggest pushes
     status: verified
+    constants:
+      last_position: { from_row: 1, last_position: tokens, unit: position, note: "row 1 recorded the token count of this same prompt" }
 
   - id: 35
     outline: [P3.6.md:79, P3.6.md:90.6]
@@ -387,6 +470,8 @@ rows:
     claim: 'another athlete with the same token count; top token " tennis"'
     status: narrowed
     note: 'P3.6.md:79 "If the token count differs, use another athlete with a two-token name and record it." Recorded: "Serena Williams" is 9 tokens ("S", "ere", "na", " Williams"), row 1 is 7. Applied: "Andy Murray", the first two-token athlete in the order tried (Roger Federer 8, Wayne Gretzky 10, Babe Ruth 8, Lionel Messi 9, Andy Murray 7) whose prompt has 7 tokens and whose top token is " tennis", the outline''s expectation.'
+    constants:
+      best_mlp_not_l0: { argmax: mlp_grid, by: share, exclude_layer: 0, take: layer, unit: layer }
 
   - id: 36
     outline: [P3.7.md:84, P3.7.md:95.6]
@@ -538,6 +623,10 @@ rows:
     record: '" basketball"''s rank in the L5-L7 rows (recorded: L5 rank 9, 0.6%; L6 rank 6, 2.1%; L7 rank 2, 16.9%; L8 rank 1, 42.2%)'
     claim: '" basketball" climbs before L8 (it''s not absent, just not on top)'
     status: verified
+    constants:
+      rank_L5: { path: basketball_L5_L8.0.1, unit: count }
+      rank_L6: { path: basketball_L5_L8.1.1, unit: count }
+      rank_L7: { path: basketball_L5_L8.2.1, unit: count }
 
   - id: 51
     label: "29"
@@ -548,6 +637,9 @@ rows:
     record: top 3 parts; bars total; real logit difference; gap; the difference from the two logits
     claim: 'the largest bars are heads in L9-L11; the logit difference is about 3.4'
     status: verified
+    constants:
+      top_head_layer: { parse_head: top3.0.0, take: layer, unit: layer }
+      top_head: { parse_head: top3.0.0, take: head, unit: head }
 
   - id: 52
     label: "30"
@@ -570,6 +662,9 @@ rows:
     claim: the learner can guess the label from the snippets; at least one top example the label doesn't cover
     status: verified
     note: '{fid} rule: the highest-ranked feature at " Jordan" whose label names basketball (12472, "names of basketball players", rank 4), so the skeptic''s Jordan-country check tests it. Distractors: the labels of the two highest-ranked other features at " Jordan" (13856, 13526). Snippet the label doesn''t describe: the one naming Drew Brees, an NFL quarterback.'
+    constants:
+      fid: { path: fid, unit: number }
+      sae_layer: { from_row: 62, path: sae_layer, unit: layer, note: "the preset SAE (gpt2-small-res-jb, blocks.8) that row 62 recorded; this row's feature run uses the same preset" }
 
   - id: 54
     label: "32"

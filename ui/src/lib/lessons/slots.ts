@@ -5,14 +5,21 @@
 
 import type { ReadoutDef } from './registry/contract';
 import type { AssertItem, Slot } from './format/schema';
+import { rowConstant, type RowConstant } from './row-constants';
 
 export const PLACEHOLDER = '(appears after you run it)';
 
 /** What a slot reads through: live readouts (or a capture) and row constants. */
 export interface SlotSource {
   read(name: string, args?: Record<string, unknown>, capture?: string): unknown;
-  row?(id: string): unknown;
+  /** A row constant, `{row: <id>.<field>}` (default: the bundled rows.json `constants`). */
+  row?(id: string, field: string): RowConstant | undefined;
   readouts?: Record<string, Pick<ReadoutDef, 'type' | 'unit'>>;
+}
+
+function rowOf(slot: Slot, row: SlotSource['row'] = rowConstant): RowConstant | undefined {
+  const [id, ...field] = slot.row!.split('.');
+  return row(id, field.join('.'));
 }
 
 export type SlotFormat = NonNullable<Slot['format']>;
@@ -71,9 +78,16 @@ export function formatValue(v: unknown, format: SlotFormat): string {
   }
 }
 
-/** The format a slot renders with: its own `format`, else from the readout's unit and type. */
-export function slotFormat(slot: Slot, readouts?: SlotSource['readouts']): SlotFormat {
+/** A row constant's unit as a slot format; a head index and list elements without `of` render as numbers. */
+function rowFormat(c: RowConstant | undefined): SlotFormat {
+  const u = c?.unit === 'list' ? c.of : c?.unit;
+  return u === 'probability' || u === 'logit' || u === 'layer' || u === 'count' || u === 'position' || u === 'string' ? u : 'number';
+}
+
+/** The format a slot renders with: its own `format`, else from the row constant's or readout's unit and type. */
+export function slotFormat(slot: Slot, readouts?: SlotSource['readouts'], src?: SlotSource): SlotFormat {
   if (slot.format) return slot.format;
+  if (slot.row !== undefined) return rowFormat(rowOf(slot, src?.row));
   if (slot.formula === 'share') return 'probability';
   const def = slot.read ? readouts?.[slot.read] : undefined;
   if (def?.unit === 'probability' || def?.unit === 'logit' || def?.unit === 'layer' || def?.unit === 'count') return def.unit;
@@ -117,10 +131,7 @@ export function slotValue(name: string, slots: Record<string, Slot>, src: SlotSo
   const slot = slots[name];
   if (!slot || seen.has(name)) return undefined;
   seen.add(name);
-  if (slot.row !== undefined) {
-    const [id, ...rest] = slot.row.split('.');
-    return pick(src.row?.(id), rest.join('.') || undefined);
-  }
+  if (slot.row !== undefined) return rowOf(slot, src.row)?.value;
   if (slot.formula && slot.from) {
     const xs = slot.from.map((f) => {
       const v = slotValue(f, slots, src, new Set(seen));
@@ -137,7 +148,7 @@ export function renderSlot(name: string, slots: Record<string, Slot>, src: SlotS
   if (!slot) return `{${name}}`;
   const v = slotValue(name, slots, src);
   if (slot.formula === 'share' && typeof v === 'number' && (v < 0 || v > 1)) return PERCENT(v);
-  return formatValue(v, slotFormat(slot, src.readouts));
+  return formatValue(v, slotFormat(slot, src.readouts, src));
 }
 
 /** Replaces every `{slot}` in a text with its rendered live value. */

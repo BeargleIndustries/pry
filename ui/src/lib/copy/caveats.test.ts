@@ -5,13 +5,19 @@
 //
 // Existing phrases are asserted now, whoever owns the file. New phrases owed by a
 // lane in PENDING_LANES run as `test.todo` until that lane merges.
+//
+// A surface that moved into a lesson (plan pry-learning-mode, T6 "Caveats and
+// closure") is `lesson:<id>#<sectionId>`: the phrase must sit in that section of
+// `lessons/<id>/lesson.md`. Until the lesson file exists the pin runs as `test.todo`.
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { tipsRegistry } from '../tips/tips-registry';
-import { PENDING_LANES, read, type Lane } from './copy-files';
+import { PENDING_LANES, SRC, read, type Lane } from './copy-files';
 
 interface Pin {
   caveat: string;
-  /** File under `ui/src`, or `tip:<id>` for a tip's blurb + why. */
+  /** File under `ui/src`, `tip:<id>` for a tip's blurb + why, or `lesson:<id>#<sectionId>`. */
   where: string;
   phrase: string;
   lane: Lane;
@@ -50,7 +56,8 @@ export const PINS: Pin[] = [
     lane: 'T4c',
     isNew: true,
   },
-  { caveat: 'Labels auto-generated', where: 'lib/experiments/experiments.json', phrase: 'written by an AI', lane: 'T4a', isNew: true },
+  // Moved with the experiments into the lessons (T7b deletes experiments.json).
+  { caveat: 'Labels auto-generated', where: 'lesson:pry.p2-5#s3-6', phrase: 'written by an AI', lane: 'T6' },
 
   {
     caveat: 'Neuronpedia',
@@ -61,17 +68,32 @@ export const PINS: Pin[] = [
   },
 
   { caveat: 'Logit lens rough early', where: 'tip:logit-lens-heatmap', phrase: 'a hint, not proof', lane: 'T4b' },
-  { caveat: 'Logit lens rough early', where: 'lib/experiments/experiments.json', phrase: 'So read the early rows as a rough hint.', lane: 'T4a' },
+  // Moved with the experiments and the tour into P2.3 (T7b deletes experiments.json and tour-steps.ts).
+  { caveat: 'Logit lens rough early', where: 'lesson:pry.p2-3#s5', phrase: 'So read the early rows as a rough hint.', lane: 'T6' },
   {
     caveat: 'Logit lens rough early',
-    where: 'lib/tutorial/tour-steps.ts',
+    where: 'lesson:pry.p2-3#s3-6',
     phrase: "It's an approximation, since the middle layers weren't built to be read this way.",
-    lane: 'T4a',
+    lane: 'T6',
   },
 ];
 
+/** `lessons/<id>/lesson.md` for a `lesson:<id>#<sectionId>` pin. */
+const lessonFile = (where: string) => `lessons/${where.slice('lesson:'.length).split('#')[0]}/lesson.md`;
+
+/** One `## Heading {id=<sectionId> ...}` section of a lesson file, up to the next `## `. */
+function lessonSection(where: string): string {
+  const section = where.split('#')[1];
+  const lines = read(lessonFile(where)).split(/\r?\n/);
+  const start = lines.findIndex((l) => l.startsWith('## ') && new RegExp(`\\{id=${section}[\\s}]`).test(l));
+  expect(start, `${where}: section exists`).toBeGreaterThanOrEqual(0);
+  const end = lines.findIndex((l, i) => i > start && l.startsWith('## '));
+  return lines.slice(start, end < 0 ? undefined : end).join('\n');
+}
+
 /** The text a pin is checked against. */
 function surface(where: string): string {
+  if (where.startsWith('lesson:')) return lessonSection(where);
   if (where.startsWith('tip:')) {
     const tip = tipsRegistry.find((t) => t.id === where.slice(4));
     expect(tip, where).toBeDefined();
@@ -94,6 +116,10 @@ describe('honesty caveats are present', () => {
     const name = `${p.caveat}: ${p.where} "${p.phrase.slice(0, 50)}"`;
     if (p.isNew && PENDING_LANES.has(p.lane)) {
       it.todo(`${name} [${p.lane}]`);
+      continue;
+    }
+    if (p.where.startsWith('lesson:') && !existsSync(resolve(SRC, lessonFile(p.where)))) {
+      it.todo(`${name} [lesson not written yet]`);
       continue;
     }
     // Markup wraps long lines, so runs of whitespace compare as one space.
