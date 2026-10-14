@@ -746,10 +746,14 @@ async def logit_lens(request: Request) -> JSONResponse:
         return _error(f"preset {req.preset_id!r} not loaded; POST /load first", status=409)
 
     try:
-        from pry_sidecar.inference import run_logit_lens
+        from pry_sidecar.inference import UnprocessableError, run_logit_lens
 
         response = await asyncio.to_thread(run_logit_lens, req, loaded)
-        return _json(response.model_dump())
+        # No track_tokens: the body stays exactly as it was before ``tracked``.
+        return _json(response.model_dump(exclude={"tracked"} if response.tracked is None else None))
+    except UnprocessableError as e:
+        # A tracked token that isn't a single token
+        return _error(str(e), status=422)
     except Exception as e:
         logger.exception("logit_lens failed for preset %r", req.preset_id)
         return JSONResponse(

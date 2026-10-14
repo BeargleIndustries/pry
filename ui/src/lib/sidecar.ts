@@ -266,8 +266,11 @@ export function buildSaeFeaturesRequest(a: {
   };
 }
 
-export function buildLogitLensRequest(a: { presetId: string; prompt: string }) {
-  return { preset_id: a.presetId, prompt: a.prompt };
+export function buildLogitLensRequest(a: { presetId: string; prompt: string; trackTokens?: string[] }) {
+  // No tracked tokens: the body is 0.3.8's.
+  return a.trackTokens?.length
+    ? { preset_id: a.presetId, prompt: a.prompt, track_tokens: a.trackTokens }
+    : { preset_id: a.presetId, prompt: a.prompt };
 }
 
 export interface DLARequestArgs {

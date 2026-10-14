@@ -61,7 +61,7 @@ export interface RowSpec {
   requests: RowRequestSpec[];
   record: string;
   claim: string;
-  status: 'verified' | 'narrowed' | 'failed' | 'needs-brad';
+  status: 'verified' | 'narrowed' | 'failed' | 'needs-brad' | 'closed-by-task';
   note?: string;
 }
 export interface RowRequest {
@@ -97,7 +97,7 @@ function one(model: string, r: RowRequestSpec): { endpoint: string; body: unknow
         }),
       };
     case 'logitLens':
-      return { endpoint: '/logit-lens', body: buildLogitLensRequest({ presetId, prompt: s('prompt') }) };
+      return { endpoint: '/logit-lens', body: buildLogitLensRequest({ presetId, prompt: s('prompt'), trackTokens: r.trackTokens as string[] | undefined }) };
     case 'dla':
       return {
         endpoint: '/dla',

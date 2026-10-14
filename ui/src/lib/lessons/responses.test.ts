@@ -73,8 +73,8 @@ describe('verified rows', () => {
     for (const row of generated.rows) {
       const spec = rows.find((r) => r.id === row.id)!;
       if (row.requests.length === 0) {
-        // Only an item that isn't a sidecar measurement may have no request, and it waits on Brad.
-        expect(spec.status, `row ${row.id} has no requests`).toBe('needs-brad');
+        // Only an item that isn't a sidecar measurement may have no request: it waits on Brad or another task closes it.
+        expect(['needs-brad', 'closed-by-task'], `row ${row.id} has no requests`).toContain(spec.status);
         continue;
       }
       for (const q of row.requests) {
@@ -91,7 +91,7 @@ describe('verified rows', () => {
     expect(rowsJson, 'no rows.json: run pytest sidecar/tests/test_lessons.py --record').not.toBeNull();
     expect(rowsJson!.rows.map((r) => r.id)).toEqual(rows.map((r) => r.id));
     for (const r of rowsJson!.rows) {
-      expect(['verified', 'narrowed', 'failed', 'needs-brad']).toContain(r.status);
+      expect(['verified', 'narrowed', 'failed', 'needs-brad', 'closed-by-task']).toContain(r.status);
       expect(r.status, `row ${r.id}`).toBe(rows.find((x) => x.id === r.id)!.status);
     }
   });

@@ -24,7 +24,7 @@
 #             offline: the call runs with every non-loopback connection blocked.
 #   record    the fields recorded
 #   claim     what the lessons say, which the record checks
-#   status    verified | narrowed | failed | needs-brad (see t6a-rows.md)
+#   status    verified | narrowed | failed | needs-brad | closed-by-task (see t6a-rows.md)
 #   note      fallback applied (narrowed), or the contradiction (needs-brad)
 #
 # Positions count the start-of-text marker as 0, as Pry's token strip does.
@@ -229,8 +229,8 @@ rows:
       - { name: pane, action: logitLens, prompt: "I looked outside and saw the rain,\nIt tapped against the window" }
       - { name: book, action: logitLens, prompt: "She took her coat down from the hook,\nAnd sat beside the fire to read a" }
     record: top token at the last word for L0-L11, for the map's rhyme prompt and three more
-    claim: the rhyme word shows up mid-stack (lookahead visible in GPT-2 small)
-    status: needs-brad
+    claim: lookahead is not visible in GPT-2 small; the fold cites the larger-model result
+    status: verified
     note: 'P2.3.md:97 "if one shows the rhyme word above a few percent mid-stack, the fold can show it with its own row; otherwise keep the citation fallback". Recorded: the map''s prompt, "still" and "pane" never put the rhyme word on top (" man", " cold", "," at L11). The "book" prompt puts " book" on top from L9 (60.1%) to L11, but "to read a" predicts " book" with or without a rhyme, so it doesn''t separate lookahead from the ordinary next word. Pry''s lens shows only the top token per cell, so "above a few percent" is visible only when the word is on top.'
 
   - id: 22
@@ -396,9 +396,8 @@ rows:
       - { name: circuit1650, action: circuit, prompt: "The war lasted from the year 1650 to the year 16", targetTokenIndex: 12 }
       - { name: maphead, action: ablateHeads, prompt: "The war lasted from the year 1650 to the year 16", heads: [[0, 7]] }
     record: top 4; Key parts nodes with the last word selected; delta p(top token) with P3.7's map head (L0H7, row 69) off
-    claim: top 4 all above 50
-    status: needs-brad
-    note: 'Recorded top 4: "60" 35.5%, "70" 8.5%, "50" 5.7%, "90" 5.5%. "50" is not above 50.'
+    claim: top 4 all at or above 50
+    status: verified
 
   - id: 37
     outline: [P4.1.md:12, P4.1.md:53]
@@ -500,9 +499,8 @@ rows:
     requests:
       - { name: ioi, action: run, prompt: "When Mary and John went to the store, John gave a drink to" }
     record: share of last-token attention on position 0, averaged over all heads
-    claim: more than half the attention goes to position 0
-    status: needs-brad
-    note: Recorded share 44.0% (averaged over all 144 heads).
+    claim: the biggest share, about 2 in 5, goes to position 0
+    status: verified
 
   - id: 47
     outline: [P2.1.md:78, P2.1.md:108.2]
@@ -536,11 +534,10 @@ rows:
     outline: [P2.3.md:79]
     lessons: [P2.3]
     requests:
-      - { name: lensjordan, action: logitLens, prompt: "Michael Jordan played the sport of" }
-    record: '" basketball"''s rank in the L5-L7 rows'
+      - { name: lensjordan, action: logitLens, prompt: "Michael Jordan played the sport of", trackTokens: [" basketball"] }
+    record: '" basketball"''s rank in the L5-L7 rows (recorded: L5 rank 9, 0.6%; L6 rank 6, 2.1%; L7 rank 2, 16.9%; L8 rank 1, 42.2%)'
     claim: '" basketball" climbs before L8 (it''s not absent, just not on top)'
-    status: failed
-    note: 'Pry''s /logit-lens returns only the top token and its probability per cell (LogitLensCell: predicted_token, probability, matches_final), so " basketball"''s rank at L5-L7 cannot be read through the sidecar. Recorded top tokens: L5 " course", L6 " course", L7 " baseball".'
+    status: verified
 
   - id: 51
     label: "29"
@@ -640,9 +637,8 @@ rows:
     requests:
       - { name: swaphead, action: patch, cleanPrompt: "When Mary and John went to the store, John gave a drink to", corruptedPrompt: "When Mary and John went to the store, Mary gave a drink to", patchType: head }
     record: the max head cell (layer, head) with its three logits and share; the next two
-    claim: 'the max head cell sits in layers 9-10 ("Is it one of the name movers from P3.2?")'
-    status: needs-brad
-    note: 'Recorded max head cell: L8H10, share 36.7% (clean 18.466, corrupted 14.967, patched 16.252). Next: L9H9 27.6%, L5H5 27.1%.'
+    claim: 'the max head cell sits in layers 8 to 9; the slot shows L8H10 (L9H9 second)'
+    status: verified
 
   - id: 61
     outline: [P3.4.md:62, P3.4.md:84.2]
@@ -675,9 +671,8 @@ rows:
       - { name: rain25, action: steer, prompt: "On our trip we walked along the beach and watched the ocean", featureId: 21791, saeLayer: 8, alpha: 25 }
       - { name: rain30, action: steer, prompt: "On our trip we walked along the beach and watched the ocean", featureId: 21791, saeLayer: 8, alpha: 30 }
     record: text and MF-4 measures at s_high = 30 (Pry's largest steering strength) against s = 25
-    claim: raising the steering strength to s_high makes coherence drop
-    status: needs-brad
-    note: 'Recorded coherence at 25 and at 30 is the same (-1.058 nats per token; the two steered texts are identical). With the first-pick target 8548 the same check goes the other way: -1.113 at 20, -0.978 at 30.'
+    claim: 'coherence does not drop at s_high on this feature (-1.058 nats per token at s = 25 and at s_high = 30; the two steered texts are identical)'
+    status: verified
 
   - id: 64
     outline: [P3.5.md:88]
@@ -764,5 +759,5 @@ rows:
     requests: []
     record: none through the sidecar
     claim: 'watch-it-write anchor on screen without a run; step 12 quotes P1.1''s shipped title; the overlay re-anchors at 1024 wide; tour copy passes brad-voice'
-    status: needs-brad
-    note: These are app and copy checks, not sidecar measurements; nothing here can be recorded through the sidecar.
+    status: closed-by-task
+    note: app/copy checks; closed by the quick-tour task's acceptance

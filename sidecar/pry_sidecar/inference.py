@@ -46,6 +46,7 @@ from .schemas import (
     LogitLensCell,
     LogitLensRequest,
     LogitLensResponse,
+    LogitLensTracked,
     PatchComponent,
     PatchRequest,
     PatchResponse,
@@ -811,6 +812,7 @@ def run_logit_lens(req: LogitLensRequest, loaded: LoadedModel) -> LogitLensRespo
         token_strs = model.to_str_tokens(req.prompt)
         tokens = [TokenInfo(index=i, text=str(s)) for i, s in enumerate(token_strs)]
         seq_len = len(tokens)
+        track_ids = {t: _single_token_id(model, t) for t in req.track_tokens}
 
         # Cache hook_resid_post at ALL layers
         def names_filter(name: str) -> bool:
@@ -834,6 +836,7 @@ def run_logit_lens(req: LogitLensRequest, loaded: LoadedModel) -> LogitLensRespo
 
         # Build grid: [layer][token_pos]
         grid: list[list[LogitLensCell]] = []
+        tracked: list[dict[str, LogitLensTracked]] | None = [] if track_ids else None
         for layer_idx in range(n_layers):
             key = f"blocks.{layer_idx}.hook_resid_post"
             if key not in cache:
@@ -842,6 +845,8 @@ def run_logit_lens(req: LogitLensRequest, loaded: LoadedModel) -> LogitLensRespo
                     LogitLensCell(predicted_token="?", probability=0.0, matches_final=False)
                     for _ in range(seq_len)
                 ])
+                if tracked is not None:
+                    tracked.append({})
                 continue
 
             resid = cache[key][0]  # [seq, d_model]
@@ -869,6 +874,19 @@ def run_logit_lens(req: LogitLensRequest, loaded: LoadedModel) -> LogitLensRespo
                 ))
             grid.append(row)
 
+            if tracked is not None:
+                last_logits = layer_logits[seq_len - 1]
+                readouts: dict[str, LogitLensTracked] = {}
+                for text, tid in track_ids.items():
+                    logit = last_logits[tid]
+                    readouts[text] = LogitLensTracked(
+                        prob=float(layer_probs[seq_len - 1, tid].item()),
+                        logit=float(logit.item()),
+                        # 1 + how many tokens score strictly higher
+                        rank=int((last_logits > logit).sum().item()) + 1,
+                    )
+                tracked.append(readouts)
+
         lens_ms = (time.perf_counter() - lens_start) * 1000
     total_ms = (time.perf_counter() - total_start) * 1000
 
@@ -877,6 +895,7 @@ def run_logit_lens(req: LogitLensRequest, loaded: LoadedModel) -> LogitLensRespo
         prompt=req.prompt,
         tokens=tokens,
         grid=grid,
+        tracked=tracked,
         n_layers=n_layers,
         timing_ms={
             "forward_ms": forward_ms,

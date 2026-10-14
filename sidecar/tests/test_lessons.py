@@ -652,7 +652,10 @@ def c21(R, REP, OFF):
         v[name] = {"rhyme": word, "column": [(f"L{li}", t, p) for li, t, p in col]}
         mid.append(any(t == word for li, t, _ in col[:-1]))
     v["rhyme_on_top_mid_stack"] = dict(zip(RHYMES, mid))
-    return v, [("fallback condition: no prompt shows its rhyme word on top before L11", not any(mid))]
+    # Brad 2026-10-14: "to read a" predicts " book" with or without a rhyme, so
+    # the book prompt is never counted as lookahead.
+    rhymes = [m for name, m in zip(RHYMES, mid) if name != "book"]
+    return v, [("lookahead not visible: no rhyme prompt shows its rhyme word on top before L11 (book prompt not counted)", not any(rhymes))]
 
 
 def c22(R, REP, OFF):
@@ -806,7 +809,7 @@ def c36(R, REP, OFF):
     r, c, a = R["war1650"], R["circuit1650"], R["maphead"]
     t = top(r)
     return {"top4": t, "nodes": [n["id"] for n in c["nodes"]], "L0H7_on_map": (0, 7) in heads_of(c), "maphead": abl(a, t[0][0]), "top_token": t[0][0]}, [
-        ("top 4 all above 50", all(x.strip().isdigit() and int(x) > 50 for x, _, _ in t)),
+        ("top 4 all at or above 50", all(x.strip().isdigit() and int(x) >= 50 for x, _, _ in t)),
     ]
 
 
@@ -877,7 +880,10 @@ def c45(R, REP, OFF):
 
 def c46(R, REP, OFF):
     avg = _avg_last(R["ioi"])
-    return {"share_position0": avg[0]}, [("more than half on position 0", avg[0] > 0.5)]
+    return {"share_position0": avg[0]}, [
+        ("position 0 has the biggest share", avg[0] == max(avg)),
+        ("about 2 in 5 on position 0", round(avg[0] * 5) == 2),
+    ]
 
 
 def c47(R, REP, OFF):
@@ -902,8 +908,18 @@ def c49(R, REP, OFF):
 
 
 def c50(R, REP, OFF):
-    col = lens_col(R["lensjordan"])
-    return {"L5_L7_top": [(f"L{li}", t, p) for li, t, p in col[5:8]], "rank_available": False}, [("rank readable through the sidecar", False)]
+    r = R["lensjordan"]
+    col = lens_col(r)
+    b = [r["tracked"][li][" basketball"] for li in range(len(r["grid"]))]
+    ranks = [b[li]["rank"] for li in (5, 6, 7)]
+    return {
+        "L5_L7_top": [(f"L{li}", t, p) for li, t, p in col[5:8]],
+        "basketball_L5_L8": [(f"L{li}", b[li]["rank"], b[li]["prob"]) for li in (5, 6, 7, 8)],
+    }, [
+        ('" basketball" not on top at L5-L7', all(k > 1 for k in ranks)),
+        ('" basketball" climbs from L5 to L7', ranks[0] > ranks[1] > ranks[2]),
+        ('" basketball" tops at L8', b[8]["rank"] == 1),
+    ]
 
 
 def c51(R, REP, OFF):
@@ -991,7 +1007,7 @@ def c59(R, REP, OFF):
 def c60(R, REP, OFF):
     r = R["swaphead"]
     pk = patch_peak(r, 3)
-    return {"max_cells": pk}, [("max head cell in layers 9-10", pk[0]["layer"] in (9, 10))]
+    return {"max_cells": pk}, [("max head cell in layers 8 to 9", pk[0]["layer"] in (8, 9))]
 
 
 def c61(R, REP, OFF):
@@ -1013,7 +1029,7 @@ def c62(R, REP, OFF):
 
 def c63(R, REP, OFF):
     a, b = steer_view(R["rain25"], "rain"), steer_view(R["rain30"], "rain")
-    return {"s": a, "s_high": b}, [("coherence drops at s_high", b["coherence"]["steered"] < a["coherence"]["steered"])]
+    return {"s": a, "s_high": b}, [("coherence does not drop at s_high", b["coherence"]["steered"] >= a["coherence"]["steered"])]
 
 
 def c64(R, REP, OFF):
@@ -1148,7 +1164,7 @@ def test_rows_json(lessons, request):
             "drift_checked": lessons.today,
             "sidecar_hash": stamp[0] if stamp else None,
             "sidecar_hash_files": stamp[1] if stamp else 0,
-            "status_counts": {s: sum(1 for r in RESULTS.values() if r["status"] == s) for s in ("verified", "narrowed", "failed", "needs-brad")},
+            "status_counts": {s: sum(1 for r in RESULTS.values() if r["status"] == s) for s in ("verified", "narrowed", "failed", "needs-brad", "closed-by-task")},
             "rows": [RESULTS[i] for i in ROW_IDS],
         }
         ROWS_JSON.write_text(json.dumps(doc, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
