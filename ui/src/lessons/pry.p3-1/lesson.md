@@ -223,7 +223,7 @@ free: true
 :::
 
 :::do{id=swap-run}
-On the original sentence, side A, ' Mary' gets {mary}, ' them' gets {them} and ' John' gets {john}. Press **Do it** to run the swapped sentence beside it.
+Press **Do it** to run the original sentence on side A and the swapped one beside it.
 
 ```actions
 - set_compare: { a: "When Mary and John went to the store, John gave a drink to", b: "When Mary and John went to the store, Mary gave a drink to" }
@@ -232,6 +232,8 @@ On the original sentence, side A, ' Mary' gets {mary}, ' them' gets {them} and '
 :::
 
 :::observe{id=swap-obs}
+On the original sentence, side A, ' Mary' gets {mary}, ' them' gets {them} and ' John' gets {john}. Swap the second name and ' John' takes the top spot on side B. One word moved the answer, and the delta still can't say where inside that happened.
+
 ```yaml
 check: { read: compare.top, args: { side: b }, op: contains, value: { token: " John" } }
 ```

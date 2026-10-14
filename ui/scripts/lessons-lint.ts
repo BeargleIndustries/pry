@@ -30,6 +30,21 @@ export interface LintRun {
   lines: string[];
 }
 
+/**
+ * The app's own lesson folder (`ui/src/lessons`, or `src/lessons` from inside ui/),
+ * or one lesson folder in it: linted as bundled without `--bundled` (plan T6
+ * acceptance runs `lessons-lint.mjs ui/src/lessons --release` as written).
+ * `_template` stays a user lesson.
+ */
+export function isBundledTarget(root: string): boolean {
+  const norm = (p: string) => p.replace(/\\/g, '/').replace(/\/+$/, '');
+  const isSet = (p: string) => /(^|\/)src\/lessons$/.test(norm(p));
+  if (isSet(root)) return true;
+  const r = norm(root);
+  const name = r.slice(r.lastIndexOf('/') + 1);
+  return !name.startsWith('_') && existsSync(join(root, 'lesson.md')) && isSet(resolve(root, '..'));
+}
+
 function lessonFiles(root: string): string[] {
   if (existsSync(join(root, 'lesson.md'))) return [join(root, 'lesson.md')];
   return readdirSync(root)
@@ -61,7 +76,7 @@ export function runLint(argv: string[]): LintRun {
   const indexText = readIf(join(setRoot, 'index.yaml'));
   const rowsText = readIf(join(setRoot, 'verified-rows.yaml'));
   const verifiedRows = rowsText ? collectRowIds(parse(rowsText)) : undefined;
-  const recordedPrompts = ['rows.json', 'expectations.json']
+  const recordedPrompts = ['rows.json', 'row-requests.json', 'expectations.json']
     .map((f) => readIf(join(setRoot, '__generated__', f)))
     .filter((t): t is string => t !== undefined)
     .reduce((acc, t) => strings(JSON.parse(t), acc), new Set<string>());
@@ -91,7 +106,7 @@ export function runLint(argv: string[]): LintRun {
   for (const [tool, group] of groupBy(lessons, (l) => toolOf.get(l)!)) {
     const results = lintLessonSet(group, {
       tool,
-      bundled: flags.has('--bundled'),
+      bundled: flags.has('--bundled') || isBundledTarget(root),
       skeleton: flags.has('--skeleton'),
       release: flags.has('--release'),
       knownLessons: known,

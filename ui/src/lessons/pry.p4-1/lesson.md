@@ -58,7 +58,7 @@ capture: instruction
 It didn't write a poem. It started a new line and wrote the instruction again, then again, like it's copying out a list. If you picked the poem, that's a fair guess: it's what ChatGPT would do. The text on screen is what rules it out.
 
 ```yaml
-check: { read: write_it.text, op: starts_with, value: "\n\nWrite a short poem about the sea." }
+check: { read: write_it.text, op: starts_with, value: "Write a short poem about the sea.\n\nWrite a short poem about the sea." }
 ```
 :::
 
@@ -125,7 +125,7 @@ same_question: journal
 This time it wrote a poem. It isn't a good poem, it repeats itself, but it's poem-shaped, because a poem is what usually follows a line like that on a page.
 
 ```yaml
-check: { read: write_it.text, from: document, op: starts_with, value: "\nThe sea is a sea of water" }
+check: { read: write_it.text, from: document, op: starts_with, value: "Here is a short poem about the sea:\n\nThe sea is a sea of water" }
 ```
 :::
 

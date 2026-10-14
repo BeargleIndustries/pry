@@ -179,9 +179,11 @@ gap: { read: dla.gap, expect: -0.9281865006778389, tolerance: 0.05 }
 :::
 
 :::do{id=dla-contrast}
-Now a different question: which parts push ' basketball' over ' football' directly, at the very end? Press **Do it** to open Why (DLA) and split the logit difference.
+Now a different question: which parts push ' basketball' over ' football' directly, at the very end? Press **Do it** to leave Compare, open Why (DLA) on the Jordan prompt and split the logit difference.
 
 ```actions
+- set_compare_mode: { on: false }
+- ensure_run: { prompt: "Michael Jordan played the sport of" }
 - open_panel: { panel: dla }
 - run_dla: { answer: " basketball", contrast: " football" }
 ```

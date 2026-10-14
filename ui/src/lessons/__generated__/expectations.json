@@ -194,6 +194,19 @@
       ]
     },
     {
+      "endpoint": "/dla",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Michael Jordan played the sport of",
+        "target_token_index": 6
+      },
+      "key": "4301bdda7a91b9447e0ef98fab95d0e4d3f099e1b7a7b201da2aba44d8585c88",
+      "lessons": [
+        "pry.p3-6"
+      ]
+    },
+    {
       "endpoint": "/ablate-head",
       "model": "gpt2-small",
       "body": {
@@ -261,6 +274,21 @@
       "key": "66d6a8129881e5614c4ee3ba0eacc2a0a6d2d1b5442957608628bbc5d8913591",
       "lessons": [
         "pry.p3-1"
+      ]
+    },
+    {
+      "endpoint": "/dla",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Michael Jordan played the sport of",
+        "target_token_index": 6,
+        "answer_token": " basketball",
+        "contrast_token": " football"
+      },
+      "key": "689a1ed59420f911b28cc4da02e83edd51066fd09ad3e1b11e8f6d2a06a2c1c9",
+      "lessons": [
+        "pry.p3-6"
       ]
     },
     {
@@ -433,6 +461,18 @@
       ]
     },
     {
+      "endpoint": "/logit-lens",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Michael Jordan played the sport of"
+      },
+      "key": "b20b92ea77cabf5ab888cce7d3cc178029f4ee5d5d88716da97e72049f2a30c1",
+      "lessons": [
+        "pry.p3-6"
+      ]
+    },
+    {
       "endpoint": "/generate",
       "model": "gpt2-small",
       "body": {
@@ -472,6 +512,20 @@
       "key": "de7097f37ac45977a5b019175b1cf8dd8a710a9de779faa44bafd9ad7f0187ff",
       "lessons": [
         "pry.p3-4"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Michael Jordan played the sport of",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "de870ae59653d02cb64f39674c39b3f8f7af8b94ef5ec7ae3a2b11e14a70226d",
+      "lessons": [
+        "pry.p3-6"
       ]
     },
     {
@@ -549,6 +603,41 @@
         },
         {
           "where": "s3-3/she-obs",
+          "kind": "slot",
+          "name": "she_nurse",
+          "prompt": "The nurse said that",
+          "expect": 0.1896977424621582
+        },
+        {
+          "where": "s3-3/she-obs",
+          "kind": "slot",
+          "name": "she_doctor",
+          "prompt": "The nurse said that",
+          "expect": 0.04582584276795387
+        },
+        {
+          "where": "s3-3/she-obs",
+          "kind": "slot",
+          "name": "he_doctor",
+          "prompt": "The nurse said that",
+          "expect": 0.14450117945671082
+        },
+        {
+          "where": "s3-3/she-obs",
+          "kind": "slot",
+          "name": "she_delta",
+          "prompt": "The nurse said that",
+          "expect": -0.14387189704179765
+        },
+        {
+          "where": "s3-3/she-obs",
+          "kind": "slot",
+          "name": "he_delta",
+          "prompt": "The nurse said that",
+          "expect": 0.12173311971127987
+        },
+        {
+          "where": "s3-3/she-obs",
           "kind": "check",
           "name": "compare.top contains {\"token\":\" he\"}",
           "prompt": "The nurse said that",
@@ -579,11 +668,11 @@
           }
         },
         {
-          "where": "s3-3/she-obs",
+          "where": "s3-5/control-obs",
           "kind": "slot",
-          "name": "she_doctor",
+          "name": "control_delta",
           "prompt": "The nurse said that",
-          "expect": 0.04582584276795387
+          "expect": 0
         },
         {
           "where": "s3-5/control-obs",
@@ -600,6 +689,27 @@
             "tolerance": 0.000001,
             "expect": 0
           }
+        },
+        {
+          "where": "s5/mary-swap/swap-obs",
+          "kind": "slot",
+          "name": "mary",
+          "prompt": "The nurse said that",
+          "expect": 0.6769932508468628
+        },
+        {
+          "where": "s5/mary-swap/swap-obs",
+          "kind": "slot",
+          "name": "them",
+          "prompt": "The nurse said that",
+          "expect": 0.12825962901115417
+        },
+        {
+          "where": "s5/mary-swap/swap-obs",
+          "kind": "slot",
+          "name": "john",
+          "prompt": "The nurse said that",
+          "expect": 0.02347848005592823
         },
         {
           "where": "s5/mary-swap/swap-obs",
@@ -625,6 +735,20 @@
         "When Tom and Sarah went to the park, Sarah gave a ball to"
       ],
       "checks": [
+        {
+          "where": "s3-4/heavy-obs",
+          "kind": "slot",
+          "name": "before",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": 0.6769932508468628
+        },
+        {
+          "where": "s3-4/heavy-obs",
+          "kind": "slot",
+          "name": "after",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": 0.6741434931755066
+        },
         {
           "where": "s3-4/heavy-obs",
           "kind": "check",
@@ -656,6 +780,20 @@
         },
         {
           "where": "s3-7/three-obs",
+          "kind": "slot",
+          "name": "movers_delta",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": -0.19180729985237122
+        },
+        {
+          "where": "s3-7/three-obs",
+          "kind": "slot",
+          "name": "control_delta",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": -0.022185027599334717
+        },
+        {
+          "where": "s3-7/three-obs",
           "kind": "check",
           "name": "ablation.delta lt \"$capture.control.ablation.delta\"",
           "prompt": "When Mary and John went to the store, John gave a drink to",
@@ -674,23 +812,9 @@
         },
         {
           "where": "s3-7/three-obs",
-          "kind": "slot",
-          "name": "movers_delta",
-          "prompt": "When Mary and John went to the store, John gave a drink to",
-          "expect": -0.19180729985237122
-        },
-        {
-          "where": "s3-7/three-obs",
           "kind": "assert",
           "name": "movers_delta lt -0.1",
           "prompt": "When Mary and John went to the store, John gave a drink to"
-        },
-        {
-          "where": "s3-7/three-obs",
-          "kind": "slot",
-          "name": "control_delta",
-          "prompt": "When Mary and John went to the store, John gave a drink to",
-          "expect": -0.022185027599334717
         },
         {
           "where": "s3-7/three-obs",
@@ -704,6 +828,13 @@
           "name": "control_delta",
           "prompt": "When Mary and John went to the store, John gave a drink to",
           "expect": -0.022185027599334717
+        },
+        {
+          "where": "s5/tom-sarah/tom-obs",
+          "kind": "slot",
+          "name": "tom_delta",
+          "prompt": "When Tom and Sarah went to the park, Sarah gave a ball to",
+          "expect": 0.049371927976608276
         },
         {
           "where": "s5/tom-sarah/tom-obs",
@@ -751,6 +882,27 @@
           "name": "corrupted",
           "prompt": "When Mary and John went to the store, John gave a drink to",
           "expect": 14.966815948486328
+        },
+        {
+          "where": "s3-5/peak-obs",
+          "kind": "slot",
+          "name": "clean",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": 18.466388702392578
+        },
+        {
+          "where": "s3-5/peak-obs",
+          "kind": "slot",
+          "name": "corrupted",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": 14.966815948486328
+        },
+        {
+          "where": "s3-5/peak-obs",
+          "kind": "slot",
+          "name": "patched",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": 18.474945068359375
         },
         {
           "where": "s3-5/peak-obs",
@@ -831,6 +983,20 @@
       "checks": [
         {
           "where": "s3-4/top-obs",
+          "kind": "slot",
+          "name": "before",
+          "prompt": "The nurse said that",
+          "expect": 0.1896977424621582
+        },
+        {
+          "where": "s3-4/top-obs",
+          "kind": "slot",
+          "name": "after",
+          "prompt": "The nurse said that",
+          "expect": 0.17817918956279755
+        },
+        {
+          "where": "s3-4/top-obs",
           "kind": "check",
           "name": "feature_ablation.delta lt 0",
           "prompt": "The nurse said that",
@@ -845,18 +1011,18 @@
           }
         },
         {
-          "where": "s3-4/top-obs",
+          "where": "s3-5/control-obs",
           "kind": "slot",
-          "name": "before",
+          "name": "control_delta",
           "prompt": "The nurse said that",
-          "expect": 0.1896977424621582
+          "expect": 0.0009149760007858276
         },
         {
-          "where": "s3-4/top-obs",
+          "where": "s3-5/control-obs",
           "kind": "slot",
-          "name": "after",
+          "name": "target_delta",
           "prompt": "The nurse said that",
-          "expect": 0.17817918956279755
+          "expect": -0.011518552899360657
         },
         {
           "where": "s3-5/control-obs",
@@ -889,6 +1055,13 @@
           "name": "target_delta",
           "prompt": "The nurse said that",
           "expect": -0.011518552899360657
+        },
+        {
+          "where": "s5/doctor/he-obs",
+          "kind": "slot",
+          "name": "he_delta",
+          "prompt": "The doctor said that",
+          "expect": -0.014612361788749695
         }
       ]
     },
@@ -897,6 +1070,18 @@
         "On our trip we walked along the beach and watched the ocean"
       ],
       "checks": [
+        {
+          "where": "s3-2/steering-tab",
+          "kind": "slot",
+          "name": "scale",
+          "prompt": "On our trip we walked along the beach and watched the ocean",
+          "expect": {
+            "strength": 25,
+            "activation_p50": 0,
+            "activation_p99": 0,
+            "activation_max": 0
+          }
+        },
         {
           "where": "s3-3/explain",
           "kind": "slot",
@@ -966,6 +1151,34 @@
           }
         },
         {
+          "where": "s3-5/reveal-coherence",
+          "kind": "slot",
+          "name": "coh_steered",
+          "prompt": "On our trip we walked along the beach and watched the ocean",
+          "expect": -1.0579530000686646
+        },
+        {
+          "where": "s3-5/reveal-coherence",
+          "kind": "slot",
+          "name": "coh_control",
+          "prompt": "On our trip we walked along the beach and watched the ocean",
+          "expect": -0.7376875877380371
+        },
+        {
+          "where": "s3-6/harder-obs",
+          "kind": "slot",
+          "name": "coh_high",
+          "prompt": "On our trip we walked along the beach and watched the ocean",
+          "expect": -1.0579530000686646
+        },
+        {
+          "where": "s3-6/harder-obs",
+          "kind": "slot",
+          "name": "coh_at_s",
+          "prompt": "On our trip we walked along the beach and watched the ocean",
+          "expect": -1.0579530000686646
+        },
+        {
           "where": "s3-6/harder-obs",
           "kind": "check",
           "name": "steer.coherence lt \"$read.steer.coherence\"",
@@ -984,20 +1197,6 @@
         },
         {
           "where": "s3-6/harder-obs",
-          "kind": "slot",
-          "name": "coh_high",
-          "prompt": "On our trip we walked along the beach and watched the ocean",
-          "expect": -1.0579530000686646
-        },
-        {
-          "where": "s3-6/harder-obs",
-          "kind": "slot",
-          "name": "coh_at_s",
-          "prompt": "On our trip we walked along the beach and watched the ocean",
-          "expect": -1.0579530000686646
-        },
-        {
-          "where": "s3-6/harder-obs",
           "kind": "assert",
           "name": "coh_high lt coh_at_s",
           "prompt": "On our trip we walked along the beach and watched the ocean"
@@ -1012,6 +1211,41 @@
       "checks": [
         {
           "where": "s3-2/pair-obs",
+          "kind": "slot",
+          "name": "jordan_bb",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.42208388447761536
+        },
+        {
+          "where": "s3-2/pair-obs",
+          "kind": "slot",
+          "name": "jordan_fb",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.0471893772482872
+        },
+        {
+          "where": "s3-2/pair-obs",
+          "kind": "slot",
+          "name": "jordan_golf",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.041473932564258575
+        },
+        {
+          "where": "s3-2/pair-obs",
+          "kind": "slot",
+          "name": "brady_fb",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.4862939715385437
+        },
+        {
+          "where": "s3-2/pair-obs",
+          "kind": "slot",
+          "name": "brady_bb",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.022681239992380142
+        },
+        {
+          "where": "s3-2/pair-obs",
           "kind": "check",
           "name": "compare.token_count equals \"$read.compare.token_count\"",
           "prompt": "Michael Jordan played the sport of",
@@ -1024,22 +1258,6 @@
             "value": "$read.compare.token_count",
             "value_args": {
               "side": "b"
-            }
-          }
-        },
-        {
-          "where": "s3-4/mlp-obs",
-          "kind": "check",
-          "name": "patch.peak contains {\"layer\":0}",
-          "prompt": "Michael Jordan played the sport of",
-          "check": {
-            "read": "patch.peak",
-            "args": {
-              "type": "mlp"
-            },
-            "op": "contains",
-            "value": {
-              "layer": 0
             }
           }
         },
@@ -1066,16 +1284,39 @@
         },
         {
           "where": "s3-4/mlp-obs",
-          "kind": "assert",
-          "name": "share gt 0.8",
-          "prompt": "Michael Jordan played the sport of"
-        },
-        {
-          "where": "s3-4/mlp-obs",
           "kind": "slot",
           "name": "l2_share",
           "prompt": "Michael Jordan played the sport of",
           "expect": 0.40324814685155025
+        },
+        {
+          "where": "s3-4/mlp-obs",
+          "kind": "slot",
+          "name": "l11_share",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": -0.3850042056096413
+        },
+        {
+          "where": "s3-4/mlp-obs",
+          "kind": "check",
+          "name": "patch.peak contains {\"layer\":0}",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "patch.peak",
+            "args": {
+              "type": "mlp"
+            },
+            "op": "contains",
+            "value": {
+              "layer": 0
+            }
+          }
+        },
+        {
+          "where": "s3-4/mlp-obs",
+          "kind": "assert",
+          "name": "share gt 0.8",
+          "prompt": "Michael Jordan played the sport of"
         },
         {
           "where": "s3-4/mlp-obs",
@@ -1301,6 +1542,27 @@
         },
         {
           "where": "s3-7/dla-obs",
+          "kind": "slot",
+          "name": "bars",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 3.119221771368757
+        },
+        {
+          "where": "s3-7/dla-obs",
+          "kind": "slot",
+          "name": "actual",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 2.191035270690918
+        },
+        {
+          "where": "s3-7/dla-obs",
+          "kind": "slot",
+          "name": "gap",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": -0.9281865006778389
+        },
+        {
+          "where": "s3-7/dla-obs",
           "kind": "check",
           "name": "dla.target equals {\"answer\":\" basketball\",\"contrast\":\" football\"}",
           "prompt": "Michael Jordan played the sport of",
@@ -1312,6 +1574,20 @@
               "contrast": " football"
             }
           }
+        },
+        {
+          "where": "s3-8/lens-obs",
+          "kind": "slot",
+          "name": "first_top",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 8
+        },
+        {
+          "where": "s3-8/lens-obs",
+          "kind": "slot",
+          "name": "peak",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 9
         },
         {
           "where": "s3-8/lens-obs",
@@ -1338,6 +1614,34 @@
       "checks": [
         {
           "where": "s3-3/flat-obs",
+          "kind": "slot",
+          "name": "p49",
+          "prompt": "The war lasted from the year 1732 to the year 17",
+          "expect": 0.05795148387551308
+        },
+        {
+          "where": "s3-3/flat-obs",
+          "kind": "slot",
+          "name": "p50",
+          "prompt": "The war lasted from the year 1732 to the year 17",
+          "expect": 0.050567593425512314
+        },
+        {
+          "where": "s3-3/flat-obs",
+          "kind": "slot",
+          "name": "p45",
+          "prompt": "The war lasted from the year 1732 to the year 17",
+          "expect": 0.03358353301882744
+        },
+        {
+          "where": "s3-3/flat-obs",
+          "kind": "slot",
+          "name": "p43",
+          "prompt": "The war lasted from the year 1732 to the year 17",
+          "expect": 0.031525228172540665
+        },
+        {
+          "where": "s3-3/flat-obs",
           "kind": "check",
           "name": "top_guess.token equals \"49\"",
           "prompt": "The war lasted from the year 1732 to the year 17",
@@ -1359,6 +1663,20 @@
               "token": "49"
             }
           }
+        },
+        {
+          "where": "s3-7/poke-obs",
+          "kind": "slot",
+          "name": "map_delta",
+          "prompt": "The war lasted from the year 1732 to the year 17",
+          "expect": -0.03274303674697876
+        },
+        {
+          "where": "s3-7/poke-obs",
+          "kind": "slot",
+          "name": "control_delta",
+          "prompt": "The war lasted from the year 1732 to the year 17",
+          "expect": -0.0018772967159748077
         },
         {
           "where": "s3-7/poke-obs",
@@ -1392,25 +1710,32 @@
         {
           "where": "s3-1/instruction-obs",
           "kind": "check",
-          "name": "write_it.text starts_with \"\\n\\nWrite a short poem about the sea.\"",
+          "name": "write_it.text starts_with \"Write a short poem about the sea.\\n\\nWrite a short poem about the sea.\"",
           "prompt": "Write a short poem about the sea.",
           "check": {
             "read": "write_it.text",
             "op": "starts_with",
-            "value": "\n\nWrite a short poem about the sea."
+            "value": "Write a short poem about the sea.\n\nWrite a short poem about the sea."
           }
         },
         {
           "where": "s3-3/document-obs",
           "kind": "check",
-          "name": "write_it.text starts_with \"\\nThe sea is a sea of water\"",
+          "name": "write_it.text starts_with \"Here is a short poem about the sea:\\n\\nThe sea is a sea of water\"",
           "prompt": "Here is a short poem about the sea:\n",
           "check": {
             "read": "write_it.text",
             "from": "document",
             "op": "starts_with",
-            "value": "\nThe sea is a sea of water"
+            "value": "Here is a short poem about the sea:\n\nThe sea is a sea of water"
           }
+        },
+        {
+          "where": "s5/french/french-obs",
+          "kind": "slot",
+          "name": "qa_top",
+          "prompt": "Q: What is the opposite of hot?\nA:",
+          "expect": 0.1572200357913971
         },
         {
           "where": "s5/french/french-obs",
