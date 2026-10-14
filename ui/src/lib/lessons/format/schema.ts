@@ -70,12 +70,17 @@ export const expectValue = z.union([z.number(), z.string(), z.boolean(), z.array
 export const checkItem = z.strictObject({
   read: str,
   args: args.optional(),
+  /** Read the readout from an earlier capture instead of the live app (P1.5:70, A = B judged after E). */
+  from: str.optional(),
+  /** One field of a record readout, like a slot's `field` (P1.6:44, " Sam" in prompt 1's top ten: rank). */
+  field: str.optional(),
   op: z.enum(OPS),
   value: z.unknown().optional(),
   value_args: args.optional(),
   not: z.boolean().optional(),
   expect: expectValue.optional(),
-  tolerance: z.number().optional(),
+  /** A number, or a `$row` / `$slot` binding ("within {coh_band}", P3.5:77). */
+  tolerance: z.union([z.number(), z.string().regex(/^\$(row|slot)\./)]).optional(),
 });
 export type CheckItem = z.infer<typeof checkItem>;
 const checks = z.union([checkItem, z.array(checkItem).min(1)]);
@@ -151,7 +156,7 @@ const common = {
 };
 
 const predictChoice = z.strictObject({ text: str, target: str.optional(), feedback: str.optional() });
-const questionChoice = z.strictObject({ text: str, feedback: str.optional(), reveal: z.boolean().optional() });
+const questionChoice = z.strictObject({ text: str, target: str.optional(), feedback: str.optional(), reveal: z.boolean().optional() });
 
 export const stepSchemas: Record<StepKind, z.ZodObject<any>> = {
   explain: z.strictObject({ ...common, image: str.optional(), alt: str.optional(), assert: asserts.optional() }),
@@ -238,6 +243,8 @@ export const stepSchemas: Record<StepKind, z.ZodObject<any>> = {
     max_runs: z.number().int().min(1).optional(),
     predict_before_each_run: z.boolean().optional(),
     one_change: str.optional(),
+    /** The actions the learner drives during the task (P3.2:71, learner-driven knockouts). */
+    learner_actions: strList.optional(),
     reset: z.unknown().optional(),
     remember: z.strictObject({ key: str, read: str, args: args.optional() }).optional(),
   }),

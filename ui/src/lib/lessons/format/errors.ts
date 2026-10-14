@@ -100,7 +100,7 @@ export const MESSAGES: Record<string, (d: D) => string> = {
   'image-missing': (d) => `The image \`${d.src}\` isn't in the lesson folder.`,
   'expect-no-model': () => 'This lesson has expected values, so it needs a `model:` they were recorded on.',
   'model-unknown': (d) => `\`model: ${d.model}\` isn't one of ${quoteList(d.models)}.`,
-  'targets-untagged': (d) => `\`targets\` lists \`${d.target}\`, and no predict choice is tagged with it.`,
+  'targets-untagged': (d) => `\`targets\` lists \`${d.target}\`, and no predict or question choice is tagged with it.`,
   'permission-missing': (d) => `\`${d.name}\` needs \`permissions: { ${d.effect}: [${d.scope}] }\` in the front matter.`,
   'link-host': (d) => `The link goes to ${d.host}, which isn't listed in \`permissions.external\`.`,
   'link-scheme': (d) => `Links must start with http:// or https://. This one uses \`${d.scheme}\`.`,

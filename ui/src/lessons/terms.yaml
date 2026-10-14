@@ -42,8 +42,8 @@ terms:
   - { term: ablation, introduced_in: pry.p3-2 }
   - { term: name mover head, introduced_in: pry.p3-2 }
   - { term: activation patching, introduced_in: pry.p3-3 }
-  - { term: clean run, introduced_in: pry.p3-3 }
-  - { term: corrupted run, introduced_in: pry.p3-3 }
+  - { term: clean run, introduced_in: pry.p3-3, family: clean-corrupted-run }
+  - { term: corrupted run, introduced_in: pry.p3-3, family: clean-corrupted-run }
   - { term: direction, introduced_in: pry.p3-5 }
   - { term: steering, introduced_in: pry.p3-5 }
   - { term: coherence, introduced_in: pry.p3-5 }
@@ -56,6 +56,7 @@ terms:
 # UI labels as shipped (style guide section 2) and tab names. A term inside a
 # quoted label, straight or curly quotes, isn't a use.
 ui_labels:
+  - Words (tokens)
   - Swap test
   - Original prompt
   - Changed prompt

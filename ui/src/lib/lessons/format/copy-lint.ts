@@ -12,6 +12,8 @@ export interface Term {
   term: string;
   introduced_in: string;
   aliases?: string[];
+  /** Terms sharing a family are named together and count as one new term per section. */
+  family?: string;
 }
 
 export interface TermsData {
@@ -28,6 +30,14 @@ export interface LintWords {
   tour_banned: string[];
   /** Tool key -> the pinned caveat phrases (from copy/caveats.test.ts) one of which must sit beside its result. */
   pinned_caveats: Record<string, string[]>;
+  /** Stand-in name -> its real term (map 5.2): a plain phrase until the term is named, retired after. */
+  stand_in_names?: Record<string, string>;
+  /** Phrases holding a qualitative word that state a rank, not a size ("got the most", P1.4:93). */
+  qualitative_exempt?: string[];
+  /** Phrases where a banned verb's subject isn't the model ("Temperature decides", P1.5:88). */
+  model_verb_exempt?: string[];
+  /** Metaphor -> the lesson that withdraws it (map 5.1); that lesson may name it to say it's done. */
+  metaphor_withdrawn_in?: Record<string, string | string[]>;
 }
 
 export interface CopyLintOptions {
@@ -77,6 +87,8 @@ function maskBase(text: string): { base: string; refutes: [number, number][] } {
     const le = ls + n.label!.length;
     base = blank(base, n.start, ls);
     base = blank(base, le, n.end);
+    // Inline code and slots inside a label are masked too (`L9` in a refutation, P2.3:58).
+    for (const c of parseInline(n.label!)) if (c.type === 'code' || c.type === 'slot') base = blank(base, ls + c.start, ls + c.end);
     if (n.type === 'refutes') refutes.push([ls, le]);
   }
   // Image syntax `![alt](src)` is not prose.
@@ -116,7 +128,8 @@ function units(lesson: Lesson): Unit[] {
 }
 
 const NUMBER_RULES: RegExp[] = [
-  /(?<![\w.])\d+(?:\.\d+)?\s?%/g,
+  // 100% is the whole distribution ("probabilities that add up to 100%", P1.4:59), not a measurement.
+  /(?<![\w.])(?!100\s?%)\d+(?:\.\d+)?\s?%/g,
   /(?<![\w.])\d+\.\d+(?![\w.])/g,
   /(?<![\w-])L\d+(?:H\d+)?(?![\w])/g,
   /\b(?:position|token|word|layer)s?\s+\d+/gi,
@@ -156,8 +169,10 @@ export function copyLint(lesson: Lesson, opts: CopyLintOptions): LessonIssue[] {
   if (!isTour) {
     const perSection = new Map<number, string[]>();
     for (const [term, s] of firstSection) perSection.set(s, [...(perSection.get(s) ?? []), term]);
+    // Terms of one family ("clean run / corrupted run", P3.3:8) count as one naming moment.
+    const familyOf = (term: string) => terms.terms.find((t) => t.term === term)?.family ?? term;
     for (const [s, list] of perSection) {
-      if (list.length > 1) {
+      if (new Set(list.map(familyOf)).size > 1 && !meta.term_budget_exception) {
         const sec = lesson.sections[s - 1];
         issues.push(makeIssue('term-budget-section', { terms: list }, { line: sec.line, section: s }));
       }
@@ -174,18 +189,32 @@ export function copyLint(lesson: Lesson, opts: CopyLintOptions): LessonIssue[] {
     // Pinned caveats are fixed wording (only the Critic or Brad changes them), so they're exempt.
     const unpinned = maskPhrases(labelled, pinned);
     for (const p of words.retired) if (hits(unpinned, p).length) err('retired', { phrase: p }, u);
+    for (const [p, term] of Object.entries(words.stand_in_names ?? {})) {
+      if (!hits(unpinned, p).length) continue;
+      const intro = opts.path.indexOf(terms.terms.find((t) => t.term === term)?.introduced_in ?? '');
+      const named = here < 0 || here > intro || (here === intro && u.section.index > (firstSection.get(term) ?? Infinity));
+      if (named) err('retired', { phrase: p }, u);
+    }
 
     if (u.role !== 'choice' && u.role !== 'feedback') {
-      for (const v of words.banned_model_verbs) if (hits(refuted, v).length) err('model-verb', { verb: v }, u);
+      const notModel = maskPhrases(refuted, words.model_verb_exempt ?? []);
+      for (const v of words.banned_model_verbs) if (hits(notModel, v).length) err('model-verb', { verb: v }, u);
     }
     if (u.step.kind !== 'analogy') {
-      for (const p of words.metaphor_names) if (hits(u.base, p).length) err('metaphor-name', { phrase: p }, u);
+      for (const p of words.metaphor_names) {
+        // The lesson that withdraws a picture names it once to say so (P2.1:49).
+        if ([words.metaphor_withdrawn_in?.[p] ?? []].flat().includes(meta.id)) continue;
+        if (hits(u.base, p).length) err('metaphor-name', { phrase: p }, u);
+      }
     }
-    for (const re of NUMBER_RULES) for (const m of labelled.matchAll(re)) err('bare-number', { text: m[0].trim() }, u);
+    // A choice may be a fixed bin the learner picks ("under 10%", P1.4:34), not a measured number.
+    if (u.role !== 'choice') for (const re of NUMBER_RULES) for (const m of labelled.matchAll(re)) err('bare-number', { text: m[0].trim() }, u);
     for (const m of u.text.matchAll(/\{([a-z_][a-z0-9_]*)\}\s?%/g)) err('percent-slot', { name: m[1] }, u);
 
-    if (u.role !== 'choice' && u.role !== 'feedback' && u.role !== 'say') {
-      const claim = maskPhrases(maskSpans(labelled, u.refutes), pinned);
+    // A predict or question stem asks; it isn't the lesson's claim ("Which earlier word matters most", P2.1:40).
+    const asks = u.role === 'prose' && (u.step.kind === 'predict' || u.step.kind === 'question');
+    if (u.role !== 'choice' && u.role !== 'feedback' && u.role !== 'say' && !asks) {
+      const claim = maskPhrases(maskSpans(labelled, u.refutes), [...pinned, ...(words.qualitative_exempt ?? [])]);
       for (const q of words.qualitative) if (hits(claim, q).length) err('qualitative', { word: q }, u);
     }
     if (u.role === 'feedback') {
