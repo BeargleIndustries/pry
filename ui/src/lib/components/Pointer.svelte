@@ -6,6 +6,8 @@
   target and the arrow stops at it. The ring follows layout changes with a
   requestAnimationFrame loop, since targets move with scrolling, tab switches
   and results arriving. Purely visual: pointer-events none, aria-hidden.
+  Lessons (plan D3) adds an edge tick: a small marker on the sidebar's inner
+  edge with a glyph that shows which way the target is.
 -->
 <script lang="ts">
   import { onMount } from 'svelte';
@@ -17,12 +19,15 @@
     arrowTo = null,
     focusRing = false,
     z = 55,
+    tick = null,
   }: {
     target: HTMLElement | null;
     arrowFrom?: Point | null;
     arrowTo?: Point | null;
     focusRing?: boolean;
     z?: number;
+    /** Lessons: the direction tick on the sidebar's inner edge. */
+    tick?: { x: number; y: number; glyph: string; edge: 'left' | 'right' } | null;
   } = $props();
 
   type Box = { x: number; y: number; w: number; h: number };
@@ -98,6 +103,12 @@
         stroke="rgb(129 140 248)"
         stroke-width="2"
       />
+    {/if}
+    {#if tick}
+      <g data-pointer-tick data-tick-edge={tick.edge} data-tick-glyph={tick.glyph}>
+        <circle cx={tick.x} cy={tick.y} r="11" fill="rgb(30 27 75)" stroke="rgb(129 140 248)" stroke-width="2" />
+        <text x={tick.x} y={tick.y + 4.5} text-anchor="middle" font-size="13" fill="rgb(199 210 254)">{tick.glyph}</text>
+      </g>
     {/if}
     {#if line}
       <line

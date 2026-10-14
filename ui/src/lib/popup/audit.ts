@@ -32,8 +32,21 @@ import { rectOf } from './measure';
 import { occupied, OCCUPIED } from './occupied.svelte';
 import { popupDevHooks } from './dev';
 
+/** What the learning-mode pass drives (plan T3 harness; +page.svelte passes it). */
+export interface AuditLessons {
+  open(side: 'left' | 'right'): Promise<void>;
+  close(): void;
+  openLesson(id: string, sectionId?: string | null): Promise<boolean>;
+  sectionCount(): number;
+  goto(i: number): Promise<void>;
+  /** True when the current section shows an explain-result. */
+  hasExplainResult(): boolean;
+  railed(): boolean;
+}
+
 export interface AuditDeps {
   actions: TutorialActions;
+  lessons?: AuditLessons;
   loadState(): string;
   /** Load GPT-2 small if nothing is loaded. */
   ensureModel(): Promise<void>;
@@ -42,8 +55,8 @@ export interface AuditDeps {
   setCustomModelDialog(open: boolean): void;
 }
 
-type Phase = 'main' | 'guide-open' | 'guide-closed' | 'tour-with-guide';
-type Kind = 'tour' | 'tip' | 'term' | 'hover';
+type Phase = 'main' | 'guide-open' | 'guide-closed' | 'tour-with-guide' | 'lessons-right' | 'lessons-left';
+type Kind = 'tour' | 'tip' | 'term' | 'hover' | 'lesson';
 
 export interface AuditRecord {
   phase: Phase;
@@ -614,10 +627,95 @@ async function tourWithGuidePass(deps: AuditDeps, out: AuditRecord[]) {
 }
 
 // ---------------------------------------------------------------------------
+// Learning mode (plan T3): the Lessons sidebar open beside the app
+// ---------------------------------------------------------------------------
+
+export const AUDIT_LESSON = 'pry.p1-1';
+
+function lessonRecord(phase: Phase, id: string, failures: string[], notes: string[] = [], rect?: RectLike): AuditRecord {
+  return {
+    phase, kind: 'lesson', id, pass: failures.length === 0, mode: null, side: null, inViewport: true, overlapsTarget: false,
+    coversFocus: false, overlapsAvoid: false, avoidHit: [], arrowLen: null, arrowExempt: false, largeTarget: false,
+    waiting: false, jumped: false, failures, notes, rect,
+  };
+}
+
+const sidebarEl = () => document.querySelector<HTMLElement>('[data-lesson-sidebar]');
+
+/** Lengths of the arrows the Lessons pointers draw now. */
+function drawnArrows(): number[] {
+  return [...document.querySelectorAll('[data-popup-pointer] line')].map((l) => {
+    const n = (k: string) => Number(l.getAttribute(k) ?? 0);
+    return Math.hypot(n('x2') - n('x1'), n('y2') - n('y1'));
+  });
+}
+
+async function lessonsPass(deps: AuditDeps, out: AuditRecord[], side: 'left' | 'right') {
+  const L = deps.lessons;
+  const phase: Phase = side === 'left' ? 'lessons-left' : 'lessons-right';
+  if (!L) {
+    out.push({ ...lessonRecord(phase, 'lessons', ['lessons hook missing']), skipped: 'lessons hook missing' });
+    return;
+  }
+  progress(`${phase} open`);
+  await L.open(side);
+  const opened = await L.openLesson(AUDIT_LESSON);
+  const sb = await waitFor(() => sidebarEl(), 15000);
+  if (!opened || !sb) {
+    out.push(lessonRecord(phase, 'open', [`couldn't open ${AUDIT_LESSON}`]));
+    L.close();
+    return;
+  }
+  await settle(sidebarEl);
+  // Beside the app, never over it.
+  const s = rectOf(sb);
+  const main = rectOf(document.querySelector('[data-lessons-main]'));
+  const header = rectOf(document.querySelector('header'));
+  const beside: string[] = [];
+  if (!s || !main) beside.push('sidebar or workspace missing');
+  else {
+    if (placementFlags(s, vp(), null, null, [main]).overlapsAvoid) beside.push('sidebar overlaps the workspace');
+    if (header && s.top < header.top + header.height - 0.5) beside.push('sidebar overlaps the header');
+    if (side === 'right' && s.left < main.left) beside.push('right sidebar sits left of the workspace');
+    if (side === 'left' && s.left > main.left) beside.push('left sidebar sits right of the workspace');
+  }
+  out.push(lessonRecord(phase, 'beside', beside, [`sidebar ${s ? Math.round(s.width) : '?'}px${L.railed() ? ' (rail)' : ''}`], s ?? undefined));
+
+  // Every section: the honesty box in view on explain-result steps; no drawn arrow over MAX_ARROW.
+  const n = L.sectionCount();
+  for (let i = 0; i < n; i++) {
+    progress(`${phase} section ${i + 1}/${n}`);
+    await L.goto(i);
+    await waitFor(() => !document.querySelector('[data-lesson-sidebar] [role="status"]')?.textContent?.includes('Setting up'), 15000);
+    await settle(sidebarEl);
+    await sleep(300);
+    const arrows = drawnArrows();
+    const long = arrows.filter((a) => a > MAX_ARROW);
+    const f: string[] = long.map((a) => `drawn arrow ${Math.round(a)}px > ${MAX_ARROW}`);
+    const notes = [`${arrows.length} arrow(s)`];
+    if (L.hasExplainResult() && !L.railed()) {
+      const box = rectOf(document.querySelector('[data-testid="honesty-box"]'));
+      if (!box) f.push('honesty box missing on an explain-result step');
+      else if (box.top < 0 || box.left < 0 || box.top + box.height > window.innerHeight + 0.5 || box.left + box.width > window.innerWidth + 0.5) f.push('honesty box outside the viewport');
+      notes.push('explain-result');
+    }
+    out.push(lessonRecord(phase, `section-${i + 1}`, f, notes));
+  }
+
+  // Tips with the sidebar open: none may cover it (occupied: lesson-sidebar).
+  await tipPass(deps, out, phase);
+  L.close();
+  await waitFor(() => !sidebarEl(), 5000);
+}
+
+// ---------------------------------------------------------------------------
 // Entry
 // ---------------------------------------------------------------------------
 
-export async function runPopupAudit(deps: AuditDeps, opts: { guideTour?: boolean } = {}) {
+export async function runPopupAudit(
+  deps: AuditDeps,
+  opts: { guideTour?: boolean; skipTour?: boolean; lessons?: ('left' | 'right')[] } = {},
+) {
   const w = window as unknown as { __popupAudit?: unknown };
   const size = `${window.innerWidth}x${window.innerHeight}`;
   const records: AuditRecord[] = [];
@@ -641,7 +739,7 @@ export async function runPopupAudit(deps: AuditDeps, opts: { guideTour?: boolean
     if (!(await waitFor(() => deps.actions.response()?.prompt === IOI, 120000, 250))) throw new Error('fixed prompt never ran');
     await sleep(500);
 
-    await tourPass(deps, records);
+    if (!opts.skipTour) await tourPass(deps, records);
     // Back to the fixed prompt for tips and tooltips.
     deps.actions.setCompareMode(false);
     if (deps.actions.response()?.prompt !== IOI) {
@@ -652,7 +750,8 @@ export async function runPopupAudit(deps: AuditDeps, opts: { guideTour?: boolean
     await termPass(deps, records);
     await hoverPass(deps, records);
     await guidePasses(deps, records);
-    if (opts.guideTour) await tourWithGuidePass(deps, records);
+    if (opts.guideTour && !opts.skipTour) await tourWithGuidePass(deps, records);
+    for (const side of opts.lessons ?? []) await lessonsPass(deps, records, side);
   } catch (e) {
     error = e instanceof Error ? e.message : String(e);
   } finally {

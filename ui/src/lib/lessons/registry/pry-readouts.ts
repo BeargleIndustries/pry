@@ -84,7 +84,8 @@ export function liveSource(): PrySource {
     focusTokenIndex: s.focusTokenIndex,
     logitLens: s.logitLensResponse,
     dla: s.dlaResponse,
-    headScores: s.headScoresResponse,
+    // Only while the copying-heads view shows them (the scores stay cached per model).
+    headScores: s.headScoresMode ? s.headScoresResponse : null,
     headAblations: s.headAblations,
     headAblate: s.headAblateResponse,
     featureAblations: s.featureAblations,
@@ -667,15 +668,22 @@ export const pryReadouts: Record<string, ReadoutDef> = {
     fields: { layer: 'number', position: 'number', head: 'number', clean: 'number', corrupted: 'number', patched: 'number', share: 'number' },
     args: z.object({ type: z.enum(['head', 'mlp', 'resid']) }).strict(),
     type: 'record',
-    doc: 'The Swap test cell with the biggest share.',
+    doc: 'The Swap test cell with the biggest share: {layer, head} for heads, {layer} for MLPs, {layer, position} for the residual stream, with its three logits and share.',
     read: reader((s, a) => {
       const r = s.patch?.patch_type === a.type ? s.patch : s.patchByType[a.type];
-      let best: ReturnType<typeof cellRecord> | undefined;
+      let best: PatchComponent | undefined;
+      let bestShare: number | undefined;
       for (const c of r?.components ?? []) {
-        const rec = cellRecord(c);
-        if (rec.share !== undefined && (!best || rec.share > (best.share as number))) best = rec;
+        const share = shareOf(c);
+        if (share !== undefined && (bestShare === undefined || share > bestShare)) {
+          best = c;
+          bestShare = share;
+        }
       }
-      return best;
+      if (!best) return undefined;
+      // Match patch.cell / patch.focused: a head is a head, never a word position.
+      const where = a.type === 'head' ? { head: best.head ?? 0 } : a.type === 'resid' ? { position: best.position ?? 0 } : {};
+      return { layer: best.layer, ...where, clean: best.clean_logit, corrupted: best.corrupted_logit, patched: best.patched_logit, share: bestShare };
     }),
   },
 
@@ -742,12 +750,19 @@ export const pryReadouts: Record<string, ReadoutDef> = {
     read: reader((s) => s.circuit?.nodes.map((x) => ({ id: x.id, type: x.type, layer: x.layer, head: x.head, importance: x.importance }))),
   },
   'circuit.target': {
-    fields: { token: 'string' },
+    fields: { token: 'string', after: 'string', position: 'number' },
     type: 'record',
-    doc: 'The token the Key parts map explains.',
+    doc: 'The token the Key parts map explains: the top guess after the selected word (`after`, at `position`).',
+    // As the panel's header says: "Explains the top guess ' X' after the selected word ' Y'".
+    // The guess is Why (DLA)'s answer when it explains the same word, else the run's top guess when
+    // the selected word is the last (CircuitPanel's topGuess).
     read: reader((s) => {
       const t = focusTok(s);
-      return s.circuit && t ? { token: t.text, position: t.index } : undefined;
+      if (!s.circuit || !t) return undefined;
+      let guess: string | undefined;
+      if (s.dla && s.dla.target_token_index === t.index) guess = s.dla.predicted_token;
+      else if (s.response && t.index === s.response.tokens[s.response.tokens.length - 1]?.index) guess = preds(s.response)[0]?.token;
+      return guess === undefined ? undefined : { token: guess, after: t.text, position: t.index };
     }),
   },
 

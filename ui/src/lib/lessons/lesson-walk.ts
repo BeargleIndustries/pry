@@ -19,6 +19,7 @@ import { RequestMemo } from './registry/memo';
 import { requestKey } from './registry/request-key';
 import { answer, makeHost } from './registry/pry-test-host';
 import { evaluateAssert, slotValue, type SlotSource } from './slots';
+import { compareOp } from './runner/checks';
 import type { AssertItem, CheckItem, Lesson, Slot, Step } from './format/schema';
 
 export interface WalkRequest {
@@ -242,43 +243,15 @@ export async function walkLesson(
     if (r.skip) return { got, want: undefined, skip: r.skip };
     const want = r.value;
     const tol = tolOf(item);
+    // The runner's operators (runner/checks.ts), with this walker's tolerances: exact unless the
+    // item names one; `contains` on records matches the fields `value` names, within the recorded tolerance.
     let ok: boolean;
-    switch (item.op) {
-      case 'equals':
-        ok = deepEqual(got, want, tol);
-        break;
-      case 'in':
-        ok = Array.isArray(want) && want.some((w) => deepEqual(got, w, tol));
-        break;
-      case 'changed_from':
-        ok = got !== undefined && !deepEqual(got, want, tol);
-        break;
-      case 'gt':
-      case 'increased':
-        ok = typeof got === 'number' && typeof want === 'number' && got > want;
-        break;
-      case 'lt':
-      case 'decreased':
-        ok = typeof got === 'number' && typeof want === 'number' && got < want;
-        break;
-      case 'within':
-        ok = typeof got === 'number' && typeof want === 'number' && Math.abs(got - want) <= (tol ?? 0);
-        break;
-      case 'contains':
-        // A string holds a substring; a list holds an item; a record holds every field of `value`.
-        ok =
-          typeof got === 'string'
-            ? typeof want === 'string' && got.includes(want)
-            : Array.isArray(got)
-              ? got.some((g) => deepEqual(g, want) || holdsFields(g, want, tol))
-              : isObj(got) && isObj(want) && Object.entries(want).every(([k, w]) => deepEqual(got[k], w, tol));
-        break;
-      case 'starts_with':
-        ok = typeof got === 'string' && typeof want === 'string' && got.startsWith(want);
-        break;
-      default:
-        ok = false;
-    }
+    if (item.op === 'changed_from' && got === undefined) ok = false;
+    else if (item.op === 'contains' && !(typeof got === 'string'))
+      ok = Array.isArray(got)
+        ? got.some((g) => deepEqual(g, want) || holdsFields(g, want, tol))
+        : isObj(got) && isObj(want) && Object.entries(want).every(([k, w]) => deepEqual(got[k], w, tol));
+    else ok = compareOp(item.op, got, want, tol ?? (item.op === 'within' ? 0 : 1e-9));
     if (item.not) ok = !ok;
     // A check's `expect` is the readout's recorded value (AUTHORING.md): the live
     // readout must match it too. `absent` = the readout has no value (a token

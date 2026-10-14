@@ -26,7 +26,7 @@
   import { anchorState, anchorUsable } from '$lib/tutorial/anchors';
   import { arrowShown, placePopup, type Placement, type Point } from '$lib/popup/place';
   import { focusPoint, placementAttrs, rectOf, viewportSize } from '$lib/popup/measure';
-  import { occupied, OCCUPIED } from '$lib/popup/occupied.svelte';
+  import { occupied, OCCUPIED, tipHold } from '$lib/popup/occupied.svelte';
   import { POPUP_AUDIT, popupDevHooks, type ForcedTipReport } from '$lib/popup/dev';
   import Pointer from './Pointer.svelte';
 
@@ -62,6 +62,8 @@
       // A target that's hidden, disabled or covered (a dialog, the experiment
       // guide) waits; the tip shows once it's usable again.
       if (!el || !anchorUsable(el, tipEl)) continue;
+      // A lesson is pointing at this target: its tip waits (T3 coexistence).
+      if (tipHold.holds(el)) continue;
       activateTip(tip, el);
       return;
     }

@@ -176,9 +176,15 @@ export const pryApply: PrySet['apply'] = async (t, ctx) => {
   // 3. Prompt.
   if (t.prompt !== null && t.prompt !== h.getPrompt()) h.setPrompt(t.prompt);
 
-  // 4. Run.
+  // 4. Run. A scene that hasn't run yet doesn't show the results of a later
+  // one (T3 back-state: entering a section is a function of the section and
+  // the journal, never of the path that led there).
   const prompt = h.getPrompt();
   const ran = () => !!s.response && s.response.prompt === prompt && s.response.preset_id === h.activePresetId();
+  if (!t.run && s.response) {
+    s.response = null;
+    s.focusTokenIndex = undefined;
+  }
   if (t.run && !ran()) await an.generate(prompt, call);
   abortIf(ctx);
   await switchLayer();
@@ -192,6 +198,10 @@ export const pryApply: PrySet['apply'] = async (t, ctx) => {
   if (t.focus && s.response) {
     const idx = resolveFocus(s.response.tokens, t.focus);
     if (idx !== undefined && idx !== s.focusTokenIndex) s.focusTokenIndex = idx;
+  } else if (!t.focus && s.response) {
+    // No focus in the scene: a run's own default, its last token (as generate sets it).
+    const last = s.response.tokens.at(-1)?.index;
+    if (last !== s.focusTokenIndex) s.focusTokenIndex = last;
   }
   const att = pryUi.attention;
   att.view = t.attention_view;
@@ -220,6 +230,24 @@ export const pryApply: PrySet['apply'] = async (t, ctx) => {
 
   // 6. Analyses. A scene-set DLA target holds until the learner moves focus.
   const want = new Set<PryAnalysis>(t.analyses);
+  // Results the scene doesn't hold (and its open tab doesn't fetch) go, so a
+  // section entered by Back shows what it showed going forward (T3 back-state).
+  const keep = new Set<PryAnalysis>(want);
+  if (t.dla_target || t.left_panel === 'dla') keep.add('dla');
+  if (t.left_panel === 'logit-lens') keep.add('logit_lens');
+  if (t.left_panel === 'circuit') keep.add('circuit');
+  if (!s.response) for (const a of ['logit_lens', 'dla', 'circuit', 'head_ablation', 'feature_ablation', 'steer'] as const) keep.delete(a);
+  if (!keep.has('logit_lens')) s.logitLensResponse = null;
+  if (!keep.has('dla')) s.dlaResponse = null;
+  if (!keep.has('circuit')) s.circuitResponse = null;
+  if (!keep.has('head_ablation')) s.headAblateResponse = null;
+  if (!keep.has('feature_ablation')) s.featureAblateResponse = null;
+  if (!keep.has('steer')) s.steerResponse = null;
+  if (!keep.has('patching') && s.patchResponse) {
+    s.patchResponse = null;
+    ps.byType = {};
+  }
+  if (!keep.has('compare') && (cs.a || cs.b)) h.compare.clear();
   let dlaStale = false;
   if (!sameJson(s.dlaTarget, t.dla_target)) {
     an.setSceneDlaTarget(t.dla_target?.answer ?? null, t.dla_target?.contrast ?? null);

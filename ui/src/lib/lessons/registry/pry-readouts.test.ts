@@ -414,7 +414,18 @@ describe('Pry readouts: one test per readout', () => {
 
   it('patch.peak', async () => {
     await act('run_patching', { clean: 'A B', corrupted: 'A C', type: 'head' });
-    expect(r('patch.peak', { type: 'head' })).toMatchObject({ layer: 1, position: 1, patched: 3 });
+    expect(r('patch.peak', { type: 'head' })).toMatchObject({ layer: 1, head: 1, patched: 3 });
+  });
+
+  it('› patch.peak names a head for head patching and a position for residual patching', async () => {
+    await act('run_patching', { clean: 'A B', corrupted: 'A C', type: 'head' });
+    const head = r('patch.peak', { type: 'head' }) as Record<string, unknown>;
+    expect(head).toMatchObject({ layer: 1, head: 1 });
+    expect('position' in head).toBe(false);
+    await act('run_patching', { clean: 'A B', corrupted: 'A C', type: 'resid' });
+    const resid = r('patch.peak', { type: 'resid' }) as Record<string, unknown>;
+    expect(resid).toMatchObject({ layer: 1, position: 1 });
+    expect('head' in resid).toBe(false);
   });
 
   it('› patch.token_count reads the Swap test prompts\' length (P3.6:78)', async () => {
@@ -513,10 +524,11 @@ describe('Pry readouts: one test per readout', () => {
     expect(r('circuit.nodes')).toEqual([{ id: 'L1H0', type: 'attention', layer: 1, head: 0, importance: 0.8 }]);
   });
 
-  it('circuit.target', async () => {
+  it('› circuit.target is the top guess after the selected word, as the Key parts header says', async () => {
     await ran();
     await act('run_circuit');
-    expect(r('circuit.target')).toEqual({ token: ' bank', position: 5 });
+    // The selected word is the last, ' bank'; the map explains the top guess after it, ' the'.
+    expect(r('circuit.target')).toEqual({ token: ' the', after: ' bank', position: 5 });
   });
 
   it('readout', async () => {

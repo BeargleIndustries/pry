@@ -95,4 +95,21 @@ describe('Pry anchors', () => {
     expect(pryAnchors['run-button'].large).toBeUndefined();
     expect(pryAnchors['tab-features'].label).toBeTruthy();
   });
+
+  it('› head-cell locates the attention grid cell by layer and head (P3.2: L9H9, L9H6, L10H0)', async () => {
+    const cells = [
+      el({ 'data-tour': 'head-cell', 'data-head': 'L9H9' }),
+      el({ 'data-tour': 'head-cell', 'data-head': 'L9H6' }),
+      el({ 'data-tour': 'head-cell', 'data-head': 'L10H0' }),
+    ];
+    dom.push(...cells);
+    expect(pryAnchors['head-cell'].locate({ layer: 9, head: 6 })).toBe(cells[1]);
+    expect(pryAnchors['head-cell'].locate({ layer: 10, head: 0 })).toBe(cells[2]);
+    expect(pryAnchors['head-cell'].locate({ layer: 3, head: 3 })).toBeNull();
+    // The grid renders the attributes the anchor reads.
+    const { readFileSync } = await import('node:fs');
+    const src = readFileSync(new URL('../../components/PanelA.svelte', import.meta.url), 'utf-8');
+    expect(src).toContain('data-tour="head-cell"');
+    expect(src).toContain('data-head={`L${l}H${h}`}');
+  });
 });

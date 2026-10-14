@@ -100,6 +100,18 @@ describe('Pry actions: one test per action', () => {
     await expect(run('set_hidden', { anchor: 'run-button', on: true })).rejects.toThrow();
   });
 
+  it('› reset clears feature knockouts too', async () => {
+    await ran();
+    h.analysis.state.featureAblations = [{ feature_index: 7, layer: 8 }];
+    h.analysis.state.featureAblationMode = true;
+    await run('run_feature_ablation');
+    expect(h.analysis.state.featureAblateResponse).not.toBeNull();
+    await run('reset');
+    expect(h.analysis.state.featureAblations).toEqual([]);
+    expect(h.analysis.state.featureAblationMode).toBe(false);
+    expect(h.analysis.state.featureAblateResponse).toBeNull();
+  });
+
   it('reset is Back to normal without the guide or tour, and keeps the prompt', async () => {
     await ran();
     h.analysis.state.headAblations = [{ layer: 1, head: 1 }];

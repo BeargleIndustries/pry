@@ -131,8 +131,8 @@ const PANEL_OF: Record<string, string> = {
 // Anchors whose element doesn't exist yet locate to null until it does
 // (`dla-total-line` on an engine without the total, `steering-coherence`
 // under 5 tokens).
-// TODO(pry-learning T3): mark the Lessons button `lessons-toggle`; the
-// presenter draws `highlight` from pryUi.highlight.
+// The Lessons button carries `data-tour="lessons-toggle"` (+page.svelte); the
+// sidebar draws `highlight` from pryUi.highlight (T3).
 
 /** First on-screen element marked `name` whose `attr` equals `value`. */
 function findWith(name: string, attr: string, value: string): HTMLElement | null {
@@ -212,7 +212,7 @@ const added: Record<string, Omit<AnchorDef, 'locate'> & { locate?: AnchorDef['lo
     locate: (a: { part: string }) => findWith('dla-bar', 'data-part', a.part),
   },
   // Added by the T1 gate after T2b closed (critic M8, P3.2:51 "cells L9H9, L9H6, L10H0").
-  // TODO(pry-learning T4-ui): mark grid cells as the head-cell anchor with `data-head="L9H9"`.
+  // PanelA.svelte marks each grid cell `data-tour="head-cell" data-head="L9H9"` (T3).
   'head-cell': {
     doc: 'One cell in the attention head grid, picked by layer and head.',
     label: 'a head in the attention grid, left side',
@@ -246,3 +246,9 @@ function build(): Record<string, AnchorDef> {
 }
 
 export const pryAnchors: Record<string, AnchorDef> = build();
+
+/** The anchors 0.4.0 adds (N11) beyond the 0.3.8 tour's targets. */
+export const ADDED_ANCHORS: readonly string[] = Object.keys(added);
+
+/** Anchors that live inside the Lessons sidebar, not the app (the embedding reader). */
+export const SIDEBAR_ANCHORS: readonly string[] = ['embedding-view', 'embedding-values'];

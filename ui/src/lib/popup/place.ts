@@ -230,6 +230,24 @@ function result(
   };
 }
 
+/**
+ * The viewport minus side-docked surfaces: an avoid rect that runs most of the
+ * window's height along its left or right edge (the Lessons sidebar or its
+ * rail) narrows the area a popup may use, so "room beside the target" counts
+ * only the app's side of it. Kept as is when what's left can't hold the popup.
+ */
+function sideDocked(view: Rect, avoid: Rect[], vp: { w: number; h: number }, pad: number, minW: number): Rect {
+  let left = view.left;
+  let right = view.right;
+  for (const a of avoid) {
+    if (a.height < vp.h * 0.6) continue;
+    if (a.left <= 1) left = Math.max(left, a.right + pad);
+    else if (a.right >= vp.w - 1) right = Math.min(right, a.left - pad);
+  }
+  if (right - left < Math.min(minW, 220)) return view;
+  return rect(left, view.top, right - left, view.height);
+}
+
 /** Bottom edge for a bottom-docked surface spanning [left, right]: above any bottom-docked avoid rect. */
 function dockBottom(left: number, right: number, vp: { w: number; h: number }, pad: number, gap: number, avoid: Rect[]): number {
   let bottom = vp.h - pad;
@@ -282,7 +300,7 @@ function placeAtSize(input: PlaceInput, stage: Stage): Placement | null {
   const avoid = (input.avoid ?? []).map(toRect).filter((a) => a.width > 0 && a.height > 0);
   const w = Math.min(input.size.w, vp.w - pad * 2);
   const h = Math.min(input.size.h, vp.h - pad * 2);
-  const view = rect(pad, pad, vp.w - pad * 2, vp.h - pad * 2);
+  const view = sideDocked(rect(pad, pad, vp.w - pad * 2, vp.h - pad * 2), avoid, vp, pad, input.size.w);
   const target = input.target ? toRect(input.target) : null;
   const visible = target ? intersection(target, rect(0, 0, vp.w, vp.h)) : null;
   const focus: Point | null = target
@@ -294,9 +312,9 @@ function placeAtSize(input: PlaceInput, stage: Stage): Placement | null {
 
   // 1. sheet
   if (input.sheetBelow !== undefined && vp.w < input.sheetBelow) {
-    const sw = vp.w - pad * 2;
-    const bottom = dockBottom(pad, pad + sw, vp, pad, gap, avoid);
-    const box = rect(pad, Math.max(pad, bottom - h), sw, Math.min(h, bottom - pad));
+    const sw = view.width;
+    const bottom = dockBottom(view.left, view.left + sw, vp, pad, gap, avoid);
+    const box = rect(view.left, Math.max(pad, bottom - h), sw, Math.min(h, bottom - pad));
     return result(box, 'sheet', 'bottom', focus ? 'top' : null, focus);
   }
 
