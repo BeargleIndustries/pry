@@ -19,7 +19,6 @@ slots:
   control_label: { row: "25.control_label", format: string }
   s: { row: "25.strength", format: number }
   s_high: { row: "25.strength_high", format: number }
-  coh_band: { row: "25.coh_band", format: number }
   coh_at_s: { read: steer.coherence, args: { which: steered }, from_capture: at_s, expect: -1.0579530000686646, tolerance: 0.05 }
 ---
 
@@ -286,12 +285,11 @@ journal: true
 ::::
 
 :::task{id=find-strength}
-Find a steering strength where the label's idea shows up and coherence stays within {coh_band} of the unsteered text. Change only the steering strength, type your guess before each run, and you've got four runs.
+Find a steering strength where the label's idea shows up in the text. Then read the coherence line next to it: you've seen that a number closer to zero can just mean repetition, so judge it beside the text. Change only the steering strength, type your guess before each run, and you've got four runs.
 
 ```yaml
 target:
   - { read: steer.text, args: { which: steered }, op: contains, value: $row.25.concept_words }
-  - { read: steer.coherence, args: { which: steered }, op: within, value: $read.steer.coherence, value_args: { which: original }, tolerance: $slot.coh_band }
 max_runs: 4
 predict_before_each_run: true
 one_change: set_steering
