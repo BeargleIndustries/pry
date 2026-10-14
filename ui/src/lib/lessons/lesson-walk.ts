@@ -71,12 +71,20 @@ export function loadRecorded(dir: string): Recorded {
   return out;
 }
 
-/** rows.json values by row id, for `$row.<id>.<field>`. */
+/**
+ * rows.json by row id, for `$row.<id>.<field>`: the row's `constants` (their
+ * values) first, then its recorded `values` for any field without a constant.
+ */
 export function loadRows(file: string): Map<string, Record<string, unknown>> {
   const out = new Map<string, Record<string, unknown>>();
   if (!existsSync(file)) return out;
-  const doc = JSON.parse(readFileSync(file, 'utf8')) as { rows: { id: number; values: Record<string, unknown> }[] };
-  for (const r of doc.rows) out.set(String(r.id), r.values ?? {});
+  const doc = JSON.parse(readFileSync(file, 'utf8')) as {
+    rows: { id: number; values: Record<string, unknown>; constants?: Record<string, { value: unknown }> }[];
+  };
+  for (const r of doc.rows) {
+    const constants = Object.fromEntries(Object.entries(r.constants ?? {}).map(([k, c]) => [k, c.value]));
+    out.set(String(r.id), { ...(r.values ?? {}), ...constants });
+  }
   return out;
 }
 
@@ -149,7 +157,11 @@ export async function walkLesson(
   };
   const src: SlotSource = {
     read: (name, args, capture) => read(name, args, capture !== undefined ? captures.get(capture) : undefined),
-    row: (id) => opts.rows?.get(id),
+    // The walker compares values, so the unit only matters for rendering.
+    row: (id, field) => {
+      const value = pick(opts.rows?.get(id), field);
+      return value === undefined ? undefined : { value, unit: 'number' };
+    },
     readouts,
   };
   const bindings = { earlier: () => undefined, row: (id: string, field: string) => pick(opts.rows?.get(id), field) };

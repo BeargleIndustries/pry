@@ -30,6 +30,14 @@ const rows = loadRows(join(GEN, 'rows.json'));
 const files = bundledLessonFiles();
 
 describe('lesson checks', () => {
+  it('› $row resolves from the row constants first, then the recorded values', () => {
+    // Row 23: `layer` is only a constant (derived from pick.head "L2H8"); `pick` is only a recorded value.
+    expect(rows.get('23')?.layer).toBe(2);
+    expect((rows.get('23')?.pick as { head: string }).head).toBe('L2H8');
+    // Row 14's " Mary" head comes from row 47's record by `from_row`.
+    expect([rows.get('14')?.mary_head_layer, rows.get('14')?.mary_head]).toEqual([10, 7]);
+  });
+
   it('› there are bundled lessons to check', () => {
     expect(files.length).toBeGreaterThan(0);
   });
