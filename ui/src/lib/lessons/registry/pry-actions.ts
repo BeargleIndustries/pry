@@ -264,13 +264,18 @@ export const pryActions: Record<string, ActionDef> = {
     doc: 'Returns the app to its baseline, like Back to normal.',
     effect: 'view',
     // Today's "Back to normal" (experiments.ts resetExperiment) without the
-    // guide and tour coupling: head knockouts off, copying heads off, the Swap
-    // test back to its default pair. The prompt stays.
+    // guide and tour coupling: head and feature knockouts off, copying heads off,
+    // the Swap test back to its default pair. The prompt stays.
     run: async () => {
       const h = pryHost();
       const s = h.analysis.state;
       s.headAblations = [];
       s.headAblationMode = false;
+      // Every panel back to baseline: feature knockouts too.
+      s.featureAblations = [];
+      s.featureAblationMode = false;
+      s.featureAblateResponse = null;
+      s.headAblateResponse = null;
       h.analysis.hideHeadScores();
       h.setPatchingPreset(null);
       Object.assign(pryUi.patching, { cleanPrompt: IOI_CLEAN, corruptedPrompt: IOI_CHANGED, patchType: 'head', selectedComponent: null });

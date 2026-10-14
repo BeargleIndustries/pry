@@ -111,7 +111,7 @@ Effects: `view` and `compute` run freely and replay when a section opens; `downl
 | `patch.cell` | record | `{ layer: integer, position: integer }` | One Swap test cell: clean, corrupted and patched logits, and the share. |
 | `patch.focused` | record |  | The Swap test cell selected now: its layer, word position or head, the three logits and the share. |
 | `patch.token_count` | number (count) | `{ side: "clean" \| "corrupted" }` | How many tokens the Swap test's Original (clean) or Changed (corrupted) prompt became. |
-| `patch.peak` | record | `{ type: "head" \| "mlp" \| "resid" }` | The Swap test cell with the biggest share. |
+| `patch.peak` | record | `{ type: "head" \| "mlp" \| "resid" }` | The Swap test cell with the biggest share: {layer, head} for heads, {layer} for MLPs, {layer, position} for the residual stream, with its three logits and share. |
 | `feature_ablation.count` | number (count) |  | How many features are knocked out. |
 | `feature_ablation.delta` | number (probability) | `{ token: string }` | How much one token's probability changed with the features knocked out. |
 | `feature_ablation.prediction` | record | `{ side: "original" \| "ablated", token: string }` | One token's probability, logit and rank with the features knocked out, or in the original run. |
@@ -123,7 +123,7 @@ Effects: `view` and `compute` run freely and replay when a section opens; `downl
 | `steer.persist` | number | `{ measure: string }` | One measure of whether steering held across other prompts. |
 | `steer.scale` | record |  | Steering strength beside the feature's activation on this prompt: p50, p99 and max. |
 | `circuit.nodes` | list |  | The parts in the Key parts map. |
-| `circuit.target` | record |  | The token the Key parts map explains. |
+| `circuit.target` | record |  | The token the Key parts map explains: the top guess after the selected word (`after`, at `position`). |
 | `readout` | prose | `{ panel: "attention" \| "logit-lens" \| "dla" \| "patching" \| "circuit" \| "steering" \| "predictions" \| "features" \| "watch-it-write" }` | A panel's readout sentence. For hints only, never checked. |
 
 ## Anchors

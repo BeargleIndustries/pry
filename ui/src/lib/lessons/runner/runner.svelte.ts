@@ -1007,7 +1007,6 @@ export class LessonRunner<VS = unknown> {
         if (capture && cap === undefined) return undefined;
         return readFrom(this.set, name, this.resolveArgs(args), cap);
       },
-      row: (id) => this.deps.rows?.(id),
       readouts: this.set.readouts,
     };
   }
