@@ -181,7 +181,8 @@ export const ROWS: Row[] = [
     checks: [
       { test: { file: READOUTS_TEST, name: 'patching readout names the best part and its score change' } },
       { test: { file: READOUTS_TEST, name: 'key parts readout says lines show one kind of link' } },
-      { test: { file: READOUTS_TEST, name: 'steering readout counts changed words' } },
+      // TODO(pry-learning T6): confirm the re-point in the copy pass (T4-ui: MF-4 dropped the changed-word count).
+      { test: { file: READOUTS_TEST, name: 'steering readout says the text changed, with no word count' } },
     ],
   },
 
