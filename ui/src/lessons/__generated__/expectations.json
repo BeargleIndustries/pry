@@ -166,6 +166,20 @@
       ]
     },
     {
+      "endpoint": "/sae-features",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Michael Jordan played the sport of",
+        "sae_layer": 8,
+        "top_k_features": 5
+      },
+      "key": "c4a9ec8f948542cdda097de8df7a2a3768ca602fce4f25927006ccbdb4909aa2",
+      "lessons": [
+        "pry.p2-5"
+      ]
+    },
+    {
       "endpoint": "/logit-lens",
       "model": "gpt2-small",
       "body": {
@@ -507,28 +521,28 @@
           "kind": "slot",
           "name": "n",
           "prompt": "Michael Jordan played the sport of",
-          "expect": 7
+          "expect": 2
         },
         {
           "where": "s3-6/explain-result",
           "kind": "slot",
           "name": "bars_total",
           "prompt": "Michael Jordan played the sport of",
-          "expect": 2.823
+          "expect": 14.799
         },
         {
           "where": "s3-6/explain-result",
           "kind": "slot",
           "name": "actual_logit",
           "prompt": "Michael Jordan played the sport of",
-          "expect": 2.12
+          "expect": 15.962
         },
         {
           "where": "s3-6/explain-result",
           "kind": "slot",
           "name": "gap",
           "prompt": "Michael Jordan played the sport of",
-          "expect": -0.703
+          "expect": 1.163
         },
         {
           "where": "s3-6/explain-result",

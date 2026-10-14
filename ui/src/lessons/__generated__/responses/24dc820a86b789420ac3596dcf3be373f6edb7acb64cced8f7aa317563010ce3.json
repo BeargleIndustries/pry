@@ -25,7 +25,7 @@
  "neuronpedia_fetched": null,
  "offline": false,
  "trimmed": [
-  "attention: each head's last query row only"
+  "attention: each head's last query row only (earlier rows null)"
  ],
  "response": {
   "preset_id": "gpt2-small",
@@ -93,6 +93,18 @@
     "layer": 0,
     "heads": [
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.1619548499584198,
        0.034972209483385086,
@@ -110,6 +122,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        7.69193284213543e-05,
        0.0007881050696596503,
@@ -127,6 +151,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.32202428579330444,
        0.05225937068462372,
@@ -144,6 +180,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.00031108185066841543,
        2.501074277461157e-06,
@@ -161,6 +209,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.017260363325476646,
        0.0009347771992906928,
@@ -178,6 +238,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.0006699398509226739,
        6.035260412318166e-06,
@@ -195,6 +267,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.24425122141838074,
        0.03860301896929741,
@@ -212,6 +296,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.05100243538618088,
        0.008722974918782711,
@@ -229,6 +325,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.13663294911384583,
        0.0452420711517334,
@@ -246,6 +354,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.38739144802093506,
        0.05689691752195358,
@@ -263,6 +383,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.1817689836025238,
        0.05659222602844238,
@@ -280,6 +412,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.18771331012248993,
        0.08196361362934113,
@@ -302,6 +446,18 @@
     "layer": 1,
     "heads": [
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.017063254490494728,
        0.009591789916157722,
@@ -319,6 +475,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.12209060043096542,
        0.010741222649812698,
@@ -336,6 +504,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.11481155455112457,
        0.02032739669084549,
@@ -353,6 +533,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.4872426390647888,
        0.023677755147218704,
@@ -370,6 +562,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.30601242184638977,
        0.04948161169886589,
@@ -387,6 +591,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.2703889310359955,
        0.07692167162895203,
@@ -404,6 +620,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.3937901258468628,
        0.045441802591085434,
@@ -421,6 +649,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.48408374190330505,
        0.05140094459056854,
@@ -438,6 +678,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.37854278087615967,
        0.052069246768951416,
@@ -455,6 +707,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.45416927337646484,
        0.048128485679626465,
@@ -472,6 +736,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.0019259630935266614,
        0.04610389471054077,
@@ -489,6 +765,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.06327695399522781,
        0.00241651339456439,
@@ -511,6 +799,18 @@
     "layer": 2,
     "heads": [
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.19101709127426147,
        0.020911339670419693,
@@ -528,6 +828,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.3631942570209503,
        0.12139326333999634,
@@ -545,6 +857,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.04214056581258774,
        8.203534525819123e-05,
@@ -562,6 +886,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.03410453721880913,
        0.0015557925216853619,
@@ -579,6 +915,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.29029911756515503,
        0.003216617740690708,
@@ -596,6 +944,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.03884477540850639,
        0.0003908638609573245,
@@ -613,6 +973,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.447620689868927,
        0.08752382546663284,
@@ -630,6 +1002,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.1179698258638382,
        0.022045599296689034,
@@ -647,6 +1031,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.0970597043633461,
        0.007207915652543306,
@@ -664,6 +1060,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.08031342923641205,
        0.0018554073758423328,
@@ -681,6 +1089,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.09572391211986542,
        0.027619073167443275,
@@ -698,6 +1118,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.5823892951011658,
        0.00904834270477295,
@@ -720,6 +1152,18 @@
     "layer": 3,
     "heads": [
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.9035428166389465,
        0.0014768425608053803,
@@ -737,6 +1181,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.3568812310695648,
        0.010657812468707561,
@@ -754,6 +1210,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.10048741847276688,
        4.301044100429863e-05,
@@ -771,6 +1239,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.607154905796051,
        0.00022685089788865298,
@@ -788,6 +1268,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.8523872494697571,
        0.006514421664178371,
@@ -805,6 +1297,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.3995344638824463,
        0.014357556588947773,
@@ -822,6 +1326,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.16879169642925262,
        0.000803523464128375,
@@ -839,6 +1355,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.3562639355659485,
        3.9090522477636114e-05,
@@ -856,6 +1384,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.17313723266124725,
        0.0003878777497448027,
@@ -873,6 +1413,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.2301909476518631,
        0.009855254553258419,
@@ -890,6 +1442,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.6396074891090393,
        0.0014887339202687144,
@@ -907,6 +1471,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.3129376173019409,
        0.0033900460693985224,
@@ -929,6 +1505,18 @@
     "layer": 4,
     "heads": [
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.22423246502876282,
        0.00046180596109479666,
@@ -946,6 +1534,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.3124851584434509,
        0.0015345256542786956,
@@ -963,6 +1563,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.6285971999168396,
        0.02553308941423893,
@@ -980,6 +1592,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.7642717957496643,
        0.0010406021028757095,
@@ -997,6 +1621,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.8254648447036743,
        0.0032529523596167564,
@@ -1014,6 +1650,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.7722287178039551,
        0.00014694713172502816,
@@ -1031,6 +1679,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.721976101398468,
        0.007168978452682495,
@@ -1048,6 +1708,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.31818917393684387,
        0.0016597423236817122,
@@ -1065,6 +1737,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.8330506086349487,
        0.004030913580209017,
@@ -1082,6 +1766,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.5957522392272949,
        0.004979386460036039,
@@ -1099,6 +1795,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.7585849165916443,
        0.013316269963979721,
@@ -1116,6 +1824,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        6.920301554025343e-10,
        1.0485477154041426e-19,
@@ -1138,6 +1858,18 @@
     "layer": 5,
     "heads": [
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.6425998210906982,
        7.042624929454178e-05,
@@ -1155,6 +1887,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.9972495436668396,
        3.293021791250794e-06,
@@ -1172,6 +1916,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.7278382182121277,
        0.0025748645421117544,
@@ -1189,6 +1945,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.2949986755847931,
        0.03148368000984192,
@@ -1206,6 +1974,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.5426317453384399,
        0.0007620370015501976,
@@ -1223,6 +2003,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.927436351776123,
        0.00755272014066577,
@@ -1240,6 +2032,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.8032770752906799,
        0.0014689560048282146,
@@ -1257,6 +2061,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.7382144331932068,
        0.00043558533070608974,
@@ -1274,6 +2090,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.5545404553413391,
        0.0012968187220394611,
@@ -1291,6 +2119,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.9318640232086182,
        0.0135206812992692,
@@ -1308,6 +2148,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.4894326329231262,
        0.007786533795297146,
@@ -1325,6 +2177,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.7100181579589844,
        0.008491890504956245,
@@ -1347,6 +2211,18 @@
     "layer": 6,
     "heads": [
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.4432584345340729,
        0.002432119334116578,
@@ -1364,6 +2240,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.8725299835205078,
        0.0011571203358471394,
@@ -1381,6 +2269,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.7197926044464111,
        0.019881853833794594,
@@ -1398,6 +2298,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.8263571858406067,
        0.0020021831151098013,
@@ -1415,6 +2327,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.6968151926994324,
        0.017184920608997345,
@@ -1432,6 +2356,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.7101463079452515,
        0.00394901167601347,
@@ -1449,6 +2385,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.8502753376960754,
        0.00303821312263608,
@@ -1466,6 +2414,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.7567762732505798,
        0.0029153418727219105,
@@ -1483,6 +2443,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.6652941107749939,
        0.0005318871117196977,
@@ -1500,6 +2472,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.9390223622322083,
        0.00033063135924749076,
@@ -1517,6 +2501,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.93409663438797,
        0.001160202082246542,
@@ -1534,6 +2530,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.4519878029823303,
        0.002917309058830142,
@@ -1556,6 +2564,18 @@
     "layer": 7,
     "heads": [
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.4015585482120514,
        0.00028978215414099395,
@@ -1573,6 +2593,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.9696415066719055,
        0.0008986075990833342,
@@ -1590,6 +2622,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.9946605563163757,
        4.8314250307157636e-05,
@@ -1607,6 +2651,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.7280758619308472,
        0.004121537320315838,
@@ -1624,6 +2680,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.6260528564453125,
        0.006286335177719593,
@@ -1641,6 +2709,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.5491889119148254,
        0.006288452539592981,
@@ -1658,6 +2738,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.8921210765838623,
        0.006998819764703512,
@@ -1675,6 +2767,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.897341251373291,
        0.0003619628259912133,
@@ -1692,6 +2796,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.7399596571922302,
        0.0012155843432992697,
@@ -1709,6 +2825,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.5629937648773193,
        0.008175866678357124,
@@ -1726,6 +2854,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.9920237064361572,
        0.00014684330380987376,
@@ -1743,6 +2883,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.9573619365692139,
        0.0003659229550976306,
@@ -1765,6 +2917,18 @@
     "layer": 8,
     "heads": [
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.6688835620880127,
        0.007159813307225704,
@@ -1782,6 +2946,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.979296863079071,
        0.00011071167682530358,
@@ -1799,6 +2975,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.7010967135429382,
        0.019378947094082832,
@@ -1816,6 +3004,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.8855993747711182,
        0.010190668515861034,
@@ -1833,6 +3033,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.2637293338775635,
        0.001187996007502079,
@@ -1850,6 +3062,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.4088073670864105,
        0.002964996499940753,
@@ -1867,6 +3091,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.8408515453338623,
        0.0009057600400410593,
@@ -1884,6 +3120,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.27082183957099915,
        0.00011998410627711564,
@@ -1901,6 +3149,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.8676726222038269,
        0.0026440899819135666,
@@ -1918,6 +3178,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.8643611669540405,
        0.0015967084327712655,
@@ -1935,6 +3207,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.5757686495780945,
        0.024449655786156654,
@@ -1952,6 +3236,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.8106761574745178,
        0.01352438610047102,
@@ -1974,6 +3270,18 @@
     "layer": 9,
     "heads": [
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.7949284911155701,
        0.0013781881425529718,
@@ -1991,6 +3299,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.9688053131103516,
        0.00022402832109946758,
@@ -2008,6 +3328,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.9107742309570312,
        0.011473837308585644,
@@ -2025,6 +3357,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.4379196763038635,
        0.000687212566845119,
@@ -2042,6 +3386,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.9705614447593689,
        0.002567123621702194,
@@ -2059,6 +3415,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.8741742968559265,
        0.009284678846597672,
@@ -2076,6 +3444,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.9818658232688904,
        0.0005235361168161035,
@@ -2093,6 +3473,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.7838654518127441,
        0.018318312242627144,
@@ -2110,6 +3502,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.934056282043457,
        0.004078321158885956,
@@ -2127,6 +3531,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.9943344593048096,
        0.0003880096192006022,
@@ -2144,6 +3560,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.40969401597976685,
        0.00022494542645290494,
@@ -2161,6 +3589,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.9424382448196411,
        0.0009395033121109009,
@@ -2183,6 +3623,18 @@
     "layer": 10,
     "heads": [
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.8635507225990295,
        0.0014269902603700757,
@@ -2200,6 +3652,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.9521452188491821,
        0.0008576565887778997,
@@ -2217,6 +3681,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.929020345211029,
        0.0019943020306527615,
@@ -2234,6 +3710,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.9228443503379822,
        0.000700474192854017,
@@ -2251,6 +3739,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.6056364178657532,
        0.017698984593153,
@@ -2268,6 +3768,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.2938670217990875,
        0.0029698398429900408,
@@ -2285,6 +3797,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.9771843552589417,
        0.0002896820369642228,
@@ -2302,6 +3826,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.8560388684272766,
        0.004078250378370285,
@@ -2319,6 +3855,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.9385614395141602,
        0.0016802975442260504,
@@ -2336,6 +3884,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.4109800457954407,
        0.0006212923326529562,
@@ -2353,6 +3913,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.9441606998443604,
        0.0028119219932705164,
@@ -2370,6 +3942,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.7079663276672363,
        0.00013937299081590027,
@@ -2392,6 +3976,18 @@
     "layer": 11,
     "heads": [
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.23976801335811615,
        0.0631161779165268,
@@ -2409,6 +4005,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.9051623940467834,
        0.002311810851097107,
@@ -2426,6 +4034,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.9483737945556641,
        0.0015620649792253971,
@@ -2443,6 +4063,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.8824905157089233,
        0.0028875567950308323,
@@ -2460,6 +4092,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.8030888438224792,
        0.004909047391265631,
@@ -2477,6 +4121,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.9544902443885803,
        0.0035998555831611156,
@@ -2494,6 +4150,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.9596531987190247,
        0.003596009686589241,
@@ -2511,6 +4179,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.8882009983062744,
        0.00457787374034524,
@@ -2528,6 +4208,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.00015171425184234977,
        0.014481204561889172,
@@ -2545,6 +4237,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.9736610651016235,
        0.0009980895556509495,
@@ -2562,6 +4266,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.6250599026679993,
        0.003035416128113866,
@@ -2579,6 +4295,18 @@
       ]
      ],
      [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       [
        0.5430429577827454,
        0.0013766292249783874,
