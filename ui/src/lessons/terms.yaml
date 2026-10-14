@@ -27,6 +27,9 @@ terms:
   - { term: activations, aliases: [activation], introduced_in: pry.p1-6 }
   - { term: attention, introduced_in: pry.p2-1 }
   - { term: attention head, aliases: [head], introduced_in: pry.p2-1 }
+  # Map section 6: query / key / value are named in P2.1's optional fold. No
+  # `key` alias: it would match the "Key parts" label and lesson keys.
+  - { term: query and key, introduced_in: pry.p2-1 }
   - { term: induction head, introduced_in: pry.p2-2 }
   - { term: previous-token head, introduced_in: pry.p2-2 }
   - { term: logit lens, introduced_in: pry.p2-3 }
@@ -48,6 +51,8 @@ terms:
   - { term: steering, introduced_in: pry.p3-5 }
   - { term: coherence, introduced_in: pry.p3-5 }
   - { term: circuit, introduced_in: pry.p3-7 }
+  # The Key parts threshold (glossary `threshold`), met with the map in P3.7.
+  - { term: threshold, introduced_in: pry.p3-7 }
   - { term: direct value path, introduced_in: pry.p3-7 }
   - { term: base model, introduced_in: pry.p4-1 }
   - { term: fine-tuning, introduced_in: pry.p4-1 }

@@ -664,6 +664,7 @@ rows:
     note: '{fid} rule: the highest-ranked feature at " Jordan" whose label names basketball (12472, "names of basketball players", rank 4), so the skeptic''s Jordan-country check tests it. Distractors: the labels of the two highest-ranked other features at " Jordan" (13856, 13526). Snippet the label doesn''t describe: the one naming Drew Brees, an NFL quarterback.'
     constants:
       fid: { path: fid, unit: number }
+      label: { path: label, unit: string, note: "Neuronpedia's label for {fid}, fetched when this row was recorded (lesson checks run without the network)" }
       sae_layer: { from_row: 62, path: sae_layer, unit: layer, note: "the preset SAE (gpt2-small-res-jb, blocks.8) that row 62 recorded; this row's feature run uses the same preset" }
 
   - id: 54

@@ -3,6 +3,18 @@
   "model": "gpt2-small",
   "requests": [
     {
+      "endpoint": "/tokenize",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "text": "The bank"
+      },
+      "key": "089f0187c7441f95bce02cd25aab1faa7afdc60dc84954823fd7adc5aefbbf6f",
+      "lessons": [
+        "pry.p1-2"
+      ]
+    },
+    {
       "endpoint": "/dla",
       "model": "gpt2-small",
       "body": {
@@ -13,6 +25,35 @@
       "key": "0b21f9308ab13477900f447260538a0c7a8926087d6f3e94ec268199215c5bc9",
       "lessons": [
         "pry.p2-4"
+      ]
+    },
+    {
+      "endpoint": "/embedding",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "I like the river bank",
+        "positions": [
+          5
+        ]
+      },
+      "key": "0c6da7fe2049f4fffc0f47391ccb302cda6b663d217479bef20dc9dbc537e93d",
+      "lessons": [
+        "pry.p1-2"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The bank",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "0d120d2788b65930e678a404e3ebdda82fc0ac874021e80b49fd9f4e3400f56e",
+      "lessons": [
+        "pry.p1-2"
       ]
     },
     {
@@ -34,6 +75,21 @@
       "model": "gpt2-small",
       "body": {
         "preset_id": "gpt2-small",
+        "prompt": "Michael Jordan played the sport of",
+        "max_new_tokens": 0,
+        "top_k_features": 20,
+        "sae_layer": 8
+      },
+      "key": "18703c6f242a1db27ad9d6bd024bfaebab8d61f6dff8a3a19f9de14d2b1617d2",
+      "lessons": [
+        "pry.p1-3"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
         "prompt": "I like the money bank",
         "max_new_tokens": 0,
         "top_k_features": 20,
@@ -42,6 +98,21 @@
       "key": "18f0a844d2d508ed166cfa61d566ee56f44603eb5b41e20db99344dc07e91b9b",
       "lessons": [
         "pry.p2-5"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Michael Jordan played the sport of",
+        "max_new_tokens": 20,
+        "temperature": 0,
+        "top_k_features": 1
+      },
+      "key": "1dafa01dec71cce8736eceb35a30d5be726da8e68752414af5a0c7d675c308ed",
+      "lessons": [
+        "pry.p1-5"
       ]
     },
     {
@@ -70,6 +141,50 @@
       ]
     },
     {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "We hold these truths to be self-evident, that all men are",
+        "max_new_tokens": 20,
+        "temperature": 0,
+        "top_k_features": 1
+      },
+      "key": "295e4075e1002198c6793556c8c2a297143855c4cdd0afa3fb83f10e6249a0f8",
+      "lessons": [
+        "pry.p1-6"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Our quiet street was named for a baker who",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "298f0bbee5e73011cdd275b9de88ece989b3cb3e751ff9a1c09a42cab07e584a",
+      "lessons": [
+        "pry.p1-5",
+        "pry.p1-6"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Humans only use ten percent of their",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "2cc2c967430f3864aef8886a8138954c04826ae8dc7c7271d99d174c5042ef97",
+      "lessons": [
+        "pry.p1-4"
+      ]
+    },
+    {
       "endpoint": "/dla",
       "model": "gpt2-small",
       "body": {
@@ -82,6 +197,47 @@
       "key": "2dcfd83c972c6f42c498299fd27e066a67f1da5fcfb8b9b5dd7397d18f2de43f",
       "lessons": [
         "pry.p2-4"
+      ]
+    },
+    {
+      "endpoint": "/tokenize",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "text": "I like the money bank"
+      },
+      "key": "3788d18a0e048d081bb49e4f933c674259bda60fd50b214776807c23efea90a8",
+      "lessons": [
+        "pry.p1-2"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Tiger Woods played the sport of",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "3ed191ba1aa90230b88e8122abe85ef5e4e12fc8f1618793789badf4e0985117",
+      "lessons": [
+        "pry.p1-3"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Nice to meet you. My name is",
+        "max_new_tokens": 0,
+        "top_k_features": 20,
+        "sae_layer": 8
+      },
+      "key": "3f50f97d1b07adb5d1dd2b96826942885818c94f57dfcd83cd6c2340efad9a00",
+      "lessons": [
+        "pry.p1-6"
       ]
     },
     {
@@ -102,6 +258,36 @@
       "model": "gpt2-small",
       "body": {
         "preset_id": "gpt2-small",
+        "prompt": "Michael Jordan played the sport of",
+        "max_new_tokens": 20,
+        "temperature": 1,
+        "seed": 2,
+        "top_k_features": 1
+      },
+      "key": "51b65c580233fc51449ee132ffb3aebb054e92abf8b0d9d8f4c3d3ffd13440db",
+      "lessons": [
+        "pry.p1-5"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The MIT License\n\nPermission is hereby granted, free of charge, to any person obtaining a copy",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "560e7514c7bac351010203e2a0969763fabfa8c288fd77557604dab9ae08593c",
+      "lessons": [
+        "pry.p1-6"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
         "prompt": "He saw a carrot and had to grab it,\nHis hunger was like a starving",
         "max_new_tokens": 0,
         "top_k_features": 5
@@ -109,6 +295,50 @@
       "key": "59c906aaf74bcbe15b44a64eaec3882aab2764034dc58fc220fb2f046c172182",
       "lessons": [
         "pry.p2-3"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Two plus two equals",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "6cbfa01a0cf51537e015464b871062ea6755335522325630603b56a1bf055d3e",
+      "lessons": [
+        "pry.p1-4"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Tom Brady played the sport of",
+        "max_new_tokens": 0,
+        "top_k_features": 20,
+        "sae_layer": 8
+      },
+      "key": "74556d2ef9102b370a3f1ac633a6e3ccc86946760d29b2fef590af7406f4b91c",
+      "lessons": [
+        "pry.p1-3"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The MIT License\n\nPermission is hereby granted, free of charge, to any person obtaining a copy",
+        "max_new_tokens": 20,
+        "temperature": 0,
+        "top_k_features": 1
+      },
+      "key": "74f806eee847b1ea23e13cf873ff3fbcc36a743c919a9a9b415fc01f4676bdc2",
+      "lessons": [
+        "pry.p1-6"
       ]
     },
     {
@@ -142,6 +372,109 @@
       ]
     },
     {
+      "endpoint": "/tokenize",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "text": "I like the river bank"
+      },
+      "key": "8a0e92c780f4c5a2d585c679a7fea5d0989c85af581bfc7de956e2d330ac8328",
+      "lessons": [
+        "pry.p1-2"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Our quiet street was named for a baker who",
+        "max_new_tokens": 20,
+        "temperature": 0,
+        "top_k_features": 1
+      },
+      "key": "8bb7944332de4b287d590f5fb5c219b4018ae61fde26163cb97f388e98ea1c28",
+      "lessons": [
+        "pry.p1-5",
+        "pry.p1-6"
+      ]
+    },
+    {
+      "endpoint": "/embedding",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The bank",
+        "positions": [
+          2
+        ]
+      },
+      "key": "9ad506fa2031af5443fb7b61904c04369b2bc5ff71009ea61094dc637c558f7f",
+      "lessons": [
+        "pry.p1-2"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "I like the river bank",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "a1cde7500b758505f02e0c8a0866a651fda4a6366cf2f8b77a8df71f778c403b",
+      "lessons": [
+        "pry.p1-2"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Michael Jordan played the sport of",
+        "max_new_tokens": 20,
+        "temperature": 1,
+        "seed": 1,
+        "top_k_features": 1
+      },
+      "key": "a3235e72149c49eda34a91d80f617549965e4800325d76cd2d4ab023f17ed6d0",
+      "lessons": [
+        "pry.p1-5"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The capital of France is the city of",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "a468eb96531897079e4892b2e22c4d4216db580be59c17633a37b5b61e4de64a",
+      "lessons": [
+        "pry.p1-1",
+        "pry.p1-4"
+      ]
+    },
+    {
+      "endpoint": "/embedding",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "I like the money bank",
+        "positions": [
+          5
+        ]
+      },
+      "key": "a883b4e2f0564349c3dc86298053e6a06ee99085611e4684b7e6435dded5f4f1",
+      "lessons": [
+        "pry.p1-2"
+      ]
+    },
+    {
       "endpoint": "/logit-lens",
       "model": "gpt2-small",
       "body": {
@@ -166,6 +499,20 @@
       ]
     },
     {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "We hold these truths to be self-evident, that all men are",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "bd1f2c026c6e4a1997d5fe1acfa00dbf78aa055c25ca37b563398f86619ca5f8",
+      "lessons": [
+        "pry.p1-6"
+      ]
+    },
+    {
       "endpoint": "/sae-features",
       "model": "gpt2-small",
       "body": {
@@ -180,6 +527,21 @@
       ]
     },
     {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "My name is Sam. Nice to meet you. My name is",
+        "max_new_tokens": 0,
+        "top_k_features": 20,
+        "sae_layer": 8
+      },
+      "key": "c9713e866f65b955e2a810597ce9d013d0208d86226bf5fa2e4e8167e6261c15",
+      "lessons": [
+        "pry.p1-6"
+      ]
+    },
+    {
       "endpoint": "/logit-lens",
       "model": "gpt2-small",
       "body": {
@@ -189,6 +551,20 @@
       "key": "ca5904d80de5b8b3d4983f91e4dbc8d3bf31da0524a7b4d4be288e33e59e6a75",
       "lessons": [
         "pry.p2-3"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The capital of France is",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "ce84e8bcdec7307156bf7da570c6709b3f27be6ff15eeb4a2f585733953751fd",
+      "lessons": [
+        "pry.p1-1"
       ]
     },
     {
@@ -229,9 +605,27 @@
       },
       "key": "de870ae59653d02cb64f39674c39b3f8f7af8b94ef5ec7ae3a2b11e14a70226d",
       "lessons": [
+        "pry.p1-1",
+        "pry.p1-3",
+        "pry.p1-5",
+        "pry.p1-6",
         "pry.p2-3",
         "pry.p2-4",
         "pry.p2-5"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "It was unbelievable, said Leclerc",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "e22911d27439eb6ce2557062982928b6ee3b0e01677fe8da5a9c98b45d2911b3",
+      "lessons": [
+        "pry.p1-2"
       ]
     },
     {
@@ -250,11 +644,803 @@
     }
   ],
   "lessons": {
+    "pry.p1-1": {
+      "prompts": [
+        "Michael Jordan played the sport of",
+        "The capital of France is",
+        "The capital of France is the city of"
+      ],
+      "checks": [
+        {
+          "where": "s3-2/top-is-basketball",
+          "kind": "check",
+          "name": "top_guess.token equals \" basketball\"",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "top_guess.token",
+            "op": "equals",
+            "value": " basketball"
+          }
+        },
+        {
+          "where": "s3-2/top-is-basketball",
+          "kind": "slot",
+          "name": "basketball",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.42208
+        },
+        {
+          "where": "s3-2/explain",
+          "kind": "slot",
+          "name": "basketball",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.42208
+        },
+        {
+          "where": "s3-2/explain",
+          "kind": "slot",
+          "name": "football",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.047189
+        },
+        {
+          "where": "s3-2/explain",
+          "kind": "slot",
+          "name": "golf",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.041474
+        },
+        {
+          "where": "s3-2/explain",
+          "kind": "slot",
+          "name": "the_jordan",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.021034
+        },
+        {
+          "where": "s3-2/explain",
+          "kind": "slot",
+          "name": "rest",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.3702
+        },
+        {
+          "where": "s3-2/explain",
+          "kind": "assert",
+          "name": "basketball gt 0.3",
+          "prompt": "Michael Jordan played the sport of"
+        },
+        {
+          "where": "s5/france/france-obs",
+          "kind": "check",
+          "name": "top_guess.token equals \" now\"",
+          "prompt": "The capital of France is",
+          "check": {
+            "read": "top_guess.token",
+            "op": "equals",
+            "value": " now"
+          }
+        },
+        {
+          "where": "s5/france/france-obs",
+          "kind": "slot",
+          "name": "now",
+          "prompt": "The capital of France is",
+          "expect": 0.047506
+        },
+        {
+          "where": "s5/explain",
+          "kind": "slot",
+          "name": "now",
+          "prompt": "The capital of France is",
+          "expect": 0.047506
+        },
+        {
+          "where": "s5/explain",
+          "kind": "slot",
+          "name": "the_france",
+          "prompt": "The capital of France is",
+          "expect": 0.037447
+        },
+        {
+          "where": "s5/explain",
+          "kind": "slot",
+          "name": "a_france",
+          "prompt": "The capital of France is",
+          "expect": 0.035461
+        },
+        {
+          "where": "s5/explain",
+          "kind": "slot",
+          "name": "home",
+          "prompt": "The capital of France is",
+          "expect": 0.030921
+        },
+        {
+          "where": "s5/explain",
+          "kind": "assert",
+          "name": "now lt 0.1",
+          "prompt": "The capital of France is"
+        },
+        {
+          "where": "s5/explain",
+          "kind": "slot",
+          "name": "paris",
+          "prompt": "The capital of France is the city of",
+          "expect": 0.097184
+        },
+        {
+          "where": "s5/explain",
+          "kind": "slot",
+          "name": "marse",
+          "prompt": "The capital of France is the city of",
+          "expect": 0.089123
+        },
+        {
+          "where": "s5/explain",
+          "kind": "assert",
+          "name": "paris_lead lt 0.02",
+          "prompt": "The capital of France is the city of"
+        }
+      ]
+    },
+    "pry.p1-2": {
+      "prompts": [
+        "It was unbelievable, said Leclerc",
+        "I like the river bank",
+        "I like the money bank",
+        "The bank"
+      ],
+      "checks": [
+        {
+          "where": "s3-2/pieces-obs",
+          "kind": "check",
+          "name": "word_tokens equals 1",
+          "prompt": "It was unbelievable, said Leclerc",
+          "check": {
+            "read": "word_tokens",
+            "args": {
+              "word": " unbelievable"
+            },
+            "op": "equals",
+            "value": 1,
+            "expect": 1
+          }
+        },
+        {
+          "where": "s3-2/pieces-obs",
+          "kind": "check",
+          "name": "word_tokens equals 3",
+          "prompt": "It was unbelievable, said Leclerc",
+          "check": {
+            "read": "word_tokens",
+            "args": {
+              "word": " Leclerc"
+            },
+            "op": "equals",
+            "value": 3,
+            "expect": 3
+          }
+        },
+        {
+          "where": "s3-6/identical-obs",
+          "kind": "slot",
+          "name": "bank_matches",
+          "prompt": "It was unbelievable, said Leclerc",
+          "expect": 768
+        },
+        {
+          "where": "s3-6/identical-obs",
+          "kind": "check",
+          "name": "embedding.matches equals 768",
+          "prompt": "It was unbelievable, said Leclerc",
+          "check": {
+            "read": "embedding.matches",
+            "args": {
+              "part": "sum"
+            },
+            "op": "equals",
+            "value": 768,
+            "expect": 768
+          }
+        },
+        {
+          "where": "s3-7/explain",
+          "kind": "slot",
+          "name": "bank_word",
+          "prompt": "I like the river bank",
+          "expect": 6
+        },
+        {
+          "where": "s3-7/the-bank-pos",
+          "kind": "slot",
+          "name": "bank_pos",
+          "prompt": "I like the river bank",
+          "expect": 5
+        },
+        {
+          "where": "s3-7/the-bank-obs",
+          "kind": "slot",
+          "name": "the_bank_pos",
+          "prompt": "The bank",
+          "expect": 2
+        },
+        {
+          "where": "s3-7/the-bank-obs",
+          "kind": "check",
+          "name": "focus.position equals 2",
+          "prompt": "The bank",
+          "check": {
+            "read": "focus.position",
+            "op": "equals",
+            "value": 2,
+            "expect": 2
+          }
+        },
+        {
+          "where": "s5/bank-two-five/match-or-not",
+          "kind": "slot",
+          "name": "pos_two",
+          "prompt": "The bank",
+          "expect": 2
+        },
+        {
+          "where": "s5/bank-two-five/match-or-not",
+          "kind": "slot",
+          "name": "pos_five",
+          "prompt": "The bank",
+          "expect": 5
+        },
+        {
+          "where": "s5/bank-two-five/split-obs",
+          "kind": "slot",
+          "name": "embed_matches",
+          "prompt": "The bank",
+          "expect": 768
+        },
+        {
+          "where": "s5/bank-two-five/split-obs",
+          "kind": "slot",
+          "name": "pos_matches",
+          "prompt": "The bank",
+          "expect": 0
+        },
+        {
+          "where": "s5/bank-two-five/split-obs",
+          "kind": "slot",
+          "name": "cosine",
+          "prompt": "The bank",
+          "expect": 0.95732
+        },
+        {
+          "where": "s5/bank-two-five/split-obs",
+          "kind": "check",
+          "name": "embedding.matches equals 768",
+          "prompt": "The bank",
+          "check": {
+            "read": "embedding.matches",
+            "args": {
+              "part": "embed"
+            },
+            "op": "equals",
+            "value": 768,
+            "expect": 768
+          }
+        },
+        {
+          "where": "s5/bank-two-five/split-obs",
+          "kind": "check",
+          "name": "embedding.matches not equals 768",
+          "prompt": "The bank",
+          "check": {
+            "read": "embedding.matches",
+            "args": {
+              "part": "pos"
+            },
+            "op": "equals",
+            "value": 768,
+            "not": true,
+            "expect": 0
+          }
+        },
+        {
+          "where": "s5/bank-two-five/split-obs",
+          "kind": "assert",
+          "name": "cosine gt 0.9",
+          "prompt": "The bank"
+        }
+      ]
+    },
+    "pry.p1-3": {
+      "prompts": [
+        "Michael Jordan played the sport of",
+        "Tom Brady played the sport of",
+        "Tiger Woods played the sport of"
+      ],
+      "checks": [
+        {
+          "where": "s3-5/differ-obs",
+          "kind": "slot",
+          "name": "jordan_bb",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.42208
+        },
+        {
+          "where": "s3-5/differ-obs",
+          "kind": "slot",
+          "name": "jordan_fb",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.047189
+        },
+        {
+          "where": "s3-5/differ-obs",
+          "kind": "slot",
+          "name": "brady_fb",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.48629
+        },
+        {
+          "where": "s3-5/differ-obs",
+          "kind": "slot",
+          "name": "brady_bb",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.022681
+        },
+        {
+          "where": "s3-5/differ-obs",
+          "kind": "check",
+          "name": "compare.top not equals \"$read.compare.top\"",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "compare.top",
+            "args": {
+              "side": "a"
+            },
+            "op": "equals",
+            "value": "$read.compare.top",
+            "value_args": {
+              "side": "b"
+            },
+            "not": true
+          }
+        },
+        {
+          "where": "s5/tiger/tiger-obs",
+          "kind": "slot",
+          "name": "tiger_golf",
+          "prompt": "Tiger Woods played the sport of",
+          "expect": 0.55911
+        },
+        {
+          "where": "s5/tiger/tiger-obs",
+          "kind": "check",
+          "name": "top_guess.token equals \" golf\"",
+          "prompt": "Tiger Woods played the sport of",
+          "check": {
+            "read": "top_guess.token",
+            "op": "equals",
+            "value": " golf"
+          }
+        }
+      ]
+    },
+    "pry.p1-4": {
+      "prompts": [
+        "Two plus two equals",
+        "The capital of France is the city of",
+        "Humans only use ten percent of their"
+      ],
+      "checks": [
+        {
+          "where": "s3-2/one-obs",
+          "kind": "check",
+          "name": "top_guess.token equals \" one\"",
+          "prompt": "Two plus two equals",
+          "check": {
+            "read": "top_guess.token",
+            "op": "equals",
+            "value": " one"
+          }
+        },
+        {
+          "where": "s3-2/one-obs",
+          "kind": "check",
+          "name": "prediction contains {\"rank\":3}",
+          "prompt": "Two plus two equals",
+          "check": {
+            "read": "prediction",
+            "args": {
+              "token": " four"
+            },
+            "op": "contains",
+            "value": {
+              "rank": 3
+            },
+            "expect": {
+              "rank": 3
+            }
+          }
+        },
+        {
+          "where": "s3-2/explain",
+          "kind": "slot",
+          "name": "one_p",
+          "prompt": "Two plus two equals",
+          "expect": 0.34206
+        },
+        {
+          "where": "s3-2/explain",
+          "kind": "slot",
+          "name": "two_p",
+          "prompt": "Two plus two equals",
+          "expect": 0.16224
+        },
+        {
+          "where": "s3-2/explain",
+          "kind": "slot",
+          "name": "four_p",
+          "prompt": "Two plus two equals",
+          "expect": 0.069509
+        },
+        {
+          "where": "s3-2/explain",
+          "kind": "slot",
+          "name": "three_p",
+          "prompt": "Two plus two equals",
+          "expect": 0.068916
+        },
+        {
+          "where": "s3-2/explain",
+          "kind": "slot",
+          "name": "rest",
+          "prompt": "Two plus two equals",
+          "expect": 0.2446
+        },
+        {
+          "where": "s3-3/explain",
+          "kind": "slot",
+          "name": "shape",
+          "prompt": "Two plus two equals",
+          "expect": "few"
+        },
+        {
+          "where": "s3-3/explain",
+          "kind": "assert",
+          "name": "shape equals \"few\"",
+          "prompt": "Two plus two equals"
+        },
+        {
+          "where": "s3-4/bigger-obs",
+          "kind": "check",
+          "name": "prediction.logit gt \"$read.prediction\"",
+          "prompt": "Two plus two equals",
+          "check": {
+            "read": "prediction",
+            "args": {
+              "token": " one"
+            },
+            "field": "logit",
+            "op": "gt",
+            "value": "$read.prediction",
+            "value_args": {
+              "token": " four"
+            },
+            "value_field": "logit"
+          }
+        },
+        {
+          "where": "s3-5/paris-obs",
+          "kind": "slot",
+          "name": "paris",
+          "prompt": "The capital of France is the city of",
+          "expect": 0.097184
+        },
+        {
+          "where": "s3-5/paris-obs",
+          "kind": "slot",
+          "name": "marse",
+          "prompt": "The capital of France is the city of",
+          "expect": 0.089123
+        },
+        {
+          "where": "s3-5/paris-obs",
+          "kind": "slot",
+          "name": "saint",
+          "prompt": "The capital of France is the city of",
+          "expect": 0.030925
+        },
+        {
+          "where": "s3-5/paris-obs",
+          "kind": "slot",
+          "name": "st",
+          "prompt": "The capital of France is the city of",
+          "expect": 0.027857
+        },
+        {
+          "where": "s3-5/paris-obs",
+          "kind": "check",
+          "name": "prediction contains {\"rank\":1}",
+          "prompt": "The capital of France is the city of",
+          "check": {
+            "read": "prediction",
+            "args": {
+              "token": " Paris"
+            },
+            "op": "contains",
+            "value": {
+              "rank": 1
+            },
+            "expect": {
+              "rank": 1
+            }
+          }
+        },
+        {
+          "where": "s3-5/paris-obs",
+          "kind": "assert",
+          "name": "paris_lead lt 0.02",
+          "prompt": "The capital of France is the city of"
+        },
+        {
+          "where": "s5/myth/myth-obs",
+          "kind": "slot",
+          "name": "brains",
+          "prompt": "Humans only use ten percent of their",
+          "expect": 0.12701
+        },
+        {
+          "where": "s5/myth/myth-obs",
+          "kind": "slot",
+          "name": "energy",
+          "prompt": "Humans only use ten percent of their",
+          "expect": 0.1146
+        },
+        {
+          "where": "s5/myth/myth-obs",
+          "kind": "slot",
+          "name": "body",
+          "prompt": "Humans only use ten percent of their",
+          "expect": 0.1027
+        },
+        {
+          "where": "s5/myth/myth-obs",
+          "kind": "slot",
+          "name": "bodies",
+          "prompt": "Humans only use ten percent of their",
+          "expect": 0.072989
+        },
+        {
+          "where": "s5/myth/myth-obs",
+          "kind": "check",
+          "name": "top_guess.prob lt 0.5",
+          "prompt": "Humans only use ten percent of their",
+          "check": {
+            "read": "top_guess.prob",
+            "op": "lt",
+            "value": 0.5,
+            "expect": 0.12701
+          }
+        }
+      ]
+    },
+    "pry.p1-5": {
+      "prompts": [
+        "Michael Jordan played the sport of",
+        "Our quiet street was named for a baker who"
+      ],
+      "checks": [
+        {
+          "where": "s3-1/write-obs",
+          "kind": "slot",
+          "name": "first_tok",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": " basketball"
+        },
+        {
+          "where": "s3-1/write-obs",
+          "kind": "slot",
+          "name": "first_p",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.42208
+        },
+        {
+          "where": "s3-5/match-obs",
+          "kind": "slot",
+          "name": "text_a",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": "Michael Jordan played the sport of basketball for the first time in his life in the 1980s. He was a member of the NBA"
+        },
+        {
+          "where": "s3-5/match-obs",
+          "kind": "slot",
+          "name": "text_c",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": "Michael Jordan played the sport of football in 1974. He did not return from the 1976 Olympics to Arizona, but he was Deacon"
+        },
+        {
+          "where": "s3-5/match-obs",
+          "kind": "slot",
+          "name": "text_d",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": "Michael Jordan played the sport of shot who cared about red as a kid or A-game for his team. Those days are gone"
+        },
+        {
+          "where": "s3-5/match-obs",
+          "kind": "check",
+          "name": "write_it.text equals \"$capture.b.write_it.text\"",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "write_it.text",
+            "from": "a",
+            "op": "equals",
+            "value": "$capture.b.write_it.text"
+          }
+        },
+        {
+          "where": "s3-5/match-obs",
+          "kind": "check",
+          "name": "write_it.text equals \"$capture.e.write_it.text\"",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "write_it.text",
+            "from": "c",
+            "op": "equals",
+            "value": "$capture.e.write_it.text"
+          }
+        },
+        {
+          "where": "s3-5/match-obs",
+          "kind": "check",
+          "name": "write_it.text not equals \"$capture.d.write_it.text\"",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "write_it.text",
+            "from": "c",
+            "op": "equals",
+            "value": "$capture.d.write_it.text",
+            "not": true
+          }
+        },
+        {
+          "where": "s5/baker/baker-write",
+          "kind": "check",
+          "name": "write_it.text contains \"a baker who was a great friend of mine\"",
+          "prompt": "Our quiet street was named for a baker who",
+          "check": {
+            "read": "write_it.text",
+            "op": "contains",
+            "value": "a baker who was a great friend of mine"
+          }
+        },
+        {
+          "where": "s5/baker/baker-obs",
+          "kind": "check",
+          "name": "write_it.text contains \"a baker who was a great friend of mine\"",
+          "prompt": "Our quiet street was named for a baker who",
+          "check": {
+            "read": "write_it.text",
+            "op": "contains",
+            "value": "a baker who was a great friend of mine"
+          }
+        }
+      ]
+    },
+    "pry.p1-6": {
+      "prompts": [
+        "My name is Sam. Nice to meet you. My name is",
+        "Nice to meet you. My name is",
+        "Michael Jordan played the sport of",
+        "The MIT License\n\nPermission is hereby granted, free of charge, to any person obtaining a copy",
+        "We hold these truths to be self-evident, that all men are",
+        "Our quiet street was named for a baker who"
+      ],
+      "checks": [
+        {
+          "where": "s3-2/sam-obs",
+          "kind": "slot",
+          "name": "sam_a",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.19151
+        },
+        {
+          "where": "s3-2/sam-obs",
+          "kind": "check",
+          "name": "compare.prediction.rank lt 11",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "compare.prediction",
+            "args": {
+              "side": "a",
+              "token": " Sam"
+            },
+            "field": "rank",
+            "op": "lt",
+            "value": 11,
+            "expect": 1
+          }
+        },
+        {
+          "where": "s3-2/sam-obs",
+          "kind": "check",
+          "name": "compare.prediction.rank not lt 11",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "compare.prediction",
+            "args": {
+              "side": "b",
+              "token": " Sam"
+            },
+            "field": "rank",
+            "op": "lt",
+            "value": 11,
+            "not": true,
+            "expect": "absent"
+          }
+        },
+        {
+          "where": "s3-2/explain",
+          "kind": "slot",
+          "name": "basketball",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.42208
+        },
+        {
+          "where": "s5/openings/openings-obs",
+          "kind": "check",
+          "name": "write_it.text contains \"obtaining a copy of this software and associated documentation files (the \\\"Software\\\"), to deal in the\"",
+          "prompt": "Our quiet street was named for a baker who",
+          "check": {
+            "read": "write_it.text",
+            "from": "mit",
+            "op": "contains",
+            "value": "obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the"
+          }
+        },
+        {
+          "where": "s5/openings/openings-obs",
+          "kind": "check",
+          "name": "write_it.text contains \"all men are created equal, that every man is endowed by his Creator\"",
+          "prompt": "Our quiet street was named for a baker who",
+          "check": {
+            "read": "write_it.text",
+            "from": "decl",
+            "op": "contains",
+            "value": "all men are created equal, that every man is endowed by his Creator"
+          }
+        },
+        {
+          "where": "s5/openings/openings-obs",
+          "kind": "check",
+          "name": "write_it.text contains \"a baker who was a great friend of mine\"",
+          "prompt": "Our quiet street was named for a baker who",
+          "check": {
+            "read": "write_it.text",
+            "from": "baker",
+            "op": "contains",
+            "value": "a baker who was a great friend of mine"
+          }
+        }
+      ]
+    },
     "pry.p2-1": {
       "prompts": [
         "When Mary and John went to the store, John gave a drink to"
       ],
       "checks": [
+        {
+          "where": "s3-2/run-ioi",
+          "kind": "slot",
+          "name": "mary",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": 0.677
+        },
+        {
+          "where": "s3-2/run-ioi",
+          "kind": "slot",
+          "name": "john",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": 0.0235
+        },
         {
           "where": "s3-5/thickest",
           "kind": "check",
@@ -286,6 +1472,13 @@
         },
         {
           "where": "s5/other-head/heaviest-obs",
+          "kind": "slot",
+          "name": "weight",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": 0.808
+        },
+        {
+          "where": "s5/other-head/heaviest-obs",
           "kind": "check",
           "name": "attention.top_source contains {\"token\":\"$row.23.token\"}",
           "prompt": "When Mary and John went to the store, John gave a drink to",
@@ -301,13 +1494,6 @@
               "token": "$row.23.token"
             }
           }
-        },
-        {
-          "where": "s5/other-head/heaviest-obs",
-          "kind": "slot",
-          "name": "weight",
-          "prompt": "When Mary and John went to the store, John gave a drink to",
-          "expect": 0.808
         }
       ]
     },
@@ -317,17 +1503,6 @@
         "Pip ordered zebra lamps from Quorn. Pip ordered yellow lamps from"
       ],
       "checks": [
-        {
-          "where": "s3-3/pip-obs",
-          "kind": "check",
-          "name": "top_guess.token equals \" Qu\"",
-          "prompt": "Pip ordered zebra lamps from Quorn. Pip ordered zebra lamps from",
-          "check": {
-            "read": "top_guess.token",
-            "op": "equals",
-            "value": " Qu"
-          }
-        },
         {
           "where": "s3-3/pip-obs",
           "kind": "slot",
@@ -343,6 +1518,40 @@
           "expect": 0.0172
         },
         {
+          "where": "s3-3/pip-obs",
+          "kind": "check",
+          "name": "top_guess.token equals \" Qu\"",
+          "prompt": "Pip ordered zebra lamps from Quorn. Pip ordered zebra lamps from",
+          "check": {
+            "read": "top_guess.token",
+            "op": "equals",
+            "value": " Qu"
+          }
+        },
+        {
+          "where": "s3-5/ringed-layers",
+          "kind": "slot",
+          "name": "top_induction_heads",
+          "prompt": "Pip ordered zebra lamps from Quorn. Pip ordered zebra lamps from",
+          "expect": [
+            {
+              "layer": 5,
+              "head": 5,
+              "induction": 0.9389
+            },
+            {
+              "layer": 7,
+              "head": 10,
+              "induction": 0.886
+            },
+            {
+              "layer": 6,
+              "head": 9,
+              "induction": 0.8556
+            }
+          ]
+        },
+        {
           "where": "s3-5/ringed-layers",
           "kind": "check",
           "name": "head_scores.top contains \"$row.15.top_induction_head_ref\"",
@@ -355,6 +1564,13 @@
             "op": "contains",
             "value": "$row.15.top_induction_head_ref"
           }
+        },
+        {
+          "where": "s3-7/head-to-qu",
+          "kind": "slot",
+          "name": "from_weight",
+          "prompt": "Pip ordered zebra lamps from Quorn. Pip ordered zebra lamps from",
+          "expect": 0.7523
         },
         {
           "where": "s3-7/head-to-qu",
@@ -373,6 +1589,20 @@
               "token": " Qu"
             }
           }
+        },
+        {
+          "where": "s5/yellow/yellow-obs",
+          "kind": "slot",
+          "name": "qu",
+          "prompt": "Pip ordered zebra lamps from Quorn. Pip ordered yellow lamps from",
+          "expect": 0.1158
+        },
+        {
+          "where": "s5/yellow/yellow-obs",
+          "kind": "slot",
+          "name": "the_p",
+          "prompt": "Pip ordered zebra lamps from Quorn. Pip ordered yellow lamps from",
+          "expect": 0.0169
         },
         {
           "where": "s5/yellow/yellow-obs",
@@ -397,21 +1627,6 @@
       "checks": [
         {
           "where": "s3-5/first-top-obs",
-          "kind": "check",
-          "name": "lens.first_top_layer equals 8",
-          "prompt": "Michael Jordan played the sport of",
-          "check": {
-            "read": "lens.first_top_layer",
-            "args": {
-              "token": " basketball"
-            },
-            "op": "equals",
-            "value": 8,
-            "expect": 8
-          }
-        },
-        {
-          "where": "s3-5/first-top-obs",
           "kind": "slot",
           "name": "first_top_layer",
           "prompt": "Michael Jordan played the sport of",
@@ -430,6 +1645,28 @@
           "name": "peak_p",
           "prompt": "Michael Jordan played the sport of",
           "expect": 0.932
+        },
+        {
+          "where": "s3-5/first-top-obs",
+          "kind": "slot",
+          "name": "final_p",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.4221
+        },
+        {
+          "where": "s3-5/first-top-obs",
+          "kind": "check",
+          "name": "lens.first_top_layer equals 8",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "lens.first_top_layer",
+            "args": {
+              "token": " basketball"
+            },
+            "op": "equals",
+            "value": 8,
+            "expect": 8
+          }
         },
         {
           "where": "s3-6/explain-result",
@@ -454,6 +1691,20 @@
         },
         {
           "where": "s3-7/she-obs",
+          "kind": "slot",
+          "name": "she_first",
+          "prompt": "The nurse said that",
+          "expect": 10
+        },
+        {
+          "where": "s3-7/she-obs",
+          "kind": "slot",
+          "name": "she_final",
+          "prompt": "The nurse said that",
+          "expect": 0.1897
+        },
+        {
+          "where": "s3-7/she-obs",
           "kind": "check",
           "name": "lens.first_top_layer equals 10",
           "prompt": "The nurse said that",
@@ -466,6 +1717,20 @@
             "value": 10,
             "expect": 10
           }
+        },
+        {
+          "where": "s5/mary-lens/mary-obs",
+          "kind": "slot",
+          "name": "mary_first",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": 9
+        },
+        {
+          "where": "s5/mary-lens/mary-obs",
+          "kind": "slot",
+          "name": "mary_final",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": 0.677
         },
         {
           "where": "s5/mary-lens/mary-obs",
@@ -504,6 +1769,26 @@
         "When Mary and John went to the store, John gave a drink to"
       ],
       "checks": [
+        {
+          "where": "s3-5/bars-obs",
+          "kind": "slot",
+          "name": "top_parts",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": [
+            {
+              "part": "MLP.9",
+              "contribution": 1.8497
+            },
+            {
+              "part": "MLP.10",
+              "contribution": 1.778
+            },
+            {
+              "part": "L11.H3",
+              "contribution": 1.7494
+            }
+          ]
+        },
         {
           "where": "s3-5/bars-obs",
           "kind": "check",
@@ -566,6 +1851,47 @@
         },
         {
           "where": "s3-9/mary-john-obs",
+          "kind": "slot",
+          "name": "top_parts",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": [
+            {
+              "part": "L10.H7",
+              "contribution": -2.2792
+            },
+            {
+              "part": "L9.H6",
+              "contribution": 2.1079
+            },
+            {
+              "part": "L9.H9",
+              "contribution": 2.0957
+            }
+          ]
+        },
+        {
+          "where": "s3-9/mary-john-obs",
+          "kind": "slot",
+          "name": "bars_total",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": 4.564
+        },
+        {
+          "where": "s3-9/mary-john-obs",
+          "kind": "slot",
+          "name": "actual_logit",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": 3.362
+        },
+        {
+          "where": "s3-9/mary-john-obs",
+          "kind": "slot",
+          "name": "gap",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": -1.203
+        },
+        {
+          "where": "s3-9/mary-john-obs",
           "kind": "check",
           "name": "dla.target equals {\"answer\":\" Mary\",\"contrast\":\" John\"}",
           "prompt": "When Mary and John went to the store, John gave a drink to",
@@ -586,6 +1912,10 @@
         "I like the river bank",
         "I like the money bank"
       ],
+      "checks": []
+    },
+    "pry.quick-tour": {
+      "prompts": [],
       "checks": []
     }
   }

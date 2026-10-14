@@ -1,0 +1,30 @@
+# Pry's bundled lessons, in path order, with their stages (plan T6, plan:511-534).
+# The loader orders bundled lessons by this list; the copy lint reads it as the
+# path (a term must be introduced earlier on it). Stage 0 is the quick tour,
+# which sits outside the stages.
+#
+# All 20 ids are listed. While the T6 lanes run apart, a listed id may have no
+# folder yet in a lane's worktree: the loader skips it, and
+# lessons-content.test.ts allows a missing folder only for the ids other lanes
+# write (it fails on any other gap, and on a folder this file doesn't list).
+lessons:
+  - { id: pry.quick-tour, stage: 0 }
+  - { id: pry.p1-1, stage: 1 }
+  - { id: pry.p1-2, stage: 1 }
+  - { id: pry.p1-3, stage: 1 }
+  - { id: pry.p1-4, stage: 1 }
+  - { id: pry.p1-5, stage: 1 }
+  - { id: pry.p1-6, stage: 1 }
+  - { id: pry.p2-1, stage: 2 }
+  - { id: pry.p2-2, stage: 2 }
+  - { id: pry.p2-3, stage: 2 }
+  - { id: pry.p2-4, stage: 2 }
+  - { id: pry.p2-5, stage: 2 }
+  - { id: pry.p3-1, stage: 3 }
+  - { id: pry.p3-2, stage: 3 }
+  - { id: pry.p3-3, stage: 3 }
+  - { id: pry.p3-4, stage: 3 }
+  - { id: pry.p3-5, stage: 3 }
+  - { id: pry.p3-6, stage: 3 }
+  - { id: pry.p3-7, stage: 3 }
+  - { id: pry.p4-1, stage: 4 }
