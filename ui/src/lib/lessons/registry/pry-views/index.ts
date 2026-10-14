@@ -19,7 +19,14 @@ export const pryViews: Record<string, ViewDef> = {
     args: z.object({}).strict(),
     component: EmbeddingCompare,
   },
-  'text-diff': { doc: 'Two captured texts with the changed tokens marked.', args: captures, component: TextDiff },
+  'text-diff': {
+    doc: 'A captured text against a second capture (b) or a literal reference text, with the changed tokens marked.',
+    args: z
+      .object({ a: z.string(), b: z.string().optional(), text: z.string().optional() })
+      .strict()
+      .refine((v) => (v.b === undefined) !== (v.text === undefined), { message: 'give exactly one of b (a capture) or text (a literal reference)' }),
+    component: TextDiff,
+  },
   'top5-pair': { doc: 'Two captured top 5 lists side by side.', args: captures, component: Top5Pair },
   'three-logits': {
     doc: 'Clean, corrupted and patched logits on one line with the share formula.',

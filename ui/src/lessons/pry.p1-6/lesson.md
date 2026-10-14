@@ -283,7 +283,8 @@ columns:
 :::compare{id=marked}
 ```yaml
 columns:
-  - { view: text-diff, args: { a: mit, b: decl } }
+  - { view: text-diff, args: { a: mit, text: " of this software and associated documentation files (the \"Software\"), to deal in the" } }
+  - { view: text-diff, args: { a: decl, text: "that they are endowed by their Creator" } }
   - { text: "Read each one against the real text beside it: the licence matches, and the Declaration swaps \"they are\" and \"their\" for \"every man is\" and \"his\"." }
 ```
 :::
