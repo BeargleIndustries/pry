@@ -86,7 +86,7 @@ describe('custom model copy', () => {
 
   it('matches the sidecar message', () => {
     expect(NO_SAE_MESSAGE).toBe(
-      "Features need a trained feature dictionary (SAE); this model doesn't have one in Pry yet.",
+      "Features need a trained sparse autoencoder (SAE); this model doesn't have one in Pry yet.",
     );
   });
 });

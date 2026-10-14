@@ -100,6 +100,22 @@ describe('lint', () => {
     expect(errors(lint(body, {}, { verifiedRows: ['14', '26'] }))).toEqual([]);
   });
 
+  it('› $row field missing from rows.json constants is an error (warning under --skeleton)', () => {
+    const body = `## A\n\n:::slots\nname: { row: "23.token", format: string }\n:::\n\n${step(
+      'do{id=d}',
+      `Look at {name}.\n\n${F}actions\n- open_head: { layer: $row.23.layer, head: $row.23.head }\n${F}`,
+    )}`;
+    const verifiedRows = ['23'];
+    const all = { '23': { layer: { value: 2, unit: 'layer' }, head: { value: 8, unit: 'head' }, token: { value: ' gave', unit: 'string' } } };
+    expect(errors(lint(body, {}, { verifiedRows, rowConstants: all }))).toEqual([]);
+    const noHead = { '23': { layer: all['23'].layer, token: all['23'].token } };
+    expect(errors(lint(body, {}, { verifiedRows, rowConstants: noHead }))).toContain('row-field-missing');
+    const noToken = { '23': { layer: all['23'].layer, head: all['23'].head } };
+    expect(errors(lint(body, {}, { verifiedRows, rowConstants: noToken }))).toContain('row-field-missing');
+    expect(errors(lint(body, {}, { verifiedRows, rowConstants: noHead, skeleton: true }))).not.toContain('row-field-missing');
+    expect(warnings(lint(body, {}, { verifiedRows, rowConstants: noHead, skeleton: true }))).toContain('row-field-missing');
+  });
+
   it('› bundled slot without expect is an error', () => {
     const body = `## A\n\n:::slots\ntop: { read: top_guess.token }\n:::\n\n${step('explain{id=e}', 'It gave {top}.')}`;
     expect(errors(lint(body, BASE, { bundled: true }))).toContain('expect-missing');

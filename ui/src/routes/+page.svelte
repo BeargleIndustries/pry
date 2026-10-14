@@ -801,7 +801,7 @@
     {
       id: 'logit-lens',
       label: 'Logit Lens',
-      title: 'Watch the model change its mind layer by layer. Each row shows what it would guess if it had to answer at that layer.',
+      title: 'A rough read of what each layer would guess. Each row shows what the model would predict if it had to answer at that layer.',
     },
     {
       id: 'dla',
@@ -821,8 +821,8 @@
     },
   ];
   const rightTabs: TabDef[] = [
-    { id: 'features', label: 'Features', title: 'Concepts the model lit up for each word: what it "knew" while reading your prompt.' },
-    { id: 'predictions', label: 'Predictions', title: "What the model thinks the next word should be, and how likely it thinks each guess is." },
+    { id: 'features', label: 'Features', title: "Patterns a separate network (an SAE) found in the model's numbers at each token, with labels an AI wrote from examples." },
+    { id: 'predictions', label: 'Predictions', title: 'The probability the model gives each possible next token, highest first.' },
     { id: 'steering', label: 'Steering', title: "Turn a feature up or down and run again to see how the model's answer shifts." },
   ];
   let leftActiveTab = $state('attention');

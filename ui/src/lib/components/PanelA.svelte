@@ -630,7 +630,7 @@
         A model can't guess random words. But if the same random words come round a second time, it
         can guess each one, as long as it remembers what came next last time. Some <Term key="attention-head">attention heads</Term> do
         exactly that. To find them, Pry gives the model a test: {headScoresResponse?.repeat_len ?? 25}
-        random word-pieces (the chunks the model reads text in), then the same ones again in the same
+        random tokens (the chunks the model reads text in), then the same ones again in the same
         order. Then it checks where every head looks during the second time through.
       </p>
 

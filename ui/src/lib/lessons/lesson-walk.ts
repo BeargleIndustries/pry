@@ -14,7 +14,7 @@ import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { vi } from 'vitest';
 import { pryToolSet } from './registry/pry-set';
-import { createDispatcher } from './registry/dispatcher';
+import { createDispatcher, resolveBindings } from './registry/dispatcher';
 import { RequestMemo } from './registry/memo';
 import { requestKey } from './registry/request-key';
 import { answer, makeHost } from './registry/pry-test-host';
@@ -71,13 +71,36 @@ export function loadRecorded(dir: string): Recorded {
   return out;
 }
 
-/** rows.json values by row id, for `$row.<id>.<field>`. */
+/**
+ * rows.json by row id, for `$row.<id>.<field>`: the row's `constants` (their
+ * values) first, then its recorded `values` for any field without a constant.
+ */
 export function loadRows(file: string): Map<string, Record<string, unknown>> {
   const out = new Map<string, Record<string, unknown>>();
   if (!existsSync(file)) return out;
-  const doc = JSON.parse(readFileSync(file, 'utf8')) as { rows: { id: number; values: Record<string, unknown> }[] };
-  for (const r of doc.rows) out.set(String(r.id), r.values ?? {});
+  const doc = JSON.parse(readFileSync(file, 'utf8')) as {
+    rows: { id: number; values: Record<string, unknown>; constants?: Record<string, { value: unknown }> }[];
+  };
+  for (const r of doc.rows) {
+    const constants = Object.fromEntries(Object.entries(r.constants ?? {}).map(([k, c]) => [k, c.value]));
+    out.set(String(r.id), { ...(r.values ?? {}), ...constants });
+  }
   return out;
+}
+
+/**
+ * Recordings keep only each head's last query row of attention (test_lessons.py
+ * `_trim`). Put that row back at the last token's index so readouts that read
+ * the last token's row find it; earlier rows stay empty (not recorded).
+ */
+function untrim(resp: unknown): unknown {
+  const r = resp as { tokens?: unknown[]; attention?: { heads: number[][][] }[] } | undefined;
+  const n = r?.tokens?.length ?? 0;
+  if (!r?.attention || n < 2 || r.attention[0]?.heads?.[0]?.length !== 1) return resp;
+  return {
+    ...r,
+    attention: r.attention.map((l) => ({ ...l, heads: l.heads.map((h) => [...Array.from({ length: n - 1 }, () => []), h[0]]) })),
+  };
 }
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -93,6 +116,25 @@ function deepEqual(a: unknown, b: unknown, tol?: number): boolean {
   if (typeof a === 'number' && typeof b === 'number') return Math.abs(a - b) <= (tol ?? 1e-9);
   return JSON.stringify(a) === JSON.stringify(b);
 }
+
+/**
+ * A recorded expect against a live value: numbers within `tol` (default 1e-3,
+ * or 0.1% of the value), at any depth in lists and records, so a list of parts
+ * authored with rounded contributions still matches.
+ */
+function approxEqual(live: unknown, want: unknown, tol?: number): boolean {
+  if (typeof live === 'number' && typeof want === 'number') return Math.abs(live - want) <= (tol ?? Math.max(1e-3, Math.abs(want) * 1e-3));
+  if (Array.isArray(live) && Array.isArray(want)) return live.length === want.length && want.every((w, i) => approxEqual(live[i], w, tol));
+  if (isObj(live) && isObj(want)) {
+    const keys = new Set([...Object.keys(live), ...Object.keys(want)]);
+    return [...keys].every((k) => approxEqual(live[k], want[k], tol));
+  }
+  return live === want;
+}
+
+/** `value` held by a record: every field it names matches. */
+const holdsFields = (got: unknown, want: unknown, tol?: number) =>
+  isObj(got) && isObj(want) && Object.entries(want).every(([k, w]) => approxEqual(got[k], w, tol));
 
 /** Default tolerance for a slot's live value against its authored expect. */
 function slotTolerance(expect: number, slot: Slot): number {
@@ -122,7 +164,7 @@ export async function walkLesson(
       const req = { endpoint, model, body, key };
       if (n === 0) res.requests.push(req);
       const list = opts.recorded.get(key);
-      let out: unknown = list?.[n] ?? list?.[0];
+      let out: unknown = untrim(list?.[n] ?? list?.[0]);
       if (out === undefined) {
         if (n === 0) res.missing.push(req);
         out = answer(endpoint, body);
@@ -146,11 +188,17 @@ export async function walkLesson(
   const read = (name: string, args?: Record<string, unknown>, capture?: unknown) => {
     const def = readouts[name];
     if (!def) return undefined;
-    return def.read(capture !== undefined ? { ...(args ?? {}), from_capture: capture } : args);
+    // `$row` inside readout arguments (slot and check args, P3.3's patch.cell) resolves first.
+    const a = args === undefined ? undefined : (resolveBindings(args, bindings) as Record<string, unknown>);
+    return def.read(capture !== undefined ? { ...(a ?? {}), from_capture: capture } : a);
   };
   const src: SlotSource = {
     read: (name, args, capture) => read(name, args, capture !== undefined ? captures.get(capture) : undefined),
-    row: (id) => opts.rows?.get(id),
+    // The walker compares values, so the unit only matters for rendering.
+    row: (id, field) => {
+      const value = pick(opts.rows?.get(id), field);
+      return value === undefined ? undefined : { value, unit: 'number' };
+    },
     readouts,
   };
   const bindings = { earlier: () => undefined, row: (id: string, field: string) => pick(opts.rows?.get(id), field) };
@@ -158,7 +206,9 @@ export async function walkLesson(
   /** A check's right-hand side; `skip` when it needs the learner. */
   function rhs(item: CheckItem): { value?: unknown; skip?: string } {
     const v = item.value;
-    if (typeof v !== 'string' || !v.startsWith('$')) return { value: v };
+    // `$row` inside a record or list value (P3.3: contains { layer: $row.27.peak_layer }).
+    if (typeof v !== 'string') return { value: v !== null && typeof v === 'object' ? resolveBindings(v, bindings) : v };
+    if (!v.startsWith('$')) return { value: v };
     let m: RegExpExecArray | null;
     if (v === '$prediction') return { skip: 'compares with the learner\'s prediction' };
     if ((m = /^\$slot\.(.+)$/.exec(v))) return { value: slots[m[1]]?.expect };
@@ -220,7 +270,7 @@ export async function walkLesson(
           typeof got === 'string'
             ? typeof want === 'string' && got.includes(want)
             : Array.isArray(got)
-              ? got.some((g) => deepEqual(g, want))
+              ? got.some((g) => deepEqual(g, want) || holdsFields(g, want, tol))
               : isObj(got) && isObj(want) && Object.entries(want).every(([k, w]) => deepEqual(got[k], w, tol));
         break;
       case 'starts_with':
@@ -241,8 +291,8 @@ export async function walkLesson(
           : typeof e === 'number' && typeof got === 'number'
             ? Math.abs(got - e) <= (tol ?? Math.max(1e-3, Math.abs(e) * 1e-3))
             : isObj(e) && isObj(got)
-              ? Object.entries(e).every(([k, w]) => deepEqual(got[k], w, tol))
-              : deepEqual(got, e);
+              ? holdsFields(got, e, tol)
+              : approxEqual(got, e, tol);
       if (!ok) return { ok, got, want: `${fmt(want)} (recorded ${fmt(e)})` };
     }
     return { ok, got, want };
@@ -254,6 +304,10 @@ export async function walkLesson(
     const key = `${where}|${name}`;
     if (done.has(key)) return;
     done.add(key);
+    if (learnerGap && slots[name] && !slots[name].from_capture) {
+      res.checks.push({ where, kind: 'slot', name, ok: true, skipped: learnerGap, detail: '', prompt: prompt() });
+      return;
+    }
     const slot = slots[name];
     if (!slot) return;
     for (const f of slot.from ?? []) checkSlot(f, where, done);
@@ -264,7 +318,7 @@ export async function walkLesson(
     }
     const got = slotValue(name, slots, src);
     const want = slot.expect;
-    const ok = typeof want === 'number' && typeof got === 'number' ? Math.abs(got - want) <= slotTolerance(want, slot) : deepEqual(got, want);
+    const ok = typeof want === 'number' && typeof got === 'number' ? Math.abs(got - want) <= slotTolerance(want, slot) : approxEqual(got, want, slot.tolerance);
     res.checks.push({ where, kind: 'slot', name, ok, detail: `live ${fmt(got)}, expect ${fmt(want)}`, expect: want, prompt: prompt() });
   }
 
@@ -283,6 +337,10 @@ export async function walkLesson(
 
   function runAsserts(list: AssertItem[] | undefined, where: string, done: Set<string>) {
     for (const a of list ?? []) {
+      if (learnerGap) {
+        res.checks.push({ where, kind: 'assert', name: a.require.slot, ok: true, skipped: learnerGap, detail: '', prompt: prompt() });
+        continue;
+      }
       for (const s of [a.require.slot, a.require.slot2].filter((x): x is string => !!x)) checkSlot(s, where, done);
       for (const s of slotsIn([a.say, a.else])) checkSlot(s, where, done);
       let fell = false;
@@ -301,6 +359,10 @@ export async function walkLesson(
   function runCheckItems(items: CheckItem | CheckItem[] | undefined, where: string) {
     const list = items === undefined ? [] : Array.isArray(items) ? items : [items];
     for (const item of list) {
+      if (learnerGap) {
+        res.checks.push({ where, kind: 'check', name: item.read, ok: true, skipped: learnerGap, detail: '', prompt: prompt(), check: item });
+        continue;
+      }
       const r = evalCheck(item);
       res.checks.push({
         where,
@@ -330,6 +392,8 @@ export async function walkLesson(
    * the learner: the transfer's prompt in the box, then Run.
    */
   let learnerPrompt: string | undefined;
+  /** Set after a learner task the walk can't play: later reads in its transfer or section are the learner's. */
+  let learnerGap: string | undefined;
   /** Learner actions a task asks for, with the settings its prose tells the learner to use (P1.5:5 "sets temperature 0 and presses Write"). */
   const LEARNER_PLAY: Record<string, Record<string, unknown>> = { write_it: { temperature: 0 }, run: {} };
   const RUNS = ['run', 'ensure_run', 'run_compare', 'write_it', 'run_logit_lens', 'run_dla', 'run_head_ablation', 'run_patching', 'run_feature_ablation', 'run_steer', 'steer_across', 'run_circuit', 'show_embedding'];
@@ -343,7 +407,7 @@ export async function walkLesson(
     }
     switch (step.kind) {
       case 'do': {
-        for (const s of slotsIn([step.prose.map((p) => p.text)])) checkSlot(s, at, done);
+        // A do step's prose often reports what the run gives: its slots are read after the actions.
         before = read('result');
         for (const a of step.actions) {
           try {
@@ -360,6 +424,7 @@ export async function walkLesson(
           }
         }
         if (typeof f.capture === 'string') captures.set(f.capture, read('result'));
+        for (const s of slotsIn([step.prose.map((p) => p.text)])) checkSlot(s, at, done);
         break;
       }
       case 'observe':
@@ -387,6 +452,9 @@ export async function walkLesson(
           }
           runCheckItems(f.target, at);
           if (typeof f.capture === 'string') captures.set(f.capture, read('result'));
+        } else if (acts.length) {
+          // The learner's run decides what the rest of this transfer (or section) reads.
+          learnerGap = `after task ${step.id ?? at}, which the walk can't play (${acts.join(', ')})`;
         }
         break;
       }
@@ -401,6 +469,7 @@ export async function walkLesson(
     if (step.kind === 'transfer') learnerPrompt = f.prompt as string;
     for (const c of step.children) await walkStep(c, at, done);
     learnerPrompt = outer;
+    if (step.kind === 'transfer') learnerGap = undefined;
   }
 
   let state: unknown;
@@ -415,6 +484,7 @@ export async function walkLesson(
     }
     if (baseline === undefined) baseline = read('result');
     slots = { ...(lesson.meta.slots ?? {}), ...(section.slots ?? {}) };
+    learnerGap = undefined;
     const done = new Set<string>();
     for (const step of section.steps) await walkStep(step, where, done);
     for (const [k, fb] of pendingFeedback) {

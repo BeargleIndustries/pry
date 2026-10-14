@@ -178,7 +178,15 @@ describe('lessons content', () => {
    * Where a lesson departs from its skeleton on purpose. Each entry names why;
    * nothing else may differ in sections, step kinds or actions.
    */
-  const DEPARTURES: { lesson: string; step: string; lessonActions?: string[]; skeletonActions?: string[]; added?: true; why: string }[] = [
+  const DEPARTURES: { lesson: string; step: string; lessonActions?: string[]; skeletonActions?: string[]; added?: true; args?: true; why: string }[] = [
+    // `args`: same actions, arguments differ on purpose.
+    ...['features-tab', 'open-card'].map((step) => ({
+      lesson: 'pry.p2-5',
+      step,
+      args: true as const,
+      why: "the feature row is row 53 (verified-rows.yaml's outline label \"31\"); the skeleton's $row.1 has no sae_layer or fid",
+    })),
+    { lesson: 'pry.p2-5', step: 'bank-compare', args: true, why: 'focus_token gained `side` (the row constants lane) to pick the Compare side' },
     { lesson: 'pry.p1-5', step: 'baker-set', lessonActions: ['set_prompt', 'run'], skeletonActions: ['set_prompt', 'write_it'], why: 'critic r5: the transfer write is learner-run, so the lesson only sets and runs the prompt' },
     { lesson: 'pry.p1-5', step: 'baker-write', added: true, why: 'critic r5: a task with learner_actions: [write_it]' },
     ...['write-mit', 'write-decl', 'write-baker'].map((step) => ({
@@ -190,13 +198,33 @@ describe('lessons content', () => {
     })),
   ];
 
+  const rowsJson = JSON.parse(readFileSync(join(LESSONS, '__generated__/rows.json'), 'utf8')) as {
+    rows: { id: number; values?: Record<string, unknown>; constants?: Record<string, { value: unknown }> }[];
+  };
+  const rowValue = (id: string, field: string): unknown => {
+    const r = rowsJson.rows.find((x) => String(x.id) === id);
+    const c = r?.constants?.[field];
+    return c !== undefined ? c.value : field.split('.').reduce<unknown>((v, k) => (v as Record<string, unknown> | undefined)?.[k], r?.values);
+  };
+  const rowValues = (v: unknown): unknown => {
+    if (typeof v === 'string') {
+      const m = /^\$row\.([^.]+)\.(.+)$/.exec(v);
+      return m ? (rowValue(m[1], m[2]) ?? v) : v;
+    }
+    if (Array.isArray(v)) return v.map(rowValues);
+    if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, rowValues(x)]));
+    return v;
+  };
+
   it("› each bundled lesson's sections, step kinds and actions match its outline-coverage skeleton", () => {
     const sig = (l: Lesson, side: 'lesson' | 'skeleton') => {
       const dep = DEPARTURES.filter((d) => d.lesson === l.meta.id);
       const one = (s: Step): unknown[] => {
         const d = dep.find((x) => x.step === s.id);
         if (d?.added && side === 'lesson') return [];
-        let actions = s.actions.map((a) => `${a.name} ${JSON.stringify(a.args)}`);
+        // `$row` arguments compare by value: an outline label's row and its alias (row 29 → row 51) are the same constant.
+        let actions = s.actions.map((a) => `${a.name} ${JSON.stringify(rowValues(a.args))}`);
+        if (d?.args) actions = s.actions.map((a) => a.name);
         if (d?.lessonActions) {
           expect(s.actions.map((a) => a.name), `${l.meta.id} ${s.id} (${side})`).toEqual(side === 'lesson' ? d.lessonActions : d.skeletonActions);
           actions = ['(departure)'];
@@ -219,15 +247,18 @@ describe('lessons content', () => {
     .map((block) => ({
       term: /\bterm:\s*['"]([^'"]+)['"]/.exec(block)?.[1],
       introducedIn: /\bintroducedIn:\s*['"]([^'"]+)['"]/.exec(block)?.[1],
+      aliases: [.../\baliases:\s*\[([^\]]*)\]/.exec(block)?.[1]?.matchAll(/['"]([^'"]+)['"]/g) ?? []].map((m) => m[1]),
     }))
-    .filter((g): g is { term: string; introducedIn: string } => !!g.term && !!g.introducedIn);
+    .filter((g): g is { term: string; introducedIn: string; aliases: string[] } => !!g.term && !!g.introducedIn);
   it.skipIf(withIntro.length === 0)(
     `› glossary introducedIn matches terms.yaml${withIntro.length === 0 ? ' (waiting for lane/t6-copy to add introducedIn to glossary.ts)' : ''}`,
     () => {
       const terms = (parseYaml(readFileSync(join(LESSONS, 'terms.yaml'), 'utf8')) as { terms: { term: string; aliases?: string[]; introduced_in: string }[] }).terms;
-      const find = (name: string) => terms.find((t) => [t.term, ...(t.aliases ?? [])].some((n) => n.toLowerCase() === name.toLowerCase()));
+      // A glossary entry matches a term when any of its names (term or alias) is one of the term's.
+      const find = (names: string[]) =>
+        terms.find((t) => [t.term, ...(t.aliases ?? [])].some((n) => names.some((m) => n.toLowerCase() === m.toLowerCase())));
       for (const g of withIntro) {
-        const t = find(g.term);
+        const t = find([g.term, ...g.aliases]);
         expect(t, `glossary "${g.term}" isn't in terms.yaml`).toBeDefined();
         expect(g.introducedIn, g.term).toBe(t!.introduced_in);
       }

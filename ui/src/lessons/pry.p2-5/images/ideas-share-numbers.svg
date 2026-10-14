@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="14">
+  <title>Ideas share numbers</title>
+  <rect width="640" height="300" fill="#ffffff"/>
+  <text x="320" y="28" text-anchor="middle" fill="#222" font-weight="600">One token's residual stream: a row of numbers</text>
+  <!-- number cells -->
+  <g fill="#f4f4f4" stroke="#aaa">
+    <rect x="40" y="200" width="36" height="36"/><rect x="76" y="200" width="36" height="36"/>
+    <rect x="112" y="200" width="36" height="36"/><rect x="148" y="200" width="36" height="36"/>
+    <rect x="184" y="200" width="36" height="36"/><rect x="220" y="200" width="36" height="36"/>
+    <rect x="256" y="200" width="36" height="36"/><rect x="292" y="200" width="36" height="36"/>
+    <rect x="328" y="200" width="36" height="36"/><rect x="364" y="200" width="36" height="36"/>
+    <rect x="400" y="200" width="36" height="36"/><rect x="436" y="200" width="36" height="36"/>
+    <rect x="472" y="200" width="36" height="36"/><rect x="508" y="200" width="36" height="36"/>
+    <rect x="544" y="200" width="36" height="36"/>
+  </g>
+  <text x="600" y="224" fill="#777">...</text>
+  <!-- ideas as overlapping bands -->
+  <rect x="40" y="60" width="300" height="34" rx="17" fill="#3b6fb6" fill-opacity="0.25" stroke="#3b6fb6"/>
+  <text x="56" y="82" fill="#1f3f6e">a name</text>
+  <rect x="148" y="104" width="324" height="34" rx="17" fill="#d08a00" fill-opacity="0.25" stroke="#d08a00"/>
+  <text x="164" y="126" fill="#7a5000">a sports name</text>
+  <rect x="256" y="148" width="324" height="34" rx="17" fill="#3a9a5b" fill-opacity="0.25" stroke="#3a9a5b"/>
+  <text x="272" y="170" fill="#1e5a33">a sport is coming up</text>
+  <!-- guides -->
+  <g stroke="#bbb" stroke-dasharray="3 3">
+    <line x1="166" y1="94" x2="166" y2="200"/><line x1="274" y1="94" x2="274" y2="200"/>
+    <line x1="310" y1="138" x2="310" y2="200"/><line x1="418" y1="138" x2="418" y2="200"/>
+  </g>
+  <text x="320" y="270" text-anchor="middle" fill="#555" font-size="13">Each idea is spread over many numbers, and each number moves for several ideas.</text>
+</svg>

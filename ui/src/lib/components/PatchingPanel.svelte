@@ -271,8 +271,8 @@
       </button>
     </div>
     <p class="text-[10px] text-zinc-500">
-      Heads swaps one attention head at a time. <Term key="mlp">MLPs</Term> swaps each layer's processing block.
-      <Term key="residual-stream">Residual</Term> swaps the running notes at one word, going into one layer.
+      Heads swaps one attention head at a time. <Term key="mlp">MLPs</Term> swaps one layer's MLP at a time.
+      <Term key="residual-stream">Residual</Term> swaps the residual stream at one word, going into one layer.
     </p>
   </div>
 
@@ -314,7 +314,7 @@
       <!-- Heatmap for head patching -->
       <div class="overflow-x-auto">
         <div id={gridDescId} class="text-[10px] text-zinc-600 mb-1">
-          Rows are layers, columns are heads. Blue squares bring the original answer back, orange push it further away. Brighter means a bigger change. Look for <Term key="name-mover">name mover</Term> heads in the late layers. Click a square for its numbers; arrow keys move between squares.
+          Rows are layers, columns are heads. Blue squares raise the original answer's score, orange push it further away. Brighter means a bigger change. Look for <Term key="name-mover">name mover</Term> heads in the late layers. Click a square for its numbers; arrow keys move between squares.
         </div>
         <div
           bind:this={gridEl}
@@ -366,7 +366,7 @@
       <!-- Heatmap for residual patching: one square per (layer, word) -->
       <div class="overflow-x-auto">
         <div id={gridDescId} class="text-[10px] text-zinc-600 mb-1">
-          Rows are layers, columns are words. Each square swaps in the original prompt's information at one word, going into one layer. Blue squares bring the original answer back, orange push it further away. Click a square for its numbers; arrow keys move between squares.
+          Rows are layers, columns are words. Each square swaps in the original prompt's information at one word, going into one layer. Blue squares raise the original answer's score, orange push it further away. Click a square for its numbers; arrow keys move between squares.
         </div>
         <div
           bind:this={gridEl}
