@@ -465,9 +465,18 @@ export function visibleHits(strings: string[], phrase: string | RegExp): string[
   });
 }
 
+/** A lesson file's text lines, without blank lines, `:::` directive fences and `---` frontmatter fences. */
+function visibleFromMarkdown(src: string): string[] {
+  return src
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => l !== '' && l !== '---' && !l.startsWith(':::'));
+}
+
 /** Visible strings in a source file, chosen by its extension. */
 export function visibleStrings(src: string, filename: string): string[] {
   if (filename.endsWith('.svelte')) return visibleFromSvelte(src);
+  if (filename.endsWith('.md')) return visibleFromMarkdown(src);
   if (filename.endsWith('.json')) return visibleFromJson(src);
   return visibleFromCode(src);
 }

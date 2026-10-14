@@ -371,7 +371,7 @@ export const tourChapters: TourChapter[] = [
         blurb:
           'Did basketball make the top spot? The readout gives you its chance in plain words, and a "confident" tag shows up when the top guess has better than even odds.',
         why:
-          "A probability is the model's confidence, and confidence isn't a fact check (a model can be 90% sure and still wrong). The confident tag appears when the top guess is over 50%. The uncertain tag appears when the top three guesses are within a few points of each other. Keep an eye out for surprises, since a model that's confidently wrong about a fact is exactly what interpretability wants to catch and explain.",
+          "A probability is about what text tends to come next, not what's true, so a top guess can get 90% and still be wrong. When one guess gets most of the chance, over 50%, the confident tag appears. When the top three guesses are within a few points of each other, the uncertain tag appears. Keep an eye out for surprises, since a fluent wrong answer about a fact is exactly what interpretability wants to catch and explain.",
       },
       {
         id: 'guesses.write',

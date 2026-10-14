@@ -31,7 +31,7 @@ Effects: `view` and `compute` run freely and replay when a section opens; `downl
 | `show_copying_heads` | compute | `{ on: boolean }` | Turns the Copying heads view on or off. |
 | `run_logit_lens` | compute | `{}` | Runs the logit lens and waits for it. |
 | `run_dla` | compute | `{ answer?: string, contrast?: string }` | Runs DLA and waits for it, with an optional answer and contrast token. |
-| `switch_sae_layer` | compute, stateful | `{ layer: integer }` | Switches the feature dictionary (SAE) layer. |
+| `switch_sae_layer` | compute, stateful | `{ layer: integer }` | Switches the SAE layer. |
 | `open_feature` | view | `{ id: integer }` | Opens the feature card for one feature id. |
 | `search_concepts` | network | `{ text: string }` | Looks up a concept on Neuronpedia. The learner starts it. |
 | `set_head_ablation` | view | `{ heads: { layer: integer, head: integer }[], on: boolean }` | Marks attention heads to knock out. |

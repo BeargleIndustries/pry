@@ -20,12 +20,11 @@
   </div>
 
   <p class="mb-6 text-lg leading-relaxed text-zinc-300">
-    Pry opens the black box. See what's happening inside a small language model, right
-    on your computer. No cloud.
+    Peek inside a small language model, right on your computer. No cloud.
   </p>
 
   <p class="mb-8 text-sm leading-relaxed text-zinc-500">
-    See which earlier words the model looks at, which ideas light up inside it, and what changes
+    See which earlier words the model looks at, which patterns fire inside it, and what changes
     when you poke it. No math or coding needed.
   </p>
 
@@ -50,8 +49,8 @@
         <p>
           Pry is a desktop app for learning how language models work by looking inside one. It runs
           small, open models (like GPT-2) on your own computer and shows you what's going on
-          inside: which words the model pays <Term key="attention">attention</Term> to, and which concepts (we call them
-          <Term key="feature">features</Term>) light up as it reads.
+          inside: which earlier words the model draws from (that's <Term key="attention">attention</Term>), and which patterns (we call them
+          <Term key="feature">features</Term>) fire as it reads.
         </p>
         <p>
           Everything runs on your computer. The first launch downloads the tools Pry needs to run a

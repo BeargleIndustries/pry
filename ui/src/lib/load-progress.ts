@@ -73,8 +73,8 @@ export const STAGE_LABELS: Record<string, string> = {
   download_model: 'Downloading the model',
   load_model: 'Loading the model into memory',
   to_device: 'Moving it to your GPU',
-  download_sae: 'Downloading the feature dictionary',
-  load_sae: 'Loading the feature dictionary',
+  download_sae: 'Downloading the sparse autoencoder (SAE)',
+  load_sae: 'Loading the sparse autoencoder (SAE)',
   ready: 'Ready',
   already_loaded: 'Ready',
 };
@@ -491,7 +491,7 @@ export function stageNote(track: LoadTrack, view: LoadView): string | null {
     case 'to_device':
       return "Pry copies the model's numbers into your graphics card's memory, because that's where the math runs fastest.";
     case 'load_sae':
-      return 'Pry uses the feature dictionary (an SAE) to turn the model’s internal numbers into ideas you can read.';
+      return 'Pry uses the sparse autoencoder (SAE) to split the model’s internal numbers into features you can read.';
     default:
       return null;
   }
