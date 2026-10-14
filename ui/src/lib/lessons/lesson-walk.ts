@@ -296,6 +296,13 @@ export async function walkLesson(
 
   /** Predict feedback is shown at the reveal: evaluated at the observe it `checks`, or at section end. */
   const pendingFeedback = new Map<string, unknown[]>();
+  /**
+   * Inside a transfer, a faded do step leaves Run to the learner (P1.3:5 "the
+   * learner presses Run"). With no action that runs anything, the walk plays
+   * the learner: the transfer's prompt in the box, then Run.
+   */
+  let learnerPrompt: string | undefined;
+  const RUNS = ['run', 'ensure_run', 'run_compare', 'write_it', 'run_logit_lens', 'run_dla', 'run_head_ablation', 'run_patching', 'run_feature_ablation', 'run_steer', 'steer_across', 'run_circuit', 'show_embedding'];
 
   async function walkStep(step: Step, where: string, done: Set<string>) {
     const at = `${where}/${step.id ?? step.kind}`;
@@ -314,6 +321,12 @@ export async function walkLesson(
             if (r.status !== 'done') res.errors.push(`${at}: ${a.name} ${r.status}`);
           } catch (e) {
             res.errors.push(`${at}: ${a.name} threw ${String(e)}`);
+          }
+        }
+        if (learnerPrompt !== undefined && !step.actions.some((a) => RUNS.includes(a.name))) {
+          for (const [name, args] of [['set_prompt', { text: learnerPrompt }], ['run', {}]] as const) {
+            const r = await dispatcher.dispatch(name, args, { signal, bindings });
+            if (r.status !== 'done') res.errors.push(`${at}: learner ${name} ${r.status}`);
           }
         }
         if (typeof f.capture === 'string') captures.set(f.capture, read('result'));
@@ -343,7 +356,10 @@ export async function walkLesson(
         runAsserts(f.assert, at, done);
       }
     }
+    const outer = learnerPrompt;
+    if (step.kind === 'transfer') learnerPrompt = f.prompt as string;
     for (const c of step.children) await walkStep(c, at, done);
+    learnerPrompt = outer;
   }
 
   let state: unknown;

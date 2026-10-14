@@ -44,6 +44,21 @@
       ]
     },
     {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Michael Jordan played the sport of",
+        "max_new_tokens": 0,
+        "top_k_features": 20,
+        "sae_layer": 8
+      },
+      "key": "18703c6f242a1db27ad9d6bd024bfaebab8d61f6dff8a3a19f9de14d2b1617d2",
+      "lessons": [
+        "pry.p1-3"
+      ]
+    },
+    {
       "endpoint": "/tokenize",
       "model": "gpt2-small",
       "body": {
@@ -53,6 +68,35 @@
       "key": "3788d18a0e048d081bb49e4f933c674259bda60fd50b214776807c23efea90a8",
       "lessons": [
         "pry.p1-2"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Tiger Woods played the sport of",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "3ed191ba1aa90230b88e8122abe85ef5e4e12fc8f1618793789badf4e0985117",
+      "lessons": [
+        "pry.p1-3"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Tom Brady played the sport of",
+        "max_new_tokens": 0,
+        "top_k_features": 20,
+        "sae_layer": 8
+      },
+      "key": "74556d2ef9102b370a3f1ac633a6e3ccc86946760d29b2fef590af7406f4b91c",
+      "lessons": [
+        "pry.p1-3"
       ]
     },
     {
@@ -150,7 +194,8 @@
       },
       "key": "de870ae59653d02cb64f39674c39b3f8f7af8b94ef5ec7ae3a2b11e14a70226d",
       "lessons": [
-        "pry.p1-1"
+        "pry.p1-1",
+        "pry.p1-3"
       ]
     },
     {
@@ -473,6 +518,79 @@
           "kind": "assert",
           "name": "cosine gt 0.9",
           "prompt": "The bank"
+        }
+      ]
+    },
+    "pry.p1-3": {
+      "prompts": [
+        "Michael Jordan played the sport of",
+        "Tom Brady played the sport of",
+        "Tiger Woods played the sport of"
+      ],
+      "checks": [
+        {
+          "where": "s3-5/differ-obs",
+          "kind": "slot",
+          "name": "jordan_bb",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.42208
+        },
+        {
+          "where": "s3-5/differ-obs",
+          "kind": "slot",
+          "name": "jordan_fb",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.047189
+        },
+        {
+          "where": "s3-5/differ-obs",
+          "kind": "slot",
+          "name": "brady_fb",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.48629
+        },
+        {
+          "where": "s3-5/differ-obs",
+          "kind": "slot",
+          "name": "brady_bb",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.022681
+        },
+        {
+          "where": "s3-5/differ-obs",
+          "kind": "check",
+          "name": "compare.top not equals \"$read.compare.top\"",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "compare.top",
+            "args": {
+              "side": "a"
+            },
+            "op": "equals",
+            "value": "$read.compare.top",
+            "value_args": {
+              "side": "b"
+            },
+            "not": true
+          }
+        },
+        {
+          "where": "s5/tiger/tiger-obs",
+          "kind": "slot",
+          "name": "tiger_golf",
+          "prompt": "Tiger Woods played the sport of",
+          "expect": 0.55911
+        },
+        {
+          "where": "s5/tiger/tiger-obs",
+          "kind": "check",
+          "name": "top_guess.token equals \" golf\"",
+          "prompt": "Tiger Woods played the sport of",
+          "check": {
+            "read": "top_guess.token",
+            "op": "equals",
+            "value": " golf"
+          }
         }
       ]
     },

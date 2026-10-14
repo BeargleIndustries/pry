@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 560" width="760" height="560" font-family="system-ui, sans-serif">
+<rect width="760" height="560" fill="#ffffff"/>
+<rect x="510" y="20" width="240" height="30" rx="6" fill="#dbeafe" stroke="#2563eb"/>
+<text x="630" y="40" text-anchor="middle" font-size="14" fill="#1f2937">chances for the next token</text>
+<line x1="692.0" y1="70" x2="692.0" y2="50" stroke="#2563eb" stroke-width="2" marker-end="url(#a)"/>
+<defs><marker id="a" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/></marker></defs>
+<text x="106" y="90" text-anchor="end" font-size="13" fill="#6b7280">L11</text>
+<rect x="120" y="73" width="616" height="24" rx="4" fill="#f9fafb" stroke="#d1d5db"/>
+<text x="106" y="120" text-anchor="end" font-size="13" fill="#6b7280">L10</text>
+<rect x="120" y="103" width="616" height="24" rx="4" fill="#f9fafb" stroke="#d1d5db"/>
+<text x="106" y="150" text-anchor="end" font-size="13" fill="#6b7280">L9</text>
+<rect x="120" y="133" width="616" height="24" rx="4" fill="#f9fafb" stroke="#d1d5db"/>
+<text x="106" y="180" text-anchor="end" font-size="13" fill="#6b7280">L8</text>
+<rect x="120" y="163" width="616" height="24" rx="4" fill="#f9fafb" stroke="#d1d5db"/>
+<text x="106" y="210" text-anchor="end" font-size="13" fill="#6b7280">L7</text>
+<rect x="120" y="193" width="616" height="24" rx="4" fill="#f9fafb" stroke="#d1d5db"/>
+<text x="106" y="240" text-anchor="end" font-size="13" fill="#6b7280">L6</text>
+<rect x="120" y="223" width="616" height="24" rx="4" fill="#f9fafb" stroke="#d1d5db"/>
+<text x="106" y="270" text-anchor="end" font-size="13" fill="#6b7280">L5</text>
+<rect x="120" y="253" width="616" height="24" rx="4" fill="#f9fafb" stroke="#d1d5db"/>
+<text x="106" y="300" text-anchor="end" font-size="13" fill="#6b7280">L4</text>
+<rect x="120" y="283" width="616" height="24" rx="4" fill="#f9fafb" stroke="#d1d5db"/>
+<text x="106" y="330" text-anchor="end" font-size="13" fill="#6b7280">L3</text>
+<rect x="120" y="313" width="616" height="24" rx="4" fill="#f9fafb" stroke="#d1d5db"/>
+<text x="106" y="360" text-anchor="end" font-size="13" fill="#6b7280">L2</text>
+<rect x="120" y="343" width="616" height="24" rx="4" fill="#f9fafb" stroke="#d1d5db"/>
+<text x="106" y="390" text-anchor="end" font-size="13" fill="#6b7280">L1</text>
+<rect x="120" y="373" width="616" height="24" rx="4" fill="#f9fafb" stroke="#d1d5db"/>
+<text x="106" y="420" text-anchor="end" font-size="13" fill="#6b7280">L0</text>
+<rect x="120" y="403" width="616" height="24" rx="4" fill="#f9fafb" stroke="#d1d5db"/>
+<line x1="164.0" y1="436" x2="164.0" y2="72" stroke="#6b7280" stroke-width="1.5"/>
+<circle cx="164.0" cy="85.0" r="3.5" fill="#6b7280"/>
+<circle cx="164.0" cy="115.0" r="3.5" fill="#6b7280"/>
+<circle cx="164.0" cy="145.0" r="3.5" fill="#6b7280"/>
+<circle cx="164.0" cy="175.0" r="3.5" fill="#6b7280"/>
+<circle cx="164.0" cy="205.0" r="3.5" fill="#6b7280"/>
+<circle cx="164.0" cy="235.0" r="3.5" fill="#6b7280"/>
+<circle cx="164.0" cy="265.0" r="3.5" fill="#6b7280"/>
+<circle cx="164.0" cy="295.0" r="3.5" fill="#6b7280"/>
+<circle cx="164.0" cy="325.0" r="3.5" fill="#6b7280"/>
+<circle cx="164.0" cy="355.0" r="3.5" fill="#6b7280"/>
+<circle cx="164.0" cy="385.0" r="3.5" fill="#6b7280"/>
+<circle cx="164.0" cy="415.0" r="3.5" fill="#6b7280"/>
+<rect x="124.0" y="440" width="80" height="26" rx="5" fill="#f3f4f6" stroke="#6b7280"/>
+<text x="164.0" y="457" text-anchor="middle" font-size="12" fill="#1f2937">marker</text>
+<line x1="252.0" y1="436" x2="252.0" y2="72" stroke="#6b7280" stroke-width="1.5"/>
+<circle cx="252.0" cy="85.0" r="3.5" fill="#6b7280"/>
+<circle cx="252.0" cy="115.0" r="3.5" fill="#6b7280"/>
+<circle cx="252.0" cy="145.0" r="3.5" fill="#6b7280"/>
+<circle cx="252.0" cy="175.0" r="3.5" fill="#6b7280"/>
+<circle cx="252.0" cy="205.0" r="3.5" fill="#6b7280"/>
+<circle cx="252.0" cy="235.0" r="3.5" fill="#6b7280"/>
+<circle cx="252.0" cy="265.0" r="3.5" fill="#6b7280"/>
+<circle cx="252.0" cy="295.0" r="3.5" fill="#6b7280"/>
+<circle cx="252.0" cy="325.0" r="3.5" fill="#6b7280"/>
+<circle cx="252.0" cy="355.0" r="3.5" fill="#6b7280"/>
+<circle cx="252.0" cy="385.0" r="3.5" fill="#6b7280"/>
+<circle cx="252.0" cy="415.0" r="3.5" fill="#6b7280"/>
+<rect x="212.0" y="440" width="80" height="26" rx="5" fill="#f3f4f6" stroke="#6b7280"/>
+<text x="252.0" y="457" text-anchor="middle" font-size="12" fill="#1f2937">Michael</text>
+<line x1="340.0" y1="436" x2="340.0" y2="72" stroke="#6b7280" stroke-width="1.5"/>
+<circle cx="340.0" cy="85.0" r="3.5" fill="#6b7280"/>
+<circle cx="340.0" cy="115.0" r="3.5" fill="#6b7280"/>
+<circle cx="340.0" cy="145.0" r="3.5" fill="#6b7280"/>
+<circle cx="340.0" cy="175.0" r="3.5" fill="#6b7280"/>
+<circle cx="340.0" cy="205.0" r="3.5" fill="#6b7280"/>
+<circle cx="340.0" cy="235.0" r="3.5" fill="#6b7280"/>
+<circle cx="340.0" cy="265.0" r="3.5" fill="#6b7280"/>
+<circle cx="340.0" cy="295.0" r="3.5" fill="#6b7280"/>
+<circle cx="340.0" cy="325.0" r="3.5" fill="#6b7280"/>
+<circle cx="340.0" cy="355.0" r="3.5" fill="#6b7280"/>
+<circle cx="340.0" cy="385.0" r="3.5" fill="#6b7280"/>
+<circle cx="340.0" cy="415.0" r="3.5" fill="#6b7280"/>
+<rect x="300.0" y="440" width="80" height="26" rx="5" fill="#f3f4f6" stroke="#6b7280"/>
+<text x="340.0" y="457" text-anchor="middle" font-size="12" fill="#1f2937">Jordan</text>
+<line x1="428.0" y1="436" x2="428.0" y2="72" stroke="#6b7280" stroke-width="1.5"/>
+<circle cx="428.0" cy="85.0" r="3.5" fill="#6b7280"/>
+<circle cx="428.0" cy="115.0" r="3.5" fill="#6b7280"/>
+<circle cx="428.0" cy="145.0" r="3.5" fill="#6b7280"/>
+<circle cx="428.0" cy="175.0" r="3.5" fill="#6b7280"/>
+<circle cx="428.0" cy="205.0" r="3.5" fill="#6b7280"/>
+<circle cx="428.0" cy="235.0" r="3.5" fill="#6b7280"/>
+<circle cx="428.0" cy="265.0" r="3.5" fill="#6b7280"/>
+<circle cx="428.0" cy="295.0" r="3.5" fill="#6b7280"/>
+<circle cx="428.0" cy="325.0" r="3.5" fill="#6b7280"/>
+<circle cx="428.0" cy="355.0" r="3.5" fill="#6b7280"/>
+<circle cx="428.0" cy="385.0" r="3.5" fill="#6b7280"/>
+<circle cx="428.0" cy="415.0" r="3.5" fill="#6b7280"/>
+<rect x="388.0" y="440" width="80" height="26" rx="5" fill="#f3f4f6" stroke="#6b7280"/>
+<text x="428.0" y="457" text-anchor="middle" font-size="12" fill="#1f2937">played</text>
+<line x1="516.0" y1="436" x2="516.0" y2="72" stroke="#6b7280" stroke-width="1.5"/>
+<circle cx="516.0" cy="85.0" r="3.5" fill="#6b7280"/>
+<circle cx="516.0" cy="115.0" r="3.5" fill="#6b7280"/>
+<circle cx="516.0" cy="145.0" r="3.5" fill="#6b7280"/>
+<circle cx="516.0" cy="175.0" r="3.5" fill="#6b7280"/>
+<circle cx="516.0" cy="205.0" r="3.5" fill="#6b7280"/>
+<circle cx="516.0" cy="235.0" r="3.5" fill="#6b7280"/>
+<circle cx="516.0" cy="265.0" r="3.5" fill="#6b7280"/>
+<circle cx="516.0" cy="295.0" r="3.5" fill="#6b7280"/>
+<circle cx="516.0" cy="325.0" r="3.5" fill="#6b7280"/>
+<circle cx="516.0" cy="355.0" r="3.5" fill="#6b7280"/>
+<circle cx="516.0" cy="385.0" r="3.5" fill="#6b7280"/>
+<circle cx="516.0" cy="415.0" r="3.5" fill="#6b7280"/>
+<rect x="476.0" y="440" width="80" height="26" rx="5" fill="#f3f4f6" stroke="#6b7280"/>
+<text x="516.0" y="457" text-anchor="middle" font-size="12" fill="#1f2937">the</text>
+<line x1="604.0" y1="436" x2="604.0" y2="72" stroke="#6b7280" stroke-width="1.5"/>
+<circle cx="604.0" cy="85.0" r="3.5" fill="#6b7280"/>
+<circle cx="604.0" cy="115.0" r="3.5" fill="#6b7280"/>
+<circle cx="604.0" cy="145.0" r="3.5" fill="#6b7280"/>
+<circle cx="604.0" cy="175.0" r="3.5" fill="#6b7280"/>
+<circle cx="604.0" cy="205.0" r="3.5" fill="#6b7280"/>
+<circle cx="604.0" cy="235.0" r="3.5" fill="#6b7280"/>
+<circle cx="604.0" cy="265.0" r="3.5" fill="#6b7280"/>
+<circle cx="604.0" cy="295.0" r="3.5" fill="#6b7280"/>
+<circle cx="604.0" cy="325.0" r="3.5" fill="#6b7280"/>
+<circle cx="604.0" cy="355.0" r="3.5" fill="#6b7280"/>
+<circle cx="604.0" cy="385.0" r="3.5" fill="#6b7280"/>
+<circle cx="604.0" cy="415.0" r="3.5" fill="#6b7280"/>
+<rect x="564.0" y="440" width="80" height="26" rx="5" fill="#f3f4f6" stroke="#6b7280"/>
+<text x="604.0" y="457" text-anchor="middle" font-size="12" fill="#1f2937">sport</text>
+<line x1="692.0" y1="436" x2="692.0" y2="72" stroke="#2563eb" stroke-width="4"/>
+<circle cx="692.0" cy="85.0" r="5" fill="#2563eb"/>
+<circle cx="692.0" cy="115.0" r="5" fill="#2563eb"/>
+<circle cx="692.0" cy="145.0" r="5" fill="#2563eb"/>
+<circle cx="692.0" cy="175.0" r="5" fill="#2563eb"/>
+<circle cx="692.0" cy="205.0" r="5" fill="#2563eb"/>
+<circle cx="692.0" cy="235.0" r="5" fill="#2563eb"/>
+<circle cx="692.0" cy="265.0" r="5" fill="#2563eb"/>
+<circle cx="692.0" cy="295.0" r="5" fill="#2563eb"/>
+<circle cx="692.0" cy="325.0" r="5" fill="#2563eb"/>
+<circle cx="692.0" cy="355.0" r="5" fill="#2563eb"/>
+<circle cx="692.0" cy="385.0" r="5" fill="#2563eb"/>
+<circle cx="692.0" cy="415.0" r="5" fill="#2563eb"/>
+<rect x="652.0" y="440" width="80" height="26" rx="5" fill="#dbeafe" stroke="#2563eb"/>
+<text x="692.0" y="457" text-anchor="middle" font-size="12" fill="#1f2937">of</text>
+<text x="428.0" y="484" text-anchor="middle" font-size="13" fill="#6b7280">each token starts as its embedding plus positional embedding</text>
+<text x="380.0" y="546" text-anchor="middle" font-size="13" fill="#1f2937">Only the top of the last token's list becomes the chances for the next token.</text>
+</svg>
