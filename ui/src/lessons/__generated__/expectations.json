@@ -63,6 +63,35 @@
       "model": "gpt2-small",
       "body": {
         "preset_id": "gpt2-small",
+        "prompt": "Michael Jordan played the sport of",
+        "max_new_tokens": 20,
+        "temperature": 0,
+        "top_k_features": 1
+      },
+      "key": "1dafa01dec71cce8736eceb35a30d5be726da8e68752414af5a0c7d675c308ed",
+      "lessons": [
+        "pry.p1-5"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Our quiet street was named for a baker who",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "298f0bbee5e73011cdd275b9de88ece989b3cb3e751ff9a1c09a42cab07e584a",
+      "lessons": [
+        "pry.p1-5"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
         "prompt": "Humans only use ten percent of their",
         "max_new_tokens": 0,
         "top_k_features": 5
@@ -96,6 +125,22 @@
       "key": "3ed191ba1aa90230b88e8122abe85ef5e4e12fc8f1618793789badf4e0985117",
       "lessons": [
         "pry.p1-3"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Michael Jordan played the sport of",
+        "max_new_tokens": 20,
+        "temperature": 1,
+        "seed": 2,
+        "top_k_features": 1
+      },
+      "key": "51b65c580233fc51449ee132ffb3aebb054e92abf8b0d9d8f4c3d3ffd13440db",
+      "lessons": [
+        "pry.p1-5"
       ]
     },
     {
@@ -140,6 +185,21 @@
       ]
     },
     {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Our quiet street was named for a baker who",
+        "max_new_tokens": 20,
+        "temperature": 0,
+        "top_k_features": 1
+      },
+      "key": "8bb7944332de4b287d590f5fb5c219b4018ae61fde26163cb97f388e98ea1c28",
+      "lessons": [
+        "pry.p1-5"
+      ]
+    },
+    {
       "endpoint": "/embedding",
       "model": "gpt2-small",
       "body": {
@@ -166,6 +226,22 @@
       "key": "a1cde7500b758505f02e0c8a0866a651fda4a6366cf2f8b77a8df71f778c403b",
       "lessons": [
         "pry.p1-2"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Michael Jordan played the sport of",
+        "max_new_tokens": 20,
+        "temperature": 1,
+        "seed": 1,
+        "top_k_features": 1
+      },
+      "key": "a3235e72149c49eda34a91d80f617549965e4800325d76cd2d4ab023f17ed6d0",
+      "lessons": [
+        "pry.p1-5"
       ]
     },
     {
@@ -224,7 +300,8 @@
       "key": "de870ae59653d02cb64f39674c39b3f8f7af8b94ef5ec7ae3a2b11e14a70226d",
       "lessons": [
         "pry.p1-1",
-        "pry.p1-3"
+        "pry.p1-3",
+        "pry.p1-5"
       ]
     },
     {
@@ -818,6 +895,108 @@
             "op": "lt",
             "value": 0.5,
             "expect": 0.12701
+          }
+        }
+      ]
+    },
+    "pry.p1-5": {
+      "prompts": [
+        "Michael Jordan played the sport of",
+        "Our quiet street was named for a baker who"
+      ],
+      "checks": [
+        {
+          "where": "s3-1/write-obs",
+          "kind": "slot",
+          "name": "first_tok",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": " basketball"
+        },
+        {
+          "where": "s3-1/write-obs",
+          "kind": "slot",
+          "name": "first_p",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.42208
+        },
+        {
+          "where": "s3-5/match-obs",
+          "kind": "slot",
+          "name": "text_a",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": "Michael Jordan played the sport of basketball for the first time in his life in the 1980s. He was a member of the NBA"
+        },
+        {
+          "where": "s3-5/match-obs",
+          "kind": "slot",
+          "name": "text_c",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": "Michael Jordan played the sport of football in 1974. He did not return from the 1976 Olympics to Arizona, but he was Deacon"
+        },
+        {
+          "where": "s3-5/match-obs",
+          "kind": "slot",
+          "name": "text_d",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": "Michael Jordan played the sport of shot who cared about red as a kid or A-game for his team. Those days are gone"
+        },
+        {
+          "where": "s3-5/match-obs",
+          "kind": "check",
+          "name": "write_it.text equals \"$capture.b.write_it.text\"",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "write_it.text",
+            "from": "a",
+            "op": "equals",
+            "value": "$capture.b.write_it.text"
+          }
+        },
+        {
+          "where": "s3-5/match-obs",
+          "kind": "check",
+          "name": "write_it.text equals \"$capture.e.write_it.text\"",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "write_it.text",
+            "from": "c",
+            "op": "equals",
+            "value": "$capture.e.write_it.text"
+          }
+        },
+        {
+          "where": "s3-5/match-obs",
+          "kind": "check",
+          "name": "write_it.text not equals \"$capture.d.write_it.text\"",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "write_it.text",
+            "from": "c",
+            "op": "equals",
+            "value": "$capture.d.write_it.text",
+            "not": true
+          }
+        },
+        {
+          "where": "s5/baker/baker-write",
+          "kind": "check",
+          "name": "write_it.text contains \"a baker who was a great friend of mine\"",
+          "prompt": "Our quiet street was named for a baker who",
+          "check": {
+            "read": "write_it.text",
+            "op": "contains",
+            "value": "a baker who was a great friend of mine"
+          }
+        },
+        {
+          "where": "s5/baker/baker-obs",
+          "kind": "check",
+          "name": "write_it.text contains \"a baker who was a great friend of mine\"",
+          "prompt": "Our quiet street was named for a baker who",
+          "check": {
+            "read": "write_it.text",
+            "op": "contains",
+            "value": "a baker who was a great friend of mine"
           }
         }
       ]

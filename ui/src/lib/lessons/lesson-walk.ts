@@ -308,6 +308,8 @@ export async function walkLesson(
    * the learner: the transfer's prompt in the box, then Run.
    */
   let learnerPrompt: string | undefined;
+  /** Learner actions a task asks for, with the settings its prose tells the learner to use (P1.5:5 "sets temperature 0 and presses Write"). */
+  const LEARNER_PLAY: Record<string, Record<string, unknown>> = { write_it: { temperature: 0 }, run: {} };
   const RUNS = ['run', 'ensure_run', 'run_compare', 'write_it', 'run_logit_lens', 'run_dla', 'run_head_ablation', 'run_patching', 'run_feature_ablation', 'run_steer', 'steer_across', 'run_circuit', 'show_embedding'];
 
   async function walkStep(step: Step, where: string, done: Set<string>) {
@@ -352,9 +354,21 @@ export async function walkLesson(
         else pendingFeedback.set(`__end:${at}`, [f.choices]);
         for (const s of slotsIn([step.prose.map((p) => p.text)])) checkSlot(s, at, done);
         break;
-      case 'task':
-        // Learner-driven: its target is the learner's to reach, not checkable here.
+      case 'task': {
+        // Learner-driven. When every learner action is one the walk can play the
+        // way the task tells the learner to (LEARNER_PLAY), it plays them and checks
+        // the target; otherwise the target is the learner's to reach.
+        const acts = (f.learner_actions as string[] | undefined) ?? [];
+        if (acts.length && acts.every((a) => a in LEARNER_PLAY)) {
+          for (const a of acts) {
+            const r = await dispatcher.dispatch(a, LEARNER_PLAY[a], { signal, bindings });
+            if (r.status !== 'done') res.errors.push(`${at}: learner ${a} ${r.status}`);
+          }
+          runCheckItems(f.target, at);
+          if (typeof f.capture === 'string') captures.set(f.capture, read('result'));
+        }
         break;
+      }
       default: {
         // Prose and fields (feedback, supports, leaves_open, ...); assert lines are checked by runAsserts.
         const { assert: _assert, ...rest } = f;
