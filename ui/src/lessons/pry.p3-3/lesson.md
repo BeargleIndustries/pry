@@ -13,7 +13,7 @@ prerequisites: [pry.p3-1, pry.p3-2, pry.p2-1]
 cold_entry: "Four things from before. Each token has its own residual stream, a list of numbers every layer reads and adds to (P1.3). A logit is a token's raw score before the scores turn into probabilities (P1.4). Attention only reaches back: a token draws from itself and the tokens before it, never after (P2.1). And ablation switches a part off for one run to see whether the answer changes (P3.2)."
 model: gpt2-small
 baseline: { prompt: "When Mary and John went to the store, John gave a drink to" }
-verified_rows: [14, 27, 31, 32, 59, 60]
+verified_rows: [14, 27, 32, 59, 60]
 slots:
   clean: { read: patch.cell, args: { layer: $row.27.peak_layer, position: $row.27.peak_position }, field: clean, expect: 18.466388702392578, tolerance: 0.05 }
   corrupted: { read: patch.cell, args: { layer: $row.27.peak_layer, position: $row.27.peak_position }, field: corrupted, expect: 14.966815948486328, tolerance: 0.05 }

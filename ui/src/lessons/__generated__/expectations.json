@@ -3,6 +3,37 @@
   "model": "gpt2-small",
   "requests": [
     {
+      "endpoint": "/steer",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "On our trip we walked along the beach and watched the ocean",
+        "feature_id": 21791,
+        "sae_layer": 8,
+        "alpha": 25,
+        "max_new_tokens": 50,
+        "control": true
+      },
+      "key": "068739dc2ffd4f8dbc264c479adbc148e5a050aaeb631c19150cb61a1fa8d1f5",
+      "lessons": [
+        "pry.p3-5"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Q: What is the opposite of hot?\nA:",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "08776d603e6bba42ad7f56d875eebb317dfa1430f6e9cf3d8f7cc61e8ca63401",
+      "lessons": [
+        "pry.p4-1"
+      ]
+    },
+    {
       "endpoint": "/tokenize",
       "model": "gpt2-small",
       "body": {
@@ -61,6 +92,49 @@
       "model": "gpt2-small",
       "body": {
         "preset_id": "gpt2-small",
+        "prompt": "What is the opposite of hot?",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "0d178fe872087441dd7d58d0fc59839821f5a547df5fd7fec124a062f4f8ac44",
+      "lessons": [
+        "pry.p4-1"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Here is a short poem about the sea:\n",
+        "max_new_tokens": 20,
+        "temperature": 0,
+        "top_k_features": 1
+      },
+      "key": "11a1a09a59bccdbaf6b8d26ea9bb8be716cfce608b4a2f361588c161f43cc26d",
+      "lessons": [
+        "pry.p4-1"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The war lasted from the year 1650 to the year 16",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "13d1b12f0976b7bb2036899dd258ff426ec52e87742baa44c881b427767916ce",
+      "lessons": [
+        "pry.p3-7"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
         "prompt": "Pip ordered zebra lamps from Quorn. Pip ordered zebra lamps from",
         "max_new_tokens": 0,
         "top_k_features": 5
@@ -82,7 +156,8 @@
       },
       "key": "18703c6f242a1db27ad9d6bd024bfaebab8d61f6dff8a3a19f9de14d2b1617d2",
       "lessons": [
-        "pry.p1-3"
+        "pry.p1-3",
+        "pry.p3-6"
       ]
     },
     {
@@ -116,6 +191,20 @@
       ]
     },
     {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "On our trip we walked along the beach and watched the ocean",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "24dc820a86b789420ac3596dcf3be373f6edb7acb64cced8f7aa317563010ce3",
+      "lessons": [
+        "pry.p3-5"
+      ]
+    },
+    {
       "endpoint": "/head-scores",
       "model": "gpt2-small",
       "body": {
@@ -137,7 +226,25 @@
       },
       "key": "25e44d6e3ef82c34d09ad852e14b0e2c115af20d4b7fea65ef91919e9c691608",
       "lessons": [
-        "pry.p2-3"
+        "pry.p2-3",
+        "pry.p3-1",
+        "pry.p3-4"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Write a short poem about the sea.",
+        "max_new_tokens": 20,
+        "temperature": 0,
+        "seed": 1,
+        "top_k_features": 1
+      },
+      "key": "27f970fb76945f8e8dd3b0d455482d9c0d2678421e3161e58dff05c9a21fd5e3",
+      "lessons": [
+        "pry.p4-1"
       ]
     },
     {
@@ -200,6 +307,66 @@
       ]
     },
     {
+      "endpoint": "/ablate-head",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "When Mary and John went to the store, John gave a drink to",
+        "ablations": [
+          {
+            "layer": 9,
+            "head": 9
+          },
+          {
+            "layer": 9,
+            "head": 6
+          },
+          {
+            "layer": 10,
+            "head": 0
+          },
+          {
+            "layer": 9,
+            "head": 9
+          }
+        ]
+      },
+      "key": "30900680a4ced0c6eb8d96810abd2ec4515dfa3f415966a13ba61e21960a565a",
+      "lessons": [
+        "pry.p3-2"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "You are a poet. You answer every request with a short poem.\nWrite a short poem about the sea.",
+        "max_new_tokens": 20,
+        "temperature": 0,
+        "top_k_features": 1
+      },
+      "key": "34cb0d67d0ddf2424dcc1c33bedc649e7fccd6c624613cacab8d4f77b0d261a4",
+      "lessons": [
+        "pry.p4-1"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "When Mary and John went to the store, Mary gave a drink to",
+        "max_new_tokens": 0,
+        "top_k_features": 20,
+        "sae_layer": 8
+      },
+      "key": "34d2de7b640f7e4e047852ba0bf31c9f96e0149a32e38f3028260fd6c28b27ce",
+      "lessons": [
+        "pry.p3-1"
+      ]
+    },
+    {
       "endpoint": "/tokenize",
       "model": "gpt2-small",
       "body": {
@@ -209,6 +376,20 @@
       "key": "3788d18a0e048d081bb49e4f933c674259bda60fd50b214776807c23efea90a8",
       "lessons": [
         "pry.p1-2"
+      ]
+    },
+    {
+      "endpoint": "/patch",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "clean_prompt": "The war lasted from the year 1732 to the year 17",
+        "corrupted_prompt": "The war lasted from the year 1701 to the year 17",
+        "patch_type": "mlp"
+      },
+      "key": "3cb1d7972d159fb5e81650dd46343dee33634c5e76331fa25d7648ad35977745",
+      "lessons": [
+        "pry.p3-7"
       ]
     },
     {
@@ -241,6 +422,24 @@
       ]
     },
     {
+      "endpoint": "/ablate-head",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The war lasted from the year 1732 to the year 17",
+        "ablations": [
+          {
+            "layer": 9,
+            "head": 9
+          }
+        ]
+      },
+      "key": "41ae35a4cc2bb87e16e68cbb2c5f1e48698a90d8f2f98581188d6390046fd3fd",
+      "lessons": [
+        "pry.p3-7"
+      ]
+    },
+    {
       "endpoint": "/dla",
       "model": "gpt2-small",
       "body": {
@@ -250,7 +449,52 @@
       },
       "key": "4301bdda7a91b9447e0ef98fab95d0e4d3f099e1b7a7b201da2aba44d8585c88",
       "lessons": [
-        "pry.p2-4"
+        "pry.p2-4",
+        "pry.p3-6"
+      ]
+    },
+    {
+      "endpoint": "/ablate-head",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "When Mary and John went to the store, John gave a drink to",
+        "ablations": [
+          {
+            "layer": 9,
+            "head": 4
+          },
+          {
+            "layer": 2,
+            "head": 5
+          },
+          {
+            "layer": 0,
+            "head": 1
+          }
+        ]
+      },
+      "key": "4841301e105e480595e5966b30145c682266c3e152ebdfa9926b4a36500d3a44",
+      "lessons": [
+        "pry.p3-2"
+      ]
+    },
+    {
+      "endpoint": "/ablate-head",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The war lasted from the year 1732 to the year 17",
+        "ablations": [
+          {
+            "layer": 0,
+            "head": 7
+          }
+        ]
+      },
+      "key": "493a048097532cf3c30a9421f900fca60b8d02a73b801ccf20aaa3488fabdaaf",
+      "lessons": [
+        "pry.p3-7"
       ]
     },
     {
@@ -267,6 +511,20 @@
       "key": "51b65c580233fc51449ee132ffb3aebb054e92abf8b0d9d8f4c3d3ffd13440db",
       "lessons": [
         "pry.p1-5"
+      ]
+    },
+    {
+      "endpoint": "/patch",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "clean_prompt": "When Mary and John went to the store, John gave a drink to",
+        "corrupted_prompt": "When Mary and John went to the store, Mary gave a drink to",
+        "patch_type": "head"
+      },
+      "key": "554e63564265ce8b374d07cf22076e7950a1f9718b9ab2a4aae266610f07c42c",
+      "lessons": [
+        "pry.p3-3"
       ]
     },
     {
@@ -302,6 +560,51 @@
       "model": "gpt2-small",
       "body": {
         "preset_id": "gpt2-small",
+        "prompt": "When Mary and John went to the store, John gave a drink to",
+        "max_new_tokens": 0,
+        "top_k_features": 20,
+        "sae_layer": 8
+      },
+      "key": "5b7764c21954758d4624bfc3ca8a9c91ae8afa9d3339223785cdad353d5dcaf3",
+      "lessons": [
+        "pry.p3-1"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The doctor said that",
+        "max_new_tokens": 0,
+        "top_k_features": 20,
+        "sae_layer": 8
+      },
+      "key": "66d6a8129881e5614c4ee3ba0eacc2a0a6d2d1b5442957608628bbc5d8913591",
+      "lessons": [
+        "pry.p3-1"
+      ]
+    },
+    {
+      "endpoint": "/dla",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Michael Jordan played the sport of",
+        "target_token_index": 6,
+        "answer_token": " basketball",
+        "contrast_token": " football"
+      },
+      "key": "689a1ed59420f911b28cc4da02e83edd51066fd09ad3e1b11e8f6d2a06a2c1c9",
+      "lessons": [
+        "pry.p3-6"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
         "prompt": "Two plus two equals",
         "max_new_tokens": 0,
         "top_k_features": 5
@@ -309,6 +612,20 @@
       "key": "6cbfa01a0cf51537e015464b871062ea6755335522325630603b56a1bf055d3e",
       "lessons": [
         "pry.p1-4"
+      ]
+    },
+    {
+      "endpoint": "/circuit",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The war lasted from the year 1732 to the year 17",
+        "source": "dla",
+        "target_token_index": 12
+      },
+      "key": "6fbc4ce57ed05bb52c601c11a8b12ef14e81cc2f5927ecd548439e71fac81198",
+      "lessons": [
+        "pry.p3-7"
       ]
     },
     {
@@ -323,7 +640,8 @@
       },
       "key": "74556d2ef9102b370a3f1ac633a6e3ccc86946760d29b2fef590af7406f4b91c",
       "lessons": [
-        "pry.p1-3"
+        "pry.p1-3",
+        "pry.p3-6"
       ]
     },
     {
@@ -342,6 +660,49 @@
       ]
     },
     {
+      "endpoint": "/patch",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "clean_prompt": "When Mary and John went to the store, John gave a drink to",
+        "corrupted_prompt": "When Mary and John went to the store, Mary gave a drink to",
+        "patch_type": "resid"
+      },
+      "key": "77bbe4891999fd526093aa768d83fc1d46304de99c719a8c1951ff16d4aa3ab5",
+      "lessons": [
+        "pry.p3-3"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "What is the opposite of hot?",
+        "max_new_tokens": 20,
+        "temperature": 0,
+        "top_k_features": 1
+      },
+      "key": "7b940fd0916456a4e57319e3790893b1a77454d20e6ee10682f916795902f617",
+      "lessons": [
+        "pry.p4-1"
+      ]
+    },
+    {
+      "endpoint": "/circuit",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The war lasted from the year 1650 to the year 16",
+        "source": "dla",
+        "target_token_index": 12
+      },
+      "key": "802c5f9fb33197278bcdc2d7d4e675f2f9804ca36106195e7605702726a4763b",
+      "lessons": [
+        "pry.p3-7"
+      ]
+    },
+    {
       "endpoint": "/dla",
       "model": "gpt2-small",
       "body": {
@@ -353,6 +714,32 @@
       "key": "81529737375a1dc4cc7f2659033037c57a38115104a80c4c6f90409ab40304a4",
       "lessons": [
         "pry.p2-4"
+      ]
+    },
+    {
+      "endpoint": "/ablate-feature",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The doctor said that",
+        "feature_ablations": [
+          {
+            "feature_index": 7195,
+            "layer": 8
+          },
+          {
+            "feature_index": 11067,
+            "layer": 8
+          },
+          {
+            "feature_index": 19093,
+            "layer": 8
+          }
+        ]
+      },
+      "key": "86e4a6466bbac36fa3efcee9cf328c9acebfd8c2ffdfa826383f79da3d8f8f55",
+      "lessons": [
+        "pry.p3-4"
       ]
     },
     {
@@ -368,7 +755,26 @@
       "lessons": [
         "pry.p2-1",
         "pry.p2-3",
-        "pry.p2-4"
+        "pry.p2-4",
+        "pry.p3-2"
+      ]
+    },
+    {
+      "endpoint": "/ablate-head",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The war lasted from the year 1650 to the year 16",
+        "ablations": [
+          {
+            "layer": 0,
+            "head": 7
+          }
+        ]
+      },
+      "key": "888792713e1c165a9a54bcbf504461b52f8073bcdecfb77ad263ec87769df8d9",
+      "lessons": [
+        "pry.p3-7"
       ]
     },
     {
@@ -400,6 +806,75 @@
       ]
     },
     {
+      "endpoint": "/ablate-head",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "When Tom and Sarah went to the park, Sarah gave a ball to",
+        "ablations": [
+          {
+            "layer": 9,
+            "head": 9
+          },
+          {
+            "layer": 9,
+            "head": 6
+          },
+          {
+            "layer": 10,
+            "head": 0
+          }
+        ]
+      },
+      "key": "93b377ef471cbb66485674c60555cbe92e9297de19b5edc2f2016dcc2dc05965",
+      "lessons": [
+        "pry.p3-2"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The nurse said that",
+        "max_new_tokens": 0,
+        "top_k_features": 20,
+        "sae_layer": 8
+      },
+      "key": "96a6e7211657b99b4f3998c72d2457bcdadeca198ca9cc11eeb8af6d3fe1338b",
+      "lessons": [
+        "pry.p3-1"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "You are a poet. You answer every request with a short poem.\nWrite a short poem about the sea.",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "983d7caf3085176593474f65acab2388d858d741b238d166db73837854207656",
+      "lessons": [
+        "pry.p4-1"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The doctor said that",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "9a4bdd8fa9241ac5f6a78b51034d1ca9f332d82cfb26b1f9f0b10bcc465c49d0",
+      "lessons": [
+        "pry.p3-4"
+      ]
+    },
+    {
       "endpoint": "/embedding",
       "model": "gpt2-small",
       "body": {
@@ -412,6 +887,24 @@
       "key": "9ad506fa2031af5443fb7b61904c04369b2bc5ff71009ea61094dc637c558f7f",
       "lessons": [
         "pry.p1-2"
+      ]
+    },
+    {
+      "endpoint": "/ablate-feature",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The nurse said that",
+        "feature_ablations": [
+          {
+            "feature_index": 7698,
+            "layer": 8
+          }
+        ]
+      },
+      "key": "9cd467d418acd6095629c22875edb5c02d830eb0792462a16adacf1981af5348",
+      "lessons": [
+        "pry.p3-4"
       ]
     },
     {
@@ -460,6 +953,20 @@
       ]
     },
     {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Here is a short poem about the sea:\n",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "a75477d3a00d727cfe13afbe5971644c0ffe90806496577758d5e3ddffca5ed1",
+      "lessons": [
+        "pry.p4-1"
+      ]
+    },
+    {
       "endpoint": "/embedding",
       "model": "gpt2-small",
       "body": {
@@ -475,6 +982,22 @@
       ]
     },
     {
+      "endpoint": "/steer",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "On our trip we walked along the beach and watched the ocean",
+        "feature_id": 21791,
+        "sae_layer": 8,
+        "alpha": 25,
+        "max_new_tokens": 50
+      },
+      "key": "a9cf3e8ebb3f3c33450e5cb6e4bc506e3ae83eeb084009e33c0a525569e17a4e",
+      "lessons": [
+        "pry.p3-5"
+      ]
+    },
+    {
       "endpoint": "/logit-lens",
       "model": "gpt2-small",
       "body": {
@@ -483,7 +1006,8 @@
       },
       "key": "b20b92ea77cabf5ab888cce7d3cc178029f4ee5d5d88716da97e72049f2a30c1",
       "lessons": [
-        "pry.p2-3"
+        "pry.p2-3",
+        "pry.p3-6"
       ]
     },
     {
@@ -513,6 +1037,52 @@
       ]
     },
     {
+      "endpoint": "/ablate-head",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "When Mary and John went to the store, John gave a drink to",
+        "ablations": [
+          {
+            "layer": 2,
+            "head": 8
+          }
+        ]
+      },
+      "key": "c019c1b8a5c3154599991027d7c8b09c67a015cf625c9e2307601743c1031492",
+      "lessons": [
+        "pry.p3-2"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The war lasted from the year 1732 to the year 17",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "c05778a2cfba5d332b4b85ed645151bafb6634ca43bc465315499e38df55a052",
+      "lessons": [
+        "pry.p3-7"
+      ]
+    },
+    {
+      "endpoint": "/patch",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "clean_prompt": "Michael Jordan played the sport of",
+        "corrupted_prompt": "Tom Brady played the sport of",
+        "patch_type": "mlp"
+      },
+      "key": "c2499046eb1242e49600c33d2f5c7a92322276832c08638ea0ff775a38399aca",
+      "lessons": [
+        "pry.p3-6"
+      ]
+    },
+    {
       "endpoint": "/sae-features",
       "model": "gpt2-small",
       "body": {
@@ -524,6 +1094,32 @@
       "key": "c4a9ec8f948542cdda097de8df7a2a3768ca602fce4f25927006ccbdb4909aa2",
       "lessons": [
         "pry.p2-5"
+      ]
+    },
+    {
+      "endpoint": "/ablate-feature",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The nurse said that",
+        "feature_ablations": [
+          {
+            "feature_index": 21213,
+            "layer": 8
+          },
+          {
+            "feature_index": 19093,
+            "layer": 8
+          },
+          {
+            "feature_index": 821,
+            "layer": 8
+          }
+        ]
+      },
+      "key": "c7b8c0c8af995a49b8ef939b986b195eab5efc8e6b1d07b64beb31140acf53b1",
+      "lessons": [
+        "pry.p3-4"
       ]
     },
     {
@@ -595,6 +1191,20 @@
       ]
     },
     {
+      "endpoint": "/sae-features",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The nurse said that",
+        "sae_layer": 8,
+        "top_k_features": 5
+      },
+      "key": "de7097f37ac45977a5b019175b1cf8dd8a710a9de779faa44bafd9ad7f0187ff",
+      "lessons": [
+        "pry.p3-4"
+      ]
+    },
+    {
       "endpoint": "/generate",
       "model": "gpt2-small",
       "body": {
@@ -611,7 +1221,8 @@
         "pry.p1-6",
         "pry.p2-3",
         "pry.p2-4",
-        "pry.p2-5"
+        "pry.p2-5",
+        "pry.p3-6"
       ]
     },
     {
@@ -629,6 +1240,50 @@
       ]
     },
     {
+      "endpoint": "/steer",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "On our trip we walked along the beach and watched the ocean",
+        "feature_id": 21791,
+        "sae_layer": 8,
+        "alpha": 30,
+        "max_new_tokens": 50
+      },
+      "key": "e5982e2874d8129de8fdebc5daf42c4f073ca62e8ddf31ac53dab3347655d3c3",
+      "lessons": [
+        "pry.p3-5"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "When Tom and Sarah went to the park, Sarah gave a ball to",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "e7881768a8bb9ee2e14d8263582139dfef9dfc223e19eddab94ccda3e5e42a90",
+      "lessons": [
+        "pry.p3-2"
+      ]
+    },
+    {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "Write a short poem about the sea.",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "e7ef55dda0bc01e78c4a92bee3e3a3a869a56de96d511f5a2611758fc8784f71",
+      "lessons": [
+        "pry.p4-1"
+      ]
+    },
+    {
       "endpoint": "/generate",
       "model": "gpt2-small",
       "body": {
@@ -640,6 +1295,34 @@
       "key": "ebda32aacf0986d0757a30f1d1335d843b3e96e746c9ded950756851de962be8",
       "lessons": [
         "pry.p2-2"
+      ]
+    },
+    {
+      "endpoint": "/patch",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "clean_prompt": "When Tom and Sarah went to the park, Sarah gave a ball to",
+        "corrupted_prompt": "When Tom and Sarah went to the park, Tom gave a ball to",
+        "patch_type": "resid"
+      },
+      "key": "f9331e94489adadda22551e61ceed91b59df61c4f94f12744fdf43b3c410b4f3",
+      "lessons": [
+        "pry.p3-3"
+      ]
+    },
+    {
+      "endpoint": "/patch",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "clean_prompt": "Michael Jordan played the sport of",
+        "corrupted_prompt": "Tom Brady played the sport of",
+        "patch_type": "resid"
+      },
+      "key": "ffcb90ba9575101da93e7055f3910a50f7b184a100d777e8e821f16f4cfcdf3a",
+      "lessons": [
+        "pry.p3-6"
       ]
     }
   ],
@@ -1913,6 +2596,1117 @@
         "I like the money bank"
       ],
       "checks": []
+    },
+    "pry.p3-1": {
+      "prompts": [
+        "The nurse said that",
+        "The doctor said that",
+        "When Mary and John went to the store, John gave a drink to",
+        "When Mary and John went to the store, Mary gave a drink to"
+      ],
+      "checks": [
+        {
+          "where": "s3-2/she-moves",
+          "kind": "slot",
+          "name": "she_nurse",
+          "prompt": "The nurse said that",
+          "expect": 0.1896977424621582
+        },
+        {
+          "where": "s3-3/she-obs",
+          "kind": "slot",
+          "name": "she_nurse",
+          "prompt": "The nurse said that",
+          "expect": 0.1896977424621582
+        },
+        {
+          "where": "s3-3/she-obs",
+          "kind": "slot",
+          "name": "she_doctor",
+          "prompt": "The nurse said that",
+          "expect": 0.04582584276795387
+        },
+        {
+          "where": "s3-3/she-obs",
+          "kind": "slot",
+          "name": "he_doctor",
+          "prompt": "The nurse said that",
+          "expect": 0.14450117945671082
+        },
+        {
+          "where": "s3-3/she-obs",
+          "kind": "slot",
+          "name": "she_delta",
+          "prompt": "The nurse said that",
+          "expect": -0.14387189704179765
+        },
+        {
+          "where": "s3-3/she-obs",
+          "kind": "slot",
+          "name": "he_delta",
+          "prompt": "The nurse said that",
+          "expect": 0.12173311971127987
+        },
+        {
+          "where": "s3-3/she-obs",
+          "kind": "check",
+          "name": "compare.top contains {\"token\":\" he\"}",
+          "prompt": "The nurse said that",
+          "check": {
+            "read": "compare.top",
+            "args": {
+              "side": "b"
+            },
+            "op": "contains",
+            "value": {
+              "token": " he"
+            }
+          }
+        },
+        {
+          "where": "s3-3/she-obs",
+          "kind": "check",
+          "name": "compare.delta lt 0",
+          "prompt": "The nurse said that",
+          "check": {
+            "read": "compare.delta",
+            "args": {
+              "token": " she"
+            },
+            "op": "lt",
+            "value": 0,
+            "expect": -0.14387189704179765
+          }
+        },
+        {
+          "where": "s3-5/control-obs",
+          "kind": "slot",
+          "name": "control_delta",
+          "prompt": "The nurse said that",
+          "expect": 0
+        },
+        {
+          "where": "s3-5/control-obs",
+          "kind": "check",
+          "name": "compare.delta within 0",
+          "prompt": "The nurse said that",
+          "check": {
+            "read": "compare.delta",
+            "args": {
+              "token": " she"
+            },
+            "op": "within",
+            "value": 0,
+            "tolerance": 0.000001,
+            "expect": 0
+          }
+        },
+        {
+          "where": "s5/mary-swap/swap-obs",
+          "kind": "slot",
+          "name": "mary",
+          "prompt": "The nurse said that",
+          "expect": 0.6769932508468628
+        },
+        {
+          "where": "s5/mary-swap/swap-obs",
+          "kind": "slot",
+          "name": "them",
+          "prompt": "The nurse said that",
+          "expect": 0.12825962901115417
+        },
+        {
+          "where": "s5/mary-swap/swap-obs",
+          "kind": "slot",
+          "name": "john",
+          "prompt": "The nurse said that",
+          "expect": 0.02347848005592823
+        },
+        {
+          "where": "s5/mary-swap/swap-obs",
+          "kind": "check",
+          "name": "compare.top contains {\"token\":\" John\"}",
+          "prompt": "The nurse said that",
+          "check": {
+            "read": "compare.top",
+            "args": {
+              "side": "b"
+            },
+            "op": "contains",
+            "value": {
+              "token": " John"
+            }
+          }
+        }
+      ]
+    },
+    "pry.p3-2": {
+      "prompts": [
+        "When Mary and John went to the store, John gave a drink to",
+        "When Tom and Sarah went to the park, Sarah gave a ball to"
+      ],
+      "checks": [
+        {
+          "where": "s3-4/heavy-obs",
+          "kind": "slot",
+          "name": "before",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": 0.6769932508468628
+        },
+        {
+          "where": "s3-4/heavy-obs",
+          "kind": "slot",
+          "name": "after",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": 0.6741434931755066
+        },
+        {
+          "where": "s3-4/heavy-obs",
+          "kind": "check",
+          "name": "ablation.delta gt -0.01",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "check": {
+            "read": "ablation.delta",
+            "args": {
+              "token": " Mary"
+            },
+            "op": "gt",
+            "value": -0.01,
+            "expect": -0.002849757671356201
+          }
+        },
+        {
+          "where": "s3-4/heavy-obs",
+          "kind": "slot",
+          "name": "mary_before",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": 0.6769932508468628
+        },
+        {
+          "where": "s3-4/heavy-obs",
+          "kind": "slot",
+          "name": "mary_after",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": 0.6741434931755066
+        },
+        {
+          "where": "s3-7/three-obs",
+          "kind": "slot",
+          "name": "movers_delta",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": -0.19180729985237122
+        },
+        {
+          "where": "s3-7/three-obs",
+          "kind": "slot",
+          "name": "control_delta",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": -0.022185027599334717
+        },
+        {
+          "where": "s3-7/three-obs",
+          "kind": "check",
+          "name": "ablation.delta lt \"$capture.control.ablation.delta\"",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "check": {
+            "read": "ablation.delta",
+            "args": {
+              "token": " Mary"
+            },
+            "from": "movers",
+            "op": "lt",
+            "value": "$capture.control.ablation.delta",
+            "value_args": {
+              "token": " Mary"
+            }
+          }
+        },
+        {
+          "where": "s3-7/three-obs",
+          "kind": "assert",
+          "name": "movers_delta lt -0.1",
+          "prompt": "When Mary and John went to the store, John gave a drink to"
+        },
+        {
+          "where": "s3-7/three-obs",
+          "kind": "assert",
+          "name": "control_delta lt -0.02",
+          "prompt": "When Mary and John went to the store, John gave a drink to"
+        },
+        {
+          "where": "s3-8/explain-result",
+          "kind": "slot",
+          "name": "control_delta",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": -0.022185027599334717
+        },
+        {
+          "where": "s5/tom-sarah/tom-obs",
+          "kind": "slot",
+          "name": "tom_delta",
+          "prompt": "When Tom and Sarah went to the park, Sarah gave a ball to",
+          "expect": 0.049371927976608276
+        },
+        {
+          "where": "s5/tom-sarah/tom-obs",
+          "kind": "check",
+          "name": "ablation.delta gt 0",
+          "prompt": "When Tom and Sarah went to the park, Sarah gave a ball to",
+          "check": {
+            "read": "ablation.delta",
+            "args": {
+              "token": " Tom"
+            },
+            "op": "gt",
+            "value": 0,
+            "expect": 0.049371927976608276
+          }
+        },
+        {
+          "where": "s6/explain-chain",
+          "kind": "slot",
+          "name": "heavy_delta",
+          "prompt": "When Tom and Sarah went to the park, Sarah gave a ball to",
+          "expect": -0.002849757671356201
+        },
+        {
+          "where": "s6/explain-chain",
+          "kind": "assert",
+          "name": "heavy_delta gt -0.01",
+          "prompt": "When Tom and Sarah went to the park, Sarah gave a ball to"
+        }
+      ]
+    },
+    "pry.p3-3": {
+      "prompts": [],
+      "checks": [
+        {
+          "where": "s3-3/explain",
+          "kind": "slot",
+          "name": "clean",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": 18.466388702392578
+        },
+        {
+          "where": "s3-3/explain",
+          "kind": "slot",
+          "name": "corrupted",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": 14.966815948486328
+        },
+        {
+          "where": "s3-5/peak-obs",
+          "kind": "slot",
+          "name": "clean",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": 18.466388702392578
+        },
+        {
+          "where": "s3-5/peak-obs",
+          "kind": "slot",
+          "name": "corrupted",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": 14.966815948486328
+        },
+        {
+          "where": "s3-5/peak-obs",
+          "kind": "slot",
+          "name": "patched",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": 18.474945068359375
+        },
+        {
+          "where": "s3-5/peak-obs",
+          "kind": "check",
+          "name": "patch.peak contains {\"layer\":\"$row.27.peak_layer\"}",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "check": {
+            "read": "patch.peak",
+            "args": {
+              "type": "resid"
+            },
+            "op": "contains",
+            "value": {
+              "layer": "$row.27.peak_layer"
+            }
+          }
+        },
+        {
+          "where": "s3-6/store-obs",
+          "kind": "check",
+          "name": "patch.cell.share within 0",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "check": {
+            "read": "patch.cell",
+            "args": {
+              "layer": "$row.27.peak_layer",
+              "position": "$row.14.store_position"
+            },
+            "field": "share",
+            "op": "within",
+            "value": 0,
+            "tolerance": 0.0001,
+            "expect": 0
+          }
+        }
+      ]
+    },
+    "pry.p3-4": {
+      "prompts": [
+        "The nurse said that",
+        "The doctor said that"
+      ],
+      "checks": [
+        {
+          "where": "s3-4/top-obs",
+          "kind": "slot",
+          "name": "before",
+          "prompt": "The nurse said that",
+          "expect": 0.1896977424621582
+        },
+        {
+          "where": "s3-4/top-obs",
+          "kind": "slot",
+          "name": "after",
+          "prompt": "The nurse said that",
+          "expect": 0.17817918956279755
+        },
+        {
+          "where": "s3-4/top-obs",
+          "kind": "check",
+          "name": "feature_ablation.delta lt 0",
+          "prompt": "The nurse said that",
+          "check": {
+            "read": "feature_ablation.delta",
+            "args": {
+              "token": " she"
+            },
+            "op": "lt",
+            "value": 0,
+            "expect": -0.011518552899360657
+          }
+        },
+        {
+          "where": "s3-5/control-obs",
+          "kind": "slot",
+          "name": "control_delta",
+          "prompt": "The nurse said that",
+          "expect": 0.0009149760007858276
+        },
+        {
+          "where": "s3-5/control-obs",
+          "kind": "slot",
+          "name": "target_delta",
+          "prompt": "The nurse said that",
+          "expect": -0.011518552899360657
+        },
+        {
+          "where": "s3-5/control-obs",
+          "kind": "check",
+          "name": "feature_ablation.delta lt \"$capture.control.feature_ablation.delta\"",
+          "prompt": "The nurse said that",
+          "check": {
+            "read": "feature_ablation.delta",
+            "args": {
+              "token": " she"
+            },
+            "from": "target",
+            "op": "lt",
+            "value": "$capture.control.feature_ablation.delta",
+            "value_args": {
+              "token": " she"
+            }
+          }
+        },
+        {
+          "where": "s3-6/explain-result",
+          "kind": "slot",
+          "name": "control_delta",
+          "prompt": "The nurse said that",
+          "expect": 0.0009149760007858276
+        },
+        {
+          "where": "s3-6/explain-result",
+          "kind": "slot",
+          "name": "target_delta",
+          "prompt": "The nurse said that",
+          "expect": -0.011518552899360657
+        },
+        {
+          "where": "s5/doctor/he-obs",
+          "kind": "slot",
+          "name": "he_delta",
+          "prompt": "The doctor said that",
+          "expect": -0.014612361788749695
+        }
+      ]
+    },
+    "pry.p3-5": {
+      "prompts": [
+        "On our trip we walked along the beach and watched the ocean"
+      ],
+      "checks": [
+        {
+          "where": "s3-3/explain",
+          "kind": "slot",
+          "name": "period",
+          "prompt": "On our trip we walked along the beach and watched the ocean",
+          "expect": 0.10398386418819427
+        },
+        {
+          "where": "s3-3/explain",
+          "kind": "slot",
+          "name": "rise",
+          "prompt": "On our trip we walked along the beach and watched the ocean",
+          "expect": 0.04655522480607033
+        },
+        {
+          "where": "s3-3/explain",
+          "kind": "slot",
+          "name": "breeze",
+          "prompt": "On our trip we walked along the beach and watched the ocean",
+          "expect": 0.03423939272761345
+        },
+        {
+          "where": "s3-4/changed-obs",
+          "kind": "slot",
+          "name": "scale",
+          "prompt": "On our trip we walked along the beach and watched the ocean",
+          "expect": {
+            "strength": 25,
+            "activation_p50": 0,
+            "activation_p99": 0,
+            "activation_max": 0
+          }
+        },
+        {
+          "where": "s3-4/changed-obs",
+          "kind": "check",
+          "name": "steer.text contains \"rain\"",
+          "prompt": "On our trip we walked along the beach and watched the ocean",
+          "check": {
+            "read": "steer.text",
+            "args": {
+              "which": "steered"
+            },
+            "op": "contains",
+            "value": "rain"
+          }
+        },
+        {
+          "where": "s3-4/changed-obs",
+          "kind": "check",
+          "name": "steer.text not contains \"rain\"",
+          "prompt": "On our trip we walked along the beach and watched the ocean",
+          "check": {
+            "read": "steer.text",
+            "args": {
+              "which": "control"
+            },
+            "op": "contains",
+            "value": "rain",
+            "not": true
+          }
+        },
+        {
+          "where": "s3-4/changed-obs",
+          "kind": "check",
+          "name": "steer.text not equals \"$read.steer.text\"",
+          "prompt": "On our trip we walked along the beach and watched the ocean",
+          "check": {
+            "read": "steer.text",
+            "args": {
+              "which": "control"
+            },
+            "op": "equals",
+            "value": "$read.steer.text",
+            "value_args": {
+              "which": "original"
+            },
+            "not": true
+          }
+        },
+        {
+          "where": "s3-5/reveal-coherence",
+          "kind": "slot",
+          "name": "coh_steered",
+          "prompt": "On our trip we walked along the beach and watched the ocean",
+          "expect": -1.0579530000686646
+        },
+        {
+          "where": "s3-5/reveal-coherence",
+          "kind": "slot",
+          "name": "coh_control",
+          "prompt": "On our trip we walked along the beach and watched the ocean",
+          "expect": -0.7376875877380371
+        },
+        {
+          "where": "s3-6/harder-obs",
+          "kind": "slot",
+          "name": "coh_high",
+          "prompt": "On our trip we walked along the beach and watched the ocean",
+          "expect": -1.0579530000686646
+        },
+        {
+          "where": "s3-6/harder-obs",
+          "kind": "slot",
+          "name": "coh_at_s",
+          "prompt": "On our trip we walked along the beach and watched the ocean",
+          "expect": -1.0579530000686646
+        },
+        {
+          "where": "s3-6/harder-obs",
+          "kind": "check",
+          "name": "steer.coherence lt \"$read.steer.coherence\"",
+          "prompt": "On our trip we walked along the beach and watched the ocean",
+          "check": {
+            "read": "steer.coherence",
+            "args": {
+              "which": "steered"
+            },
+            "op": "lt",
+            "value": "$read.steer.coherence",
+            "value_args": {
+              "which": "original"
+            }
+          }
+        },
+        {
+          "where": "s3-6/harder-obs",
+          "kind": "assert",
+          "name": "coh_high equals coh_at_s",
+          "prompt": "On our trip we walked along the beach and watched the ocean"
+        }
+      ]
+    },
+    "pry.p3-6": {
+      "prompts": [
+        "Michael Jordan played the sport of",
+        "Tom Brady played the sport of"
+      ],
+      "checks": [
+        {
+          "where": "s3-2/pair-obs",
+          "kind": "slot",
+          "name": "jordan_bb",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.42208388447761536
+        },
+        {
+          "where": "s3-2/pair-obs",
+          "kind": "slot",
+          "name": "jordan_fb",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.0471893772482872
+        },
+        {
+          "where": "s3-2/pair-obs",
+          "kind": "slot",
+          "name": "jordan_golf",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.041473932564258575
+        },
+        {
+          "where": "s3-2/pair-obs",
+          "kind": "slot",
+          "name": "brady_fb",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.4862939715385437
+        },
+        {
+          "where": "s3-2/pair-obs",
+          "kind": "slot",
+          "name": "brady_bb",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.022681239992380142
+        },
+        {
+          "where": "s3-2/pair-obs",
+          "kind": "check",
+          "name": "compare.token_count equals \"$read.compare.token_count\"",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "compare.token_count",
+            "args": {
+              "side": "a"
+            },
+            "op": "equals",
+            "value": "$read.compare.token_count",
+            "value_args": {
+              "side": "b"
+            }
+          }
+        },
+        {
+          "where": "s3-4/mlp-obs",
+          "kind": "slot",
+          "name": "clean",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 15.96245288848877
+        },
+        {
+          "where": "s3-4/mlp-obs",
+          "kind": "slot",
+          "name": "corrupted",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 13.080302238464355
+        },
+        {
+          "where": "s3-4/mlp-obs",
+          "kind": "slot",
+          "name": "patched_l",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 15.456536293029785
+        },
+        {
+          "where": "s3-4/mlp-obs",
+          "kind": "slot",
+          "name": "l2_share",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 0.40324814685155025
+        },
+        {
+          "where": "s3-4/mlp-obs",
+          "kind": "slot",
+          "name": "l11_share",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": -0.3850042056096413
+        },
+        {
+          "where": "s3-4/mlp-obs",
+          "kind": "check",
+          "name": "patch.peak contains {\"layer\":0}",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "patch.peak",
+            "args": {
+              "type": "mlp"
+            },
+            "op": "contains",
+            "value": {
+              "layer": 0
+            }
+          }
+        },
+        {
+          "where": "s3-4/mlp-obs",
+          "kind": "assert",
+          "name": "share gt 0.8",
+          "prompt": "Michael Jordan played the sport of"
+        },
+        {
+          "where": "s3-4/mlp-obs",
+          "kind": "assert",
+          "name": "l2_share gt 0.3",
+          "prompt": "Michael Jordan played the sport of"
+        },
+        {
+          "where": "s3-6/resid-obs",
+          "kind": "check",
+          "name": "patch.cell.share within 0",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "patch.cell",
+            "args": {
+              "layer": 0,
+              "position": 0
+            },
+            "field": "share",
+            "op": "within",
+            "value": 0,
+            "tolerance": 0.0001,
+            "expect": 0
+          }
+        },
+        {
+          "where": "s3-6/resid-obs",
+          "kind": "check",
+          "name": "patch.cell.share within 0",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "patch.cell",
+            "args": {
+              "layer": 1,
+              "position": 0
+            },
+            "field": "share",
+            "op": "within",
+            "value": 0,
+            "tolerance": 0.0001,
+            "expect": 0
+          }
+        },
+        {
+          "where": "s3-6/resid-obs",
+          "kind": "check",
+          "name": "patch.cell.share within 0",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "patch.cell",
+            "args": {
+              "layer": 2,
+              "position": 0
+            },
+            "field": "share",
+            "op": "within",
+            "value": 0,
+            "tolerance": 0.0001,
+            "expect": 0
+          }
+        },
+        {
+          "where": "s3-6/resid-obs",
+          "kind": "check",
+          "name": "patch.cell.share within 0",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "patch.cell",
+            "args": {
+              "layer": 3,
+              "position": 0
+            },
+            "field": "share",
+            "op": "within",
+            "value": 0,
+            "tolerance": 0.0001,
+            "expect": 0
+          }
+        },
+        {
+          "where": "s3-6/resid-obs",
+          "kind": "check",
+          "name": "patch.cell.share within 0",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "patch.cell",
+            "args": {
+              "layer": 4,
+              "position": 0
+            },
+            "field": "share",
+            "op": "within",
+            "value": 0,
+            "tolerance": 0.0001,
+            "expect": 0
+          }
+        },
+        {
+          "where": "s3-6/resid-obs",
+          "kind": "check",
+          "name": "patch.cell.share within 0",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "patch.cell",
+            "args": {
+              "layer": 5,
+              "position": 0
+            },
+            "field": "share",
+            "op": "within",
+            "value": 0,
+            "tolerance": 0.0001,
+            "expect": 0
+          }
+        },
+        {
+          "where": "s3-6/resid-obs",
+          "kind": "check",
+          "name": "patch.cell.share within 0",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "patch.cell",
+            "args": {
+              "layer": 6,
+              "position": 0
+            },
+            "field": "share",
+            "op": "within",
+            "value": 0,
+            "tolerance": 0.0001,
+            "expect": 0
+          }
+        },
+        {
+          "where": "s3-6/resid-obs",
+          "kind": "check",
+          "name": "patch.cell.share within 0",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "patch.cell",
+            "args": {
+              "layer": 7,
+              "position": 0
+            },
+            "field": "share",
+            "op": "within",
+            "value": 0,
+            "tolerance": 0.0001,
+            "expect": 0
+          }
+        },
+        {
+          "where": "s3-6/resid-obs",
+          "kind": "check",
+          "name": "patch.cell.share within 0",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "patch.cell",
+            "args": {
+              "layer": 8,
+              "position": 0
+            },
+            "field": "share",
+            "op": "within",
+            "value": 0,
+            "tolerance": 0.0001,
+            "expect": 0
+          }
+        },
+        {
+          "where": "s3-6/resid-obs",
+          "kind": "check",
+          "name": "patch.cell.share within 0",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "patch.cell",
+            "args": {
+              "layer": 9,
+              "position": 0
+            },
+            "field": "share",
+            "op": "within",
+            "value": 0,
+            "tolerance": 0.0001,
+            "expect": 0
+          }
+        },
+        {
+          "where": "s3-6/resid-obs",
+          "kind": "check",
+          "name": "patch.cell.share within 0",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "patch.cell",
+            "args": {
+              "layer": 10,
+              "position": 0
+            },
+            "field": "share",
+            "op": "within",
+            "value": 0,
+            "tolerance": 0.0001,
+            "expect": 0
+          }
+        },
+        {
+          "where": "s3-6/resid-obs",
+          "kind": "check",
+          "name": "patch.cell.share within 0",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "patch.cell",
+            "args": {
+              "layer": 11,
+              "position": 0
+            },
+            "field": "share",
+            "op": "within",
+            "value": 0,
+            "tolerance": 0.0001,
+            "expect": 0
+          }
+        },
+        {
+          "where": "s3-7/dla-obs",
+          "kind": "slot",
+          "name": "bars",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 3.119221771368757
+        },
+        {
+          "where": "s3-7/dla-obs",
+          "kind": "slot",
+          "name": "actual",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 2.191035270690918
+        },
+        {
+          "where": "s3-7/dla-obs",
+          "kind": "slot",
+          "name": "gap",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": -0.9281865006778389
+        },
+        {
+          "where": "s3-7/dla-obs",
+          "kind": "check",
+          "name": "dla.target equals {\"answer\":\" basketball\",\"contrast\":\" football\"}",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "dla.target",
+            "op": "equals",
+            "value": {
+              "answer": " basketball",
+              "contrast": " football"
+            }
+          }
+        },
+        {
+          "where": "s3-8/lens-obs",
+          "kind": "slot",
+          "name": "first_top",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 8
+        },
+        {
+          "where": "s3-8/lens-obs",
+          "kind": "slot",
+          "name": "peak",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 9
+        },
+        {
+          "where": "s3-8/lens-obs",
+          "kind": "check",
+          "name": "lens.first_top_layer equals 8",
+          "prompt": "Michael Jordan played the sport of",
+          "check": {
+            "read": "lens.first_top_layer",
+            "args": {
+              "token": " basketball"
+            },
+            "op": "equals",
+            "value": 8,
+            "expect": 8
+          }
+        }
+      ]
+    },
+    "pry.p3-7": {
+      "prompts": [
+        "The war lasted from the year 1732 to the year 17",
+        "The war lasted from the year 1650 to the year 16"
+      ],
+      "checks": [
+        {
+          "where": "s3-3/flat-obs",
+          "kind": "slot",
+          "name": "p49",
+          "prompt": "The war lasted from the year 1732 to the year 17",
+          "expect": 0.05795148387551308
+        },
+        {
+          "where": "s3-3/flat-obs",
+          "kind": "slot",
+          "name": "p50",
+          "prompt": "The war lasted from the year 1732 to the year 17",
+          "expect": 0.050567593425512314
+        },
+        {
+          "where": "s3-3/flat-obs",
+          "kind": "slot",
+          "name": "p45",
+          "prompt": "The war lasted from the year 1732 to the year 17",
+          "expect": 0.03358353301882744
+        },
+        {
+          "where": "s3-3/flat-obs",
+          "kind": "slot",
+          "name": "p43",
+          "prompt": "The war lasted from the year 1732 to the year 17",
+          "expect": 0.031525228172540665
+        },
+        {
+          "where": "s3-3/flat-obs",
+          "kind": "check",
+          "name": "top_guess.token equals \"49\"",
+          "prompt": "The war lasted from the year 1732 to the year 17",
+          "check": {
+            "read": "top_guess.token",
+            "op": "equals",
+            "value": "49"
+          }
+        },
+        {
+          "where": "s3-5/map-obs",
+          "kind": "check",
+          "name": "circuit.target contains {\"token\":\" 17\"}",
+          "prompt": "The war lasted from the year 1732 to the year 17",
+          "check": {
+            "read": "circuit.target",
+            "op": "contains",
+            "value": {
+              "token": " 17"
+            }
+          }
+        },
+        {
+          "where": "s3-7/poke-obs",
+          "kind": "slot",
+          "name": "map_delta",
+          "prompt": "The war lasted from the year 1732 to the year 17",
+          "expect": -0.03274303674697876
+        },
+        {
+          "where": "s3-7/poke-obs",
+          "kind": "slot",
+          "name": "control_delta",
+          "prompt": "The war lasted from the year 1732 to the year 17",
+          "expect": -0.0018772967159748077
+        },
+        {
+          "where": "s3-7/poke-obs",
+          "kind": "check",
+          "name": "ablation.delta lt \"$capture.control.ablation.delta\"",
+          "prompt": "The war lasted from the year 1732 to the year 17",
+          "check": {
+            "read": "ablation.delta",
+            "args": {
+              "token": "49"
+            },
+            "from": "map",
+            "op": "lt",
+            "value": "$capture.control.ablation.delta",
+            "value_args": {
+              "token": "49"
+            }
+          }
+        }
+      ]
+    },
+    "pry.p4-1": {
+      "prompts": [
+        "Write a short poem about the sea.",
+        "Here is a short poem about the sea:\n",
+        "You are a poet. You answer every request with a short poem.\nWrite a short poem about the sea.",
+        "What is the opposite of hot?",
+        "Q: What is the opposite of hot?\nA:"
+      ],
+      "checks": [
+        {
+          "where": "s3-1/instruction-obs",
+          "kind": "check",
+          "name": "write_it.text starts_with \"Write a short poem about the sea.\\n\\nWrite a short poem about the sea.\"",
+          "prompt": "Write a short poem about the sea.",
+          "check": {
+            "read": "write_it.text",
+            "op": "starts_with",
+            "value": "Write a short poem about the sea.\n\nWrite a short poem about the sea."
+          }
+        },
+        {
+          "where": "s3-3/document-obs",
+          "kind": "check",
+          "name": "write_it.text starts_with \"Here is a short poem about the sea:\\n\\nThe sea is a sea of water\"",
+          "prompt": "Here is a short poem about the sea:\n",
+          "check": {
+            "read": "write_it.text",
+            "from": "document",
+            "op": "starts_with",
+            "value": "Here is a short poem about the sea:\n\nThe sea is a sea of water"
+          }
+        }
+      ]
     },
     "pry.quick-tour": {
       "prompts": [],
