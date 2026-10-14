@@ -1,0 +1,371 @@
+// Walks a bundled lesson through the real Pry registry (tests only; plan T6,
+// plan:543). Sections run in order: the scene from `baseline` + each `:::enter`
+// (cumulative, `reset: true` restarts), then every step: do steps dispatch
+// their actions, observe checks, slot expects and asserts evaluate against the
+// readouts. The sidecar is a fake fetch that answers from
+// `__generated__/responses/<key>.json`; a request with no recording gets the
+// test host's canned answer and is reported as missing.
+//
+// Used by lesson-checks.test.ts (every check evaluates as authored) and by
+// lessons-compile.test.ts (expectations.json: every request, check and slot
+// expect). Each caller mocks '@tauri-apps/api/core' before importing it.
+
+import { readdirSync, readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { vi } from 'vitest';
+import { pryToolSet } from './registry/pry-set';
+import { createDispatcher } from './registry/dispatcher';
+import { RequestMemo } from './registry/memo';
+import { requestKey } from './registry/request-key';
+import { answer, makeHost } from './registry/pry-test-host';
+import { evaluateAssert, slotValue, type SlotSource } from './slots';
+import type { AssertItem, CheckItem, Lesson, Slot, Step } from './format/schema';
+
+export interface WalkRequest {
+  endpoint: string;
+  model: string;
+  body: unknown;
+  key: string;
+}
+
+export interface WalkCheck {
+  /** `section/step` where it evaluated. */
+  where: string;
+  kind: 'check' | 'slot' | 'assert';
+  name: string;
+  ok: boolean;
+  /** Not evaluable here (learner input); listed, not failed. */
+  skipped?: string;
+  detail: string;
+  /** The prompt in the box when it evaluated (expectations.json). */
+  prompt?: string;
+  check?: CheckItem;
+  expect?: unknown;
+}
+
+export interface WalkResult {
+  lessonId: string;
+  requests: WalkRequest[];
+  missing: WalkRequest[];
+  checks: WalkCheck[];
+  errors: string[];
+}
+
+export type Recorded = Map<string, unknown[]>;
+
+/** Recorded responses by request key: r1, r2, ... in order (offline variants left out). */
+export function loadRecorded(dir: string): Recorded {
+  const out: Recorded = new Map();
+  if (!existsSync(dir)) return out;
+  const files = readdirSync(dir)
+    .filter((f) => f.endsWith('.json'))
+    .sort();
+  for (const f of files) {
+    const doc = JSON.parse(readFileSync(join(dir, f), 'utf8')) as { key: string; variant: string; response: unknown };
+    const m = /^r(\d+)$/.exec(doc.variant);
+    if (!m) continue;
+    const list = out.get(doc.key) ?? [];
+    list[Number(m[1]) - 1] = doc.response;
+    out.set(doc.key, list);
+  }
+  return out;
+}
+
+/** rows.json values by row id, for `$row.<id>.<field>`. */
+export function loadRows(file: string): Map<string, Record<string, unknown>> {
+  const out = new Map<string, Record<string, unknown>>();
+  if (!existsSync(file)) return out;
+  const doc = JSON.parse(readFileSync(file, 'utf8')) as { rows: { id: number; values: Record<string, unknown> }[] };
+  for (const r of doc.rows) out.set(String(r.id), r.values ?? {});
+  return out;
+}
+
+const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+
+function pick(v: unknown, field?: string): unknown {
+  if (!field) return v;
+  let cur = v;
+  for (const k of field.split('.')) cur = isObj(cur) ? cur[k] : undefined;
+  return cur;
+}
+
+function deepEqual(a: unknown, b: unknown, tol?: number): boolean {
+  if (typeof a === 'number' && typeof b === 'number') return Math.abs(a - b) <= (tol ?? 1e-9);
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+/** Default tolerance for a slot's live value against its authored expect. */
+function slotTolerance(expect: number, slot: Slot): number {
+  return slot.tolerance ?? Math.max(1e-3, Math.abs(expect) * 1e-3);
+}
+
+const fmt = (v: unknown) => (typeof v === 'string' ? JSON.stringify(v) : JSON.stringify(v) ?? 'undefined');
+
+export async function walkLesson(
+  lesson: Lesson,
+  opts: { recorded: Recorded; rows?: Map<string, Record<string, unknown>> },
+): Promise<WalkResult> {
+  const set = pryToolSet;
+  const res: WalkResult = { lessonId: lesson.meta.id, requests: [], missing: [], checks: [], errors: [] };
+  const seen = new Map<string, number>();
+  const host = makeHost('');
+
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string, init?: RequestInit) => {
+      const endpoint = new URL(url).pathname;
+      const body = init?.body ? JSON.parse(String(init.body)) : null;
+      const model = (isObj(body) && typeof body.preset_id === 'string' ? body.preset_id : undefined) ?? lesson.meta.model ?? 'gpt2-small';
+      const key = await requestKey({ endpoint, model, body });
+      const n = seen.get(key) ?? 0;
+      seen.set(key, n + 1);
+      const req = { endpoint, model, body, key };
+      if (n === 0) res.requests.push(req);
+      const list = opts.recorded.get(key);
+      let out: unknown = list?.[n] ?? list?.[0];
+      if (out === undefined) {
+        if (n === 0) res.missing.push(req);
+        out = answer(endpoint, body);
+      }
+      return new Response(JSON.stringify(out), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }),
+  );
+
+  const signal = new AbortController().signal;
+  const ctx = { signal, wait: () => {} };
+  const dispatcher = createDispatcher(set, new RequestMemo(), { kind: 'bundled' });
+  const readouts = set.readouts;
+  const captures = new Map<string, unknown>();
+  let before: unknown;
+  let baseline: unknown;
+
+  const slots: Record<string, Slot> = { ...(lesson.meta.slots ?? {}) };
+  for (const s of lesson.sections) Object.assign(slots, s.slots ?? {});
+
+  const read = (name: string, args?: Record<string, unknown>, capture?: unknown) => {
+    const def = readouts[name];
+    if (!def) return undefined;
+    return def.read(capture !== undefined ? { ...(args ?? {}), from_capture: capture } : args);
+  };
+  const src: SlotSource = {
+    read: (name, args, capture) => read(name, args, capture !== undefined ? captures.get(capture) : undefined),
+    row: (id) => opts.rows?.get(id),
+    readouts,
+  };
+  const bindings = { earlier: () => undefined, row: (id: string, field: string) => pick(opts.rows?.get(id), field) };
+
+  /** A check's right-hand side; `skip` when it needs the learner. */
+  function rhs(item: CheckItem): { value?: unknown; skip?: string } {
+    const v = item.value;
+    if (typeof v !== 'string' || !v.startsWith('$')) return { value: v };
+    let m: RegExpExecArray | null;
+    if (v === '$prediction') return { skip: 'compares with the learner\'s prediction' };
+    if ((m = /^\$slot\.(.+)$/.exec(v))) return { value: slots[m[1]]?.expect };
+    if ((m = /^\$row\.([^.]+)\.(.+)$/.exec(v))) return { value: pick(opts.rows?.get(m[1]), m[2]) };
+    if ((m = /^\$read\.(.+)$/.exec(v))) return { value: pick(read(m[1], item.value_args), item.value_field) };
+    if ((m = /^\$before\.(.+)$/.exec(v))) return { value: pick(read(m[1], item.value_args, before), item.value_field) };
+    if ((m = /^\$baseline\.(.+)$/.exec(v))) return { value: pick(read(m[1], item.value_args, baseline), item.value_field) };
+    if ((m = /^\$capture\.([^.]+)\.(.+)$/.exec(v))) return { value: pick(read(m[2], item.value_args, captures.get(m[1])), item.value_field) };
+    if (v.startsWith('$earlier.')) return { skip: 'compares with the learner\'s earlier answer' };
+    return { value: v };
+  }
+
+  function tolOf(item: CheckItem): number | undefined {
+    const t = item.tolerance;
+    if (typeof t === 'number') return t;
+    if (typeof t === 'string') {
+      const m = /^\$slot\.(.+)$/.exec(t);
+      if (m) return Number(slots[m[1]]?.expect);
+      const r = /^\$row\.([^.]+)\.(.+)$/.exec(t);
+      if (r) return Number(pick(opts.rows?.get(r[1]), r[2]));
+    }
+    return undefined;
+  }
+
+  /** Evaluates one check item; undefined result = not evaluable. */
+  function evalCheck(item: CheckItem): { ok?: boolean; got: unknown; want: unknown; skip?: string } {
+    if (item.expect === 'learner') return { got: undefined, want: undefined, skip: 'learner-produced readout' };
+    const cap = item.from !== undefined ? captures.get(item.from) : undefined;
+    const got = pick(read(item.read, item.args, cap), item.field);
+    const r = rhs(item);
+    if (r.skip) return { got, want: undefined, skip: r.skip };
+    const want = r.value;
+    const tol = tolOf(item);
+    let ok: boolean;
+    switch (item.op) {
+      case 'equals':
+        ok = deepEqual(got, want, tol);
+        break;
+      case 'in':
+        ok = Array.isArray(want) && want.some((w) => deepEqual(got, w, tol));
+        break;
+      case 'changed_from':
+        ok = got !== undefined && !deepEqual(got, want, tol);
+        break;
+      case 'gt':
+      case 'increased':
+        ok = typeof got === 'number' && typeof want === 'number' && got > want;
+        break;
+      case 'lt':
+      case 'decreased':
+        ok = typeof got === 'number' && typeof want === 'number' && got < want;
+        break;
+      case 'within':
+        ok = typeof got === 'number' && typeof want === 'number' && Math.abs(got - want) <= (tol ?? 0);
+        break;
+      case 'contains':
+        ok = typeof got === 'string' ? typeof want === 'string' && got.includes(want) : Array.isArray(got) && got.some((g) => deepEqual(g, want));
+        break;
+      case 'starts_with':
+        ok = typeof got === 'string' && typeof want === 'string' && got.startsWith(want);
+        break;
+      default:
+        ok = false;
+    }
+    if (item.not) ok = !ok;
+    const expected = typeof item.expect === 'boolean' ? item.expect : true;
+    return { ok: ok === expected, got, want };
+  }
+
+  const prompt = () => host.page.prompt;
+
+  function checkSlot(name: string, where: string, done: Set<string>) {
+    const key = `${where}|${name}`;
+    if (done.has(key)) return;
+    done.add(key);
+    const slot = slots[name];
+    if (!slot) return;
+    for (const f of slot.from ?? []) checkSlot(f, where, done);
+    if (slot.expect === undefined || slot.formula) return;
+    if (slot.expect === 'learner' || slot.expect === 'pending') {
+      res.checks.push({ where, kind: 'slot', name, ok: true, skipped: String(slot.expect), detail: `live ${fmt(slotValue(name, slots, src))}`, expect: slot.expect, prompt: prompt() });
+      return;
+    }
+    const got = slotValue(name, slots, src);
+    const want = slot.expect;
+    const ok = typeof want === 'number' && typeof got === 'number' ? Math.abs(got - want) <= slotTolerance(want, slot) : deepEqual(got, want);
+    res.checks.push({ where, kind: 'slot', name, ok, detail: `live ${fmt(got)}, expect ${fmt(want)}`, expect: want, prompt: prompt() });
+  }
+
+  const SLOT_RE = /\{([a-z_][a-z0-9_]*)\}/g;
+  function slotsIn(texts: unknown[]): string[] {
+    const out: string[] = [];
+    const walk = (v: unknown) => {
+      if (typeof v === 'string') {
+        for (const m of v.matchAll(SLOT_RE)) if (m[1] in slots) out.push(m[1]);
+      } else if (Array.isArray(v)) v.forEach(walk);
+      else if (isObj(v)) Object.values(v).forEach(walk);
+    };
+    texts.forEach(walk);
+    return out;
+  }
+
+  function runAsserts(list: AssertItem[] | undefined, where: string, done: Set<string>) {
+    for (const a of list ?? []) {
+      for (const s of [a.require.slot, a.require.slot2].filter((x): x is string => !!x)) checkSlot(s, where, done);
+      for (const s of slotsIn([a.say, a.else])) checkSlot(s, where, done);
+      let fell = false;
+      const line = evaluateAssert(a, slots, src, () => (fell = true));
+      res.checks.push({
+        where,
+        kind: 'assert',
+        name: `${a.require.slot} ${a.require.op} ${a.require.slot2 ?? fmt(a.require.value)}`,
+        ok: !fell,
+        detail: `live ${fmt(slotValue(a.require.slot, slots, src))}; shows "${line}"`,
+        prompt: prompt(),
+      });
+    }
+  }
+
+  function runCheckItems(items: CheckItem | CheckItem[] | undefined, where: string) {
+    const list = items === undefined ? [] : Array.isArray(items) ? items : [items];
+    for (const item of list) {
+      const r = evalCheck(item);
+      res.checks.push({
+        where,
+        kind: 'check',
+        name: `${item.read}${item.field ? '.' + item.field : ''} ${item.not ? 'not ' : ''}${item.op} ${fmt(item.value)}`,
+        ok: r.skip ? true : !!r.ok,
+        skipped: r.skip,
+        detail: `got ${fmt(r.got)}, want ${fmt(r.want)}`,
+        prompt: prompt(),
+        check: item,
+      });
+    }
+  }
+
+  /** Predict feedback is shown at the reveal: evaluated at the observe it `checks`, or at section end. */
+  const pendingFeedback = new Map<string, unknown[]>();
+
+  async function walkStep(step: Step, where: string, done: Set<string>) {
+    const at = `${where}/${step.id ?? step.kind}`;
+    const f = step.fields;
+    if (f.when) {
+      const w = evalCheck(f.when as CheckItem);
+      if (!w.skip && !w.ok) return;
+    }
+    switch (step.kind) {
+      case 'do': {
+        before = read('result');
+        for (const a of step.actions) {
+          try {
+            const r = await dispatcher.dispatch(a.name, a.args, { signal, bindings, fresh: f.fresh === true });
+            if (r.status !== 'done') res.errors.push(`${at}: ${a.name} ${r.status}`);
+          } catch (e) {
+            res.errors.push(`${at}: ${a.name} threw ${String(e)}`);
+          }
+        }
+        if (typeof f.capture === 'string') captures.set(f.capture, read('result'));
+        break;
+      }
+      case 'observe':
+        runCheckItems(f.check, at);
+        runAsserts(f.assert, at, done);
+        if (step.id && pendingFeedback.has(step.id)) {
+          for (const s of slotsIn(pendingFeedback.get(step.id)!)) checkSlot(s, at, done);
+          pendingFeedback.delete(step.id);
+        }
+        break;
+      case 'predict':
+        if (typeof f.checks === 'string') pendingFeedback.set(f.checks, [f.choices]);
+        else pendingFeedback.set(`__end:${at}`, [f.choices]);
+        for (const s of slotsIn([step.prose.map((p) => p.text)])) checkSlot(s, at, done);
+        break;
+      case 'task':
+        // Learner-driven: its target is the learner's to reach, not checkable here.
+        break;
+      default: {
+        // Prose and fields (feedback, supports, leaves_open, ...); assert lines are checked by runAsserts.
+        const { assert: _assert, ...rest } = f;
+        for (const s of slotsIn([step.prose.map((p) => p.text), rest])) checkSlot(s, at, done);
+        runAsserts(f.assert, at, done);
+      }
+    }
+    for (const c of step.children) await walkStep(c, at, done);
+  }
+
+  let state: unknown;
+  for (const section of lesson.sections) {
+    const where = section.id;
+    const overlay = section.enter?.value as Record<string, unknown> | undefined;
+    state = !state || overlay?.reset ? set.target(lesson.meta.baseline, overlay ?? {}) : set.target(lesson.meta.baseline, overlay ?? {}, state as any);
+    try {
+      await set.apply(state as any, ctx);
+    } catch (e) {
+      res.errors.push(`${where}: apply threw ${String(e)}`);
+    }
+    if (baseline === undefined) baseline = read('result');
+    const done = new Set<string>();
+    for (const step of section.steps) await walkStep(step, where, done);
+    for (const [k, texts] of pendingFeedback) {
+      // A predict whose reveal is an observe in a later section waits for it.
+      if (!k.startsWith('__end:')) continue;
+      for (const s of slotsIn(texts)) checkSlot(s, `${where}/feedback`, done);
+      pendingFeedback.delete(k);
+    }
+    state = set.snapshot();
+  }
+  for (const texts of pendingFeedback.values()) for (const s of slotsIn(texts)) checkSlot(s, 'end/feedback', new Set());
+  vi.unstubAllGlobals();
+  return res;
+}

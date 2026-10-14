@@ -2,6 +2,7 @@
 //
 //   npm run lessons:compile -- <folder> [--out file.json]
 //   npm run lessons:compile -- --rows [--out file.json]
+//   npm run lessons:compile -- --expectations
 //
 // <folder> is one lesson folder or a folder of lesson folders. Exits 1 when a
 // lesson doesn't parse.
@@ -241,6 +242,19 @@ if (!process.env.VITEST) {
   const argv = process.argv.slice(2);
   const outAt = argv.indexOf('--out');
   const out = outAt >= 0 ? argv[outAt + 1] : undefined;
+  if (argv.includes('--expectations')) {
+    // Plan T6: the bundled lessons walk through the real registry (svelte runes),
+    // so the walk runs under vitest: lessons-compile.test.ts writes the file.
+    const { spawnSync } = await import('node:child_process');
+    const r = spawnSync('npx', ['vitest', 'run', 'src/lib/lessons/lessons-compile.test.ts'], {
+      cwd: UI,
+      stdio: 'inherit',
+      shell: process.platform === 'win32',
+      env: { ...process.env, PRY_WRITE_EXPECTATIONS: '1' },
+    });
+    if (r.status === 0) console.log('wrote src/lessons/__generated__/expectations.json');
+    process.exit(r.status ?? 1);
+  }
   if (argv.includes('--rows')) {
     const text = await rowRequestsJson(readFileSync(ROWS_YAML, 'utf8'));
     writeFileSync(out ?? ROW_REQUESTS_JSON, text);
