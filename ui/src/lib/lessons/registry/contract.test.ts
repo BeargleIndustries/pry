@@ -30,7 +30,7 @@ const PLAN_READOUTS = [
   'dla.bars_total', 'dla.answer_logit', 'dla.contrast_logit', 'dla.actual', 'dla.gap', 'dla.top_parts', 'dla.target',
   'features.top', 'features.has', 'features.activation', 'features.label', 'features.has_snippets',
   'ablation.heads', 'ablation.head_count', 'ablation.top_guess.token', 'ablation.delta', 'ablation.prediction', 'ablation.top5',
-  'patch.cell', 'patch.peak',
+  'patch.cell', 'patch.focused', 'patch.peak',
   'feature_ablation.delta', 'feature_ablation.prediction', 'feature_ablation.top5',
   'steer.text', 'steer.changed_tokens', 'steer.coherence', 'steer.control_top_changed', 'steer.persist', 'steer.scale',
   'circuit.nodes', 'circuit.target',

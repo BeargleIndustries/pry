@@ -369,6 +369,16 @@ describe('Pry readouts: one test per readout', () => {
     expect(r('patch.cell', { layer: 0, position: 1 })).toEqual({ layer: 0, position: 1, clean: 4, corrupted: 0.5, patched: 2, share: 1.5 / 3.5 });
   });
 
+  it('patch.focused reads the selected cell, undefined when none is selected', async () => {
+    await act('run_patching', { clean: 'A B', corrupted: 'A C', type: 'head' });
+    expect(r('patch.focused')).toBeUndefined();
+    await act('focus_patch_cell', { layer: 1, position: 0 });
+    expect(r('patch.focused')).toEqual({ layer: 1, head: 0, clean: 4, corrupted: 0.5, patched: 2, share: 1.5 / 3.5 });
+    await act('run_patching', { clean: 'A B', corrupted: 'A C', type: 'resid' });
+    await act('focus_patch_cell', { layer: 0, position: 1 });
+    expect(r('patch.focused')).toMatchObject({ layer: 0, position: 1 });
+  });
+
   it('patch.peak', async () => {
     await act('run_patching', { clean: 'A B', corrupted: 'A C', type: 'head' });
     expect(r('patch.peak', { type: 'head' })).toMatchObject({ layer: 1, position: 1, patched: 3 });

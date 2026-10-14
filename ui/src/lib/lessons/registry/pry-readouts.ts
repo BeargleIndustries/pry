@@ -594,6 +594,16 @@ export const pryReadouts: Record<string, ReadoutDef> = {
       return c ? cellRecord(c) : undefined;
     }),
   },
+  'patch.focused': {
+    type: 'record',
+    doc: 'The Swap test cell selected now: its layer, word position or head, the three logits and the share.',
+    read: reader((s) => {
+      const c = s.patchCell;
+      if (!c) return undefined;
+      const where = c.position != null ? { position: c.position } : c.head != null ? { head: c.head } : {};
+      return { layer: c.layer, ...where, clean: c.clean_logit, corrupted: c.corrupted_logit, patched: c.patched_logit, share: shareOf(c) };
+    }),
+  },
   'patch.peak': {
     args: z.object({ type: z.enum(['head', 'mlp', 'resid']) }).strict(),
     type: 'record',
