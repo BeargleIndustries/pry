@@ -68,6 +68,12 @@ model_answer: "Close: two tokens differ, not one (Michael Jordan vs Tom Brady), 
 
 ## Which MLP? {id=s3-3 outline=P3.6.md#3.3}
 
+:::enter
+compare_mode: false
+open_panel: patching
+patching: { clean: "Michael Jordan played the sport of", corrupted: "Tom Brady played the sport of", type: mlp }
+:::
+
 :::predict{id=which-mlp checks=mlp-obs}
 Swap one layer's MLP at a time from the Jordan run into the Brady run, measuring ' basketball''s logit. Which layer's bar will be biggest? (Pry labels layers `L0` to `L11`.)
 
@@ -87,8 +93,10 @@ clean: { read: patch.peak, args: { type: mlp }, field: clean, format: logit, exp
 corrupted: { read: patch.peak, args: { type: mlp }, field: corrupted, format: logit, expect: 13.080302238464355, tolerance: 0.05 }
 patched_l: { read: patch.peak, args: { type: mlp }, field: patched, format: logit, expect: 15.456536293029785, tolerance: 0.05 }
 share: { from: [clean, corrupted, patched_l], formula: share, format: probability }
-l2_share: { read: patch.cell, args: { layer: 2, position: 0 }, field: share, expect: 0.40324814685155025, tolerance: 0.02 }
-l11_share: { read: patch.cell, args: { layer: 11, position: 0 }, field: share, expect: -0.3850042056096413, tolerance: 0.02 }
+l2_patched: { read: patch.cell, args: { layer: 2, position: 0 }, field: patched, format: logit, expect: 14.2425, tolerance: 0.05 }
+l11_patched: { read: patch.cell, args: { layer: 11, position: 0 }, field: patched, format: logit, expect: 11.9707, tolerance: 0.05 }
+l2_share: { from: [clean, corrupted, l2_patched], formula: share, format: probability }
+l11_share: { from: [clean, corrupted, l11_patched], formula: share, format: probability }
 :::
 
 :::do{id=mlp-swaps}
@@ -102,7 +110,7 @@ Press **Do it** to run the Swap test on MLPs, Jordan as the Original prompt and 
 :::
 
 :::observe{id=mlp-obs}
-All three are ' basketball''s logit at the last token, and you've read numbers like these before. Clean: {clean}. Corrupted: {corrupted}. Swap in the Jordan run's MLP at the biggest bar and it becomes {patched_l}, {share} of the way back. Two more bars to read: `L2` brings back {l2_share}, and `L11` sits at {l11_share}, below zero, so swapping it pushes ' basketball' the other way.
+All three are ' basketball''s logit at the last token, and you've read numbers like these before. Clean: {clean}. Corrupted: {corrupted}. Swap in the Jordan run's MLP at the biggest bar and it becomes {patched_l}, {share} of the way back. Two more bars to read: swapping `L2`'s MLP gives {l2_patched}, {l2_share} of the way back, and swapping `L11`'s gives {l11_patched}, {l11_share}, below zero, so swapping it pushes ' basketball' the other way.
 
 ```yaml
 check: { read: patch.peak, args: { type: mlp }, op: contains, value: { layer: 0 } }
@@ -193,7 +201,7 @@ Now a different question: which parts push ' basketball' over ' football' direct
 :::
 
 :::observe{id=dla-obs}
-The bars for ' basketball' minus ' football' total {bars}. The real logit difference is {actual}. The {gap} left over is the embedding's own direct push plus a few fixed numbers the model adds on every run.
+On :look{at=dla-total-line}[the total line], the bars for ' basketball' minus ' football' total {bars}. The real logit difference is {actual}. The {gap} left over is the embedding's own direct push plus a few fixed numbers the model adds on every run.
 
 Here the gap's below zero: the bars add up to more than the real difference, so that leftover pushes the other way. Among the biggest bars you'll find heads and an MLP.
 
@@ -274,6 +282,10 @@ skeptic: { says: "A skeptic would say the Swap test only shows that ' Jordan' an
 :::
 
 ## Transfer {id=s5 outline=P3.6.md#5}
+
+:::enter
+open_panel: patching
+:::
 
 ::::transfer{id=serena}
 ```yaml

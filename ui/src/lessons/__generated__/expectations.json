@@ -3287,16 +3287,16 @@
         {
           "where": "s3-4/mlp-obs",
           "kind": "slot",
-          "name": "l2_share",
+          "name": "l2_patched",
           "prompt": "Michael Jordan played the sport of",
-          "expect": 0.40324814685155025
+          "expect": 14.2425
         },
         {
           "where": "s3-4/mlp-obs",
           "kind": "slot",
-          "name": "l11_share",
+          "name": "l11_patched",
           "prompt": "Michael Jordan played the sport of",
-          "expect": -0.3850042056096413
+          "expect": 11.9707
         },
         {
           "where": "s3-4/mlp-obs",
