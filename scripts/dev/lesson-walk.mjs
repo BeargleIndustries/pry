@@ -139,6 +139,15 @@ window.__t8 = (() => {
   const flat = (steps) => steps.flatMap((s) => [s, ...flat(s.children ?? [])]);
   const has = (steps, kind) => flat(steps).some((s) => s.kind === kind);
   const settled = () => { const r = R(); return !!r && !r.entering && !r.busy; };
+  // In-app tasks the walk plays with the app's own controls, as a learner would (not "Run it").
+  const TASK_MOVES = {
+    'pry.p1-5/baker-write': () => [['write_it', { temperature: 0 }]],
+    'pry.p2-4/pick-pair': () => [['run_dla', { answer: ' she', contrast: ' he' }]],
+    'pry.p3-6/find-mlp': (r) => [
+      ['run_patching', { clean: 'Michael Jordan played the sport of', corrupted: 'Andy Murray played the sport of', type: 'mlp' }],
+      ['focus_patch_cell', { layer: r.rowValue('35', 'best_mlp_not_l0'), position: 0 }],
+    ],
+  };
   // The runner's idle signal: every fold, do step and task run it issued has landed.
   const idle = async () => { await until(settled); if (R()?.idle) await R().idle(); await until(settled); };
   const until = async (fn, ms = 120000) => { const end = Date.now() + ms; while (Date.now() < end) { if (fn()) return true; await new Promise((r) => setTimeout(r, 200)); } return false; };
@@ -175,7 +184,13 @@ window.__t8 = (() => {
       // A transfer step names a prompt the learner types and runs: the driver does that before its observe.
       let typed = null;
       for (const s of flat(sec.steps)) {
-        if (s.kind === 'transfer' && typeof s.fields.prompt === 'string') { typed = { prompt: s.fields.prompt, ran: false }; continue; }
+        if (s.kind === 'transfer' && typeof s.fields.prompt === 'string') {
+          // A transfer whose own do step or task runs the new case (in Compare, the Swap test,
+          // Steering) isn't typed into the prompt box too: a second Run would replace that result.
+          const ownRun = flat(s.children ?? []).some((c) => c.kind === 'do' || c.kind === 'task');
+          typed = ownRun ? null : { prompt: s.fields.prompt, ran: false };
+          continue;
+        }
         if (s.kind === 'observe' && typed && !typed.ran) {
           // Only when the app isn't already showing that prompt's run (a do step may have run it).
           const snap = L().snapshot();
@@ -202,18 +217,46 @@ window.__t8 = (() => {
             if (asksRun) { await A().runAction('run', {}); log.push('pressed:run'); }
           }
           else if (s.kind === 'observe') await r.showObserve(key);
-          else if (s.kind === 'task') { await r.taskRun(key); await r.taskCheck(key); }
+          else if (s.kind === 'task') {
+            if (s.fields.predict_before_each_run) await r.taskPredict(key, 'My guess');
+            const move = TASK_MOVES[r.lesson.meta.id + '/' + s.id];
+            if (move) {
+              for (const [name, args] of move(r)) await A().runAction(name, args);
+              await idle();
+              await r.taskCheck(key);
+              log.push('task:moved');
+            } else { await r.taskRun(key); await r.taskCheck(key); }
+          }
           log.push(s.kind + ':ok');
         } catch (e) { log.push(s.kind + ':err ' + (e && e.message)); }
         await idle();
       }
       return log;
     },
-    /** Scrolls the sidebar to the explain-result (or the last observe result) so the screenshot shows it. */
+    /**
+     * Scrolls the sidebar to where the learner is after the driven steps: an unfinished
+     * step's own button; else the part after a do step run after the result (what the
+     * app shows now); else the explain-result (or the last observe result).
+     */
     scrollToResult() {
       const side = document.querySelector('[data-lesson-sidebar]');
       if (!side) return null;
+      const blocks = flat(R().render().blocks);
+      const sel = (b) => side.querySelector('[data-step-id="' + CSS.escape(b.stepId ?? b.key) + '"]');
+      const open = (b) => (b.ask ? !b.ask.locked : false) || (b.act ? b.act.state !== 'done' : false) || (b.observe ? !b.observe.revealed && !b.observe.journal : false) || (b.task ? !b.task.met : false) || (b.chain ? !b.chain.written && !b.chain.skipped : false);
+      const first = blocks.find(open);
+      const firstEl = first ? sel(first) : null;
+      if (firstEl) {
+        (firstEl.querySelector('[data-step-action]') ?? firstEl).scrollIntoView({ block: 'center' });
+        return 'open:' + first.kind;
+      }
       const el = side.querySelector('[data-step-kind="explain-result"]') ?? [...side.querySelectorAll('[data-check-result]')].at(-1) ?? null;
+      const lastDo = [...blocks].reverse().find((b) => b.act && b.act.state === 'done');
+      const doEl = lastDo ? sel(lastDo) : null;
+      if (doEl && (!el || el.compareDocumentPosition(doEl) & Node.DOCUMENT_POSITION_FOLLOWING)) {
+        (doEl.nextElementSibling ?? doEl).scrollIntoView({ block: 'start' });
+        return 'after-do';
+      }
       if (el) el.scrollIntoView({ block: 'center' });
       return el ? el.getAttribute('data-step-kind') ?? 'check-result' : null;
     },
