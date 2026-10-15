@@ -189,6 +189,46 @@ describe('runfix', () => {
     expect((h!.leavesOpen.length + h!.limits.length) > 0).toBe(true);
   });
 
+  it('› a compute action brings its result tab forward and leaves Compare (Swap test, Watch it write)', async () => {
+    const kit = makeKit();
+    const lesson = lessonSource(`---
+format: 1
+id: pry.fixture-show
+title: "Show fixture"
+tool: pry
+summary: "Runner fixture."
+minutes: 1
+model: gpt2-small
+baseline: { prompt: "Michael Jordan played the sport of" }
+---
+
+## Swap {id=swap}
+
+:::do{id=swap-run}
+The lesson runs the Swap test.
+
+\`\`\`actions
+- set_compare_mode: { on: true }
+- run_patching: { clean: "When Mary and John went to the store, John gave a drink to", corrupted: "When Mary and John went to the store, Mary gave a drink to", type: head }
+\`\`\`
+:::
+
+:::do{id=write}
+The lesson writes on.
+
+\`\`\`actions
+- write_it: { temperature: 0 }
+\`\`\`
+:::
+`);
+    await kit.runner.open(lesson, { source: { kind: 'bundled' } });
+    await send(kit, { type: 'do', step: 'swap-run' });
+    expect(kit.host.page.compareMode).toBe(false);
+    expect(kit.host.getLeftTab()).toBe('patching');
+    await send(kit, { type: 'do', step: 'write' });
+    expect(kit.host.getRightTab()).toBe('predictions');
+  });
+
   it('› a scene whose enter opens a right-side panel brings the right half forward in the one-panel layout', async () => {
     const kit = makeKit();
     pryUi.workspaceSplit = false;

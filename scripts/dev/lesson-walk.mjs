@@ -175,7 +175,11 @@ window.__t8 = (() => {
       for (const s of flat(sec.steps)) {
         if (s.kind === 'transfer' && typeof s.fields.prompt === 'string') { typed = { prompt: s.fields.prompt, ran: false }; continue; }
         if (s.kind === 'observe' && typed && !typed.ran) {
-          try { await A().runAction('set_prompt', { text: typed.prompt }); await A().runAction('run', {}); log.push('typed:' + typed.prompt); } catch (e) { log.push('typed:err ' + (e && e.message)); }
+          // Only when the app isn't already showing that prompt's run (a do step may have run it).
+          const snap = L().snapshot();
+          if (snap.prompt !== typed.prompt || !snap.run) {
+            try { await A().runAction('set_prompt', { text: typed.prompt }); await A().runAction('run', {}); log.push('typed:' + typed.prompt); } catch (e) { log.push('typed:err ' + (e && e.message)); }
+          } else log.push('typed:already');
           typed.ran = true;
           await idle();
         }
