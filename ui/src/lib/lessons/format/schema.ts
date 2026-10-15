@@ -269,9 +269,6 @@ export const NESTING: Partial<Record<StepKind, readonly StepKind[]>> = {
 /** A step's `actions` fence: a list of single-key maps, key = action, value = args. */
 export const actionsList = z.array(z.record(z.string(), z.unknown()).refine((o) => Object.keys(o).length === 1, 'each action is one `name: { args }` entry'));
 
-/** The generic `:::enter` keys the format owns; everything else is the tool's overlay. */
-export const ENTER_GENERIC = z.strictObject({ reset: z.literal(true).optional() });
-
 // ---------------------------------------------------------------------------
 // The normalised lesson (what parse + normalise hand lint, the runner and compile).
 

@@ -10,10 +10,10 @@
 
 import { tick } from 'svelte';
 import { z } from 'zod';
-import type { ActionContext, ToolActionSet } from './contract';
+import type { ToolActionSet } from './contract';
 import { PRY_MODELS } from './pry-models';
-import { HIDEABLE_ANCHORS } from './pry-anchors';
-import { LEFT_PANELS, PANELS, callerOf, findPatchCell, openPanel, resolveFocus } from './pry-actions';
+import { HIDEABLE_ANCHORS, occurrence } from './pry-anchors';
+import { LEFT_PANELS, PANELS, abortIf, callerOf, findPatchCell, openPanel, resolveFocus } from './pry-actions';
 import {
   IOI_CHANGED,
   IOI_CLEAN,
@@ -34,7 +34,6 @@ type PrySet = ToolActionSet<PryViewState>;
 
 const layer = z.number().int().min(0);
 const headRef = z.object({ layer, head: z.number().int().min(0) }).strict();
-const occurrence = z.union([z.literal('first'), z.literal('last'), z.number().int().min(1)]);
 const panel = z.enum(PANELS);
 
 const sceneKeys = {
@@ -160,10 +159,6 @@ export const pryTarget: PrySet['target'] = (baseline, overlay, from) => {
 // ---------------------------------------------------------------------------
 // apply
 // ---------------------------------------------------------------------------
-
-function abortIf(ctx: ActionContext): void {
-  if (ctx.signal.aborted) throw ctx.signal.reason ?? new DOMException('Aborted', 'AbortError');
-}
 
 const sameJson = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 

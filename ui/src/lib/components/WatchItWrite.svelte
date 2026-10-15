@@ -21,7 +21,6 @@
     temperatureExplanation,
     tick,
     stepText,
-    type ReplayState,
   } from '$lib/watch-it-write';
   import Readout from './Readout.svelte';
 

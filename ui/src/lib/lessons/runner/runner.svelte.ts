@@ -146,7 +146,6 @@ function blankState(): StepState {
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const list = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x) => typeof x === 'string') : typeof v === 'string' ? [v] : []);
-const pickField = (v: unknown, f?: string) => (f && isObj(v) ? v[f] : v);
 
 export class LessonRunner<VS = unknown> {
   readonly deps: RunnerDeps<VS>;
@@ -161,7 +160,6 @@ export class LessonRunner<VS = unknown> {
   /** Bumped on every internal change, so a derived view recomputes. */
   rev = $state(0);
 
-  #source: LessonSource = { kind: 'bundled' };
   #sourceKind: 'bundled' | 'user' = 'bundled';
   #images: Record<string, string> = {};
   #nav = new NavControl();
@@ -307,7 +305,6 @@ export class LessonRunner<VS = unknown> {
   async open(lesson: Lesson, opts: OpenOptions): Promise<void> {
     this.close();
     this.lesson = lesson;
-    this.#source = opts.source;
     this.#sourceKind = opts.sourceKind ?? (opts.source.kind === 'user' ? 'user' : 'bundled');
     this.#images = opts.images ?? {};
     this.#dispatcher = createDispatcher(this.set, this.deps.memo, opts.source);
@@ -779,7 +776,7 @@ export class LessonRunner<VS = unknown> {
       // later run never re-reads an earlier observe against the wrong result.
       for (const s2 of this.observesOf(section, step)) {
         const o = this.#states.get(this.keyOf(section, s2));
-        if (o?.revealed && isObj(s2.fields) && s2.fields.check) o.result = this.checkObserve(section, s2);
+        if (o?.revealed && isObj(s2.fields) && s2.fields.check) o.result = this.checkObserve(s2);
       }
       this.#expected = this.snapshotKey();
     } catch (e) {
@@ -839,7 +836,7 @@ export class LessonRunner<VS = unknown> {
     return st.text.trim() || undefined;
   }
 
-  private checkObserve(sec: Section, step: Step): CheckOutcome | null {
+  private checkObserve(step: Step): CheckOutcome | null {
     const check = step.fields.check as CheckItem | CheckItem[] | undefined;
     if (!check) return null;
     const p = this.predictFor(step);
@@ -895,7 +892,7 @@ export class LessonRunner<VS = unknown> {
     const { section, step, st } = f;
     if (this.observeWaiting(section, step)) return;
     st.revealed = true;
-    st.result = this.checkObserve(section, step);
+    st.result = this.checkObserve(step);
     const o = st.result;
     this.write(section, step, 'observe', {
       answer: st.note ? { text: st.note } : {},

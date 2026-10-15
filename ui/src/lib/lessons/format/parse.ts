@@ -384,8 +384,6 @@ export interface LoadedLesson {
   images: string[];
 }
 
-export { parseLessonForLoader } from './normalise';
-
 /** `index.yaml`: a list of lesson ids, or `{ lessons: [...] }` of ids or `{ id }` entries. */
 export function parseIndex(text: string): string[] {
   const doc = parseYaml(text);

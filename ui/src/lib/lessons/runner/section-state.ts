@@ -27,6 +27,7 @@ import type { RequestMemo } from '../registry/memo';
 import { resolveBindings, type BindingSources, type Dispatcher, type RunnerActionContext } from '../registry/dispatcher';
 import { allSteps } from '../format/normalise';
 import type { CaptureStore } from './captures';
+import { isAbort } from './nav';
 
 export interface FoldDeps<VS> {
   set: ToolActionSet<VS>;
@@ -85,8 +86,6 @@ function enterOf(section: Section, bindings: BindingSources): { overlay: Record<
 function aborted(signal: AbortSignal): boolean {
   return signal.aborted;
 }
-
-const isAbort = (e: unknown) => (e as { name?: string } | null)?.name === 'AbortError';
 
 /** Replays one do step's actions (view and compute only). */
 export async function replayStep<VS>(step: Step, deps: FoldDeps<VS>, signal: AbortSignal): Promise<'done' | 'aborted' | { model: string }> {

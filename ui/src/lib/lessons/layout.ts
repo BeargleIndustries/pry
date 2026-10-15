@@ -16,7 +16,6 @@
 // new `minWidth`: the 1024x700 minimum stays (Settled 7).
 
 export const WINDOW_WIDE = 1280;
-export const WIDE_QUERY = `(min-width: ${WINDOW_WIDE}px)`;
 export const SPLIT_AT = 760;
 export const HANDLE = 6;
 export const MIN_SIDEBAR = 320;
