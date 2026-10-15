@@ -37,6 +37,7 @@ choices:
 :::enter
 prompt: "Michael Jordan played the sport of"
 run: true
+open_panel: watch-it-write
 :::
 
 :::slots
