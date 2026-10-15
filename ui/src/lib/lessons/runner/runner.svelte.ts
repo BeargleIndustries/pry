@@ -850,11 +850,14 @@ export class LessonRunner<VS = unknown> {
   /**
    * An observe can show its result once its predict is answered and the
    * section's do steps and tasks before it ran this visit (a task counts once
-   * the learner has run it or pressed "Check my result").
+   * the learner has run it or pressed "Check my result"). Only a predict in
+   * this section holds it back: one in an earlier section can't be answered
+   * from here (a section entered directly, or passed without answering), so
+   * its slot reads "(not answered yet)" and the result still shows.
    */
   private observeWaiting(sec: Section, step: Step): boolean {
     const p = this.predictFor(step);
-    if (p) {
+    if (p && p.section === sec) {
       const ps = this.#states.get(this.keyOf(p.section, p.step));
       if (!ps?.locked) return true;
     }
@@ -1432,7 +1435,15 @@ export class LessonRunner<VS = unknown> {
     const blocks = flat(step.blocks);
     const first = blocks.find(unfinished);
     // With every step finished, the latest step's pointer: what the screen shows now.
-    const pool = (first ? blocks.slice(0, blocks.indexOf(first) + 1) : blocks.slice()).reverse();
+    // A do step run past an unfinished step counts too: the screen shows its result.
+    let end = first ? blocks.indexOf(first) : blocks.length - 1;
+    for (let i = blocks.length - 1; i > end; i--) {
+      if (blocks[i].act?.state === 'done') {
+        end = i;
+        break;
+      }
+    }
+    const pool = blocks.slice(0, end + 1).reverse();
     for (const b of pool) {
       const looks = looksIn(b.body);
       if (looks.length) return this.resolveLooks(looks[0] as PointerTarget[]);
