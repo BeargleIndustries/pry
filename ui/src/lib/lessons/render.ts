@@ -324,6 +324,8 @@ export interface RenderedBlock {
   chain?: { prompt: RNode[] | null; text: string; written: boolean; skipped: boolean; nudging: boolean; modelAnswer: RNode[] };
   /** `assert` lines on explain / compare steps. */
   asserts?: RNode[][];
+  /** A tool view mounted under this step because its text points at it (`:look{at=embedding-view}`). */
+  mount?: { view: string; args: Record<string, unknown> };
 }
 
 export interface RenderedStep {
@@ -339,6 +341,8 @@ export interface RenderedStep {
   coldEntry: RNode[] | null;
   honesty: { limits: RNode[][]; leavesOpen: RNode[][]; skeptic: RNode[] | null } | null;
   busy: string | null;
+  /** The runner is still setting the section up (its fold); presenters ignore tool highlights meanwhile. */
+  entering?: boolean;
   drift: boolean;
   banner: { model: string } | null;
   error: string | null;

@@ -124,14 +124,25 @@
 
   // Auto-select first feature when available features change; drop a
   // selection that is no longer in the list (e.g. new prompt or SAE layer).
+  // A feature set while the list stays the same (a lesson's set_steering, which
+  // may name a feature that doesn't fire on this prompt) is kept.
+  // Starts at the list on mount: a selection made while the tab was closed stays.
+  let listKey = untrack(() => availableFeatures.map((f) => f.id).join(','));
   $effect(() => {
-    if (steering.selectedFeatureId !== null && !availableFeatures.some((f) => f.id === steering.selectedFeatureId)) {
+    const key = availableFeatures.map((f) => f.id).join(',');
+    const changed = key !== listKey;
+    listKey = key;
+    if (changed && steering.selectedFeatureId !== null && !availableFeatures.some((f) => f.id === steering.selectedFeatureId)) {
       steering.selectedFeatureId = null;
     }
     if (availableFeatures.length > 0 && steering.selectedFeatureId === null) {
       steering.selectedFeatureId = availableFeatures[0].id;
     }
   });
+  /** The selected feature when it isn't among the ones that fired here. */
+  const offListFeature = $derived(
+    steering.selectedFeatureId !== null && !availableFeatures.some((f) => f.id === steering.selectedFeatureId) ? steering.selectedFeatureId : null,
+  );
 
   const selectedFeature = $derived(
     availableFeatures.find((f) => f.id === steering.selectedFeatureId) ?? null,
@@ -269,6 +280,9 @@
         onchange={() => { concept = null; }}
         class="rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-sm text-zinc-200 focus:border-indigo-500 focus:outline-none {conceptUsable ? 'opacity-50' : ''}"
       >
+        {#if offListFeature !== null}
+          <option value={offListFeature}>#{offListFeature} (doesn't fire on your prompt)</option>
+        {/if}
         {#each availableFeatures as feat (feat.id)}
           <option value={feat.id}>
             #{feat.id} {isHidden('feature-labels') ? '' : feat.description ? `- ${feat.description}` : '(no label yet)'} (fires at {feat.activation.toFixed(1)} on your prompt)

@@ -115,8 +115,13 @@ function overlayOnto(s: PryViewState, o: Record<string, unknown>): PryViewState 
   if (v.run !== undefined) out.run = v.run;
   if (v.open_panel !== undefined) {
     for (const p of Array.isArray(v.open_panel) ? v.open_panel : [v.open_panel]) {
-      if (LEFT_PANELS.includes(p)) out.left_panel = p;
-      else out.right_panel = p === 'watch-it-write' ? 'predictions' : p;
+      if (LEFT_PANELS.includes(p)) {
+        out.left_panel = p;
+        out.front = 'left';
+      } else {
+        out.right_panel = p === 'watch-it-write' ? 'predictions' : p;
+        out.front = 'right';
+      }
     }
   }
   if (v.focus_token !== undefined) out.focus = { ...v.focus_token };
@@ -253,9 +258,19 @@ export const pryApply: PrySet['apply'] = async (t, ctx) => {
     an.setSceneDlaTarget(t.dla_target?.answer ?? null, t.dla_target?.contrast ?? null);
     dlaStale = true;
   }
-  h.openRightTab(t.right_panel);
-  if (!t.compare_mode) await openPanel(t.left_panel, call);
-  else if (h.getLeftTab() !== t.left_panel) h.openLeftTab(t.left_panel);
+  // Tabs. Opening a tab brings its half forward in the one-panel (tabbed)
+  // layout, so only a tab that changes is opened, and the half the scene's
+  // open_panel named last comes forward last.
+  const rightChanged = h.getRightTab() !== t.right_panel;
+  const leftChanged = h.getLeftTab() !== t.left_panel;
+  const leftFetches = !!s.response && ['logit-lens', 'dla', 'circuit'].includes(t.left_panel);
+  if (rightChanged) h.openRightTab(t.right_panel);
+  if (!t.compare_mode) {
+    if (leftChanged || leftFetches) await openPanel(t.left_panel, call);
+  } else if (leftChanged) h.openLeftTab(t.left_panel);
+  // `front` is set only when this section's own overlay (or the baseline) named a panel.
+  if (t.front === 'right') h.openRightTab(t.right_panel);
+  else if (t.front === 'left' && !(leftChanged || leftFetches)) h.openLeftTab(t.left_panel);
   abortIf(ctx);
   if (s.response) {
     if (want.has('logit_lens') && !s.logitLensResponse) await an.logitLens(call);

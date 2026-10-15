@@ -177,7 +177,7 @@ const added: Record<string, Omit<AnchorDef, 'locate'> & { locate?: AnchorDef['lo
   'tab-key-parts': { doc: 'The Key parts tab.', label: 'the Key parts tab, left side' },
   'steering-feature-menu': { doc: 'The feature menu in the Steering tab.', label: 'the feature menu, in Steering' },
   'steering-strength': { doc: 'The Steering strength control.', label: 'Steering strength, in Steering' },
-  'embedding-view': { doc: 'The mounted embedding-compare view, inside the sidebar.', label: 'the embedding reader, in the lesson' },
+  'embedding-view': { doc: 'The mounted embedding-compare view, inside the sidebar.', label: 'the embedding reader, in the lesson', view: 'embedding-compare' },
   'patch-three-logits': { doc: 'The clean, corrupted and patched logits with the share formula.', label: 'the three logits, in the Swap test panel' },
   'dla-total-line': { doc: 'The DLA line with the bars\' total, the real logit and the gap.', label: 'the total line, in Why (DLA)' },
   'write-it-step': { doc: 'The control that writes one more token in Watch it write.', label: 'the step control, in Watch it write' },

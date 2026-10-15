@@ -14,7 +14,7 @@
 // steps and stops.
 
 import { z } from 'zod';
-import type { ActionContext, ActionDef } from './contract';
+import { NotReadyError, type ActionContext, type ActionDef } from './contract';
 import type { RunnerActionContext } from './dispatcher';
 import { PRY_MODELS } from './pry-models';
 import { directCall, type SidecarCaller } from '../../analysis-core';
@@ -205,12 +205,15 @@ const switch_model: ActionDef = {
   },
 };
 
+const EMPTY_PROMPT = 'The prompt box is empty. Type a prompt first.';
+
 const run: ActionDef = {
   args: noArgs,
   doc: 'Runs the prompt. Runner-issued runs are memoised.',
   effect: 'compute',
   run: async (_a, ctx) => {
     const h = pryHost();
+    if (!h.getPrompt().trim()) throw new NotReadyError(EMPTY_PROMPT);
     await h.analysis.generate(h.getPrompt(), callerOf(ctx));
   },
 };
@@ -545,7 +548,8 @@ export const pryActions: Record<string, ActionDef> = {
     run: async (a: { control?: true }, ctx) => {
       const s = pryHost().analysis.state;
       const fid = pryUi.steering.selectedFeatureId;
-      if (fid === null || s.saeLayer === undefined) throw new Error('Pick a feature to steer first.');
+      if (!pryHost().getPrompt().trim()) throw new NotReadyError(EMPTY_PROMPT);
+      if (fid === null || s.saeLayer === undefined) throw new NotReadyError('Pick a feature to steer first.');
       pryUi.steerControl = a.control === true;
       await pryHost().analysis.steer(fid, s.saeLayer, pryUi.steering.alpha, callerOf(ctx), a.control === true);
     },

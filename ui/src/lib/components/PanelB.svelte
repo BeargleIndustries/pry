@@ -185,7 +185,7 @@
 
   <!-- Ablation results -->
   {#if ablateResponse && ablationMode}
-    <div class="rounded-lg border border-red-800/50 bg-red-950/20 p-3">
+    <div class="rounded-lg border border-red-800/50 bg-red-950/20 p-3" data-tour="ablation-results">
       <h4 class="mb-2 text-xs font-semibold text-zinc-300">Knockout results</h4>
       <div class="grid grid-cols-2 gap-3">
         <div>

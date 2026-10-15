@@ -91,6 +91,9 @@ export const lessonsCopy = {
   constraintFails: (what: string) => `Not yet: ${what}.`,
   targetMet: 'That does it. The app shows what the task asked for.',
   targetNotMet: "Not there yet. The app doesn't show what the task asked for.",
+  taskArgsMissing: 'Not there yet. Fill in every value above with a number or a word, then run it.',
+  taskNotReady: (why: string) => `Not there yet. ${why}`,
+  taskRunFailed: "That run didn't go through, so nothing was checked. Nothing changed in the app; try the run again.",
   allowedRun: 'Run done.',
 
   // The honesty box.

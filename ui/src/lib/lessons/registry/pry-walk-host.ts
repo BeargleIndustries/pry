@@ -6,7 +6,7 @@
 import { AnalysisController, createInitialAnalysisState } from '../../analysis-core';
 import { CompareController, createInitialCompareState } from '../../compare-run';
 import type { Aggregation } from '../../attention-agg';
-import { bindPryHost, pryMemo, resetPryUi, type PatchType, type PryHost } from './pry-state.svelte';
+import { bindPryHost, pryMemo, pryUi, resetPryUi, type PatchType, type PryHost } from './pry-state.svelte';
 
 export interface Recorded {
   endpoint: string;
@@ -270,6 +270,8 @@ export interface WalkHost extends PryHost {
     prompt: string;
     leftTab: string;
     rightTab: string;
+    /** The half in front in the one-panel (tabbed) layout, as the page's activeTab. */
+    front: 'left' | 'right';
     compareMode: boolean;
     aggregation: Aggregation;
     patchingPreset: { clean: string; corrupted: string; patchType: PatchType } | null;
@@ -285,6 +287,7 @@ export function makeWalkHost(prompt = 'I like the river bank'): WalkHost {
     prompt,
     leftTab: 'attention',
     rightTab: 'features',
+    front: 'left' as 'left' | 'right',
     compareMode: false,
     aggregation: 'max' as Aggregation,
     patchingPreset: null as WalkHost['page']['patchingPreset'],
@@ -315,10 +318,12 @@ export function makeWalkHost(prompt = 'I like the river bank'): WalkHost {
     },
     getLeftTab: () => page.leftTab,
     openLeftTab: (t) => {
+      if (!pryUi.workspaceSplit) page.front = 'left';
       page.leftTab = t;
     },
     getRightTab: () => page.rightTab,
     openRightTab: (t) => {
+      if (!pryUi.workspaceSplit) page.front = 'right';
       page.rightTab = t;
     },
     getCompareMode: () => page.compareMode,

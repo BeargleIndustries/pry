@@ -79,22 +79,27 @@ export interface PrySource {
 export function liveSource(): PrySource {
   const h = pryHost();
   const s = h.analysis.state;
+  // Results belong to the prompt they ran on. Once the prompt box says
+  // something else ("Prompt edited. Press Run..."), nothing reads them: a
+  // check or slot waits for the run instead of reading the last prompt's.
+  const fresh = !s.response || s.response.prompt === h.getPrompt();
+  const ran = <T>(v: T): T | null => (fresh ? v : null);
   return {
-    response: s.response,
+    response: ran(s.response),
     focusTokenIndex: s.focusTokenIndex,
-    logitLens: s.logitLensResponse,
-    dla: s.dlaResponse,
+    logitLens: ran(s.logitLensResponse),
+    dla: ran(s.dlaResponse),
     // Only while the copying-heads view shows them (the scores stay cached per model).
     headScores: s.headScoresMode ? s.headScoresResponse : null,
     headAblations: s.headAblations,
-    headAblate: s.headAblateResponse,
+    headAblate: ran(s.headAblateResponse),
     featureAblations: s.featureAblations,
-    featureAblate: s.featureAblateResponse,
+    featureAblate: ran(s.featureAblateResponse),
     patch: s.patchResponse,
     patchByType: pryUi.patching.byType,
     patchCell: pryUi.patching.selectedComponent,
-    circuit: s.circuitResponse,
-    steer: s.steerResponse,
+    circuit: ran(s.circuitResponse),
+    steer: ran(s.steerResponse),
     steerAcross: pryUi.steerAcross,
     compare: { a: h.compare.state.a, b: h.compare.state.b },
     writeIt: pryUi.writeIt.result,

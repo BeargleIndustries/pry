@@ -150,6 +150,12 @@ export interface PryViewState {
   run: boolean;
   left_panel: string;
   right_panel: string;
+  /**
+   * The half an `open_panel` named last, which the one-panel (tabbed) layout
+   * brings forward. Only scenes built by `target` carry it; `snapshot` leaves
+   * it out, so applying a snapshot keeps whichever half is in front.
+   */
+  front?: 'left' | 'right';
   focus: FocusSpec | null;
   compare_mode: boolean;
   compare: { a: string; b: string };
