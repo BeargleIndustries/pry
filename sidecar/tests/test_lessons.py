@@ -42,6 +42,7 @@ from pathlib import Path
 
 import pytest
 
+from tests.conftest import LESSON_DIR_SUMMARY
 from tests.test_request_key import request_key
 
 REPO = Path(__file__).resolve().parents[2]
@@ -1270,16 +1271,20 @@ def test_lesson_dir_requests(request):
         )
     lessons = request.getfixturevalue("lessons")
     assert lessons.calls, "the lesson set's expectations.json lists no requests"
-    # Say what happened, not just "1 passed" (no -s needed to see it).
-    tr = request.config.pluginmanager.get_plugin("terminalreporter")
-    if tr is not None:
-        tr.write_line("")
-        if lessons.record:
-            tr.write_line(f"recorded {len(lessons.recorded)} response(s) into {lessons.responses_dir}:")
-            for line in lessons.recorded:
-                tr.write_line(f"  {line}")
-        else:
-            tr.write_line(f"replayed {sum(1 for n in lessons.calls.values() if n)} request(s) against {lessons.responses_dir}")
-        for line in lessons.not_sent:
-            tr.write_line(f"  not sent (a Neuronpedia lookup; add --network to send it to www.neuronpedia.org): {line}")
+    # Say what happened, not just "1 passed". conftest.py prints these lines as the last block,
+    # after pytest's warnings, so `| tail` shows them (no -s needed).
+    summary = request.config.stash.setdefault(LESSON_DIR_SUMMARY, [])
+    if lessons.record:
+        summary.append(f"recorded {len(lessons.recorded)} response(s) into {lessons.responses_dir}:")
+        summary.extend(f"  {line}" for line in lessons.recorded)
+    else:
+        summary.append(
+            f"replayed {sum(1 for n in lessons.calls.values() if n)} request(s) against {lessons.responses_dir} (no files written)"
+        )
+    summary.extend(
+        f"  not sent (a Neuronpedia lookup; add --network to send it to www.neuronpedia.org): {line}"
+        for line in lessons.not_sent
+    )
+    if lessons.problems:
+        summary.append(f"  {len(lessons.problems)} request(s) drifted or aren't recorded: see the failure above")
     assert not lessons.problems, f"lesson requests drifted or aren't recorded: {lessons.problems}"

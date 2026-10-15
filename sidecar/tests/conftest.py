@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import random
+import sys
 from pathlib import Path
 
 import pytest
@@ -54,6 +55,43 @@ def pytest_addoption(parser):
         default=False,
         help="drift mode also refetches Neuronpedia labels and snippets and compares them",
     )
+
+
+# The Pythons pyproject.toml's requires-python allows (">=3.11,<3.13"); test_python_support.py holds them equal.
+SUPPORTED_PYTHON = ((3, 11), (3, 12))
+
+# Lines test_lessons.py's --lesson-dir run leaves for the closing summary block.
+LESSON_DIR_SUMMARY = pytest.StashKey[list]()
+
+
+def python_problem(version=sys.version_info) -> str | None:
+    """A plain message when this Python can't run the sidecar, else None."""
+    if tuple(version[:2]) in SUPPORTED_PYTHON:
+        return None
+    have = f"{version[0]}.{version[1]}"
+    return (
+        f"This venv runs Python {have}, and Pry's sidecar needs Python 3.11 or 3.12. Make the venv again with a "
+        "supported Python: delete .venv, then run `py -3.12 -m venv .venv` (Windows) or `python3.12 -m venv .venv` "
+        "(macOS/Linux), and install again (AUTHORING.md, \"Set up the sidecar for recording\")."
+    )
+
+
+def pytest_configure(config):
+    # Recording a lesson set on an unsupported Python fails late and unclearly, so refuse it up front.
+    if config.getoption("--lesson-dir") or config.getoption("--record"):
+        problem = python_problem()
+        if problem:
+            pytest.exit(problem, returncode=4)
+
+
+@pytest.hookimpl(trylast=True)
+def pytest_terminal_summary(terminalreporter):
+    """The --lesson-dir summary, as the last block: after pytest's warnings, before the `1 passed` line."""
+    lines = terminalreporter.config.stash.get(LESSON_DIR_SUMMARY, [])
+    if lines:
+        terminalreporter.section("lesson set")
+        for line in lines:
+            terminalreporter.write_line(line)
 
 
 def _seed_all() -> None:
