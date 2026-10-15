@@ -12,16 +12,16 @@
   }
  },
  "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
- "device": "cpu",
+ "device": "cuda",
  "libs": {
   "python": "3.12.13",
-  "torch": "2.5.1+cpu",
+  "torch": "2.5.1+cu124",
   "transformer_lens": "2.15.4",
   "sae_lens": "5.11.0",
   "transformers": "4.57.6",
   "numpy": "1.26.4"
  },
- "recorded": "2026-10-14",
+ "recorded": "2026-10-15",
  "neuronpedia_fetched": null,
  "offline": false,
  "trimmed": [],
@@ -99,14 +99,14 @@
     "type": "attention",
     "layer": 10,
     "head": 7,
-    "contribution": -2.279193878173828
+    "contribution": -2.279193162918091
    },
    {
     "name": "L9.H6",
     "type": "attention",
     "layer": 9,
     "head": 6,
-    "contribution": 2.1079025268554688
+    "contribution": 2.107902765274048
    },
    {
     "name": "L9.H9",
@@ -120,112 +120,112 @@
     "type": "attention",
     "layer": 11,
     "head": 10,
-    "contribution": -0.8369671702384949
+    "contribution": -0.836966872215271
    },
    {
     "name": "L10.H0",
     "type": "attention",
     "layer": 10,
     "head": 0,
-    "contribution": 0.8184875845909119
+    "contribution": 0.8184874653816223
    },
    {
     "name": "L10.H2",
     "type": "attention",
     "layer": 10,
     "head": 2,
-    "contribution": -0.7063636779785156
+    "contribution": -0.706363320350647
    },
    {
     "name": "L10.H10",
     "type": "attention",
     "layer": 10,
     "head": 10,
-    "contribution": 0.5338677167892456
+    "contribution": 0.5338672995567322
    },
    {
     "name": "L11.H3",
     "type": "attention",
     "layer": 11,
     "head": 3,
-    "contribution": 0.45036691427230835
+    "contribution": 0.4503665566444397
    },
    {
     "name": "L10.H6",
     "type": "attention",
     "layer": 10,
     "head": 6,
-    "contribution": -0.4299641251564026
+    "contribution": -0.4299636483192444
    },
    {
     "name": "L8.H10",
     "type": "attention",
     "layer": 8,
     "head": 10,
-    "contribution": 0.4081818759441376
+    "contribution": 0.4081825613975525
    },
    {
     "name": "L11.H2",
     "type": "attention",
     "layer": 11,
     "head": 2,
-    "contribution": 0.40704643726348877
+    "contribution": 0.4070458710193634
    },
    {
     "name": "L10.H1",
     "type": "attention",
     "layer": 10,
     "head": 1,
-    "contribution": 0.4014977216720581
+    "contribution": 0.4014976918697357
    },
    {
     "name": "L11.H1",
     "type": "attention",
     "layer": 11,
     "head": 1,
-    "contribution": -0.22799931466579437
+    "contribution": -0.2279982566833496
    },
    {
     "name": "MLP.8",
     "type": "mlp",
     "layer": 8,
     "head": null,
-    "contribution": 0.20524568855762482
+    "contribution": 0.2052454948425293
    },
    {
     "name": "L7.H9",
     "type": "attention",
     "layer": 7,
     "head": 9,
-    "contribution": 0.20392663776874542
+    "contribution": 0.2039259970188141
    },
    {
     "name": "MLP.9",
     "type": "mlp",
     "layer": 9,
     "head": null,
-    "contribution": -0.19005385041236877
+    "contribution": -0.19005373120307922
    },
    {
     "name": "L9.H8",
     "type": "attention",
     "layer": 9,
     "head": 8,
-    "contribution": 0.18219366669654846
+    "contribution": 0.18219371140003204
    },
    {
     "name": "MLP.11",
     "type": "mlp",
     "layer": 11,
     "head": null,
-    "contribution": 0.1782252937555313
+    "contribution": 0.1782250553369522
    },
    {
     "name": "L8.H3",
     "type": "attention",
     "layer": 8,
     "head": 3,
-    "contribution": -0.1781720221042633
+    "contribution": -0.17817184329032898
    },
    {
     "name": "L11.H4",
@@ -239,245 +239,245 @@
     "type": "attention",
     "layer": 10,
     "head": 9,
-    "contribution": 0.16347786784172058
+    "contribution": 0.16347819566726685
    },
    {
     "name": "L10.H3",
     "type": "attention",
     "layer": 10,
     "head": 3,
-    "contribution": 0.15438026189804077
+    "contribution": 0.15438035130500793
    },
    {
     "name": "L6.H0",
     "type": "attention",
     "layer": 6,
     "head": 0,
-    "contribution": -0.14444786310195923
+    "contribution": -0.1444479525089264
    },
    {
     "name": "L11.H7",
     "type": "attention",
     "layer": 11,
     "head": 7,
-    "contribution": -0.14039644598960876
+    "contribution": -0.14039640128612518
    },
    {
     "name": "L9.H2",
     "type": "attention",
     "layer": 9,
     "head": 2,
-    "contribution": 0.13268578052520752
+    "contribution": 0.13268569111824036
    },
    {
     "name": "MLP.10",
     "type": "mlp",
     "layer": 10,
     "head": null,
-    "contribution": 0.1305539906024933
+    "contribution": 0.1305534392595291
    },
    {
     "name": "L6.H4",
     "type": "attention",
     "layer": 6,
     "head": 4,
-    "contribution": 0.12882986664772034
+    "contribution": 0.1288299858570099
    },
    {
     "name": "L9.H5",
     "type": "attention",
     "layer": 9,
     "head": 5,
-    "contribution": -0.1228170096874237
+    "contribution": -0.12281715869903564
    },
    {
     "name": "L6.H6",
     "type": "attention",
     "layer": 6,
     "head": 6,
-    "contribution": -0.11906158924102783
+    "contribution": -0.11906173825263977
    },
    {
     "name": "L11.H11",
     "type": "attention",
     "layer": 11,
     "head": 11,
-    "contribution": 0.11684373766183853
+    "contribution": 0.11684374511241913
    },
    {
     "name": "L7.H3",
     "type": "attention",
     "layer": 7,
     "head": 3,
-    "contribution": 0.11510960757732391
+    "contribution": 0.11510951817035675
    },
    {
     "name": "L9.H4",
     "type": "attention",
     "layer": 9,
     "head": 4,
-    "contribution": 0.09771659970283508
+    "contribution": 0.09771638363599777
    },
    {
     "name": "L9.H3",
     "type": "attention",
     "layer": 9,
     "head": 3,
-    "contribution": 0.08897111564874649
+    "contribution": 0.0889711081981659
    },
    {
     "name": "L4.H11",
     "type": "attention",
     "layer": 4,
     "head": 11,
-    "contribution": 0.08221615850925446
+    "contribution": 0.08221618086099625
    },
    {
     "name": "L1.H5",
     "type": "attention",
     "layer": 1,
     "head": 5,
-    "contribution": -0.07968863844871521
+    "contribution": -0.07968869805335999
    },
    {
     "name": "L5.H0",
     "type": "attention",
     "layer": 5,
     "head": 0,
-    "contribution": -0.07412558794021606
+    "contribution": -0.07412557303905487
    },
    {
     "name": "L5.H2",
     "type": "attention",
     "layer": 5,
     "head": 2,
-    "contribution": -0.07229863107204437
+    "contribution": -0.0722985491156578
    },
    {
     "name": "L5.H4",
     "type": "attention",
     "layer": 5,
     "head": 4,
-    "contribution": 0.069944366812706
+    "contribution": 0.0699443519115448
    },
    {
     "name": "L4.H7",
     "type": "attention",
     "layer": 4,
     "head": 7,
-    "contribution": -0.0696089044213295
+    "contribution": -0.06960880011320114
    },
    {
     "name": "L5.H5",
     "type": "attention",
     "layer": 5,
     "head": 5,
-    "contribution": 0.06946941465139389
+    "contribution": 0.06946942955255508
    },
    {
     "name": "L10.H11",
     "type": "attention",
     "layer": 10,
     "head": 11,
-    "contribution": 0.06821976602077484
+    "contribution": 0.06821979582309723
    },
    {
     "name": "L8.H4",
     "type": "attention",
     "layer": 8,
     "head": 4,
-    "contribution": 0.06688934564590454
+    "contribution": 0.06688932329416275
    },
    {
     "name": "L11.H5",
     "type": "attention",
     "layer": 11,
     "head": 5,
-    "contribution": -0.06568023562431335
+    "contribution": -0.06568021327257156
    },
    {
     "name": "L0.H11",
     "type": "attention",
     "layer": 0,
     "head": 11,
-    "contribution": 0.06544525921344757
+    "contribution": 0.06544527411460876
    },
    {
     "name": "L1.H2",
     "type": "attention",
     "layer": 1,
     "head": 2,
-    "contribution": 0.06392733007669449
+    "contribution": 0.06392734497785568
    },
    {
     "name": "L8.H0",
     "type": "attention",
     "layer": 8,
     "head": 0,
-    "contribution": 0.06333059072494507
+    "contribution": 0.06333065032958984
    },
    {
     "name": "L2.H9",
     "type": "attention",
     "layer": 2,
     "head": 9,
-    "contribution": 0.06257089227437973
+    "contribution": 0.06257091462612152
    },
    {
     "name": "MLP.2",
     "type": "mlp",
     "layer": 2,
     "head": null,
-    "contribution": -0.060778044164180756
+    "contribution": -0.06077807396650314
    },
    {
     "name": "L1.H6",
     "type": "attention",
     "layer": 1,
     "head": 6,
-    "contribution": 0.05761723220348358
+    "contribution": 0.057617269456386566
    },
    {
     "name": "L8.H6",
     "type": "attention",
     "layer": 8,
     "head": 6,
-    "contribution": 0.05491098016500473
+    "contribution": 0.05491100624203682
    },
    {
     "name": "L4.H8",
     "type": "attention",
     "layer": 4,
     "head": 8,
-    "contribution": 0.05461091548204422
+    "contribution": 0.05461100488901138
    },
    {
     "name": "L6.H10",
     "type": "attention",
     "layer": 6,
     "head": 10,
-    "contribution": 0.053570300340652466
+    "contribution": 0.05357031524181366
    },
    {
     "name": "L0.H1",
     "type": "attention",
     "layer": 0,
     "head": 1,
-    "contribution": -0.05135960131883621
+    "contribution": -0.051359619945287704
    },
    {
     "name": "L1.H4",
     "type": "attention",
     "layer": 1,
     "head": 4,
-    "contribution": 0.049660924822092056
+    "contribution": 0.04966093972325325
    },
    {
     "name": "L3.H11",
     "type": "attention",
     "layer": 3,
     "head": 11,
-    "contribution": 0.049132898449897766
+    "contribution": 0.04913293570280075
    },
    {
     "name": "L8.H2",
@@ -491,35 +491,35 @@
     "type": "attention",
     "layer": 11,
     "head": 9,
-    "contribution": 0.04354855418205261
+    "contribution": 0.04354846477508545
    },
    {
     "name": "MLP.5",
     "type": "mlp",
     "layer": 5,
     "head": null,
-    "contribution": -0.043402887880802155
+    "contribution": -0.043403178453445435
    },
    {
     "name": "L0.H5",
     "type": "attention",
     "layer": 0,
     "head": 5,
-    "contribution": 0.042237788438797
+    "contribution": 0.04223783686757088
    },
    {
     "name": "L4.H4",
     "type": "attention",
     "layer": 4,
     "head": 4,
-    "contribution": -0.040982190519571304
+    "contribution": -0.0409822054207325
    },
    {
     "name": "L10.H4",
     "type": "attention",
     "layer": 10,
     "head": 4,
-    "contribution": 0.04082488268613815
+    "contribution": 0.04082486033439636
    },
    {
     "name": "L8.H1",
@@ -533,56 +533,56 @@
     "type": "attention",
     "layer": 0,
     "head": 3,
-    "contribution": -0.039965592324733734
+    "contribution": -0.03996560350060463
    },
    {
     "name": "L3.H7",
     "type": "attention",
     "layer": 3,
     "head": 7,
-    "contribution": 0.03940647095441818
+    "contribution": 0.03940647467970848
    },
    {
     "name": "L1.H8",
     "type": "attention",
     "layer": 1,
     "head": 8,
-    "contribution": -0.038671769201755524
+    "contribution": -0.038671787828207016
    },
    {
     "name": "MLP.4",
     "type": "mlp",
     "layer": 4,
     "head": null,
-    "contribution": -0.03773234039545059
+    "contribution": -0.037732385098934174
    },
    {
     "name": "L6.H8",
     "type": "attention",
     "layer": 6,
     "head": 8,
-    "contribution": -0.03691399469971657
+    "contribution": -0.036914050579071045
    },
    {
     "name": "MLP.6",
     "type": "mlp",
     "layer": 6,
     "head": null,
-    "contribution": 0.036327581852674484
+    "contribution": 0.036327019333839417
    },
    {
     "name": "L2.H1",
     "type": "attention",
     "layer": 2,
     "head": 1,
-    "contribution": 0.03579098731279373
+    "contribution": 0.03579101338982582
    },
    {
     "name": "L5.H7",
     "type": "attention",
     "layer": 5,
     "head": 7,
-    "contribution": 0.03577074408531189
+    "contribution": 0.035770855844020844
    },
    {
     "name": "MLP.3",
@@ -596,196 +596,196 @@
     "type": "attention",
     "layer": 7,
     "head": 8,
-    "contribution": -0.034884486347436905
+    "contribution": -0.034884557127952576
    },
    {
     "name": "L0.H8",
     "type": "attention",
     "layer": 0,
     "head": 8,
-    "contribution": 0.03340461105108261
+    "contribution": 0.033404622226953506
    },
    {
     "name": "L2.H6",
     "type": "attention",
     "layer": 2,
     "head": 6,
-    "contribution": -0.03230345621705055
+    "contribution": -0.03230344131588936
    },
    {
     "name": "L2.H0",
     "type": "attention",
     "layer": 2,
     "head": 0,
-    "contribution": -0.032188400626182556
+    "contribution": -0.03218833729624748
    },
    {
     "name": "L11.H8",
     "type": "attention",
     "layer": 11,
     "head": 8,
-    "contribution": -0.031815893948078156
+    "contribution": -0.03181585669517517
    },
    {
     "name": "L8.H9",
     "type": "attention",
     "layer": 8,
     "head": 9,
-    "contribution": 0.03156236186623573
+    "contribution": 0.03156246244907379
    },
    {
     "name": "L7.H6",
     "type": "attention",
     "layer": 7,
     "head": 6,
-    "contribution": 0.0312710665166378
+    "contribution": 0.03127110376954079
    },
    {
     "name": "L8.H8",
     "type": "attention",
     "layer": 8,
     "head": 8,
-    "contribution": 0.02930896356701851
+    "contribution": 0.029308926314115524
    },
    {
     "name": "L3.H4",
     "type": "attention",
     "layer": 3,
     "head": 4,
-    "contribution": -0.029093675315380096
+    "contribution": -0.02909371443092823
    },
    {
     "name": "L5.H1",
     "type": "attention",
     "layer": 5,
     "head": 1,
-    "contribution": -0.02887926995754242
+    "contribution": -0.02887926623225212
    },
    {
     "name": "L7.H1",
     "type": "attention",
     "layer": 7,
     "head": 1,
-    "contribution": 0.028851769864559174
+    "contribution": 0.028851762413978577
    },
    {
     "name": "L9.H7",
     "type": "attention",
     "layer": 9,
     "head": 7,
-    "contribution": 0.02858738601207733
+    "contribution": 0.028587352484464645
    },
    {
     "name": "L2.H3",
     "type": "attention",
     "layer": 2,
     "head": 3,
-    "contribution": 0.028087042272090912
+    "contribution": 0.028087038546800613
    },
    {
     "name": "L4.H9",
     "type": "attention",
     "layer": 4,
     "head": 9,
-    "contribution": 0.02767062559723854
+    "contribution": 0.027670670300722122
    },
    {
     "name": "L4.H0",
     "type": "attention",
     "layer": 4,
     "head": 0,
-    "contribution": -0.02641153708100319
+    "contribution": -0.026411566883325577
    },
    {
     "name": "L1.H3",
     "type": "attention",
     "layer": 1,
     "head": 3,
-    "contribution": -0.0263705775141716
+    "contribution": -0.026370590552687645
    },
    {
     "name": "L9.H1",
     "type": "attention",
     "layer": 9,
     "head": 1,
-    "contribution": -0.025767873972654343
+    "contribution": -0.02576787769794464
    },
    {
     "name": "L3.H9",
     "type": "attention",
     "layer": 3,
     "head": 9,
-    "contribution": 0.025254394859075546
+    "contribution": 0.025254400447010994
    },
    {
     "name": "L11.H0",
     "type": "attention",
     "layer": 11,
     "head": 0,
-    "contribution": -0.02481244131922722
+    "contribution": -0.024812404066324234
    },
    {
     "name": "MLP.0",
     "type": "mlp",
     "layer": 0,
     "head": null,
-    "contribution": -0.023575684055685997
+    "contribution": -0.023575708270072937
    },
    {
     "name": "L5.H11",
     "type": "attention",
     "layer": 5,
     "head": 11,
-    "contribution": -0.023358222097158432
+    "contribution": -0.023358210921287537
    },
    {
     "name": "L4.H10",
     "type": "attention",
     "layer": 4,
     "head": 10,
-    "contribution": -0.022971775382757187
+    "contribution": -0.02297181263566017
    },
    {
     "name": "L5.H9",
     "type": "attention",
     "layer": 5,
     "head": 9,
-    "contribution": -0.022856436669826508
+    "contribution": -0.022856444120407104
    },
    {
     "name": "L7.H5",
     "type": "attention",
     "layer": 7,
     "head": 5,
-    "contribution": 0.022749580442905426
+    "contribution": 0.022749517112970352
    },
    {
     "name": "L2.H11",
     "type": "attention",
     "layer": 2,
     "head": 11,
-    "contribution": 0.022455358877778053
+    "contribution": 0.022455349564552307
    },
    {
     "name": "L6.H11",
     "type": "attention",
     "layer": 6,
     "head": 11,
-    "contribution": 0.021690834313631058
+    "contribution": 0.021690847352147102
    },
    {
     "name": "MLP.1",
     "type": "mlp",
     "layer": 1,
     "head": null,
-    "contribution": -0.02160649001598358
+    "contribution": -0.021606504917144775
    },
    {
     "name": "L6.H5",
     "type": "attention",
     "layer": 6,
     "head": 5,
-    "contribution": 0.021424606442451477
+    "contribution": 0.021424653008580208
    },
    {
     "name": "L9.H0",
@@ -799,63 +799,63 @@
     "type": "attention",
     "layer": 1,
     "head": 10,
-    "contribution": -0.02065453678369522
+    "contribution": -0.02065455913543701
    },
    {
     "name": "L7.H0",
     "type": "attention",
     "layer": 7,
     "head": 0,
-    "contribution": 0.0202188640832901
+    "contribution": 0.0202188603579998
    },
    {
     "name": "L4.H5",
     "type": "attention",
     "layer": 4,
     "head": 5,
-    "contribution": 0.020094677805900574
+    "contribution": 0.02009469084441662
    },
    {
     "name": "L7.H7",
     "type": "attention",
     "layer": 7,
     "head": 7,
-    "contribution": 0.019544638693332672
+    "contribution": 0.019544627517461777
    },
    {
     "name": "L0.H2",
     "type": "attention",
     "layer": 0,
     "head": 2,
-    "contribution": -0.019392456859350204
+    "contribution": -0.0193924680352211
    },
    {
     "name": "L6.H2",
     "type": "attention",
     "layer": 6,
     "head": 2,
-    "contribution": -0.017257627099752426
+    "contribution": -0.017257606610655785
    },
    {
     "name": "L6.H3",
     "type": "attention",
     "layer": 6,
     "head": 3,
-    "contribution": 0.01720396615564823
+    "contribution": 0.0172039195895195
    },
    {
     "name": "L8.H7",
     "type": "attention",
     "layer": 8,
     "head": 7,
-    "contribution": -0.01662345416843891
+    "contribution": -0.016623474657535553
    },
    {
     "name": "L0.H0",
     "type": "attention",
     "layer": 0,
     "head": 0,
-    "contribution": 0.01569896563887596
+    "contribution": 0.01569896750152111
    },
    {
     "name": "L4.H3",
@@ -876,126 +876,126 @@
     "type": "attention",
     "layer": 8,
     "head": 11,
-    "contribution": 0.014613930135965347
+    "contribution": 0.01461450569331646
    },
    {
     "name": "L6.H1",
     "type": "attention",
     "layer": 6,
     "head": 1,
-    "contribution": 0.014386877417564392
+    "contribution": 0.014386876486241817
    },
    {
     "name": "L5.H6",
     "type": "attention",
     "layer": 5,
     "head": 6,
-    "contribution": 0.014330482110381126
+    "contribution": 0.014330467209219933
    },
    {
     "name": "L2.H2",
     "type": "attention",
     "layer": 2,
     "head": 2,
-    "contribution": 0.01425960287451744
+    "contribution": 0.014259541407227516
    },
    {
     "name": "L10.H8",
     "type": "attention",
     "layer": 10,
     "head": 8,
-    "contribution": -0.013953340239822865
+    "contribution": -0.013953333720564842
    },
    {
     "name": "L3.H1",
     "type": "attention",
     "layer": 3,
     "head": 1,
-    "contribution": -0.013888522982597351
+    "contribution": -0.013888547196984291
    },
    {
     "name": "L0.H7",
     "type": "attention",
     "layer": 0,
     "head": 7,
-    "contribution": 0.01383389625698328
+    "contribution": 0.013833895325660706
    },
    {
     "name": "L2.H4",
     "type": "attention",
     "layer": 2,
     "head": 4,
-    "contribution": 0.013824522495269775
+    "contribution": 0.013824569061398506
    },
    {
     "name": "L5.H8",
     "type": "attention",
     "layer": 5,
     "head": 8,
-    "contribution": 0.013034466654062271
+    "contribution": 0.013034451752901077
    },
    {
     "name": "L3.H3",
     "type": "attention",
     "layer": 3,
     "head": 3,
-    "contribution": -0.012859641574323177
+    "contribution": -0.012859762646257877
    },
    {
     "name": "L3.H6",
     "type": "attention",
     "layer": 3,
     "head": 6,
-    "contribution": 0.012766705825924873
+    "contribution": 0.012766554020345211
    },
    {
     "name": "L2.H8",
     "type": "attention",
     "layer": 2,
     "head": 8,
-    "contribution": 0.012201555073261261
+    "contribution": 0.012201580218970776
    },
    {
     "name": "L2.H5",
     "type": "attention",
     "layer": 2,
     "head": 5,
-    "contribution": -0.011571998707950115
+    "contribution": -0.011572035029530525
    },
    {
     "name": "L3.H10",
     "type": "attention",
     "layer": 3,
     "head": 10,
-    "contribution": 0.011521950364112854
+    "contribution": 0.011521965265274048
    },
    {
     "name": "L9.H11",
     "type": "attention",
     "layer": 9,
     "head": 11,
-    "contribution": -0.011488117277622223
+    "contribution": -0.011488080024719238
    },
    {
     "name": "L10.H5",
     "type": "attention",
     "layer": 10,
     "head": 5,
-    "contribution": -0.011275915428996086
+    "contribution": -0.011275927536189556
    },
    {
     "name": "L4.H1",
     "type": "attention",
     "layer": 4,
     "head": 1,
-    "contribution": 0.01110273227095604
+    "contribution": 0.011102734133601189
    },
    {
     "name": "L3.H8",
     "type": "attention",
     "layer": 3,
     "head": 8,
-    "contribution": 0.010114558041095734
+    "contribution": 0.01011459156870842
    },
    {
     "name": "L1.H9",
@@ -1009,194 +1009,194 @@
     "type": "attention",
     "layer": 2,
     "head": 7,
-    "contribution": 0.008678289130330086
+    "contribution": 0.008678287267684937
    },
    {
     "name": "L2.H10",
     "type": "attention",
     "layer": 2,
     "head": 10,
-    "contribution": 0.007008634507656097
+    "contribution": 0.0070086270570755005
    },
    {
     "name": "L3.H5",
     "type": "attention",
     "layer": 3,
     "head": 5,
-    "contribution": 0.0067287334240973
+    "contribution": 0.006728775333613157
    },
    {
     "name": "L6.H9",
     "type": "attention",
     "layer": 6,
     "head": 9,
-    "contribution": 0.006557455286383629
+    "contribution": 0.006557458080351353
    },
    {
     "name": "L5.H3",
     "type": "attention",
     "layer": 5,
     "head": 3,
-    "contribution": 0.006350461393594742
+    "contribution": 0.006350414827466011
    },
    {
     "name": "L11.H6",
     "type": "attention",
     "layer": 11,
     "head": 6,
-    "contribution": 0.0057351067662239075
+    "contribution": 0.005734916776418686
    },
    {
     "name": "L1.H7",
     "type": "attention",
     "layer": 1,
     "head": 7,
-    "contribution": -0.005427628755569458
+    "contribution": -0.00542761106044054
    },
    {
     "name": "L7.H10",
     "type": "attention",
     "layer": 7,
     "head": 10,
-    "contribution": -0.00531954038888216
+    "contribution": -0.005319541785866022
    },
    {
     "name": "L8.H5",
     "type": "attention",
     "layer": 8,
     "head": 5,
-    "contribution": 0.005255855619907379
+    "contribution": 0.005255796015262604
    },
    {
     "name": "L6.H7",
     "type": "attention",
     "layer": 6,
     "head": 7,
-    "contribution": 0.005249202251434326
+    "contribution": 0.005249204114079475
    },
    {
     "name": "L3.H0",
     "type": "attention",
     "layer": 3,
     "head": 0,
-    "contribution": 0.0052490234375
+    "contribution": 0.005249030888080597
    },
    {
     "name": "L1.H11",
     "type": "attention",
     "layer": 1,
     "head": 11,
-    "contribution": 0.005182795226573944
+    "contribution": 0.005182851105928421
    },
    {
     "name": "MLP.7",
     "type": "mlp",
     "layer": 7,
     "head": null,
-    "contribution": 0.0050833821296691895
+    "contribution": 0.005083933472633362
    },
    {
     "name": "L1.H1",
     "type": "attention",
     "layer": 1,
     "head": 1,
-    "contribution": 0.004969312343746424
+    "contribution": 0.004969306290149689
    },
    {
     "name": "L9.H10",
     "type": "attention",
     "layer": 9,
     "head": 10,
-    "contribution": -0.004735891707241535
+    "contribution": -0.004735907539725304
    },
    {
     "name": "L7.H2",
     "type": "attention",
     "layer": 7,
     "head": 2,
-    "contribution": 0.00469114538282156
+    "contribution": 0.0046911295503377914
    },
    {
     "name": "L5.H10",
     "type": "attention",
     "layer": 5,
     "head": 10,
-    "contribution": -0.004514150321483612
+    "contribution": -0.004514114931225777
    },
    {
     "name": "L4.H2",
     "type": "attention",
     "layer": 4,
     "head": 2,
-    "contribution": 0.003882225602865219
+    "contribution": 0.003882241901010275
    },
    {
     "name": "L7.H4",
     "type": "attention",
     "layer": 7,
     "head": 4,
-    "contribution": -0.003594284877181053
+    "contribution": -0.0035942774266004562
    },
    {
     "name": "L0.H4",
     "type": "attention",
     "layer": 0,
     "head": 4,
-    "contribution": 0.0034531238488852978
+    "contribution": 0.003453148528933525
    },
    {
     "name": "L0.H10",
     "type": "attention",
     "layer": 0,
     "head": 10,
-    "contribution": 0.0030263736844062805
+    "contribution": 0.0030263829976320267
    },
    {
     "name": "L3.H2",
     "type": "attention",
     "layer": 3,
     "head": 2,
-    "contribution": -0.002862272784113884
+    "contribution": -0.002862159162759781
    },
    {
     "name": "L4.H6",
     "type": "attention",
     "layer": 4,
     "head": 6,
-    "contribution": 0.0025508515536785126
+    "contribution": 0.002550859935581684
    },
    {
     "name": "L1.H0",
     "type": "attention",
     "layer": 1,
     "head": 0,
-    "contribution": -0.0018569277599453926
+    "contribution": -0.0018568970263004303
    },
    {
     "name": "L0.H9",
     "type": "attention",
     "layer": 0,
     "head": 9,
-    "contribution": -0.0016898959875106812
+    "contribution": -0.0016899257898330688
    },
    {
     "name": "L7.H11",
     "type": "attention",
     "layer": 7,
     "head": 11,
-    "contribution": 0.0012886254116892815
+    "contribution": 0.0012886300683021545
    }
   ],
   "answer_token": " Mary",
   "contrast_token": " John",
-  "bars_total": 4.564220096450299,
-  "answer_logit": 18.46639060974121,
-  "contrast_logit": 15.104813575744629,
-  "actual": 3.361577033996582,
-  "gap": -1.202643062453717,
+  "bars_total": 4.5642213192768395,
+  "answer_logit": 18.466381072998047,
+  "contrast_logit": 15.104811668395996,
+  "actual": 3.361569404602051,
+  "gap": -1.2026519146747887,
   "gap_parts": {
-   "embedding_direct": -0.012374214828014374,
-   "biases": -1.1902699284255505
+   "embedding_direct": -0.0123742138966918,
+   "biases": -1.1902699740603566
   },
   "real_weights_verified": true,
   "status": "ok"

@@ -10,16 +10,16 @@
   }
  },
  "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
- "device": "cpu",
+ "device": "cuda",
  "libs": {
   "python": "3.12.13",
-  "torch": "2.5.1+cpu",
+  "torch": "2.5.1+cu124",
   "transformer_lens": "2.15.4",
   "sae_lens": "5.11.0",
   "transformers": "4.57.6",
   "numpy": "1.26.4"
  },
- "recorded": "2026-10-14",
+ "recorded": "2026-10-15",
  "neuronpedia_fetched": null,
  "offline": false,
  "trimmed": [],
@@ -92,268 +92,268 @@
    [
     {
      "predicted_token": "\n",
-     "probability": 0.34442171454429626,
+     "probability": 0.34442099928855896,
      "matches_final": true
     },
     {
      "predicted_token": "'m",
-     "probability": 0.16050907969474792,
+     "probability": 0.1605059951543808,
      "matches_final": true
     },
     {
      "predicted_token": " looking",
-     "probability": 0.08455409854650497,
+     "probability": 0.08455272018909454,
      "matches_final": false
     },
     {
      "predicted_token": " outside",
-     "probability": 0.6913811564445496,
+     "probability": 0.6913644671440125,
      "matches_final": false
     },
     {
      "predicted_token": " then",
-     "probability": 0.44148141145706177,
+     "probability": 0.44147348403930664,
      "matches_final": false
     },
     {
      "predicted_token": " the",
-     "probability": 0.10421916097402573,
+     "probability": 0.10421793162822723,
      "matches_final": false
     },
     {
      "predicted_token": " same",
-     "probability": 0.6223180890083313,
+     "probability": 0.622300922870636,
      "matches_final": false
     },
     {
      "predicted_token": "forest",
-     "probability": 0.39247798919677734,
+     "probability": 0.39247703552246094,
      "matches_final": false
     },
     {
      "predicted_token": " which",
-     "probability": 0.21555067598819733,
+     "probability": 0.21554823219776154,
      "matches_final": false
     },
     {
      "predicted_token": "\n",
-     "probability": 0.8163431882858276,
+     "probability": 0.8163222074508667,
      "matches_final": true
     },
     {
      "predicted_token": "self",
-     "probability": 0.5598019361495972,
+     "probability": 0.5597953200340271,
      "matches_final": false
     },
     {
      "predicted_token": " tapped",
-     "probability": 0.7332481145858765,
+     "probability": 0.7332446575164795,
      "matches_final": false
     },
     {
      "predicted_token": " against",
-     "probability": 0.5307188630104065,
+     "probability": 0.5307100415229797,
      "matches_final": false
     },
     {
      "predicted_token": " same",
-     "probability": 0.753779411315918,
+     "probability": 0.7537583112716675,
      "matches_final": false
     },
     {
      "predicted_token": " window",
-     "probability": 0.9505891799926758,
+     "probability": 0.9505869150161743,
      "matches_final": false
     }
    ],
    [
     {
      "predicted_token": "\n",
-     "probability": 0.08009959012269974,
+     "probability": 0.08009954541921616,
      "matches_final": true
     },
     {
      "predicted_token": "'m",
-     "probability": 0.3098848760128021,
+     "probability": 0.3098771572113037,
      "matches_final": true
     },
     {
      "predicted_token": " briefly",
-     "probability": 0.21322399377822876,
+     "probability": 0.21322084963321686,
      "matches_final": false
     },
     {
      "predicted_token": " outside",
-     "probability": 0.5389251112937927,
+     "probability": 0.5389160513877869,
      "matches_final": false
     },
     {
      "predicted_token": " then",
-     "probability": 0.7517867684364319,
+     "probability": 0.751768171787262,
      "matches_final": false
     },
     {
      "predicted_token": " the",
-     "probability": 0.09130948781967163,
+     "probability": 0.09130799025297165,
      "matches_final": false
     },
     {
      "predicted_token": " same",
-     "probability": 0.7768344283103943,
+     "probability": 0.7768183946609497,
      "matches_final": false
     },
     {
      "predicted_token": "bows",
-     "probability": 0.9069323539733887,
+     "probability": 0.906930685043335,
      "matches_final": false
     },
     {
      "predicted_token": " which",
-     "probability": 0.2924482822418213,
+     "probability": 0.29244476556777954,
      "matches_final": false
     },
     {
      "predicted_token": "\n",
-     "probability": 0.30005785822868347,
+     "probability": 0.30005279183387756,
      "matches_final": true
     },
     {
      "predicted_token": "self",
-     "probability": 0.6915808320045471,
+     "probability": 0.6915618777275085,
      "matches_final": false
     },
     {
      "predicted_token": " tap",
-     "probability": 0.6479116082191467,
+     "probability": 0.6479071974754333,
      "matches_final": false
     },
     {
      "predicted_token": " the",
-     "probability": 0.2799965441226959,
+     "probability": 0.27999159693717957,
      "matches_final": true
     },
     {
      "predicted_token": " same",
-     "probability": 0.8059032559394836,
+     "probability": 0.8058867454528809,
      "matches_final": false
     },
     {
      "predicted_token": " window",
-     "probability": 0.7541511654853821,
+     "probability": 0.754144549369812,
      "matches_final": false
     }
    ],
    [
     {
      "predicted_token": ",",
-     "probability": 0.026910267770290375,
+     "probability": 0.02691025659441948,
      "matches_final": false
     },
     {
      "predicted_token": "'m",
-     "probability": 0.6076801419258118,
+     "probability": 0.6076719164848328,
      "matches_final": true
     },
     {
      "predicted_token": " looking",
-     "probability": 0.13006839156150818,
+     "probability": 0.13006608188152313,
      "matches_final": false
     },
     {
      "predicted_token": " outside",
-     "probability": 0.43061065673828125,
+     "probability": 0.4306007921695709,
      "matches_final": false
     },
     {
      "predicted_token": " then",
-     "probability": 0.7303271293640137,
+     "probability": 0.7303119897842407,
      "matches_final": false
     },
     {
      "predicted_token": " how",
-     "probability": 0.18007215857505798,
+     "probability": 0.18006955087184906,
      "matches_final": false
     },
     {
      "predicted_token": " same",
-     "probability": 0.6206579208374023,
+     "probability": 0.6206480264663696,
      "matches_final": false
     },
     {
      "predicted_token": "bows",
-     "probability": 0.9611157774925232,
+     "probability": 0.9611139297485352,
      "matches_final": false
     },
     {
      "predicted_token": " which",
-     "probability": 0.3553643226623535,
+     "probability": 0.3553561568260193,
      "matches_final": false
     },
     {
      "predicted_token": "\n",
-     "probability": 0.24373601377010345,
+     "probability": 0.24373307824134827,
      "matches_final": true
     },
     {
      "predicted_token": "self",
-     "probability": 0.8715425729751587,
+     "probability": 0.8715183138847351,
      "matches_final": false
     },
     {
      "predicted_token": " tap",
-     "probability": 0.8243052959442139,
+     "probability": 0.8242932558059692,
      "matches_final": false
     },
     {
      "predicted_token": " the",
-     "probability": 0.4440203905105591,
+     "probability": 0.4440135657787323,
      "matches_final": true
     },
     {
      "predicted_token": " same",
-     "probability": 0.8694793581962585,
+     "probability": 0.8694640398025513,
      "matches_final": false
     },
     {
      "predicted_token": " window",
-     "probability": 0.6635417938232422,
+     "probability": 0.6635354161262512,
      "matches_final": false
     }
    ],
    [
     {
      "predicted_token": ",",
-     "probability": 0.027061179280281067,
+     "probability": 0.027061201632022858,
      "matches_final": false
     },
     {
      "predicted_token": "'m",
-     "probability": 0.6521574258804321,
+     "probability": 0.6521494388580322,
      "matches_final": true
     },
     {
      "predicted_token": " briefly",
-     "probability": 0.3445003628730774,
+     "probability": 0.3444945216178894,
      "matches_final": false
     },
     {
      "predicted_token": " the",
-     "probability": 0.19794942438602448,
+     "probability": 0.197945699095726,
      "matches_final": true
     },
     {
      "predicted_token": " then",
-     "probability": 0.7516832947731018,
+     "probability": 0.7516674995422363,
      "matches_final": false
     },
     {
      "predicted_token": " my",
-     "probability": 0.19365158677101135,
+     "probability": 0.1936478614807129,
      "matches_final": false
     },
     {
      "predicted_token": " same",
-     "probability": 0.5962671041488647,
+     "probability": 0.5962569713592529,
      "matches_final": false
     },
     {
@@ -363,469 +363,469 @@
     },
     {
      "predicted_token": " which",
-     "probability": 0.4005359709262848,
+     "probability": 0.4005279242992401,
      "matches_final": false
     },
     {
      "predicted_token": "                ",
-     "probability": 0.11047869175672531,
+     "probability": 0.11047815531492233,
      "matches_final": false
     },
     {
      "predicted_token": "self",
-     "probability": 0.6542484760284424,
+     "probability": 0.6542355418205261,
      "matches_final": false
     },
     {
      "predicted_token": " tap",
-     "probability": 0.7608318328857422,
+     "probability": 0.7608190178871155,
      "matches_final": false
     },
     {
      "predicted_token": " the",
-     "probability": 0.6899508833885193,
+     "probability": 0.6899390816688538,
      "matches_final": true
     },
     {
      "predicted_token": " same",
-     "probability": 0.7825270891189575,
+     "probability": 0.7825149297714233,
      "matches_final": false
     },
     {
      "predicted_token": " window",
-     "probability": 0.6692190766334534,
+     "probability": 0.6692187786102295,
      "matches_final": false
     }
    ],
    [
     {
      "predicted_token": ",",
-     "probability": 0.026887336745858192,
+     "probability": 0.0268873143941164,
      "matches_final": false
     },
     {
      "predicted_token": "'m",
-     "probability": 0.4289296865463257,
+     "probability": 0.42892149090766907,
      "matches_final": true
     },
     {
      "predicted_token": " briefly",
-     "probability": 0.45024576783180237,
+     "probability": 0.4502405524253845,
      "matches_final": false
     },
     {
      "predicted_token": " outside",
-     "probability": 0.17627288401126862,
+     "probability": 0.17626957595348358,
      "matches_final": false
     },
     {
      "predicted_token": " then",
-     "probability": 0.8471096158027649,
+     "probability": 0.8470934629440308,
      "matches_final": false
     },
     {
      "predicted_token": " my",
-     "probability": 0.2709067165851593,
+     "probability": 0.2709028422832489,
      "matches_final": false
     },
     {
      "predicted_token": " same",
-     "probability": 0.5948254466056824,
+     "probability": 0.5948132872581482,
      "matches_final": false
     },
     {
      "predicted_token": "bows",
-     "probability": 0.9624583721160889,
+     "probability": 0.9624575972557068,
      "matches_final": false
     },
     {
      "predicted_token": " which",
-     "probability": 0.6909908056259155,
+     "probability": 0.6909742951393127,
      "matches_final": false
     },
     {
      "predicted_token": "\n",
-     "probability": 0.13377860188484192,
+     "probability": 0.13377559185028076,
      "matches_final": true
     },
     {
      "predicted_token": "'s",
-     "probability": 0.5133273005485535,
+     "probability": 0.5133158564567566,
      "matches_final": false
     },
     {
      "predicted_token": " tap",
-     "probability": 0.48990586400032043,
+     "probability": 0.48989951610565186,
      "matches_final": false
     },
     {
      "predicted_token": " the",
-     "probability": 0.7277535200119019,
+     "probability": 0.7277423739433289,
      "matches_final": true
     },
     {
      "predicted_token": " same",
-     "probability": 0.5701106786727905,
+     "probability": 0.5701037645339966,
      "matches_final": false
     },
     {
      "predicted_token": " window",
-     "probability": 0.7975795269012451,
+     "probability": 0.7975765466690063,
      "matches_final": false
     }
    ],
    [
     {
      "predicted_token": ",",
-     "probability": 0.02654830552637577,
+     "probability": 0.026548324152827263,
      "matches_final": false
     },
     {
      "predicted_token": "'m",
-     "probability": 0.5207818150520325,
+     "probability": 0.5207775235176086,
      "matches_final": true
     },
     {
      "predicted_token": " briefly",
-     "probability": 0.39520034193992615,
+     "probability": 0.39519423246383667,
      "matches_final": false
     },
     {
      "predicted_token": " outside",
-     "probability": 0.19651572406291962,
+     "probability": 0.1965111494064331,
      "matches_final": false
     },
     {
      "predicted_token": " then",
-     "probability": 0.9067587852478027,
+     "probability": 0.9067438840866089,
      "matches_final": false
     },
     {
      "predicted_token": " my",
-     "probability": 0.3041776120662689,
+     "probability": 0.30416929721832275,
      "matches_final": false
     },
     {
      "predicted_token": " same",
-     "probability": 0.49596574902534485,
+     "probability": 0.4959568381309509,
      "matches_final": false
     },
     {
      "predicted_token": "bows",
-     "probability": 0.9708620309829712,
+     "probability": 0.9708616733551025,
      "matches_final": false
     },
     {
      "predicted_token": " which",
-     "probability": 0.8615788221359253,
+     "probability": 0.8615649342536926,
      "matches_final": false
     },
     {
      "predicted_token": "so",
-     "probability": 0.11172681301832199,
+     "probability": 0.11172591894865036,
      "matches_final": false
     },
     {
      "predicted_token": "'s",
-     "probability": 0.5961660742759705,
+     "probability": 0.5961535573005676,
      "matches_final": false
     },
     {
      "predicted_token": " tap",
-     "probability": 0.17293639481067657,
+     "probability": 0.17293380200862885,
      "matches_final": false
     },
     {
      "predicted_token": " the",
-     "probability": 0.7889768481254578,
+     "probability": 0.7889661192893982,
      "matches_final": true
     },
     {
      "predicted_token": " bottom",
-     "probability": 0.22319938242435455,
+     "probability": 0.22319406270980835,
      "matches_final": false
     },
     {
      "predicted_token": " window",
-     "probability": 0.6582335233688354,
+     "probability": 0.6582298874855042,
      "matches_final": false
     }
    ],
    [
     {
      "predicted_token": ",",
-     "probability": 0.0264239814132452,
+     "probability": 0.026423990726470947,
      "matches_final": false
     },
     {
      "predicted_token": "'m",
-     "probability": 0.5701041221618652,
+     "probability": 0.5700984597206116,
      "matches_final": true
     },
     {
      "predicted_token": " briefly",
-     "probability": 0.3754107356071472,
+     "probability": 0.37540528178215027,
      "matches_final": false
     },
     {
      "predicted_token": " the",
-     "probability": 0.19138190150260925,
+     "probability": 0.19137845933437347,
      "matches_final": true
     },
     {
      "predicted_token": " then",
-     "probability": 0.28591468930244446,
+     "probability": 0.28590887784957886,
      "matches_final": false
     },
     {
      "predicted_token": " my",
-     "probability": 0.21870967745780945,
+     "probability": 0.2187061607837677,
      "matches_final": false
     },
     {
      "predicted_token": " same",
-     "probability": 0.275253564119339,
+     "probability": 0.27525049448013306,
      "matches_final": false
     },
     {
      "predicted_token": "bows",
-     "probability": 0.885011613368988,
+     "probability": 0.8850111961364746,
      "matches_final": false
     },
     {
      "predicted_token": " which",
-     "probability": 0.9274225831031799,
+     "probability": 0.9274101853370667,
      "matches_final": false
     },
     {
      "predicted_token": "so",
-     "probability": 0.2157282531261444,
+     "probability": 0.21572597324848175,
      "matches_final": false
     },
     {
      "predicted_token": "'s",
-     "probability": 0.5394577980041504,
+     "probability": 0.5394473671913147,
      "matches_final": false
     },
     {
      "predicted_token": " out",
-     "probability": 0.12705305218696594,
+     "probability": 0.12705057859420776,
      "matches_final": false
     },
     {
      "predicted_token": " the",
-     "probability": 0.8230948448181152,
+     "probability": 0.8230879902839661,
      "matches_final": true
     },
     {
      "predicted_token": " backdrop",
-     "probability": 0.15681052207946777,
+     "probability": 0.15680888295173645,
      "matches_final": false
     },
     {
      "predicted_token": " windows",
-     "probability": 0.5915921926498413,
+     "probability": 0.5915877819061279,
      "matches_final": false
     }
    ],
    [
     {
      "predicted_token": ",",
-     "probability": 0.026436978951096535,
+     "probability": 0.02643696777522564,
      "matches_final": false
     },
     {
      "predicted_token": "'m",
-     "probability": 0.6925598382949829,
+     "probability": 0.6925567388534546,
      "matches_final": true
     },
     {
      "predicted_token": " briefly",
-     "probability": 0.16756577789783478,
+     "probability": 0.16756421327590942,
      "matches_final": false
     },
     {
      "predicted_token": " the",
-     "probability": 0.3133021593093872,
+     "probability": 0.313296377658844,
      "matches_final": true
     },
     {
      "predicted_token": " saw",
-     "probability": 0.7083408832550049,
+     "probability": 0.7083333730697632,
      "matches_final": true
     },
     {
      "predicted_token": " something",
-     "probability": 0.37158840894699097,
+     "probability": 0.3715830147266388,
      "matches_final": false
     },
     {
      "predicted_token": " beautiful",
-     "probability": 0.11666495352983475,
+     "probability": 0.11666285246610641,
      "matches_final": false
     },
     {
      "predicted_token": "bows",
-     "probability": 0.9248223900794983,
+     "probability": 0.9248217940330505,
      "matches_final": false
     },
     {
      "predicted_token": " which",
-     "probability": 0.9242752194404602,
+     "probability": 0.924268364906311,
      "matches_final": false
     },
     {
      "predicted_token": "And",
-     "probability": 0.18153434991836548,
+     "probability": 0.18153177201747894,
      "matches_final": false
     },
     {
      "predicted_token": "'s",
-     "probability": 0.6399799585342407,
+     "probability": 0.6399718523025513,
      "matches_final": false
     },
     {
      "predicted_token": " gently",
-     "probability": 0.18882259726524353,
+     "probability": 0.18882085382938385,
      "matches_final": false
     },
     {
      "predicted_token": " the",
-     "probability": 0.8624730110168457,
+     "probability": 0.8624672293663025,
      "matches_final": true
     },
     {
      "predicted_token": " walls",
-     "probability": 0.15378452837467194,
+     "probability": 0.15378327667713165,
      "matches_final": false
     },
     {
      "predicted_token": " windows",
-     "probability": 0.40653467178344727,
+     "probability": 0.406535804271698,
      "matches_final": false
     }
    ],
    [
     {
      "predicted_token": ",",
-     "probability": 0.026673292741179466,
+     "probability": 0.02667328715324402,
      "matches_final": false
     },
     {
      "predicted_token": "'m",
-     "probability": 0.8061155080795288,
+     "probability": 0.8061140179634094,
      "matches_final": true
     },
     {
      "predicted_token": " carefully",
-     "probability": 0.26143398880958557,
+     "probability": 0.26143011450767517,
      "matches_final": false
     },
     {
      "predicted_token": " my",
-     "probability": 0.7746177315711975,
+     "probability": 0.7746042013168335,
      "matches_final": false
     },
     {
      "predicted_token": " saw",
-     "probability": 0.882575273513794,
+     "probability": 0.8825722932815552,
      "matches_final": true
     },
     {
      "predicted_token": " my",
-     "probability": 0.34690168499946594,
+     "probability": 0.3468952178955078,
      "matches_final": false
     },
     {
      "predicted_token": " beautiful",
-     "probability": 0.13425394892692566,
+     "probability": 0.13425184786319733,
      "matches_final": false
     },
     {
      "predicted_token": "bows",
-     "probability": 0.6210882067680359,
+     "probability": 0.621088981628418,
      "matches_final": false
     },
     {
      "predicted_token": " which",
-     "probability": 0.9561392068862915,
+     "probability": 0.9561352729797363,
      "matches_final": false
     },
     {
      "predicted_token": "   ",
-     "probability": 0.27015790343284607,
+     "probability": 0.27015605568885803,
      "matches_final": false
     },
     {
      "predicted_token": "'s",
-     "probability": 0.427020400762558,
+     "probability": 0.42701634764671326,
      "matches_final": false
     },
     {
      "predicted_token": " gently",
-     "probability": 0.2833540141582489,
+     "probability": 0.28335142135620117,
      "matches_final": false
     },
     {
      "predicted_token": " the",
-     "probability": 0.6607370376586914,
+     "probability": 0.6607310175895691,
      "matches_final": true
     },
     {
      "predicted_token": " sky",
-     "probability": 0.4450250267982483,
+     "probability": 0.4450226426124573,
      "matches_final": true
     },
     {
      "predicted_token": " windows",
-     "probability": 0.3204977810382843,
+     "probability": 0.32049793004989624,
      "matches_final": false
     }
    ],
    [
     {
      "predicted_token": ",",
-     "probability": 0.026949947699904442,
+     "probability": 0.02694992907345295,
      "matches_final": false
     },
     {
      "predicted_token": "'m",
-     "probability": 0.7208510041236877,
+     "probability": 0.7208480834960938,
      "matches_final": true
     },
     {
      "predicted_token": " at",
-     "probability": 0.48750168085098267,
+     "probability": 0.48749616742134094,
      "matches_final": true
     },
     {
      "predicted_token": " my",
-     "probability": 0.8674365282058716,
+     "probability": 0.867429792881012,
      "matches_final": false
     },
     {
      "predicted_token": " saw",
-     "probability": 0.9556440114974976,
+     "probability": 0.955643355846405,
      "matches_final": true
     },
     {
      "predicted_token": " a",
-     "probability": 0.4240955412387848,
+     "probability": 0.4240911900997162,
      "matches_final": true
     },
     {
      "predicted_token": " sun",
-     "probability": 0.17776206135749817,
+     "probability": 0.1777597963809967,
      "matches_final": false
     },
     {
      "predicted_token": "bows",
-     "probability": 0.6318047642707825,
+     "probability": 0.6318033337593079,
      "matches_final": false
     },
     {
      "predicted_token": " which",
-     "probability": 0.7298151850700378,
+     "probability": 0.7298086881637573,
      "matches_final": false
     },
     {
@@ -835,181 +835,181 @@
     },
     {
      "predicted_token": " was",
-     "probability": 0.4042181372642517,
+     "probability": 0.4042143225669861,
      "matches_final": true
     },
     {
      "predicted_token": " into",
-     "probability": 0.7384961247444153,
+     "probability": 0.7384917140007019,
      "matches_final": false
     },
     {
      "predicted_token": " the",
-     "probability": 0.44828000664711,
+     "probability": 0.44827550649642944,
      "matches_final": true
     },
     {
      "predicted_token": " trees",
-     "probability": 0.35841819643974304,
+     "probability": 0.35841861367225647,
      "matches_final": false
     },
     {
      "predicted_token": " windows",
-     "probability": 0.37990325689315796,
+     "probability": 0.3799023926258087,
      "matches_final": false
     }
    ],
    [
     {
      "predicted_token": ",",
-     "probability": 0.027445368468761444,
+     "probability": 0.0274453517049551,
      "matches_final": false
     },
     {
      "predicted_token": "'m",
-     "probability": 0.36975908279418945,
+     "probability": 0.36975187063217163,
      "matches_final": true
     },
     {
      "predicted_token": " at",
-     "probability": 0.40102964639663696,
+     "probability": 0.40101712942123413,
      "matches_final": true
     },
     {
      "predicted_token": " my",
-     "probability": 0.7094599008560181,
+     "probability": 0.709453821182251,
      "matches_final": false
     },
     {
      "predicted_token": " saw",
-     "probability": 0.9003769159317017,
+     "probability": 0.9003725647926331,
      "matches_final": true
     },
     {
      "predicted_token": " a",
-     "probability": 0.5687575936317444,
+     "probability": 0.5687471628189087,
      "matches_final": true
     },
     {
      "predicted_token": " sun",
-     "probability": 0.1315540075302124,
+     "probability": 0.1315525621175766,
      "matches_final": false
     },
     {
      "predicted_token": "drops",
-     "probability": 0.3569229245185852,
+     "probability": 0.3569217324256897,
      "matches_final": false
     },
     {
      "predicted_token": " but",
-     "probability": 0.39855432510375977,
+     "probability": 0.3985486924648285,
      "matches_final": false
     },
     {
      "predicted_token": "\n",
-     "probability": 0.9717640280723572,
+     "probability": 0.971760630607605,
      "matches_final": true
     },
     {
      "predicted_token": " was",
-     "probability": 0.5601031184196472,
+     "probability": 0.5600976943969727,
      "matches_final": true
     },
     {
      "predicted_token": " into",
-     "probability": 0.2949475944042206,
+     "probability": 0.29494333267211914,
      "matches_final": false
     },
     {
      "predicted_token": " my",
-     "probability": 0.7125951051712036,
+     "probability": 0.7125877141952515,
      "matches_final": false
     },
     {
      "predicted_token": " sky",
-     "probability": 0.4368759095668793,
+     "probability": 0.4368748664855957,
      "matches_final": true
     },
     {
      "predicted_token": ",",
-     "probability": 0.21316055953502655,
+     "probability": 0.21315932273864746,
      "matches_final": true
     }
    ],
    [
     {
      "predicted_token": "\n",
-     "probability": 0.06229811906814575,
+     "probability": 0.062298163771629333,
      "matches_final": true
     },
     {
      "predicted_token": "'m",
-     "probability": 0.09338682889938354,
+     "probability": 0.09338602423667908,
      "matches_final": true
     },
     {
      "predicted_token": " at",
-     "probability": 0.3887678384780884,
+     "probability": 0.3887585997581482,
      "matches_final": true
     },
     {
      "predicted_token": " the",
-     "probability": 0.22076599299907684,
+     "probability": 0.22076283395290375,
      "matches_final": true
     },
     {
      "predicted_token": " saw",
-     "probability": 0.5560672879219055,
+     "probability": 0.5560576319694519,
      "matches_final": true
     },
     {
      "predicted_token": " a",
-     "probability": 0.28134551644325256,
+     "probability": 0.28134194016456604,
      "matches_final": true
     },
     {
      "predicted_token": " sky",
-     "probability": 0.02538313716650009,
+     "probability": 0.025382833555340767,
      "matches_final": true
     },
     {
      "predicted_token": ".",
-     "probability": 0.14576485753059387,
+     "probability": 0.14576300978660583,
      "matches_final": true
     },
     {
      "predicted_token": " and",
-     "probability": 0.22024403512477875,
+     "probability": 0.22024095058441162,
      "matches_final": true
     },
     {
      "predicted_token": "\n",
-     "probability": 0.9969480633735657,
+     "probability": 0.9969426989555359,
      "matches_final": true
     },
     {
      "predicted_token": " was",
-     "probability": 0.39594125747680664,
+     "probability": 0.3959321081638336,
      "matches_final": true
     },
     {
      "predicted_token": " my",
-     "probability": 0.1306241899728775,
+     "probability": 0.1306220144033432,
      "matches_final": true
     },
     {
      "predicted_token": " the",
-     "probability": 0.5964704751968384,
+     "probability": 0.5964575409889221,
      "matches_final": true
     },
     {
      "predicted_token": " sky",
-     "probability": 0.06867943704128265,
+     "probability": 0.06867875158786774,
      "matches_final": true
     },
     {
      "predicted_token": ",",
-     "probability": 0.2478378713130951,
+     "probability": 0.24783377349376678,
      "matches_final": true
     }
    ]

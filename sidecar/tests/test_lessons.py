@@ -17,8 +17,12 @@ own body builders. Each response is stored under its request key
 the network-blocked run as <key>.offline.json, with the model revision, device,
 library versions and record date inside. rows.json holds each row's recorded
 values, its status and a hash of the sidecar's git-tracked source and
-requirements. GPT-2 small runs on whatever device the registry picks, with BOS
-prepended as Pry does. Skips cleanly when GPT-2 small isn't in the HF cache.
+requirements. GPT-2 small runs on the device the registry picks, the same probe
+the app uses (CUDA when torch can use the GPU), with BOS prepended as Pry does.
+--record stops when torch is a CPU build on a machine with an NVIDIA GPU, since
+Pry runs on CUDA there; `--device cpu` records on the CPU anyway and
+`--device cuda` insists on the GPU (conftest.device_problem). Skips cleanly when
+GPT-2 small isn't in the HF cache.
 
 Drift tolerances (plan T6a): tokens and strings exact; probabilities (and
 attention weights, shares, cosines) within 0.02; logits and other floats within

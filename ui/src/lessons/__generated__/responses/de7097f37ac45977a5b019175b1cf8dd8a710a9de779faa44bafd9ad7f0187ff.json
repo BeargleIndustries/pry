@@ -12,16 +12,16 @@
   }
  },
  "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
- "device": "cpu",
+ "device": "cuda",
  "libs": {
   "python": "3.12.13",
-  "torch": "2.5.1+cpu",
+  "torch": "2.5.1+cu124",
   "transformer_lens": "2.15.4",
   "sae_lens": "5.11.0",
   "transformers": "4.57.6",
   "numpy": "1.26.4"
  },
- "recorded": "2026-10-14",
+ "recorded": "2026-10-15",
  "neuronpedia_fetched": null,
  "offline": false,
  "trimmed": [],
@@ -56,7 +56,7 @@
     "top_k": [
      {
       "id": 11746,
-      "activation": 501.9688415527344,
+      "activation": 501.9687805175781,
       "description": null,
       "label_detail": "none",
       "confidence": "none",
@@ -64,7 +64,7 @@
      },
      {
       "id": 11533,
-      "activation": 466.14398193359375,
+      "activation": 466.14404296875,
       "description": null,
       "label_detail": "none",
       "confidence": "none",
@@ -72,7 +72,7 @@
      },
      {
       "id": 4078,
-      "activation": 450.62896728515625,
+      "activation": 450.6288757324219,
       "description": null,
       "label_detail": "none",
       "confidence": "none",
@@ -80,7 +80,7 @@
      },
      {
       "id": 13997,
-      "activation": 427.57275390625,
+      "activation": 427.5727233886719,
       "description": null,
       "label_detail": "none",
       "confidence": "none",
@@ -88,7 +88,7 @@
      },
      {
       "id": 7662,
-      "activation": 412.3442687988281,
+      "activation": 412.3440856933594,
       "description": null,
       "label_detail": "none",
       "confidence": "none",
@@ -101,7 +101,7 @@
     "top_k": [
      {
       "id": 6069,
-      "activation": 38.275970458984375,
+      "activation": 38.27598571777344,
       "description": null,
       "label_detail": "none",
       "confidence": "none",
@@ -109,7 +109,7 @@
      },
      {
       "id": 7920,
-      "activation": 18.48867416381836,
+      "activation": 18.488676071166992,
       "description": null,
       "label_detail": "none",
       "confidence": "none",
@@ -117,7 +117,7 @@
      },
      {
       "id": 14957,
-      "activation": 4.367920875549316,
+      "activation": 4.367923259735107,
       "description": null,
       "label_detail": "none",
       "confidence": "none",
@@ -125,7 +125,7 @@
      },
      {
       "id": 2222,
-      "activation": 3.8694920539855957,
+      "activation": 3.8694896697998047,
       "description": null,
       "label_detail": "none",
       "confidence": "none",
@@ -133,7 +133,7 @@
      },
      {
       "id": 495,
-      "activation": 3.2859041690826416,
+      "activation": 3.285905122756958,
       "description": null,
       "label_detail": "none",
       "confidence": "none",
@@ -146,7 +146,7 @@
     "top_k": [
      {
       "id": 21213,
-      "activation": 44.65057373046875,
+      "activation": 44.650577545166016,
       "description": null,
       "label_detail": "none",
       "confidence": "none",
@@ -154,7 +154,7 @@
      },
      {
       "id": 19093,
-      "activation": 11.903231620788574,
+      "activation": 11.903238296508789,
       "description": null,
       "label_detail": "none",
       "confidence": "none",
@@ -162,7 +162,7 @@
      },
      {
       "id": 821,
-      "activation": 8.781829833984375,
+      "activation": 8.781839370727539,
       "description": null,
       "label_detail": "none",
       "confidence": "none",
@@ -170,7 +170,7 @@
      },
      {
       "id": 7698,
-      "activation": 8.106558799743652,
+      "activation": 8.106571197509766,
       "description": null,
       "label_detail": "none",
       "confidence": "none",
@@ -178,7 +178,7 @@
      },
      {
       "id": 15707,
-      "activation": 6.06845235824585,
+      "activation": 6.068460941314697,
       "description": null,
       "label_detail": "none",
       "confidence": "none",
@@ -191,7 +191,7 @@
     "top_k": [
      {
       "id": 1753,
-      "activation": 15.457450866699219,
+      "activation": 15.457467079162598,
       "description": null,
       "label_detail": "none",
       "confidence": "none",
@@ -199,7 +199,7 @@
      },
      {
       "id": 22022,
-      "activation": 13.979141235351562,
+      "activation": 13.979143142700195,
       "description": null,
       "label_detail": "none",
       "confidence": "none",
@@ -207,7 +207,7 @@
      },
      {
       "id": 11429,
-      "activation": 9.127982139587402,
+      "activation": 9.127983093261719,
       "description": null,
       "label_detail": "none",
       "confidence": "none",
@@ -215,7 +215,7 @@
      },
      {
       "id": 12214,
-      "activation": 8.582210540771484,
+      "activation": 8.582208633422852,
       "description": null,
       "label_detail": "none",
       "confidence": "none",
@@ -223,7 +223,7 @@
      },
      {
       "id": 11625,
-      "activation": 7.663477897644043,
+      "activation": 7.663477420806885,
       "description": null,
       "label_detail": "none",
       "confidence": "none",
@@ -236,7 +236,7 @@
     "top_k": [
      {
       "id": 22201,
-      "activation": 28.651222229003906,
+      "activation": 28.651226043701172,
       "description": null,
       "label_detail": "none",
       "confidence": "none",
@@ -244,7 +244,7 @@
      },
      {
       "id": 22509,
-      "activation": 18.476369857788086,
+      "activation": 18.476350784301758,
       "description": null,
       "label_detail": "none",
       "confidence": "none",
@@ -252,7 +252,7 @@
      },
      {
       "id": 20441,
-      "activation": 7.645265579223633,
+      "activation": 7.645261287689209,
       "description": null,
       "label_detail": "none",
       "confidence": "none",
@@ -260,7 +260,7 @@
      },
      {
       "id": 1753,
-      "activation": 3.317741870880127,
+      "activation": 3.3177480697631836,
       "description": null,
       "label_detail": "none",
       "confidence": "none",
@@ -268,7 +268,7 @@
      },
      {
       "id": 1960,
-      "activation": 3.2291643619537354,
+      "activation": 3.229161500930786,
       "description": null,
       "label_detail": "none",
       "confidence": "none",
