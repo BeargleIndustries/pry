@@ -1,0 +1,863 @@
+# Verified rows (plan T6a). Rows 1-39 are concept map section 7.4; rows 40+
+# cover every outline item the scanner (`npm run lessons:rows`) finds outside
+# them. Every number a lesson relies on is recorded through Pry's own sidecar
+# by `pytest sidecar/tests/test_lessons.py --record` and pinned under
+# `__generated__/responses/<request key>.json`.
+#
+# Fields per row:
+#   id        row number (1-39 = map 7.4; 40+ = new)
+#   label     the outline's own label for the row, when it proposed one
+#   outline   scanner items the row covers: `<file>:<line>` (every item on that
+#             line) or `<file>:<line>.<n>` (the n-th item on that line)
+#   lessons   lessons citing the row
+#   requests  what is sent, built by `npm run lessons:compile -- --rows` through
+#             the T4-ts body builders (ui/src/lib/sidecar.ts). Actions:
+#             run (Run button), compare (one Compare prompt), writeIt (Watch it
+#             write; maxNewTokens defaults to the app's 20), logitLens, dla,
+#             patch, ablateHeads (`heads` = one knockout of those heads together;
+#             `singles` = one request per listed head; `heads: all-single` =
+#             one request per head of the model's 12 x 12),
+#             ablateFeatures, steer (always with the MF-4 control), circuit
+#             (Key parts), headScores, embedding.
+#             repeat: n = n separate sidecar calls (<key>.r<n>.json);
+#             network: Neuronpedia labels and snippets fetched at record time;
+#             offline: the call runs with every non-loopback connection blocked.
+#   record    the fields recorded
+#   claim     what the lessons say, which the record checks
+#   status    verified | narrowed | failed | needs-brad | closed-by-task (see t6a-rows.md)
+#   note      fallback applied (narrowed), or the contradiction (needs-brad)
+#   constants the row constants lessons cite as `$row.<id>.<field>` and
+#             `{row: <id>.<field>}` (plan:297, :299). Each is derived from this
+#             row's recorded `values` in rows.json (or its own request
+#             arguments) by exactly one of: path, token_prob (+ token),
+#             last_position, request, parse_head (+ take), first_mlp_layer,
+#             argmax (+ by, take, exclude_layer), count, list, points
+#             (percentage points -> probability), token_position (a token's
+#             position in the row's recorded response), literal (authored,
+#             needs `source`; `kind: literature` when not measured), alias (row
+#             n's constant of the same name); `round: d`; `negate: true` flips the
+#             sign; `from_row: n` reads row n's recorded values instead (a row
+#             that recorded the same run or preset, said in `note`); and a unit
+#             (layer, head, position, probability, logit, count, number,
+#             string, list (+ of), record). `npm run lessons:compile -- --rows`
+#             derives them into rows.json `rows[].constants`; run it again after
+#             every `--record`. A field with nothing recorded to derive from is
+#             left out (see evidence row-constants.md "Cannot derive").
+#
+# Positions count the start-of-text marker as 0, as Pry's token strip does.
+# Layers use Pry's labels L0-L11. Outline files are never edited (plan C3-10).
+
+model: gpt2-small
+rows:
+  - id: 1
+    outline: [P1.1.md:103, P1.1.md:105, P1.3.md:99, P1.6.md:111, P2.5.md:11.1, P3.6.md:11.1]
+    lessons: [P1.1, P1.3, P1.6, P2.3, P2.5, P3.6]
+    requests:
+      - { name: jordan, action: run, prompt: "Michael Jordan played the sport of" }
+    record: top 4 with probabilities and logits; top-10 total
+    claim: '" basketball" 42.2%, " football" 4.7%, " golf" 4.1%, " the" 2.1%'
+    status: verified
+    constants:
+      basketball: { token_prob: top4, token: " basketball", unit: probability }
+      fid: { from_row: 53, path: fid, unit: number, note: "row 53 recorded the features on this prompt and picked {fid}" }
+      sae_layer: { from_row: 24, path: sae_layer, unit: layer, note: "the preset SAE (gpt2-small-res-jb, blocks.8) that row 24 recorded; row 53's feature run uses the same preset" }
+
+  - id: 2
+    outline: [P1.1.md:86, P1.1.md:103, P1.1.md:104, P1.1.md:105]
+    lessons: [P1.1]
+    requests:
+      - { name: france, action: run, prompt: "The capital of France is" }
+    record: top 4; top-4 and top-10 totals; whether " Paris" is in the top ten
+    claim: '" now" 4.8%, " the" 3.7%, " a" 3.5%, " home" 3.1%; top four hold 15.1%; " Paris" not in the top four (the feedback may say "not in the top ten")'
+    status: verified
+
+  - id: 3
+    outline: [P1.1.md:103, P1.1.md:105, P1.4.md:101]
+    lessons: [P1.1, P1.4]
+    requests:
+      - { name: city, action: run, prompt: "The capital of France is the city of" }
+    record: top 4; top-10 total
+    claim: '" Paris" 9.7%, " Marse" 8.9%, " Saint" 3.1%, " St" 2.8%: a near-tie with most chance elsewhere'
+    status: verified
+
+  - id: 4
+    outline: [P1.4.md:101]
+    lessons: [P1.4]
+    requests:
+      - { name: twoplustwo, action: run, prompt: "Two plus two equals" }
+    record: top 4; top-10 total; logits of " one" and " four"
+    claim: '" one" 34.2%, " two" 16.2%, " four" 7.0%, " three" 6.9%: a fluent wrong answer'
+    status: verified
+
+  - id: 5
+    outline: [P1.4.md:101]
+    lessons: [P1.4]
+    requests:
+      - { name: myth, action: run, prompt: "Humans only use ten percent of their" }
+    record: top 4; top-10 total
+    claim: '" brains" 12.7%, " energy" 11.5%, " body" 10.3%, " bodies" 7.3%'
+    status: verified
+
+  - id: 6
+    outline: []
+    lessons: [P1.2]
+    requests:
+      - { name: unbelievable, action: run, prompt: " unbelievable" }
+      - { name: leclerc, action: run, prompt: " Leclerc" }
+    record: token lists
+    claim: '" unbelievable" is 1 token; " Leclerc" is " Le", "cl", "erc"'
+    status: verified
+
+  - id: 7
+    outline: [P1.2.md:109, P1.2.md:128, P1.2.md:129, P2.5.md:11.1]
+    lessons: [P1.2, P2.5]
+    requests:
+      - { name: river, action: embedding, prompt: "I like the river bank", positions: [5] }
+      - { name: money, action: embedding, prompt: "I like the money bank", positions: [5] }
+      - { name: thebank, action: embedding, prompt: "The bank", positions: [2] }
+    record: matching numbers out of 768 for embedding and positional embedding; cosine similarity of the summed lists (position 5 vs 2); how many of the 768 summed numbers match
+    claim: '" bank" at position 5: embedding identical (768 of 768) in both sentences; position 2 vs 5: embedding identical, positional embedding different; similarity of embedding plus positional embedding 0.957'
+    status: verified
+    constants:
+      river_bank_position: { request: river.positions.0, unit: position }
+      the_bank_position: { request: thebank.positions.0, unit: position }
+
+  - id: 8
+    outline: [P1.6.md:93.2]
+    lessons: [P1.5, P1.6]
+    requests:
+      - { name: baker, action: writeIt, prompt: "Our quiet street was named for a baker who", temperature: 0, repeat: 2 }
+    record: temperature-0 continuation (20 new tokens)
+    claim: 'continues " was a great friend of mine. He was a great friend of mine, and" (HF greedy)'
+    status: verified
+
+  - id: 9
+    outline: [P1.6.md:93.1, P1.6.md:93.2, P1.6.md:109]
+    lessons: [P1.6]
+    requests:
+      - { name: mit, action: writeIt, prompt: "The MIT License\n\nPermission is hereby granted, free of charge, to any person obtaining a copy", temperature: 0 }
+    record: temperature-0 continuation; new-token count
+    claim: 'continues " of this software and associated documentation files (the "Software"), to deal in the" word for word'
+    status: verified
+
+  - id: 10
+    outline: [P1.6.md:93.1, P1.6.md:93.2, P1.6.md:109]
+    lessons: [P1.6]
+    requests:
+      - { name: truths, action: writeIt, prompt: "We hold these truths to be self-evident, that all men are", temperature: 0 }
+    record: temperature-0 continuation; new-token count
+    claim: 'continues " created equal, that every man is endowed by his Creator with certain unalienable" (close to the real text, not exact)'
+    status: verified
+
+  - id: 11
+    outline: [P4.1.md:12]
+    lessons: [P4.1]
+    requests:
+      - { name: poem, action: writeIt, prompt: "Write a short poem about the sea.", temperature: 0, repeat: 2 }
+    record: temperature-0 continuation
+    claim: 'continues "\n\nWrite a short poem about the sea.\n\nWrite a short poem about the sea."'
+    status: verified
+
+  - id: 12
+    outline: [P4.1.md:12]
+    lessons: [P4.1]
+    requests:
+      - { name: poemdoc, action: writeIt, prompt: "Here is a short poem about the sea:\n", temperature: 0, repeat: 2 }
+    record: temperature-0 continuation
+    claim: 'continues "\nThe sea is a sea of water\n\nAnd the sea is a sea"'
+    status: verified
+
+  - id: 13
+    outline: []
+    lessons: []
+    requests:
+      - { name: question, action: writeIt, prompt: "What is the capital of France?", temperature: 0 }
+      - { name: qa, action: writeIt, prompt: "Q: What is the capital of France?\nA:", temperature: 0 }
+    record: temperature-0 continuations (retired row, not used by any lesson)
+    claim: both answer "Paris" and then loop
+    status: verified
+
+  - id: 14
+    outline: [P3.1.md:11.1, P3.2.md:11, P3.3.md:11]
+    lessons: [P2.4, P3.1, P3.2, P3.3]
+    requests:
+      - { name: ioi, action: run, prompt: "When Mary and John went to the store, John gave a drink to" }
+    record: top 4; token count
+    claim: '" Mary" 67.7%, " them" 12.8%, " the" 4.8%, " John" 2.3%'
+    status: verified
+    constants:
+      to_position: { last_position: tokens, unit: position }
+      mary_head_layer: { from_row: 47, parse_head: head, take: layer, unit: layer, note: 'row 47 recorded this prompt''s L9-L10 head with the most last-token weight on " Mary"' }
+      mary_head: { from_row: 47, parse_head: head, take: head, unit: head, note: "as mary_head_layer" }
+      mary_heads:
+        literal: [{ layer: 9, head: 6 }, { layer: 9, head: 9 }, { layer: 10, head: 7 }, { layer: 11, head: 10 }]
+        unit: list
+        of: record
+        kind: literature
+        source: "Wang et al. 2022 (IOI), name-mover heads"
+        note: "plan:299 (R4-5) allows the literature's name-mover heads as a row constant; not measured here"
+      store_position: { token_position: ioi, token: " store", unit: position, note: "the first \" store\" in the recorded /generate tokens (start marker = 0)" }
+
+  - id: 15
+    outline: [P2.2.md:96.3]
+    lessons: [P2.2]
+    requests:
+      - { name: pip, action: run, prompt: "Pip ordered zebra lamps from Quorn. Pip ordered zebra lamps from" }
+    record: top 4
+    claim: '" Qu" 31.9%, " the" 1.7%, " Z" 1.6%, " Q" 0.9%'
+    status: verified
+    constants:
+      qu_prob: { token_prob: top4, token: " Qu", unit: probability }
+      last_from_position: { last_position: tokens, unit: position }
+      top_induction_layer: { from_row: 48, parse_head: top_induction.0.0, take: layer, unit: layer, note: "row 48 recorded the induction-score ranking" }
+      top_induction_head: { from_row: 48, parse_head: top_induction.0.0, take: head, unit: head, note: "as top_induction_layer" }
+      top_induction_head_ref: { from_row: 48, parse_head: top_induction.0.0, unit: record, note: "as top_induction_layer" }
+      qu_position: { from_row: 49, path: position, unit: position, note: 'row 49 recorded where that head''s lines from the last " from" land on this prompt (" Qu")' }
+
+  - id: 16
+    outline: [P2.2.md:96.3]
+    lessons: [P2.2]
+    requests:
+      - { name: pipyellow, action: run, prompt: "Pip ordered zebra lamps from Quorn. Pip ordered yellow lamps from" }
+    record: top 4
+    claim: '" Qu" 11.6%, " the" 1.7%, " Z" 1.5%, " D" 1.1%: copying survives one change'
+    status: verified
+
+  - id: 17
+    outline: [P3.1.md:11.1, P3.1.md:95.3, P3.4.md:11]
+    lessons: [P2.3, P2.4, P3.1, P3.4]
+    requests:
+      - { name: nurse, action: run, prompt: "The nurse said that" }
+      - { name: doctor, action: run, prompt: "The doctor said that" }
+    record: top 4 for both
+    claim: 'nurse: " she" 19.0%, " the" 8.1%, " her" 5.5%. doctor: " he" 14.5%, " the" 10.5%, " she" 4.6%'
+    status: verified
+
+  - id: 18
+    outline: [P1.3.md:99, P1.3.md:100, P3.6.md:11.1, P3.6.md:34, P3.6.md:90.5]
+    lessons: [P1.3, P3.6]
+    requests:
+      - { name: brady, action: run, prompt: "Tom Brady played the sport of" }
+      - { name: jordan, action: run, prompt: "Michael Jordan played the sport of" }
+    record: top 4 and top-4 total; token counts of the Brady and Jordan prompts
+    claim: '" football" 48.6%, " the" 3.0%, " basketball" 2.3%; same token count as row 1, so " of" sits at the same position'
+    status: verified
+
+  - id: 19
+    outline: [P3.7.md:11.1, P3.7.md:95.1]
+    lessons: [P3.7]
+    requests:
+      - { name: war1732, action: run, prompt: "The war lasted from the year 1732 to the year 17" }
+    record: top 4
+    claim: '"49" 5.8%, "50" 5.1%, "45" 3.4%, "43" 3.2%, all above 32'
+    status: verified
+    constants:
+      map_head: { from_row: 69, path: best.0, unit: string, note: "row 69 knocked out every map head on this prompt; the one with the largest drop in p(\"49\")" }
+      map_head_layer: { from_row: 69, parse_head: best.0, take: layer, unit: layer, note: "as map_head" }
+      map_head_head: { from_row: 69, parse_head: best.0, take: head, unit: head, note: "as map_head" }
+      control_head: { from_row: 69, path: control.0, unit: string, note: "row 69's fixed off-map control head" }
+      control_head_layer: { from_row: 69, parse_head: control.0, take: layer, unit: layer, note: "as control_head" }
+      control_head_head: { from_row: 69, parse_head: control.0, take: head, unit: head, note: "as control_head" }
+      margin_negative: { literal: -0.05, unit: probability, source: "outline P3.7:70", note: "the own-case target: lowers the top token's probability by at least 5 points more than a control head does" }
+
+  - id: 20
+    outline: [P2.3.md:11.1, P2.3.md:46, P2.3.md:52, P2.3.md:66, P2.3.md:84, P2.3.md:96, P3.6.md:11.1, P3.6.md:63, P3.6.md:90.4]
+    lessons: [P2.3, P3.6]
+    requests:
+      - { name: lensjordan, action: logitLens, prompt: "Michael Jordan played the sport of" }
+      - { name: lensmary, action: logitLens, prompt: "When Mary and John went to the store, John gave a drink to" }
+      - { name: lensnurse, action: logitLens, prompt: "The nurse said that" }
+    record: top token and probability at the last word for L0-L11; first layer the answer is on top, peak layer, final value
+    claim: 'Jordan: " basketball" first tops at L8 (42%), peaks at L9 (93%), ends at 42% at L11. Mary: tops at L9 (99.8%), ends at 67.7%. Nurse: " she" tops at L10 (41%), ends at 19%'
+    status: verified
+
+  - id: 21
+    outline: [P2.3.md:11.2, P4.1.md:12]
+    lessons: [P2.3, P4.1]
+    requests:
+      - { name: rabbit, action: logitLens, prompt: "He saw a carrot and had to grab it,\nHis hunger was like a starving" }
+      - { name: still, action: logitLens, prompt: "The sun went down behind the hill,\nThe night was dark and very" }
+      - { name: pane, action: logitLens, prompt: "I looked outside and saw the rain,\nIt tapped against the window" }
+      - { name: book, action: logitLens, prompt: "She took her coat down from the hook,\nAnd sat beside the fire to read a" }
+    record: top token at the last word for L0-L11, for the map's rhyme prompt and three more
+    claim: lookahead is not visible in GPT-2 small; the fold cites the larger-model result
+    status: verified
+    note: 'P2.3.md:97 "if one shows the rhyme word above a few percent mid-stack, the fold can show it with its own row; otherwise keep the citation fallback". Recorded: the map''s prompt, "still" and "pane" never put the rhyme word on top (" man", " cold", "," at L11). The "book" prompt puts " book" on top from L9 (60.1%) to L11, but "to read a" predicts " book" with or without a rhyme, so it doesn''t separate lookahead from the ordinary next word. Pry''s lens shows only the top token per cell, so "above a few percent" is visible only when the word is on top.'
+
+  - id: 22
+    outline: [P2.4.md:11, P2.4.md:47, P2.4.md:109.1]
+    lessons: [P2.4, P3.6]
+    requests:
+      - { name: dlajordan, action: dla, prompt: "Michael Jordan played the sport of" }
+    record: top 3 parts by direct push; bars total; real logit; gap
+    claim: several parts with large pushes; MLPs appear among the top
+    status: verified
+    constants:
+      top_mlp_layer: { first_mlp_layer: top3, unit: layer }
+      push_threshold: { path: top3.2.1, round: 2, unit: logit, note: "P2.4.md:53 leaves {x} open: the push of the third-largest DLA part, rounded to two decimals as the logit slot shows it" }
+
+  - id: 23
+    outline: [P2.1.md:11, P2.1.md:96, P2.1.md:108.3, P3.2.md:44, P3.2.md:94.1]
+    lessons: [P2.1, P3.2]
+    requests:
+      - { name: ioi, action: run, prompt: "When Mary and John went to the store, John gave a drink to" }
+      - { name: L2H8, action: ablateHeads, prompt: "When Mary and John went to the store, John gave a drink to", heads: [[2, 8]] }
+      - { name: L4H11, action: ablateHeads, prompt: "When Mary and John went to the store, John gave a drink to", heads: [[4, 11]] }
+      - { name: L10H7, action: ablateHeads, prompt: "When Mary and John went to the store, John gave a drink to", heads: [[10, 7]] }
+    record: 'heads ranked by their largest last-token weight on a non-first token; the first whose knockout moves p(" Mary") by under 1 point: layer, head, attended token, weight, delta p (the two heads ranked above it are recorded too)'
+    claim: a heavy line to a word that doesn't matter (knockout moves p(" Mary") by under 1 point)
+    status: verified
+    constants:
+      layer: { parse_head: pick.head, take: layer, unit: layer }
+      head: { parse_head: pick.head, take: head, unit: head }
+      token: { path: pick.token, unit: string }
+      position: { path: pick.position, unit: position }
+
+  - id: 24
+    outline: [P3.4.md:11, P3.4.md:43, P3.4.md:50, P3.4.md:84.1]
+    lessons: [P3.4]
+    requests:
+      - { name: nursefeat, action: run, prompt: "The nurse said that", network: true }
+      - { name: top3, action: ablateFeatures, prompt: "The nurse said that", features: [21213, 19093, 821], layer: 8 }
+      - { name: control, action: ablateFeatures, prompt: "The nurse said that", features: [7698], layer: 8 }
+    record: 'top 3 feature ids at " nurse" (preset SAE layer 8) and delta p(" she") with all three off; control feature id, its label and delta p(" she")'
+    claim: 'knocking out the top features lowers " she"; an active-but-unrelated control moves it less'
+    status: verified
+    note: 'Control rule: the highest-ranked feature at " nurse" below the top 3 whose Neuronpedia label is not about people, jobs or gender (7698, "words related to processes or actions being performed").'
+    constants:
+      sae_layer: { path: sae_layer, unit: layer }
+      top_ids: { path: top3, unit: list, of: number }
+      n_top: { count: top3, unit: count }
+      control_id: { path: control, unit: number }
+      doctor_top_ids: { from_row: 62, path: top3, unit: list, of: number, note: "row 62 recorded the top 3 features at \" doctor\" by row 24's method" }
+
+  - id: 25
+    outline: [P3.5.md:11, P3.5.md:47, P3.5.md:89.1, P3.5.md:89.3, P3.5.md:89.4]
+    lessons: [P3.5]
+    requests:
+      - { name: beachbase, action: run, prompt: "On our trip we walked along the beach and watched the ocean" }
+      - { name: ocean20, action: steer, prompt: "On our trip we walked along the beach and watched the ocean", featureId: 8548, saeLayer: 8, alpha: 20 }
+      - { name: rain25, action: steer, prompt: "On our trip we walked along the beach and watched the ocean", featureId: 21791, saeLayer: 8, alpha: 25 }
+      - { name: targetlabel, action: featureInfo, featureId: 21791, network: true }
+      - { name: controllabel, action: featureInfo, featureId: 15662, network: true }
+    record: unsteered top 4; target and control ids; steering strength; steered, control and unsteered texts; MF-4 measures (changed tokens, coherence, scale, control norms and cosine); whether the label's word appears in each text
+    claim: both texts change and only the target's moves toward its label
+    status: narrowed
+    note: 'P3.5.md:91 "If the target feature''s steer doesn''t beat the control on concept present, the lesson needs a different target: pick it during recording". First pick 8548 ("references to the ocean", Pry''s concept search for "the ocean") at strength 20: the unsteered text already says "ocean" 4 times and the control text 3 times, so the target cannot beat the control on concept present. Applied: target 21791 ("references to rain and related weather conditions", concept search "rain"), strength 25, the lowest tried strength (10, 15, 20, 25, 30) where "rain" appears in the steered text and in neither the unsteered nor the control text.'
+    constants:
+      target_id: { path: target.feature_id, unit: number }
+      control_id: { path: target.control_id, unit: number }
+      strength: { path: target.strength, unit: number }
+      strength_high: { from_row: 63, path: s_high.strength, unit: number, note: "row 63 recorded the same target at s_high" }
+      concept_words: { list: [target.word], unit: list, of: string }
+      target_label: { path: target_label, unit: string, note: "Neuronpedia's label for the target (21791), fetched by GET /feature/{id} when this row was recorded (lesson checks run without the network)" }
+      control_label: { path: control_label, unit: string, note: "Neuronpedia's label for the control (15662), fetched the same way" }
+
+  - id: 26
+    outline: [P3.2.md:11, P3.2.md:51, P3.2.md:61, P3.2.md:94.2]
+    lessons: [P3.2]
+    requests:
+      - { name: ioi, action: run, prompt: "When Mary and John went to the store, John gave a drink to" }
+      - { name: movers, action: ablateHeads, prompt: "When Mary and John went to the store, John gave a drink to", heads: [[9, 9], [9, 6], [10, 0]] }
+      - { name: random3, action: ablateHeads, prompt: "When Mary and John went to the store, John gave a drink to", heads: [[9, 4], [2, 5], [0, 1]] }
+      - { name: random1, action: ablateHeads, prompt: "When Mary and John went to the store, John gave a drink to", heads: [[9, 4]] }
+    record: 'delta p(" Mary") with L9H9, L9H6, L10H0 off; with a fixed three-head random control off; with one random head off; L9H9''s last-token weight on " Mary"'
+    claim: 'the name movers'' knockout drops " Mary" a lot; the random control barely moves it; L9H9''s lines from " to" land on " Mary"'
+    status: verified
+    note: 'Control heads: random.Random(1234).sample of the 141 heads other than the name movers, layer-major order: L9H4, L2H5, L0H1; the one-head control is the first of them.'
+    constants:
+      task_threshold: { from_row: 57, points: suggested_threshold, unit: probability, note: "row 57's suggested threshold, in points of p(\" Mary\") (about half the largest single-head drop)" }
+      task_threshold_negative: { from_row: 57, points: suggested_threshold, negate: true, unit: probability, note: "as task_threshold, as a drop" }
+
+  - id: 27
+    outline: [P3.3.md:11, P3.3.md:40, P3.3.md:50, P3.3.md:87.1]
+    lessons: [P3.3, P3.1]
+    requests:
+      - { name: swapresid, action: patch, cleanPrompt: "When Mary and John went to the store, John gave a drink to", corruptedPrompt: "When Mary and John went to the store, Mary gave a drink to", patchType: resid }
+    record: clean and corrupted logits of " Mary"; peak cell (layer, word) with clean, corrupted and patched logits and share; per-layer peak word (the (b) pattern)
+    claim: 'pattern (b): the logit comes back at the swapped name in early layers, then at " to" in later layers'
+    status: verified
+    constants:
+      peak_layer: { path: peak.0.layer, unit: layer }
+      peak_position: { path: peak.0.position, unit: position }
+      peak_word: { path: peak.0.word, unit: string }
+
+  - id: 28
+    outline: [P1.5.md:69.1, P1.5.md:81, P1.5.md:99, P1.6.md:93.3, P1.6.md:110, P4.1.md:12, P4.1.md:137]
+    lessons: [P1.5, P1.6, P4.1]
+    requests:
+      - { name: baker, action: writeIt, prompt: "Our quiet street was named for a baker who", temperature: 0, repeat: 2 }
+      - { name: poem, action: writeIt, prompt: "Write a short poem about the sea.", temperature: 0, repeat: 2 }
+      - { name: poemdoc, action: writeIt, prompt: "Here is a short poem about the sea:\n", temperature: 0, repeat: 2 }
+    record: temperature-0 continuations of rows 8, 11 and 12, each run twice as separate sidecar calls; generation length (20 new tokens)
+    claim: Watch it write at temperature 0 gives the HF greedy texts, identical run to run
+    status: verified
+
+  - id: 29
+    outline: [P1.6.md:42, P1.6.md:108]
+    lessons: [P1.6]
+    requests:
+      - { name: samfirst, action: run, prompt: "My name is Sam. Nice to meet you. My name is" }
+      - { name: samsecond, action: run, prompt: "Nice to meet you. My name is" }
+    record: top ten for both prompts
+    claim: '" Sam" high in the first, absent from the top ten in the second'
+    status: verified
+    constants:
+      top_head: { alias: 51, unit: head, note: "P2.4's outline labels row 51 \"29\"; $row.29.top_head is row 51's" }
+      top_head_layer: { alias: 51, unit: layer, note: "as top_head" }
+
+  - id: 30
+    outline: [P1.3.md:84, P1.3.md:101]
+    lessons: [P1.3]
+    requests:
+      - { name: tiger, action: run, prompt: "Tiger Woods played the sport of" }
+      - { name: jordan, action: run, prompt: "Michael Jordan played the sport of" }
+    record: token count; top 4; " golf" rank
+    claim: 'changing an early word moves the top guess; 7 tokens with the marker, so " of" keeps position 6'
+    status: narrowed
+    note: 'P1.3.md:84 "If '' Woods'' or '' Tiger'' splits into more tokens, either pick another two-token athlete or add one line: \"'' of'' moved one position, so its positional embedding changed too.\"". Recorded: "Tiger" splits into "T", "iger" (8 tokens, " of" at position 7). Applied the outline''s second option, the line it gives word for word, since it needs no new prompt; " golf" is on top at 55.9%.'
+
+  - id: 31
+    outline: [P3.1.md:11.2, P3.1.md:83, P3.1.md:95.2]
+    lessons: [P3.1, P3.3]
+    requests:
+      - { name: maryswap, action: run, prompt: "When Mary and John went to the store, Mary gave a drink to" }
+    record: top 4
+    claim: '" John" becomes the top token and " Mary" falls below 10%'
+    status: verified
+
+  - id: 32
+    outline: [P3.3.md:75, P3.3.md:87.4]
+    lessons: [P3.3]
+    requests:
+      - { name: tsresid, action: patch, cleanPrompt: "When Tom and Sarah went to the park, Sarah gave a ball to", corruptedPrompt: "When Tom and Sarah went to the park, Tom gave a ball to", patchType: resid }
+      - { name: tshead, action: patch, cleanPrompt: "When Tom and Sarah went to the park, Sarah gave a ball to", corruptedPrompt: "When Tom and Sarah went to the park, Tom gave a ball to", patchType: head }
+      - { name: ts, action: run, prompt: "When Tom and Sarah went to the park, Sarah gave a ball to" }
+      - { name: ioi, action: run, prompt: "When Mary and John went to the store, John gave a drink to" }
+    record: residual-grid peak and head-grid max cell with their three logits; token count against row 14
+    claim: a second name pair; same token count as row 14
+    status: verified
+
+  - id: 33
+    outline: [P3.5.md:78, P3.5.md:89.5]
+    lessons: [P3.5]
+    requests:
+      - { name: saturday, action: run, prompt: "My favourite thing to do on a Saturday is" }
+      - { name: saturdaytext, action: writeIt, prompt: "My favourite thing to do on a Saturday is", temperature: 0 }
+      - { name: sat20, action: steer, prompt: "My favourite thing to do on a Saturday is", featureId: 21791, saeLayer: 8, alpha: 20 }
+      - { name: sat25, action: steer, prompt: "My favourite thing to do on a Saturday is", featureId: 21791, saeLayer: 8, alpha: 25 }
+      - { name: sat30, action: steer, prompt: "My favourite thing to do on a Saturday is", featureId: 21791, saeLayer: 8, alpha: 30 }
+    record: unsteered top 4 and greedy text; steered text and MF-4 measures at strengths 20, 25 (row 25's s) and 30
+    claim: the same steer on another prompt (the lesson sets {coh_band} from these numbers)
+    status: verified
+
+  - id: 34
+    outline: [P3.6.md:11.2, P3.6.md:58, P3.6.md:90.3]
+    lessons: [P3.6]
+    requests:
+      - { name: dlacontrast, action: dla, prompt: "Michael Jordan played the sport of", answerToken: " basketball", contrastToken: " football" }
+    record: top 3 parts by direct push on the logit difference; bars total; real difference; gap
+    claim: MLPs appear among the biggest pushes
+    status: verified
+    constants:
+      last_position: { from_row: 1, last_position: tokens, unit: position, note: "row 1 recorded the token count of this same prompt" }
+
+  - id: 35
+    outline: [P3.6.md:79, P3.6.md:90.6]
+    lessons: [P3.6]
+    requests:
+      - { name: serena, action: run, prompt: "Serena Williams played the sport of" }
+      - { name: murray, action: run, prompt: "Andy Murray played the sport of" }
+      - { name: jordan, action: run, prompt: "Michael Jordan played the sport of" }
+      - { name: mlpmurray, action: patch, cleanPrompt: "Michael Jordan played the sport of", corruptedPrompt: "Andy Murray played the sport of", patchType: mlp }
+    record: token count against row 1; top token; the MLP grid's three logits per layer (target " basketball")
+    claim: 'another athlete with the same token count; top token " tennis"'
+    status: narrowed
+    note: 'P3.6.md:79 "If the token count differs, use another athlete with a two-token name and record it." Recorded: "Serena Williams" is 9 tokens ("S", "ere", "na", " Williams"), row 1 is 7. Applied: "Andy Murray", the first two-token athlete in the order tried (Roger Federer 8, Wayne Gretzky 10, Babe Ruth 8, Lionel Messi 9, Andy Murray 7) whose prompt has 7 tokens and whose top token is " tennis", the outline''s expectation.'
+    constants:
+      best_mlp_not_l0: { argmax: mlp_grid, by: share, exclude_layer: 0, take: layer, unit: layer }
+
+  - id: 36
+    outline: [P3.7.md:84, P3.7.md:95.6]
+    lessons: [P3.7]
+    requests:
+      - { name: war1650, action: run, prompt: "The war lasted from the year 1650 to the year 16" }
+      - { name: circuit1650, action: circuit, prompt: "The war lasted from the year 1650 to the year 16", targetTokenIndex: 12 }
+      - { name: maphead, action: ablateHeads, prompt: "The war lasted from the year 1650 to the year 16", heads: [[0, 7]] }
+    record: top 4; Key parts nodes with the last word selected; delta p(top token) with P3.7's map head (L0H7, row 69) off
+    claim: top 4 all at or above 50
+    status: verified
+
+  - id: 37
+    outline: [P4.1.md:12, P4.1.md:53]
+    lessons: [P4.1]
+    requests:
+      - { name: poem1, action: writeIt, prompt: "Write a short poem about the sea.", temperature: 1, seed: 1 }
+      - { name: poem2, action: writeIt, prompt: "Write a short poem about the sea.", temperature: 1, seed: 2 }
+      - { name: poem3, action: writeIt, prompt: "Write a short poem about the sea.", temperature: 1, seed: 3 }
+    record: the three sampled texts (seeds 1, 2, 3; 20 new tokens)
+    claim: 'record whether any run produces poem-like text (feeds 3.2''s leaves_open wording)'
+    status: verified
+
+  - id: 38
+    outline: [P4.1.md:12, P4.1.md:90]
+    lessons: [P4.1]
+    requests:
+      - { name: poet, action: writeIt, prompt: "You are a poet. You answer every request with a short poem.\nWrite a short poem about the sea.", temperature: 0 }
+      - { name: assistant, action: writeIt, prompt: "System: You are a helpful assistant.\nWrite a short poem about the sea.", temperature: 0 }
+    record: greedy continuation; the alternate first line's greedy continuation
+    claim: GPT-2 continues the text as a document, not a reliable poem
+    status: narrowed
+    note: 'P4.1.md:140 "if the output is degenerate, try one alternate first line (System: You are a helpful assistant.\n) and record both". The poet prompt repeats the instruction ("Write a short poem about the sea." three more times), so the alternate line was run and recorded; it repeats the instruction too.'
+
+  - id: 39
+    outline: [P4.1.md:12, P4.1.md:114]
+    lessons: [P4.1]
+    requests:
+      - { name: translate, action: writeIt, prompt: "Translate \"thank you\" into French.", temperature: 0 }
+      - { name: frenchword, action: run, prompt: "The French word for \"thank you\" is" }
+      - { name: hotqa, action: writeIt, prompt: "Q: What is the opposite of hot?\nA:", temperature: 0 }
+      - { name: hotq, action: writeIt, prompt: "What is the opposite of hot?", temperature: 0 }
+      - { name: hotqarun, action: run, prompt: "Q: What is the opposite of hot?\nA:" }
+      - { name: hotqrun, action: run, prompt: "What is the opposite of hot?" }
+    record: greedy continuation of the instruction; top 4 of the document framing; the fallback pair's greedy continuations and top 4
+    claim: document framing vs instruction (" merci" near the top of the second)
+    status: narrowed
+    note: 'P4.1.md:114 "Fallback if \" merci\" isn''t near the top: use `Q: What is the opposite of hot?\nA:` vs `What is the opposite of hot?`". Recorded top 4 of the French-word prompt: '' "'' 25.5%, " a" 2.7%, " also" 2.3%, " the" 1.4% (no " merci" or '' "merci''). Applied the named fallback pair and recorded both.'
+
+  - id: 40
+    outline: [P1.1.md:52, P1.1.md:79, P1.1.md:106, P1.1.md:107]
+    lessons: [P1.1]
+    requests:
+      - { name: jordan, action: run, prompt: "Michael Jordan played the sport of" }
+      - { name: jordanoffline, action: run, prompt: "Michael Jordan played the sport of", offline: true }
+    record: the Run response with the model cached and every non-loopback connection blocked, against the same Run online
+    claim: a Run with the model cached makes no network request and gives identical displayed numbers offline
+    status: verified
+    note: 'Covers the sidecar''s /generate path only (Neuronpedia lookups stubbed, as in the app with labels off). App startup checks (update, license) are outside the sidecar and not recorded here.'
+
+  - id: 41
+    outline: [P1.1.md:108]
+    lessons: [P1.1, P1.5]
+    requests:
+      - { name: francetext, action: writeIt, prompt: "The capital of France is", temperature: 0 }
+    record: temperature-0 continuation
+    claim: 'continues " now home to" (watch-it-write.test.ts pins it)'
+    status: verified
+
+  - id: 42
+    outline: [P1.2.md:32, P1.2.md:126, P1.2.md:127]
+    lessons: [P1.2]
+    requests:
+      - { name: leclercsentence, action: run, prompt: "It was unbelievable, said Leclerc" }
+    record: token list
+    claim: '" unbelievable" is one token and " Le", "cl", "erc" in the sentence; the token strip starts with the start-of-text marker'
+    status: verified
+
+  - id: 43
+    outline: [P1.5.md:37, P1.5.md:69.1, P1.5.md:99, P1.5.md:100]
+    lessons: [P1.5]
+    requests:
+      - { name: jordantext, action: writeIt, prompt: "Michael Jordan played the sport of", temperature: 0, repeat: 2 }
+    record: temperature-0 continuation of row 1 with each step's token, probability and runner-up; new tokens used; repeat identical
+    claim: temperature 0 gives the same text run to run (A = B)
+    status: verified
+
+  - id: 44
+    outline: [P1.5.md:69.2, P1.5.md:69.3, P1.5.md:101, P1.5.md:102]
+    lessons: [P1.5]
+    requests:
+      - { name: seed1, action: writeIt, prompt: "Michael Jordan played the sport of", temperature: 1, seed: 1, repeat: 2 }
+      - { name: seed2, action: writeIt, prompt: "Michael Jordan played the sport of", temperature: 1, seed: 2 }
+    record: both sampled texts; seed_used; seed 1 repeated
+    claim: seeds 1 and 2 give different texts (C differs from D); seed 1 repeated gives the same text (E = C); the sidecar honours an explicit seed
+    status: verified
+
+  - id: 45
+    outline: [P2.1.md:56]
+    lessons: [P2.1]
+    requests:
+      - { name: ioi, action: run, prompt: "When Mary and John went to the store, John gave a drink to" }
+    record: last-token attention averaged over all 144 heads; the token with the largest share
+    claim: from " to", the thickest line goes to the start-of-text marker
+    status: verified
+
+  - id: 46
+    outline: [P2.1.md:63, P2.1.md:108.1]
+    lessons: [P2.1]
+    requests:
+      - { name: ioi, action: run, prompt: "When Mary and John went to the store, John gave a drink to" }
+    record: share of last-token attention on position 0, averaged over all heads
+    claim: the biggest share, about 2 in 5, goes to position 0
+    status: verified
+
+  - id: 47
+    outline: [P2.1.md:78, P2.1.md:108.2]
+    lessons: [P2.1]
+    requests:
+      - { name: ioi, action: run, prompt: "When Mary and John went to the store, John gave a drink to" }
+    record: 'the L9-L10 head with the most last-token weight on " Mary", and the weight'
+    claim: 'at least one L9-L10 head draws mostly from " Mary"'
+    status: verified
+
+  - id: 48
+    outline: [P2.2.md:54, P2.2.md:96.1]
+    lessons: [P2.2]
+    requests:
+      - { name: headscores, action: headScores }
+    record: top induction and previous-token heads (recorded, never authored as ids)
+    claim: the top induction scores sit in middle layers
+    status: verified
+
+  - id: 49
+    outline: [P2.2.md:67, P2.2.md:96.2]
+    lessons: [P2.2]
+    requests:
+      - { name: headscores, action: headScores }
+      - { name: pip, action: run, prompt: "Pip ordered zebra lamps from Quorn. Pip ordered zebra lamps from" }
+    record: 'the top induction head''s weights from the last " from"; its largest target and weight'
+    claim: 'the head''s biggest weight from the last " from" goes to " Qu" (the token after the first " from")'
+    status: verified
+
+  - id: 50
+    outline: [P2.3.md:79]
+    lessons: [P2.3]
+    requests:
+      - { name: lensjordan, action: logitLens, prompt: "Michael Jordan played the sport of", trackTokens: [" basketball"] }
+    record: '" basketball"''s rank in the L5-L7 rows (recorded: L5 rank 9, 0.6%; L6 rank 6, 2.1%; L7 rank 2, 16.9%; L8 rank 1, 42.2%)'
+    claim: '" basketball" climbs before L8 (it''s not absent, just not on top)'
+    status: verified
+    constants:
+      rank_L5: { path: basketball_L5_L8.0.1, unit: count }
+      rank_L6: { path: basketball_L5_L8.1.1, unit: count }
+      rank_L7: { path: basketball_L5_L8.2.1, unit: count }
+
+  - id: 51
+    label: "29"
+    outline: [P2.4.md:80, P2.4.md:109.2, P2.4.md:109.3, P2.4.md:109.4]
+    lessons: [P2.4]
+    requests:
+      - { name: dlamary, action: dla, prompt: "When Mary and John went to the store, John gave a drink to", answerToken: " Mary", contrastToken: " John" }
+    record: top 3 parts; bars total; real logit difference; gap; the difference from the two logits
+    claim: 'the largest bars are heads in L9-L11; the logit difference is about 3.4'
+    status: verified
+    constants:
+      top_head_layer: { parse_head: top3.0.0, take: layer, unit: layer }
+      top_head: { parse_head: top3.0.0, take: head, unit: head }
+
+  - id: 52
+    label: "30"
+    outline: [P2.4.md:97, P2.4.md:109.3]
+    lessons: [P2.4]
+    requests:
+      - { name: dlanurse, action: dla, prompt: "The nurse said that", answerToken: " she", contrastToken: " he" }
+      - { name: nurse, action: run, prompt: "The nurse said that" }
+    record: 'top 3 parts; bars total; real logit difference; gap; p(" he") on the nurse prompt'
+    claim: '" she" minus " he" on the nurse prompt, with p(" he") shown'
+    status: verified
+
+  - id: 53
+    label: "31"
+    outline: [P2.5.md:11.2, P2.5.md:51, P2.5.md:52, P2.5.md:65, P2.5.md:96.1]
+    lessons: [P2.5]
+    requests:
+      - { name: jordanfeat, action: run, prompt: "Michael Jordan played the sport of", network: true }
+    record: 'features at " Jordan" on the preset SAE layer; {fid}, its label, first 5 top snippets; two distractor labels; one snippet the label doesn''t describe'
+    claim: the learner can guess the label from the snippets; at least one top example the label doesn't cover
+    status: verified
+    note: '{fid} rule: the highest-ranked feature at " Jordan" whose label names basketball (12472, "names of basketball players", rank 4), so the skeptic''s Jordan-country check tests it. Distractors: the labels of the two highest-ranked other features at " Jordan" (13856, 13526). Snippet the label doesn''t describe: the one naming Drew Brees, an NFL quarterback.'
+    constants:
+      fid: { path: fid, unit: number }
+      label: { path: label, unit: string, note: "Neuronpedia's label for {fid}, fetched when this row was recorded (lesson checks run without the network)" }
+      sae_layer: { from_row: 62, path: sae_layer, unit: layer, note: "the preset SAE (gpt2-small-res-jb, blocks.8) that row 62 recorded; this row's feature run uses the same preset" }
+
+  - id: 54
+    label: "32"
+    outline: [P2.5.md:78, P2.5.md:96.2]
+    lessons: [P2.5]
+    requests:
+      - { name: jordancountry, action: run, prompt: "Jordan is a country in the Middle East", topKFeatures: 50 }
+      - { name: jordan50, action: run, prompt: "Michael Jordan played the sport of", topKFeatures: 50 }
+    record: '{fid}''s activation at " Jordan" in both prompts (top 50 features read)'
+    claim: 'the skeptic check: does {fid} fire at " Jordan" in a sentence with no basketball'
+    status: verified
+
+  - id: 55
+    label: "33"
+    outline: [P2.5.md:84, P2.5.md:96.3]
+    lessons: [P2.5]
+    requests:
+      - { name: bankriver, action: compare, prompt: "I like the river bank", network: true }
+      - { name: bankmoney, action: compare, prompt: "I like the money bank", network: true }
+    record: 'top 5 features at " bank" in each sentence (layer 8); overlap; a feature present in only one'
+    claim: by layer 8 the residual streams differ, so the features differ
+    status: verified
+
+  - id: 56
+    outline: [P3.1.md:56, P3.1.md:95.1]
+    lessons: [P3.1]
+    requests:
+      - { name: nursecompare, action: compare, prompt: "The nurse said that", repeat: 2 }
+    record: largest probability difference between two Compare runs of the same prompt
+    claim: delta exactly 0 (abs(delta) < 1e-6)
+    status: verified
+
+  - id: 57
+    outline: [P3.2.md:72, P3.2.md:94.3]
+    lessons: [P3.2]
+    requests:
+      - { name: single, action: ablateHeads, prompt: "When Mary and John went to the store, John gave a drink to", heads: all-single }
+    record: 'delta p(" Mary") for each of the 144 single-head knockouts; the largest drop'
+    claim: 'at least one single head reaches {task_threshold} (about half the largest single-head drop)'
+    status: verified
+
+  - id: 58
+    outline: [P3.2.md:82, P3.2.md:94.4]
+    lessons: [P3.2]
+    requests:
+      - { name: ts, action: run, prompt: "When Tom and Sarah went to the park, Sarah gave a ball to" }
+      - { name: tsmovers, action: ablateHeads, prompt: "When Tom and Sarah went to the park, Sarah gave a ball to", heads: [[9, 9], [9, 6], [10, 0]] }
+      - { name: tsrandom3, action: ablateHeads, prompt: "When Tom and Sarah went to the park, Sarah gave a ball to", heads: [[9, 4], [2, 5], [0, 1]] }
+    record: 'top 4 unablated; delta p(" Tom") with L9H9, L9H6, L10H0 off; delta p(" Tom") with row 26''s random control off'
+    claim: '" Tom" is top unablated'
+    status: verified
+
+  - id: 59
+    outline: [P3.3.md:54, P3.3.md:87.2]
+    lessons: [P3.3]
+    requests:
+      - { name: swapresid, action: patch, cleanPrompt: "When Mary and John went to the store, John gave a drink to", corruptedPrompt: "When Mary and John went to the store, Mary gave a drink to", patchType: resid }
+    record: largest abs(patched - corrupted) in the " store" column
+    claim: 'patched = corrupted at every layer in the " store" column (abs < 1e-4), share 0%'
+    status: verified
+
+  - id: 60
+    outline: [P3.3.md:65, P3.3.md:87.3]
+    lessons: [P3.3]
+    requests:
+      - { name: swaphead, action: patch, cleanPrompt: "When Mary and John went to the store, John gave a drink to", corruptedPrompt: "When Mary and John went to the store, Mary gave a drink to", patchType: head }
+    record: the max head cell (layer, head) with its three logits and share; the next two
+    claim: 'the max head cell sits in layers 8 to 9; the slot shows L8H10 (L9H9 second)'
+    status: verified
+
+  - id: 61
+    outline: [P3.4.md:62, P3.4.md:84.2]
+    lessons: [P3.4]
+    requests:
+      - { name: f21213, action: ablateFeatures, prompt: "The nurse said that", features: [21213], layer: 8 }
+      - { name: f19093, action: ablateFeatures, prompt: "The nurse said that", features: [19093], layer: 8 }
+      - { name: f821, action: ablateFeatures, prompt: "The nurse said that", features: [821], layer: 8 }
+      - { name: f7698, action: ablateFeatures, prompt: "The nurse said that", features: [7698], layer: 8 }
+      - { name: f15707, action: ablateFeatures, prompt: "The nurse said that", features: [15707], layer: 8 }
+    record: 'each top-5 feature''s single-knockout delta p(" she")'
+    claim: 'the task is reachable: at least one feature alone lowers " she" by more than the control (row 24)'
+    status: verified
+
+  - id: 62
+    outline: [P3.4.md:72, P3.4.md:84.3]
+    lessons: [P3.4]
+    requests:
+      - { name: doctorfeat, action: run, prompt: "The doctor said that", network: true }
+      - { name: doctortop3, action: ablateFeatures, prompt: "The doctor said that", features: [7195, 11067, 19093], layer: 8 }
+      - { name: doctorcontrol, action: ablateFeatures, prompt: "The doctor said that", features: [7698], layer: 8 }
+    record: 'top 3 feature ids at " doctor" (layer 8), delta p(" he"); control feature (row 24''s rule) and its delta p(" he"); the SAE the preset uses'
+    claim: 'the doctor transfer: the top features'' knockout lowers " he" more than a control'
+    status: verified
+
+  - id: 63
+    outline: [P3.5.md:59, P3.5.md:89.3]
+    lessons: [P3.5]
+    requests:
+      - { name: rain25, action: steer, prompt: "On our trip we walked along the beach and watched the ocean", featureId: 21791, saeLayer: 8, alpha: 25 }
+      - { name: rain30, action: steer, prompt: "On our trip we walked along the beach and watched the ocean", featureId: 21791, saeLayer: 8, alpha: 30 }
+    record: text and MF-4 measures at s_high = 30 (Pry's largest steering strength) against s = 25
+    claim: 'coherence does not drop at s_high on this feature (-1.058 nats per token at s = 25 and at s_high = 30; the two steered texts are identical)'
+    status: verified
+
+  - id: 64
+    outline: [P3.5.md:88]
+    lessons: [P3.5]
+    requests:
+      - { name: rain25, action: steer, prompt: "On our trip we walked along the beach and watched the ocean", featureId: 21791, saeLayer: 8, alpha: 25, repeat: 2 }
+    record: two separate steer calls with the same request
+    claim: steering generation is deterministic (run_steer decodes greedily), so checks can read it
+    status: verified
+
+  - id: 65
+    outline: [P3.5.md:89.2]
+    lessons: [P3.5]
+    requests:
+      - { name: rain25, action: steer, prompt: "On our trip we walked along the beach and watched the ocean", featureId: 21791, saeLayer: 8, alpha: 25 }
+    record: decoder norms of the target and the control (MF-4 control fields)
+    claim: whether the preset SAE's decoder rows are unit norm
+    status: verified
+
+  - id: 66
+    outline: [P3.6.md:11.3, P3.6.md:43, P3.6.md:90.1]
+    lessons: [P3.6]
+    requests:
+      - { name: mlpjb, action: patch, cleanPrompt: "Michael Jordan played the sport of", corruptedPrompt: "Tom Brady played the sport of", patchType: mlp }
+    record: every layer's clean, corrupted and patched logits for " basketball", with share
+    claim: L0 wins by a mile, L2 brings back a good chunk, and L11 pushes the other way
+    status: verified
+
+  - id: 67
+    outline: [P3.6.md:11.3, P3.6.md:53, P3.6.md:90.2]
+    lessons: [P3.6]
+    requests:
+      - { name: residjb, action: patch, cleanPrompt: "Michael Jordan played the sport of", corruptedPrompt: "Tom Brady played the sport of", patchType: resid }
+    record: residual-grid peak cells; the layer where the " of" column takes over; the start-of-text marker column
+    claim: 'the marker column stays at exactly 0%; " basketball" comes back at " Jordan" early and at " of" late'
+    status: verified
+
+  - id: 68
+    outline: [P3.7.md:11.2, P3.7.md:48, P3.7.md:95.2]
+    lessons: [P3.7]
+    requests:
+      - { name: circuit1732, action: circuit, prompt: "The war lasted from the year 1732 to the year 17", targetTokenIndex: 12 }
+    record: Key parts nodes and edges for row 19 at the default threshold, last word selected
+    claim: the Key parts map for row 19 (recorded, shown live)
+    status: verified
+
+  - id: 69
+    outline: [P3.7.md:11.2, P3.7.md:60, P3.7.md:95.3]
+    lessons: [P3.7]
+    requests:
+      - { name: circuit1732, action: circuit, prompt: "The war lasted from the year 1732 to the year 17", targetTokenIndex: 12 }
+      - { name: war1732, action: run, prompt: "The war lasted from the year 1732 to the year 17" }
+      - { name: map, action: ablateHeads, prompt: "The war lasted from the year 1732 to the year 17", singles: [[0, 1], [0, 7], [2, 0], [2, 5], [3, 0], [3, 4], [5, 0], [5, 5], [6, 1], [6, 9], [7, 6], [7, 10], [7, 11], [8, 6], [8, 7], [8, 8], [9, 1], [9, 5], [10, 4], [10, 7], [11, 4], [11, 8]] }
+      - { name: control, action: ablateHeads, prompt: "The war lasted from the year 1732 to the year 17", heads: [[9, 9]] }
+    record: 'delta p("49") for every attention head on the map; the largest drop; a fixed off-map control head''s delta p("49")'
+    claim: 'a head on the map lowers p("49"); the control head moves it less'
+    status: verified
+    note: 'Control: random.Random(1234).choice of the heads not on the map, layer-major order: L9H9.'
+
+  - id: 70
+    outline: [P3.7.md:66, P3.7.md:95.4]
+    lessons: [P3.7]
+    requests:
+      - { name: mlpyears, action: patch, cleanPrompt: "The war lasted from the year 1732 to the year 17", corruptedPrompt: "The war lasted from the year 1701 to the year 17", patchType: mlp }
+    record: every layer's three logits for "49", with share
+    claim: the optional fold's MLP Swap test, with its three logits
+    status: verified
+
+  - id: 71
+    outline: [P3.7.md:73, P3.7.md:95.5]
+    lessons: [P3.7]
+    requests:
+      - { name: circuitioi, action: circuit, prompt: "When Mary and John went to the store, John gave a drink to", targetTokenIndex: 14 }
+      - { name: ioimap, action: ablateHeads, prompt: "When Mary and John went to the store, John gave a drink to", singles: [[6, 4], [7, 3], [8, 2], [8, 3], [8, 6], [8, 10], [8, 11], [9, 3], [9, 5], [9, 6], [9, 8], [9, 9], [10, 0], [10, 1], [10, 2], [10, 3], [10, 7], [10, 9], [10, 10], [11, 1], [11, 2], [11, 3], [11, 6], [11, 8], [11, 10], [11, 11]] }
+      - { name: ioicontrol, action: ablateHeads, prompt: "When Mary and John went to the store, John gave a drink to", heads: [[8, 8]] }
+    record: 'Key parts on row 14; delta p(" Mary") for every attention head on the map; an off-map control head''s delta p(" Mary")'
+    claim: 'the P3.7 task target is reachable on row 14: a head on the map lowers the top token by at least 5 points more than a control head'
+    status: verified
+    note: 'Control: random.Random(1234).choice of the heads not on the map, layer-major order: L8H8.'
+
+  - id: 72
+    outline: [quick-tour.md:84]
+    lessons: [quick-tour]
+    requests: []
+    record: none through the sidecar
+    claim: 'watch-it-write anchor on screen without a run; step 12 quotes P1.1''s shipped title; the overlay re-anchors at 1024 wide; tour copy passes brad-voice'
+    status: closed-by-task
+    note: app/copy checks; closed by the quick-tour task's acceptance

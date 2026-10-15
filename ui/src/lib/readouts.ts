@@ -2,9 +2,9 @@
 // what the chart shows, for people who have never seen these charts before.
 //
 // Honesty rules:
-// - DLA is "direct" attribution: it leaves out indirect effects (one part
-//   feeding another) and LayerNorm effects, so the parts never "add up to" the
-//   score. Never use "add up", "sum" or "total" in DLA wording.
+// - DLA is "direct" attribution: the bars leave out the embedding's own direct
+//   push and the biases. Show the bars' total, the logit itself and the gap side
+//   by side (dlaTotalLine), labelled, so the learner sees what the bars miss.
 // - Attention shows where a word looks, not what the model uses. Say "looks
 //   at", never "uses" or "because of".
 // - Key parts lines are the direct value path only: say they show one kind of
@@ -19,9 +19,12 @@ import type {
   PatchComponent,
   PatchResponse,
   SteerResponse,
+  SteerCoherence,
+  SteerControl,
   TokenFeatures,
   TopPrediction,
 } from './types';
+import { formatProbability } from './lessons/slots';
 import { isNamedFeature } from './feature-label';
 import { signedNumber } from './signed-color';
 import { diffTokens } from './token-diff';
@@ -173,15 +176,17 @@ function chanceTrend(column: LogitLensResponse['grid'][number], first: number, l
     if (column[l].probability > column[peakLayer].probability) peakLayer = l;
   }
   const peak = column[peakLayer].probability;
+  // Each chance with its natural frequency, as Predictions shows them.
+  const f = probabilityWithFrequency;
   if (peakLayer !== first && rounded(peak) > Math.max(rounded(start), rounded(end))) {
-    return `Its chance peaks at ${pct(peak)} at layer ${peakLayer}, then ends at ${pct(end)} at the last layer.`;
+    return `Its chance peaks at ${f(peak)} at layer ${peakLayer}, then ends at ${f(end)} at the last layer.`;
   }
   if (rounded(start) === rounded(end)) {
-    return `Its chance is about ${pct(end)} there and at the last layer.`;
+    return `Its chance is about ${f(end)} there and at the last layer.`;
   }
   return end > start
-    ? `Its chance grows from ${pct(start)} there to ${pct(end)} at the last layer.`
-    : `Its chance falls from ${pct(start)} there to ${pct(end)} at the last layer.`;
+    ? `Its chance grows from ${f(start)} there to ${f(end)} at the last layer.`
+    : `Its chance falls from ${f(start)} there to ${f(end)} at the last layer.`;
 }
 
 // ---------------------------------------------------------------------------
@@ -375,7 +380,7 @@ function patchPartName(c: PatchComponent, tokens: string[] | undefined): string 
 
 /**
  * Which part, copied over from the original prompt into the changed one,
- * brings the original answer back the most. The numbers are a raw change in
+ * raises the original answer's score the most. The numbers are a raw change in
  * the answer's score (logit), not a percentage.
  */
 export function patchingReadout(response: PatchResponse | null): string | null {
@@ -393,7 +398,7 @@ export function patchingReadout(response: PatchResponse | null): string | null {
   const quiet = parts.filter((c) => Math.abs(c.effect) < 0.1 * maxAbs).length;
   const quietText = quiet > 0 ? ` ${quiet} of ${parts.length} parts barely change it.` : '';
   if (best.effect <= 0) {
-    return `No single part brings ${answer} back. Copying any one of them over from the original prompt doesn't raise its score.${quietText}${same}`;
+    return `No single part raises the score for ${answer}. Copying any one of them over from the original prompt doesn't raise it.${quietText}${same}`;
   }
   return (
     `Copying ${patchPartName(best, response.tokens)} over from the original prompt raises the score for ${answer} the most (${signedNumber(best.effect, 2)}).` +
@@ -425,19 +430,225 @@ export function circuitReadout(response: CircuitResponse | null): string | null 
 // Steering
 // ---------------------------------------------------------------------------
 
-/** How many of the words the model wrote changed when the feature was steered. */
+/** Whether steering changed the text the model wrote. No word count: the marked tokens show what changed. */
 export function steeringReadout(response: SteerResponse | null): string | null {
   if (!response) return null;
-  const diff = diffTokens(response.original_generation, response.steered_generation);
-  const words = diff.right.filter((t) => /\S/.test(t.text));
   const feature = `feature #${response.feature_id}`;
   const strength = `strength ${response.alpha}`;
-  if (words.length === 0) return `Steering ${feature} at ${strength} didn't write anything. Press Run Steered again.`;
-  const changed = words.filter((t) => t.changed).length;
-  if (changed === 0) {
-    const which = words.length === 1 ? 'the one word' : `any of the ${words.length} words`;
-    return `Steering ${feature} at ${strength} didn't change ${which} it wrote. Try a bigger strength.`;
-  }
-  const of = changed === words.length ? `all ${words.length}` : `${changed} of the ${words.length}`;
-  return `Steering ${feature} at ${strength} changed ${of} words it wrote.`;
+  if (!/\S/.test(response.steered_generation)) return `Steering ${feature} at ${strength} didn't write anything. Press Run Steered again.`;
+  const changed = response.changed_token_indices
+    ? response.changed_token_indices.length > 0
+    : diffTokens(response.original_generation, response.steered_generation).right.some((t) => t.changed);
+  if (!changed) return `Steering ${feature} at ${strength} didn't change the text it wrote. Try a bigger strength.`;
+  return `Steering ${feature} at ${strength} changed the text it wrote; the changed tokens are marked.`;
 }
+
+// ---------------------------------------------------------------------------
+// Measurement display rules (plan T4-ui). Wording is pinned in
+// readouts.test.ts and predictions-scale.test.ts; changing a rule needs
+// Critic or Brad sign-off.
+// ---------------------------------------------------------------------------
+
+/** A token in single quotes with its leading space kept, the way the pinned lines write it (' Mary'). */
+function spacedToken(text: string): string {
+  return `'${text.replace(/\n/g, '\\n')}'`;
+}
+
+/** A logit or other raw number at two decimals, with a real minus sign. */
+export function num(v: number): string {
+  const s = Math.abs(v).toFixed(2);
+  return v < 0 && s !== '0.00' ? `−${s}` : s;
+}
+
+// --- Predictions (MF-1) ---
+
+/** The bar's width on the 0-100% track: the probability itself, never scaled to the top bar. */
+export function barWidthPct(p: number): string {
+  return `${Math.max(0, Math.min(1, p)) * 100}%`;
+}
+
+/** A probability with its natural frequency: "9.7% (about 1 in 10)". */
+export function probabilityWithFrequency(p: number): string {
+  return formatProbability(p);
+}
+
+function topTen(predictions: TopPrediction[]): TopPrediction[] {
+  return [...predictions].sort((a, b) => a.rank - b.rank).slice(0, 10);
+}
+
+/** Everything outside the top ten: 1 − the top ten's sum. */
+export function everythingElse(predictions: TopPrediction[]): number {
+  const sum = topTen(predictions).reduce((acc, p) => acc + p.probability, 0);
+  return Math.max(0, 1 - sum);
+}
+
+export const SHAPE_ONE = 'One token has most of the probability.';
+export const SHAPE_FEW = 'A few tokens share most of the probability.';
+export const SHAPE_SPREAD = 'The probability is spread over many tokens; the top ten have half or less.';
+
+/** The shape of the whole distribution, shown before any tag. */
+export function predictionShape(predictions: TopPrediction[] | null | undefined): string | null {
+  if (!predictions || predictions.length === 0) return null;
+  const ten = topTen(predictions);
+  if (ten[0].probability > 0.5) return SHAPE_ONE;
+  if (ten.reduce((acc, p) => acc + p.probability, 0) > 0.5) return SHAPE_FEW;
+  return SHAPE_SPREAD;
+}
+
+/** Tags after the shape sentence: `over 50%`, `top three within 5 points`. */
+export function predictionTags(predictions: TopPrediction[] | null | undefined): string[] {
+  if (!predictions || predictions.length === 0) return [];
+  const ten = topTen(predictions);
+  const tags: string[] = [];
+  if (ten[0].probability > 0.5) tags.push('over 50%');
+  if (ten.length >= 3 && ten[0].probability - ten[2].probability < 0.05) tags.push('top three within 5 points');
+  return tags;
+}
+
+/** What a clicked bar shows: its logit, the raw score softmax turns into the probability. */
+export function predictionLogitLine(pred: TopPrediction): string | null {
+  if (pred.logit == null) return null;
+  return `${quoteToken(pred.token)} has a logit of ${num(pred.logit)}. Softmax turns the logits into the probabilities above.`;
+}
+
+// --- Why (DLA), MF-2 / MF-2b ---
+
+export const DLA_GAP_EXPLAINED =
+  "the embedding's own direct push plus the attention-output and unembedding biases, not drawn as bars.";
+
+/**
+ * "Bars total … Logit … Gap …": the bars' total, the logit itself (both
+ * logits and their difference with a contrast) and the gap, labelled.
+ */
+export function dlaTotalLine(r: DLAResponse | null): string | null {
+  if (!r || r.bars_total == null || r.answer_logit == null || r.gap == null) return null;
+  const real =
+    r.contrast_logit != null && r.actual != null
+      ? `Logits ${num(r.answer_logit)} and ${num(r.contrast_logit)}, difference ${num(r.actual)}`
+      : `Logit ${num(r.answer_logit)}`;
+  return `Bars total ${num(r.bars_total)}. ${real}. Gap ${num(r.gap)}: ${DLA_GAP_EXPLAINED}`;
+}
+
+const GAP_PART_NAMES: Record<string, string> = {
+  embedding_direct: "The embedding's own direct push",
+  biases: 'The attention-output and unembedding biases',
+};
+
+/** The fold under the total line: each named part of the gap. */
+export function dlaGapParts(r: DLAResponse | null): { name: string; value: string }[] {
+  if (!r?.gap_parts) return [];
+  return Object.entries(r.gap_parts).map(([k, v]) => ({ name: GAP_PART_NAMES[k] ?? k, value: num(v) }));
+}
+
+// --- Key parts header ---
+
+/** "Explains the top guess ' X' after the selected word ' Y'"; the older label when the guess isn't known. */
+export function keyPartsHeader(
+  topGuess: string | null | undefined,
+  selected: { text: string; index: number } | null | undefined,
+): string {
+  if (topGuess == null || !selected) return explainingLabel(selected);
+  return `Explains the top guess ${spacedToken(topGuess)} after the selected word ${spacedToken(selected.text)}`;
+}
+
+// --- Swap test (MF-3) ---
+
+export const PATCH_EVERY_POSITION = 'Heads and MLPs are swapped at every position.';
+export const PATCH_BELOW_ZERO = 'The swap moved the logit away from the Original value.';
+export const PATCH_OVERSHOOT = 'The swap overshot the Original value.';
+export const PATCH_NULL_SHARE = "Original and Changed give nearly the same logit here, so a share doesn't mean anything.";
+export const PATCH_LEGEND_FORMULA =
+  'Square color is the share: (after this swap − Changed prompt) ÷ (Original prompt − Changed prompt).';
+
+/** The part whose three logits show before any square is clicked: the biggest raise. */
+export function defaultPatchPart(r: PatchResponse | null): PatchComponent | null {
+  if (!r || r.components.length === 0) return null;
+  return r.components.reduce((a, b) => (b.effect > a.effect ? b : a));
+}
+
+/** "' X''s logit: Original prompt …, Changed prompt …, after this swap …." */
+export function patchLogitsLine(r: PatchResponse | null, c: PatchComponent | null): string | null {
+  if (!r || !c) return null;
+  const token = r.target_token ?? r.clean_predicted_token;
+  const clean = r.clean_logit ?? c.clean_logit;
+  const corrupted = r.corrupted_logit ?? c.corrupted_logit;
+  return `${spacedToken(token)}'s logit: Original prompt ${num(clean)}, Changed prompt ${num(corrupted)}, after this swap ${num(c.patched_logit)}.`;
+}
+
+/** The share formula with its numbers, or the line that says a share means nothing here. */
+export function patchShareLine(r: PatchResponse | null, c: PatchComponent | null): string | null {
+  if (!r || !c || c.share === undefined) return null;
+  if (c.share === null) return PATCH_NULL_SHARE;
+  const clean = r.clean_logit ?? c.clean_logit;
+  const corrupted = r.corrupted_logit ?? c.corrupted_logit;
+  return `Share = (${num(c.patched_logit)} − ${num(corrupted)}) ÷ (${num(clean)} − ${num(corrupted)}) = ${Math.round(c.share * 100)}%`;
+}
+
+/** Below 0% or above 100%: the line that says which way the share left the range. */
+export function patchShareEdge(c: PatchComponent | null): string | null {
+  if (!c || c.share == null) return null;
+  if (c.share < 0) return PATCH_BELOW_ZERO;
+  if (c.share > 1) return PATCH_OVERSHOOT;
+  return null;
+}
+
+// --- Steering (MF-4, N13) ---
+
+export const COHERENCE_SOURCE = 'average log-probability per token of each continuation, under the unsteered model';
+export const STEERING_LIMIT =
+  'The push is added at every position, prompt included. Repetitive text scores as very natural, so breaking a loop can look like a drop.';
+
+/**
+ * Both coherence numbers with their source, no band label (calibration showed
+ * the bands don't separate fine from broken steering). null under 5 tokens.
+ */
+export function coherenceLine(
+  c: SteerCoherence | null | undefined,
+  labels: [string, string] = ['Original', 'Steered'],
+): string | null {
+  if (!c || c.original == null || c.steered == null) return null;
+  return `Coherence: ${labels[0]} ${num(c.original)}, ${labels[1]} ${num(c.steered)} (${COHERENCE_SOURCE}).`;
+}
+
+function trimNum(v: number): string {
+  return String(Number(v.toFixed(2)));
+}
+
+/** "Steering strength …; this feature's activation on this prompt runs up to … (most positions under …)." */
+export function steeringScaleLine(r: SteerResponse | null): string | null {
+  const s = r?.scale;
+  if (!s) return null;
+  return `Steering strength ${trimNum(s.strength)}; this feature's activation on this prompt runs up to ${trimNum(s.activation_max)} (most positions under ${trimNum(s.activation_p99)}).`;
+}
+
+/** The control feature's heading: same strength as the steered one. */
+export function controlHeading(c: SteerControl, alpha: number): string {
+  return `Control: feature #${c.feature_id}, same strength ${alpha}`;
+}
+
+export const CONTROL_EXPLAINED =
+  "A feature about the same size as yours, pointing a different way, steered at the same strength. If it changes the text just as much, the change might not be about your feature.";
+
+/** "on N of M prompts": how many of the other prompts the steering changed. */
+export function steeringPersistLine(runs: { response: SteerResponse }[]): string | null {
+  if (runs.length === 0) return null;
+  const changed = runs.filter((r) => r.response.steered_generation !== r.response.original_generation).length;
+  return `The steering changed the text on ${changed} of ${runs.length} prompts.`;
+}
+
+export type SteeringSection = 'changed' | 'coherence' | 'control' | 'scale';
+
+/** The four parts of the steering result in the pinned order; a part with nothing to show is left out. */
+export function steeringSections(r: SteerResponse | null): SteeringSection[] {
+  if (!r) return [];
+  const out: SteeringSection[] = ['changed'];
+  if (coherenceLine(r.coherence)) out.push('coherence');
+  if (r.control) out.push('control');
+  if (r.scale) out.push('scale');
+  return out;
+}
+
+// --- Feature knockout (C21) ---
+
+export const FEATURE_KNOCKOUT_NOTE =
+  "Knocking out a feature removes only the part of the residual stream the SAE accounts for. The SAE's leftover error stays, so a small change can mean the feature mattered little or that its share was small.";

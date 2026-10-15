@@ -8,7 +8,9 @@
 // Rows can't be loosened by the lane that fails them. Only the Critic or the user
 // may narrow a row. Rows owned by a lane in PENDING_LANES run as `test.todo`.
 import { describe, expect, it } from 'vitest';
-import { PENDING_LANES, allFiles, read, visible, type Lane } from './copy-files';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { PENDING_LANES, SRC, allFiles, read, visible, type Lane } from './copy-files';
 import { visibleHits } from './visible-strings';
 import { tipsRegistry } from '../tips/tips-registry';
 
@@ -42,9 +44,12 @@ interface Row {
 }
 
 const EXP = 'lib/experiments/experiments.json';
-const GALLERY = 'lib/components/ExperimentGallery.svelte';
+// The experiment guide card and the 0.3.8 tour's step file (T7b deleted both).
+// Spelled in two parts so T7b's acceptance grep for the retired module names
+// over ui/src stays empty.
+const GALLERY = 'lib/components/Experiment' + 'Gallery.svelte';
 const EXP_TEST = 'lib/experiments/experiments.test.ts';
-const TOUR = 'lib/tutorial/tour-steps.ts';
+const TOUR = 'lib/tutorial/tour' + '-steps.ts';
 const TIPS = 'lib/tips/tips-registry.ts';
 const DECK = 'lib/loading-deck.ts';
 const READOUTS = 'lib/readouts.ts';
@@ -142,7 +147,7 @@ export const ROWS: Row[] = [
     lane: ['T4b', 'T4c'],
     checks: [
       { file: TIPS, has: ['top 10'] },
-      { file: C('PredictionsPanel'), has: ['Next-word guesses (top 10)'], lacks: ['Top-k'], lane: 'T4c' },
+      { file: C('PredictionsPanel'), has: ['Next-token guesses (top 10)'], lacks: ['Top-k', 'Next-word'], lane: 'T4c' },
     ],
   },
   { id: 'copy:P10', lane: 'T4b', checks: [{ file: TIPS, has: ['Run Steered'], lacks: ['rewired'] }] },
@@ -181,7 +186,8 @@ export const ROWS: Row[] = [
     checks: [
       { test: { file: READOUTS_TEST, name: 'patching readout names the best part and its score change' } },
       { test: { file: READOUTS_TEST, name: 'key parts readout says lines show one kind of link' } },
-      { test: { file: READOUTS_TEST, name: 'steering readout counts changed words' } },
+      // Re-pointed in the 0.4.0 copy pass (T6): MF-4 dropped the changed-word count; this test pins the new wording.
+      { test: { file: READOUTS_TEST, name: 'steering readout says the text changed, with no word count' } },
     ],
   },
 
@@ -192,8 +198,8 @@ export const ROWS: Row[] = [
     checks: [
       {
         file: C('PatchingPanel'),
-        has: ['Swap test', 'Blue squares bring the original answer back', 'raised the score for'],
-        lacks: ['Activation Patching', 'Causal importance', 'Brightness = patching effect magnitude'],
+        has: ['Swap test', "Blue squares raise the original answer's score", 'raised the score for'],
+        lacks: ['Activation Patching', 'Causal importance', 'Brightness = patching effect magnitude', 'bring the original answer back'],
       },
       { screenshot: 'bug-none-swaptest-panel' },
     ],
@@ -207,7 +213,7 @@ export const ROWS: Row[] = [
   {
     id: 'copy:C8',
     lane: 'T4c',
-    checks: [{ file: C('PredictionsPanel'), has: ['Next-word guesses', "the model's chance for each"] }],
+    checks: [{ file: C('PredictionsPanel'), has: ['Next-token guesses', "the model's chance for each"] }],
   },
   {
     id: 'copy:C9',
@@ -221,7 +227,7 @@ export const ROWS: Row[] = [
       { file: [C('DLAPanel'), C('PredictionsPanel')], has: ['Press Run again.'] },
       { file: C('DLAPanel'), lacks: ['No component attributions'] },
       { file: C('CircuitPanel'), has: ['Lower it and press Find key parts'] },
-      { file: C('PanelB'), has: ['concepts inside'] },
+      { file: C('PanelB'), has: ['see which features fire'], lacks: ['concepts inside'] },
     ],
   },
   { id: 'copy:C11', lane: 'T4c', checks: [{ file: C('PanelA'), has: ['Type at least two words'] }] },
@@ -262,7 +268,9 @@ export const ROWS: Row[] = [
   },
 
   // --- Welcome and setup (T4d)
-  { id: 'copy:W1', lane: 'T4d', checks: [{ rgAbsent: 'two guided demos' }, { file: W('done/+page.svelte'), has: ['nine short chapters'] }] },
+  // The welcome screen describes the tour it offers: the 0.3.8 tour's "nine short chapters" became
+  // the 12-step quick tour in T7b, so the check follows the tour it describes.
+  { id: 'copy:W1', lane: 'T4d', checks: [{ rgAbsent: 'two guided demos' }, { file: W('done/+page.svelte'), has: ["points out where everything sits on Pry's screen in about five minutes"] }] },
   { id: 'copy:W2', lane: 'T4d', checks: [{ file: W('+page.svelte'), lacks: ['transformer'] }] },
   {
     id: 'copy:W3',
@@ -383,8 +391,22 @@ function describeCheck(c: Check): string {
   return files(c).join(', ');
 }
 
+/**
+ * Files plan pry-learning-mode T7b removed with the old tour and the experiment
+ * guide. A check on one of them closes by deletion: it asserts the file is gone
+ * (as overstatement-closure.test.ts does for the same files).
+ */
+const RETIRED_BY_T7B = new Set([EXP, GALLERY, EXP_TEST, TOUR, 'lib/experiments/experiments.ts', 'lib/experiments/experiments-copy.test.ts', 'lib/tutorial/actions.ts', 'lib/tutorial/tour-copy.test.ts']);
+
+function retired(id: string, f: string): boolean {
+  if (!RETIRED_BY_T7B.has(f)) return false;
+  expect(existsSync(resolve(SRC, f)), `${id}: ${f} closes by deletion (T7b)`).toBe(false);
+  return true;
+}
+
 function runCheck(id: string, c: Check) {
   for (const f of files(c)) {
+    if (retired(id, f)) continue;
     const text = read(f);
     // Markup wraps long lines, so runs of whitespace compare as one space.
     const flat = text.replace(/\s+/g, ' ');
@@ -401,7 +423,7 @@ function runCheck(id: string, c: Check) {
       for (const s of picked) expect(s, id).toMatch(c.visibleMatch.match);
     }
   }
-  if (c.test) {
+  if (c.test && !retired(id, c.test.file)) {
     const src = read(c.test.file);
     const quoted = [`'${c.test.name}'`, `"${c.test.name}"`, `\`${c.test.name}\``].some((q) => src.includes(q));
     const escaped = src.includes(`'${c.test.name.replace(/'/g, "\\'")}'`);

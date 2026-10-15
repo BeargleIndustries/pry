@@ -1,6 +1,6 @@
-// Tour step targets name an element marked `data-tour="..."` or, to reuse the
-// first-time tips' anchors, `data-tip="..."`. tour-steps.test.ts checks that every
-// target is present somewhere in the UI source.
+// Anchor targets name an element marked `data-tour="..."` or, to reuse the
+// first-time tips' anchors, `data-tip="..."`. The lesson anchors
+// (lessons/registry/pry-anchors.ts) and the tips find their elements here.
 
 export function anchorSelector(target: string): string {
   const t = CSS.escape(target);

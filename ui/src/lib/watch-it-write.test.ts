@@ -60,22 +60,22 @@ describe('replay state', () => {
 
 describe('wording', () => {
   it('says what it picked over what', () => {
-    expect(stepSentence(STEPS[0])).toBe('It picked "·now" (5%) over "·the" (4%).');
-    expect(stepSentence(STEPS[2])).toBe('It picked "·to" (>99%) over "·of" (<1%).');
+    expect(stepSentence(STEPS[0])).toBe('It picked "·now" at 4.8% (about 1 in 21) over "·the" at 3.7% (about 1 in 27).');
+    expect(stepSentence(STEPS[2])).toBe('It picked "·to" at 99.8% (about 499 in 500) over "·of" at 0.1% (about 1 in 1,000).');
   });
 
   it('is honest when sampling took the less likely word', () => {
     const s = stepSentence({
       token: ' the', token_id: 262, probability: 0.109, runner_up: ' a', runner_up_probability: 0.464,
     });
-    expect(s).toContain('over the more likely "·a" (46%)');
+    expect(s).toContain('over the more likely "·a" at 46.4% (about 1 in 2)');
     expect(s).toContain('less likely word sometimes wins');
   });
 
   it('handles a missing runner-up', () => {
     expect(
       stepSentence({ token: 'x', token_id: 1, probability: 1, runner_up: null, runner_up_probability: null }),
-    ).toBe('It picked "x" (100%).');
+    ).toBe('It picked "x" at 100%.');
   });
 
   it('explains temperature in plain words', () => {

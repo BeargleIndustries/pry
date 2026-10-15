@@ -2,7 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // `$lib/sidecar` (imported relatively by the analysis module, since vitest here
 // has no SvelteKit alias). Every analysis call is a spy.
-vi.mock('./sidecar', () => ({
+vi.mock('./sidecar', async (importOriginal) => ({
+  // The request builders stay real: the controller builds bodies with them.
+  ...(await importOriginal<typeof import('./sidecar')>()),
   // Delegates to the (stubbed) global fetch so tests can inspect URL + body.
   sidecarFetch: vi.fn((path: string, init?: RequestInit) => fetch(`http://sidecar.test${path}`, init)),
   switchSaeLayer: vi.fn(async (_p: string, _prompt: string, layer: number) => ({
@@ -559,7 +561,8 @@ describe('layer switch vs a newer Run (B2)', () => {
 
     expect(state.response?.prompt).toBe('new prompt');
     expect(state.response?.sae_layer_used).toBe(6);
-    expect(state.saeLayer).toBe(6);
+    // Commit-on-complete (plan T2b): the engine loaded layer 8, so it is recorded.
+    expect(state.saeLayer).toBe(8);
     expect(state.layerSwitching).toBe(false);
   });
 });

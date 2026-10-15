@@ -1,0 +1,177 @@
+{
+  "label": "0.3.8",
+  "recordedAt": "2026-10-14T03:43:14.838Z",
+  "page": "http://tauri.localhost/welcome?runtime=ready",
+  "viewport": "1280x800",
+  "calls": [
+    {
+      "t": 224,
+      "step": "load",
+      "method": "GET",
+      "endpoint": "/health",
+      "body": null,
+      "status": 200
+    },
+    {
+      "t": 224,
+      "step": "load",
+      "method": "GET",
+      "endpoint": "/health",
+      "body": null,
+      "status": 200
+    },
+    {
+      "t": 224,
+      "step": "load",
+      "method": "GET",
+      "endpoint": "/models",
+      "body": null,
+      "status": 200
+    },
+    {
+      "t": 270,
+      "step": "load",
+      "method": "GET",
+      "endpoint": "/health",
+      "body": null,
+      "status": 200
+    },
+    {
+      "t": 537,
+      "step": "load",
+      "method": "POST",
+      "endpoint": "/load",
+      "body": {
+        "preset_id": "gpt2-small"
+      },
+      "status": 200
+    },
+    {
+      "t": 15699,
+      "step": "load",
+      "method": "GET",
+      "endpoint": "/health",
+      "body": null,
+      "status": 200
+    },
+    {
+      "t": 15731,
+      "step": "load",
+      "method": "GET",
+      "endpoint": "/health",
+      "body": null,
+      "status": 200
+    },
+    {
+      "t": 18250,
+      "step": "run-1",
+      "method": "POST",
+      "endpoint": "/generate",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The cat sat on the mat. The cat sat on the mat. The cat sat on the",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "status": 200
+    },
+    {
+      "t": 23213,
+      "step": "run-2",
+      "method": "POST",
+      "endpoint": "/generate",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The cat sat on the mat. The cat sat on the mat. The cat sat on the",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "status": 200
+    },
+    {
+      "t": 26333,
+      "step": "logit-lens",
+      "method": "POST",
+      "endpoint": "/logit-lens",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The cat sat on the mat. The cat sat on the mat. The cat sat on the"
+      },
+      "status": 200
+    },
+    {
+      "t": 28937,
+      "step": "dla",
+      "method": "POST",
+      "endpoint": "/dla",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The cat sat on the mat. The cat sat on the mat. The cat sat on the",
+        "target_token_index": 19
+      },
+      "status": 200
+    },
+    {
+      "t": 31848,
+      "step": "swap-test",
+      "method": "POST",
+      "endpoint": "/tokenize",
+      "body": {
+        "preset_id": "gpt2-small",
+        "text": "When Mary and John went to the store, John gave a drink to"
+      },
+      "status": 200
+    },
+    {
+      "t": 31848,
+      "step": "swap-test",
+      "method": "POST",
+      "endpoint": "/tokenize",
+      "body": {
+        "preset_id": "gpt2-small",
+        "text": "When Mary and John went to the store, Mary gave a drink to"
+      },
+      "status": 200
+    },
+    {
+      "t": 35937,
+      "step": "swap-test",
+      "method": "POST",
+      "endpoint": "/patch",
+      "body": {
+        "preset_id": "gpt2-small",
+        "clean_prompt": "When Mary and John went to the store, John gave a drink to",
+        "corrupted_prompt": "When Mary and John went to the store, Mary gave a drink to",
+        "patch_type": "head"
+      },
+      "status": 200
+    },
+    {
+      "t": 43258,
+      "step": "steer",
+      "method": "POST",
+      "endpoint": "/steer",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The cat sat on the mat. The cat sat on the mat. The cat sat on the",
+        "feature_id": 11746,
+        "sae_layer": 8,
+        "alpha": 5,
+        "max_new_tokens": 50
+      },
+      "status": 200
+    }
+  ],
+  "summary": {
+    "load GET /health": 5,
+    "load GET /models": 1,
+    "load POST /load": 1,
+    "run-1 POST /generate": 1,
+    "run-2 POST /generate": 1,
+    "logit-lens POST /logit-lens": 1,
+    "dla POST /dla": 1,
+    "swap-test POST /tokenize": 2,
+    "swap-test POST /patch": 1,
+    "steer POST /steer": 1
+  }
+}

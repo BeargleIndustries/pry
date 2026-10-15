@@ -1,0 +1,1020 @@
+{
+ "key": "c593153a53771b460a3523daebe5dd864a067bb33d42bef8f0fc468503879858",
+ "variant": "r1",
+ "request": {
+  "endpoint": "/logit-lens",
+  "model": "gpt2-small",
+  "body": {
+   "preset_id": "gpt2-small",
+   "prompt": "I looked outside and saw the rain,\nIt tapped against the window"
+  }
+ },
+ "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+ "device": "cuda",
+ "libs": {
+  "python": "3.12.13",
+  "torch": "2.5.1+cu124",
+  "transformer_lens": "2.15.4",
+  "sae_lens": "5.11.0",
+  "transformers": "4.57.6",
+  "numpy": "1.26.4"
+ },
+ "recorded": "2026-10-15",
+ "neuronpedia_fetched": null,
+ "offline": false,
+ "trimmed": [],
+ "response": {
+  "preset_id": "gpt2-small",
+  "prompt": "I looked outside and saw the rain,\nIt tapped against the window",
+  "tokens": [
+   {
+    "index": 0,
+    "text": "<|endoftext|>"
+   },
+   {
+    "index": 1,
+    "text": "I"
+   },
+   {
+    "index": 2,
+    "text": " looked"
+   },
+   {
+    "index": 3,
+    "text": " outside"
+   },
+   {
+    "index": 4,
+    "text": " and"
+   },
+   {
+    "index": 5,
+    "text": " saw"
+   },
+   {
+    "index": 6,
+    "text": " the"
+   },
+   {
+    "index": 7,
+    "text": " rain"
+   },
+   {
+    "index": 8,
+    "text": ","
+   },
+   {
+    "index": 9,
+    "text": "\n"
+   },
+   {
+    "index": 10,
+    "text": "It"
+   },
+   {
+    "index": 11,
+    "text": " tapped"
+   },
+   {
+    "index": 12,
+    "text": " against"
+   },
+   {
+    "index": 13,
+    "text": " the"
+   },
+   {
+    "index": 14,
+    "text": " window"
+   }
+  ],
+  "grid": [
+   [
+    {
+     "predicted_token": "\n",
+     "probability": 0.34442099928855896,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "'m",
+     "probability": 0.1605059951543808,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " looking",
+     "probability": 0.08455272018909454,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " outside",
+     "probability": 0.6913644671440125,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.44147348403930664,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.10421793162822723,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.622300922870636,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "forest",
+     "probability": 0.39247703552246094,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.21554823219776154,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "\n",
+     "probability": 0.8163222074508667,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "self",
+     "probability": 0.5597953200340271,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " tapped",
+     "probability": 0.7332446575164795,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " against",
+     "probability": 0.5307100415229797,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.7537583112716675,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " window",
+     "probability": 0.9505869150161743,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": "\n",
+     "probability": 0.08009954541921616,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "'m",
+     "probability": 0.3098771572113037,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " briefly",
+     "probability": 0.21322084963321686,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " outside",
+     "probability": 0.5389160513877869,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.751768171787262,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.09130799025297165,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.7768183946609497,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "bows",
+     "probability": 0.906930685043335,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.29244476556777954,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "\n",
+     "probability": 0.30005279183387756,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "self",
+     "probability": 0.6915618777275085,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " tap",
+     "probability": 0.6479071974754333,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.27999159693717957,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.8058867454528809,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " window",
+     "probability": 0.754144549369812,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.02691025659441948,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "'m",
+     "probability": 0.6076719164848328,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " looking",
+     "probability": 0.13006608188152313,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " outside",
+     "probability": 0.4306007921695709,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.7303119897842407,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " how",
+     "probability": 0.18006955087184906,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.6206480264663696,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "bows",
+     "probability": 0.9611139297485352,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.3553561568260193,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "\n",
+     "probability": 0.24373307824134827,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "self",
+     "probability": 0.8715183138847351,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " tap",
+     "probability": 0.8242932558059692,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.4440135657787323,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.8694640398025513,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " window",
+     "probability": 0.6635354161262512,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.027061201632022858,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "'m",
+     "probability": 0.6521494388580322,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " briefly",
+     "probability": 0.3444945216178894,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.197945699095726,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.7516674995422363,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " my",
+     "probability": 0.1936478614807129,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.5962569713592529,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "bows",
+     "probability": 0.9368438720703125,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.4005279242992401,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "                ",
+     "probability": 0.11047815531492233,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "self",
+     "probability": 0.6542355418205261,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " tap",
+     "probability": 0.7608190178871155,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.6899390816688538,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.7825149297714233,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " window",
+     "probability": 0.6692187786102295,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.0268873143941164,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "'m",
+     "probability": 0.42892149090766907,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " briefly",
+     "probability": 0.4502405524253845,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " outside",
+     "probability": 0.17626957595348358,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.8470934629440308,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " my",
+     "probability": 0.2709028422832489,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.5948132872581482,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "bows",
+     "probability": 0.9624575972557068,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.6909742951393127,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "\n",
+     "probability": 0.13377559185028076,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "'s",
+     "probability": 0.5133158564567566,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " tap",
+     "probability": 0.48989951610565186,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.7277423739433289,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.5701037645339966,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " window",
+     "probability": 0.7975765466690063,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.026548324152827263,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "'m",
+     "probability": 0.5207775235176086,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " briefly",
+     "probability": 0.39519423246383667,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " outside",
+     "probability": 0.1965111494064331,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.9067438840866089,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " my",
+     "probability": 0.30416929721832275,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.4959568381309509,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "bows",
+     "probability": 0.9708616733551025,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.8615649342536926,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "so",
+     "probability": 0.11172591894865036,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "'s",
+     "probability": 0.5961535573005676,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " tap",
+     "probability": 0.17293380200862885,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.7889661192893982,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " bottom",
+     "probability": 0.22319406270980835,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " window",
+     "probability": 0.6582298874855042,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.026423990726470947,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "'m",
+     "probability": 0.5700984597206116,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " briefly",
+     "probability": 0.37540528178215027,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.19137845933437347,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.28590887784957886,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " my",
+     "probability": 0.2187061607837677,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " same",
+     "probability": 0.27525049448013306,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "bows",
+     "probability": 0.8850111961364746,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.9274101853370667,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "so",
+     "probability": 0.21572597324848175,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "'s",
+     "probability": 0.5394473671913147,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " out",
+     "probability": 0.12705057859420776,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.8230879902839661,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " backdrop",
+     "probability": 0.15680888295173645,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " windows",
+     "probability": 0.5915877819061279,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.02643696777522564,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "'m",
+     "probability": 0.6925567388534546,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " briefly",
+     "probability": 0.16756421327590942,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.313296377658844,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " saw",
+     "probability": 0.7083333730697632,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " something",
+     "probability": 0.3715830147266388,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " beautiful",
+     "probability": 0.11666285246610641,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "bows",
+     "probability": 0.9248217940330505,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.924268364906311,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "And",
+     "probability": 0.18153177201747894,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "'s",
+     "probability": 0.6399718523025513,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " gently",
+     "probability": 0.18882085382938385,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.8624672293663025,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " walls",
+     "probability": 0.15378327667713165,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " windows",
+     "probability": 0.406535804271698,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.02667328715324402,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "'m",
+     "probability": 0.8061140179634094,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " carefully",
+     "probability": 0.26143011450767517,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " my",
+     "probability": 0.7746042013168335,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " saw",
+     "probability": 0.8825722932815552,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " my",
+     "probability": 0.3468952178955078,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " beautiful",
+     "probability": 0.13425184786319733,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "bows",
+     "probability": 0.621088981628418,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.9561352729797363,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "   ",
+     "probability": 0.27015605568885803,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "'s",
+     "probability": 0.42701634764671326,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " gently",
+     "probability": 0.28335142135620117,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.6607310175895691,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " sky",
+     "probability": 0.4450226426124573,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " windows",
+     "probability": 0.32049793004989624,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.02694992907345295,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "'m",
+     "probability": 0.7208480834960938,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " at",
+     "probability": 0.48749616742134094,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " my",
+     "probability": 0.867429792881012,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " saw",
+     "probability": 0.955643355846405,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " a",
+     "probability": 0.4240911900997162,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " sun",
+     "probability": 0.1777597963809967,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "bows",
+     "probability": 0.6318033337593079,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.7298086881637573,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "   ",
+     "probability": 0.7192514538764954,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " was",
+     "probability": 0.4042143225669861,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " into",
+     "probability": 0.7384917140007019,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.44827550649642944,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " trees",
+     "probability": 0.35841861367225647,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " windows",
+     "probability": 0.3799023926258087,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.0274453517049551,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "'m",
+     "probability": 0.36975187063217163,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " at",
+     "probability": 0.40101712942123413,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " my",
+     "probability": 0.709453821182251,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " saw",
+     "probability": 0.9003725647926331,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " a",
+     "probability": 0.5687471628189087,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " sun",
+     "probability": 0.1315525621175766,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "drops",
+     "probability": 0.3569217324256897,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " but",
+     "probability": 0.3985486924648285,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "\n",
+     "probability": 0.971760630607605,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " was",
+     "probability": 0.5600976943969727,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " into",
+     "probability": 0.29494333267211914,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " my",
+     "probability": 0.7125877141952515,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " sky",
+     "probability": 0.4368748664855957,
+     "matches_final": true
+    },
+    {
+     "predicted_token": ",",
+     "probability": 0.21315932273864746,
+     "matches_final": true
+    }
+   ],
+   [
+    {
+     "predicted_token": "\n",
+     "probability": 0.062298163771629333,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "'m",
+     "probability": 0.09338602423667908,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " at",
+     "probability": 0.3887585997581482,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.22076283395290375,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " saw",
+     "probability": 0.5560576319694519,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " a",
+     "probability": 0.28134194016456604,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " sky",
+     "probability": 0.025382833555340767,
+     "matches_final": true
+    },
+    {
+     "predicted_token": ".",
+     "probability": 0.14576300978660583,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " and",
+     "probability": 0.22024095058441162,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "\n",
+     "probability": 0.9969426989555359,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " was",
+     "probability": 0.3959321081638336,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " my",
+     "probability": 0.1306220144033432,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.5964575409889221,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " sky",
+     "probability": 0.06867875158786774,
+     "matches_final": true
+    },
+    {
+     "predicted_token": ",",
+     "probability": 0.24783377349376678,
+     "matches_final": true
+    }
+   ]
+  ],
+  "n_layers": 12,
+  "status": "ok"
+ }
+}

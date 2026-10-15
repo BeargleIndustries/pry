@@ -2,18 +2,15 @@
 // POPUP_AUDIT is on and the URL has ?popupAudit=1; driven at several window
 // sizes by scripts/dev/popup-audit.mjs.
 //
-// It drives every tour step (enter actions, plus run work where a step has
-// it), forces every first-time tip (without marking it seen), opens glossary
-// tooltips and cell hover tooltips, and checks each popup against the pass
-// bar in .omc/plans/pry-clarity-2026-10-12.md (T3). Seen-state and tour
-// progress are snapshotted first and restored at the end.
+// It walks every quick-tour step (the overlay lesson `pry.quick-tour` on the
+// Lessons runner), forces every first-time tip (without marking it seen),
+// opens glossary tooltips and cell hover tooltips, and checks each popup
+// against the pass bar in .omc/plans/pry-clarity-2026-10-12.md (T3).
+// Seen-state and tour progress are snapshotted first and restored at the end.
 //
 // Output: one console line `POPUP AUDIT PASS n / FAIL m / SKIP k @ WxH` and
 // the full report on window.__popupAudit.
 
-import { tutorialState } from '$lib/tutorial/tutorial-store.svelte';
-import { tourChapters, type TourStep } from '$lib/tutorial/tour-steps';
-import type { TourContext, TutorialActions } from '$lib/tutorial/actions';
 import { tipsRegistry } from '$lib/tips/tips-registry';
 import { anchorState } from '$lib/tutorial/anchors';
 import {
@@ -32,18 +29,55 @@ import { rectOf } from './measure';
 import { occupied, OCCUPIED } from './occupied.svelte';
 import { popupDevHooks } from './dev';
 
+/** What the learning-mode pass drives (plan T3 harness; +page.svelte passes it). */
+export interface AuditLessons {
+  open(side: 'left' | 'right'): Promise<void>;
+  close(): void;
+  openLesson(id: string, sectionId?: string | null): Promise<boolean>;
+  sectionCount(): number;
+  goto(i: number): Promise<void>;
+  /** True when the current section shows an explain-result. */
+  hasExplainResult(): boolean;
+  railed(): boolean;
+}
+
+/** The page moves the audit makes to put a tip's target on screen. */
+export interface AuditActions {
+  setPrompt(text: string): void;
+  runGenerate(): Promise<unknown>;
+  response(): { prompt: string } | null;
+  openLeftTab(tab: string): void;
+  openRightTab(tab: string): void;
+  setCompareMode(on: boolean): void;
+  showCopyingHeads(): void;
+  hideCopyingHeads(): void;
+  setHeadAblation(on: boolean): void;
+}
+
+/** The quick tour, as the tour pass drives it (+page.svelte's auditTour). */
+export interface AuditTour {
+  start(sectionId?: string): Promise<void>;
+  close(): void;
+  next(): void;
+  open(): boolean;
+  stepId(): string | null;
+  stepIds(): string[];
+  /** How many anchors the current step points at. */
+  pointerCount(): number;
+}
+
 export interface AuditDeps {
-  actions: TutorialActions;
+  actions: AuditActions;
+  lessons?: AuditLessons;
+  tour?: AuditTour;
   loadState(): string;
   /** Load GPT-2 small if nothing is loaded. */
   ensureModel(): Promise<void>;
-  startExperiment(id: string): Promise<void>;
-  closeExperiment(): void;
   setCustomModelDialog(open: boolean): void;
 }
 
-type Phase = 'main' | 'guide-open' | 'guide-closed' | 'tour-with-guide';
-type Kind = 'tour' | 'tip' | 'term' | 'hover';
+type Phase = 'main' | 'lessons-right' | 'lessons-left';
+type Kind = 'tour' | 'tip' | 'term' | 'hover' | 'lesson';
 
 export interface AuditRecord {
   phase: Phase;
@@ -75,7 +109,7 @@ export interface AuditRecord {
 }
 
 const IOI = 'When Mary and John went to the store, John gave a drink to';
-const SEEN_KEYS = /^pry:(tip_seen:|tutorial_seen|tour_progress)/;
+const SEEN_KEYS = /^pry:(tip_seen:|tutorial_seen|tour_progress|lesson_progress)/;
 
 // ---------------------------------------------------------------------------
 // Small helpers
@@ -240,11 +274,7 @@ function judge(rec: AuditRecord, opts: { tour?: boolean; allowFallback?: boolean
 // Passes
 // ---------------------------------------------------------------------------
 
-function tourCtx(deps: AuditDeps): TourContext {
-  return { ...deps.actions, setAttentionView: (view) => tutorialState.requestAttentionView(view) };
-}
-
-const card = () => document.querySelector('[data-testid="tour-card"]');
+const card = () => document.querySelector('[data-testid="overlay-card"]');
 const activeTarget = () => document.querySelector('[data-tour-active="true"]');
 
 function snapshot(el: Element | null, target: RectLike | null) {
@@ -256,16 +286,25 @@ function snapshot(el: Element | null, target: RectLike | null) {
   };
 }
 
-async function measureTourStep(deps: AuditDeps, step: TourStep, phase: Phase): Promise<AuditRecord> {
-  const ctx = tourCtx(deps);
-  progress(`${phase} tour ${step.id}`);
+/** A pass/fail record for a check that isn't a placed popup. */
+function checkRecord(phase: Phase, kind: Kind, id: string, ok: boolean, failure: string, notes: string[] = []): AuditRecord {
+  return {
+    phase, kind, id, pass: ok, mode: null, side: null, inViewport: true, overlapsTarget: false, coversFocus: false,
+    overlapsAvoid: false, avoidHit: [], arrowLen: null, arrowExempt: false, largeTarget: false, waiting: false,
+    jumped: false, failures: ok ? [] : [failure], notes,
+  };
+}
+
+async function measureTourStep(tour: AuditTour, stepId: string, phase: Phase): Promise<AuditRecord> {
+  progress(`${phase} tour ${stepId}`);
   // Wait for the card to show this step and the anchor to be found.
-  await waitFor(() => card()?.getAttribute('data-step-id') === step.id, 5000);
-  if (step.target) {
+  await waitFor(() => card()?.getAttribute('data-step-id') === stepId, 5000);
+  const pointed = tour.pointerCount() > 0;
+  if (pointed) {
     const found = await waitFor(() => activeTarget() ?? null, 20000);
     if (!found) {
-      const rec = measure(phase, 'tour', step.id, card(), null, [OCCUPIED.tourCard]);
-      rec.skipped = `anchor "${step.target}" never appeared`;
+      const rec = measure(phase, 'tour', stepId, card(), null, [OCCUPIED.tourCard]);
+      rec.skipped = 'pointed anchor never appeared';
       rec.failures.push(rec.skipped);
       return judge(rec, { tour: true });
     }
@@ -273,42 +312,41 @@ async function measureTourStep(deps: AuditDeps, step: TourStep, phase: Phase): P
   await settle(card);
   const t1 = rectOf(activeTarget());
   const first = snapshot(card(), t1);
-  const rec = measure(phase, 'tour', step.id, card(), t1, [OCCUPIED.tourCard]);
-
-  // Second measurement: after the step's run work settles, or 1s later.
-  if (step.run && !step.run.skipIf?.(ctx)) {
-    try {
-      await step.run.act(ctx);
-    } catch (e) {
-      (rec.notes ??= []).push(`run threw: ${String(e)}`);
-    }
-    await sleep(500);
-    await settle(activeTarget);
-    await settle(card);
-  } else {
-    await sleep(1000);
-  }
+  const rec = measure(phase, 'tour', stepId, card(), t1, [OCCUPIED.tourCard]);
+  // The tour is view-only: a second measurement 1s later must not have moved.
+  await sleep(1000);
   const t2 = rectOf(activeTarget());
   const second = snapshot(card(), t2);
   rec.jumped = jumped(first, second);
-  // Judge the later state too: the step has to look right after its work as well.
-  const rec2 = measure(phase, 'tour', step.id, card(), t2, [OCCUPIED.tourCard]);
-  rec.failures.push(...judge(rec2, { tour: true }).failures.map((f) => `after: ${f}`));
-  return judge(rec, { tour: true, allowFallback: step.target === null });
+  const rec2 = measure(phase, 'tour', stepId, card(), t2, [OCCUPIED.tourCard]);
+  rec.failures.push(...judge(rec2, { tour: true, allowFallback: !pointed }).failures.map((f) => `after: ${f}`));
+  return judge(rec, { tour: true, allowFallback: !pointed });
 }
 
 async function tourPass(deps: AuditDeps, out: AuditRecord[]) {
-  tutorialState.start();
-  tutorialState.modelOfferDismissed = true;
-  for (;;) {
-    const step = tutorialState.currentStep;
-    if (!step) break;
-    out.push(await measureTourStep(deps, step, 'main'));
-    if (tutorialState.isFinal) break;
-    tutorialState.next();
-    await frame();
+  const tour = deps.tour;
+  if (!tour) {
+    out.push({ ...checkRecord('main', 'tour', 'tour', false, 'tour hook missing'), skipped: 'tour hook missing' });
+    return;
   }
-  tutorialState.close();
+  const prompt = deps.actions.response()?.prompt ?? null;
+  await tour.start('step-1');
+  if (!(await waitFor(() => tour.open(), 10000))) {
+    out.push({ ...checkRecord('main', 'tour', 'tour', false, 'the quick tour never opened'), skipped: 'the quick tour never opened' });
+    return;
+  }
+  const ids = tour.stepIds();
+  for (let i = 0; i < ids.length; i++) {
+    out.push(await measureTourStep(tour, ids[i], 'main'));
+    if (i < ids.length - 1) {
+      tour.next();
+      await frame();
+    }
+  }
+  tour.close();
+  // R4-8: walking the tour never resets the run.
+  const after = deps.actions.response()?.prompt ?? null;
+  out.push(checkRecord('main', 'tour', 'tour-keeps-run', after === prompt && ids.length === 12, `run after the tour: ${after} (was ${prompt}), ${ids.length} steps`, [`${ids.length} steps`]));
 }
 
 /** The plain Attention panel in its Expert (grid) view, as a user would open it. */
@@ -398,10 +436,6 @@ async function setupFor(tipId: string, deps: AuditDeps): Promise<() => void> {
   return () => {};
 }
 
-function guideRect(): RectLike | null {
-  return occupied.entries().find(([k]) => k === OCCUPIED.guide)?.[1] ?? null;
-}
-
 async function measureTip(tipId: string, target: string, deps: AuditDeps, phase: Phase): Promise<AuditRecord> {
   const blank = (why: string): AuditRecord => ({
     phase, kind: 'tip', id: tipId, pass: false, mode: null, side: null, inViewport: false, overlapsTarget: false,
@@ -425,32 +459,34 @@ async function measureTip(tipId: string, target: string, deps: AuditDeps, phase:
     const tipEl = () => document.querySelector(`[data-popup="tip"][data-tip-id="${CSS.escape(tipId)}"]`);
     if (res.shown) {
       await settle(tipEl);
-      // The tip released itself while settling: its target became unusable
-      // (e.g. the guide covers it), which is the waiting case.
+      // The tip released itself while settling: its target became unusable.
       if (!tipEl()) {
         const state = anchorState(el);
         res = { id: tipId, shown: false, waiting: state === 'covered', reason: `released: target ${state}` };
       }
     }
+    if (!res.shown && res.heldByLessons) {
+      // A tip about opening Lessons (TipDef.whileLessonsClosed) must stay away
+      // while the sidebar is open: the check is that it did.
+      const declared = tipsRegistry.find((x) => x.id === tipId)?.whileLessonsClosed === true;
+      const open = !!document.querySelector('[data-lesson-sidebar]');
+      const ok = declared && open;
+      return {
+        ...blank(''), skipped: undefined, mode: null, inViewport: true, target: t, pass: ok,
+        failures: ok ? [] : ['held for Lessons without declaring whileLessonsClosed, or with the sidebar closed'],
+        notes: ['not shown while Lessons is open (whileLessonsClosed)'],
+      };
+    }
     if (!res.shown) {
+      // Nothing in the app covers a tip's target any more (the experiment
+      // guide is gone), so a waiting tip is a failure too.
       const rec = blank(`not shown: ${res.reason ?? 'unknown'}`);
       if (res.waiting) {
         rec.skipped = undefined;
-        rec.failures = [];
         rec.waiting = true;
-        rec.mode = 'fallback';
         rec.target = t;
-        rec.inViewport = true;
-        const g = guideRect();
-        // The centre of the target's on-screen part (what anchorState probes).
-        const c = t && {
-          x: (Math.max(t.left, 0) + Math.min(t.left + t.width, window.innerWidth)) / 2,
-          y: (Math.max(t.top, 0) + Math.min(t.top + t.height, window.innerHeight)) / 2,
-        };
-        const inGuide = !!(g && c && placementFlags(g, vp(), null, null, [{ left: c.x - 0.5, top: c.y - 0.5, width: 1, height: 1 }]).overlapsAvoid);
-        if (phase !== 'guide-open') rec.failures.push('tip waiting outside the guide-open pass');
-        else if (!inGuide) rec.failures.push('tip waiting but its target centre is not under the guide');
-        rec.pass = rec.failures.length === 0;
+        rec.failures = [`tip waiting: ${res.reason ?? 'target covered'}`];
+        rec.pass = false;
       }
       return rec;
     }
@@ -550,74 +586,96 @@ async function hoverPass(deps: AuditDeps, out: AuditRecord[]) {
   }
 }
 
-async function guidePasses(deps: AuditDeps, out: AuditRecord[]) {
-  await deps.startExperiment('induction');
-  const g = await waitFor(() => guideRect(), 10000);
-  if (!g) {
-    out.push({ ...judge(measure('guide-open', 'tip', 'guide', null, null, [])), skipped: 'experiment guide never opened' });
-    return;
-  }
-  const open: AuditRecord[] = [];
-  await tipPass(deps, open, 'guide-open');
-  out.push(...open);
-  deps.closeExperiment();
-  await waitFor(() => !guideRect(), 5000);
-  const waiting = new Set(open.filter((r) => r.waiting).map((r) => r.id));
-  if (waiting.size) await tipPass(deps, out, 'guide-closed', waiting);
+// ---------------------------------------------------------------------------
+// Learning mode (plan T3): the Lessons sidebar open beside the app
+// ---------------------------------------------------------------------------
+
+export const AUDIT_LESSON = 'pry.p1-1';
+
+function lessonRecord(phase: Phase, id: string, failures: string[], notes: string[] = [], rect?: RectLike): AuditRecord {
+  return {
+    phase, kind: 'lesson', id, pass: failures.length === 0, mode: null, side: null, inViewport: true, overlapsTarget: false,
+    coversFocus: false, overlapsAvoid: false, avoidHit: [], arrowLen: null, arrowExempt: false, largeTarget: false,
+    waiting: false, jumped: false, failures, notes, rect,
+  };
 }
 
-/**
- * Tour with an experiment running (arch:R2-3): opening the tour collapses the
- * guide to its header, the card never covers that header, and starting an
- * experiment ends the tour.
- */
-async function tourWithGuidePass(deps: AuditDeps, out: AuditRecord[]) {
-  const record = (id: string, ok: boolean, failure: string, notes: string[] = []): AuditRecord => ({
-    phase: 'tour-with-guide', kind: 'tour', id, pass: ok, mode: null, side: null, inViewport: true,
-    overlapsTarget: false, coversFocus: false, overlapsAvoid: false, avoidHit: [], arrowLen: null,
-    arrowExempt: false, largeTarget: false, waiting: false, jumped: false, failures: ok ? [] : [failure], notes,
+const sidebarEl = () => document.querySelector<HTMLElement>('[data-lesson-sidebar]');
+
+/** Lengths of the arrows the Lessons pointers draw now. */
+function drawnArrows(): number[] {
+  return [...document.querySelectorAll('[data-popup-pointer] line')].map((l) => {
+    const n = (k: string) => Number(l.getAttribute(k) ?? 0);
+    return Math.hypot(n('x2') - n('x1'), n('y2') - n('y1'));
   });
-  await deps.startExperiment('induction');
-  const full = await waitFor(() => guideRect(), 10000);
-  if (!full) {
-    out.push({ ...record('guide', false, 'experiment guide never opened'), skipped: 'experiment guide never opened' });
+}
+
+async function lessonsPass(deps: AuditDeps, out: AuditRecord[], side: 'left' | 'right') {
+  const L = deps.lessons;
+  const phase: Phase = side === 'left' ? 'lessons-left' : 'lessons-right';
+  if (!L) {
+    out.push({ ...lessonRecord(phase, 'lessons', ['lessons hook missing']), skipped: 'lessons hook missing' });
     return;
   }
-  tutorialState.start();
-  tutorialState.modelOfferDismissed = true;
-  const collapsed = await waitFor(() => {
-    const g = guideRect();
-    return g && g.height < full.height - 1 ? g : null;
-  }, 5000);
-  out.push(record('guide-collapses', !!collapsed, 'guide did not collapse to its header when the tour opened', [
-    `guide ${Math.round(full.height)}px -> ${collapsed ? Math.round(collapsed.height) : '?'}px`,
-  ]));
-  // The first few steps: header targets, a run button, a large panel.
-  for (let i = 0; i < 5; i++) {
-    const step = tutorialState.currentStep;
-    if (!step) break;
-    progress(`tour-with-guide ${step.id}`);
-    await waitFor(() => card()?.getAttribute('data-step-id') === step.id, 5000);
-    if (step.target) await waitFor(() => activeTarget(), 10000);
-    await settle(card);
-    out.push(judge(measure('tour-with-guide', 'tour', step.id, card(), rectOf(activeTarget()), [OCCUPIED.tourCard]), { tour: true }));
-    tutorialState.next();
-    await frame();
+  progress(`${phase} open`);
+  await L.open(side);
+  const opened = await L.openLesson(AUDIT_LESSON);
+  const sb = await waitFor(() => sidebarEl(), 15000);
+  if (!opened || !sb) {
+    out.push(lessonRecord(phase, 'open', [`couldn't open ${AUDIT_LESSON}`]));
+    L.close();
+    return;
   }
-  // Starting an experiment ends the tour.
-  await deps.startExperiment('induction');
-  const ended = await waitFor(() => !tutorialState.open, 5000);
-  out.push(record('experiment-ends-tour', !!ended, 'starting an experiment left the tour open'));
-  tutorialState.close();
-  deps.closeExperiment();
-  await waitFor(() => !guideRect(), 5000);
+  await settle(sidebarEl);
+  // Beside the app, never over it.
+  const s = rectOf(sb);
+  const main = rectOf(document.querySelector('[data-lessons-main]'));
+  const header = rectOf(document.querySelector('header'));
+  const beside: string[] = [];
+  if (!s || !main) beside.push('sidebar or workspace missing');
+  else {
+    if (placementFlags(s, vp(), null, null, [main]).overlapsAvoid) beside.push('sidebar overlaps the workspace');
+    if (header && s.top < header.top + header.height - 0.5) beside.push('sidebar overlaps the header');
+    if (side === 'right' && s.left < main.left) beside.push('right sidebar sits left of the workspace');
+    if (side === 'left' && s.left > main.left) beside.push('left sidebar sits right of the workspace');
+  }
+  out.push(lessonRecord(phase, 'beside', beside, [`sidebar ${s ? Math.round(s.width) : '?'}px${L.railed() ? ' (rail)' : ''}`], s ?? undefined));
+
+  // Every section: the honesty box in view on explain-result steps; no drawn arrow over MAX_ARROW.
+  const n = L.sectionCount();
+  for (let i = 0; i < n; i++) {
+    progress(`${phase} section ${i + 1}/${n}`);
+    await L.goto(i);
+    await waitFor(() => !document.querySelector('[data-lesson-sidebar] [role="status"]')?.textContent?.includes('Setting up'), 15000);
+    await settle(sidebarEl);
+    await sleep(300);
+    const arrows = drawnArrows();
+    const long = arrows.filter((a) => a > MAX_ARROW);
+    const f: string[] = long.map((a) => `drawn arrow ${Math.round(a)}px > ${MAX_ARROW}`);
+    const notes = [`${arrows.length} arrow(s)`];
+    if (L.hasExplainResult() && !L.railed()) {
+      const box = rectOf(document.querySelector('[data-testid="honesty-box"]'));
+      if (!box) f.push('honesty box missing on an explain-result step');
+      else if (box.top < 0 || box.left < 0 || box.top + box.height > window.innerHeight + 0.5 || box.left + box.width > window.innerWidth + 0.5) f.push('honesty box outside the viewport');
+      notes.push('explain-result');
+    }
+    out.push(lessonRecord(phase, `section-${i + 1}`, f, notes));
+  }
+
+  // Tips with the sidebar open: none may cover it (occupied: lesson-sidebar).
+  await tipPass(deps, out, phase);
+  L.close();
+  await waitFor(() => !sidebarEl(), 5000);
 }
 
 // ---------------------------------------------------------------------------
 // Entry
 // ---------------------------------------------------------------------------
 
-export async function runPopupAudit(deps: AuditDeps, opts: { guideTour?: boolean } = {}) {
+export async function runPopupAudit(
+  deps: AuditDeps,
+  opts: { skipTour?: boolean; lessons?: ('left' | 'right')[] } = {},
+) {
   const w = window as unknown as { __popupAudit?: unknown };
   const size = `${window.innerWidth}x${window.innerHeight}`;
   const records: AuditRecord[] = [];
@@ -627,7 +685,7 @@ export async function runPopupAudit(deps: AuditDeps, opts: { guideTour?: boolean
   try {
     // Natural tips stay quiet while the audit forces them one at a time.
     for (const tip of tipsRegistry) localStorage.setItem(`pry:tip_seen:${tip.id}`, 'true');
-    if (tutorialState.open) tutorialState.close();
+    deps.tour?.close();
 
     if (deps.loadState() !== 'loaded') {
       await waitFor(() => deps.loadState() === 'loading' || deps.loadState() === 'loaded', 15000);
@@ -641,7 +699,7 @@ export async function runPopupAudit(deps: AuditDeps, opts: { guideTour?: boolean
     if (!(await waitFor(() => deps.actions.response()?.prompt === IOI, 120000, 250))) throw new Error('fixed prompt never ran');
     await sleep(500);
 
-    await tourPass(deps, records);
+    if (!opts.skipTour) await tourPass(deps, records);
     // Back to the fixed prompt for tips and tooltips.
     deps.actions.setCompareMode(false);
     if (deps.actions.response()?.prompt !== IOI) {
@@ -651,8 +709,7 @@ export async function runPopupAudit(deps: AuditDeps, opts: { guideTour?: boolean
     await tipPass(deps, records, 'main');
     await termPass(deps, records);
     await hoverPass(deps, records);
-    await guidePasses(deps, records);
-    if (opts.guideTour) await tourWithGuidePass(deps, records);
+    for (const side of opts.lessons ?? []) await lessonsPass(deps, records, side);
   } catch (e) {
     error = e instanceof Error ? e.message : String(e);
   } finally {
@@ -668,34 +725,28 @@ export async function runPopupAudit(deps: AuditDeps, opts: { guideTour?: boolean
     error,
     viewport: { innerWidth: window.innerWidth, innerHeight: window.innerHeight },
     tips: tipsRegistry.length,
-    tourSteps: tourChapters.reduce((n, c) => n + c.steps.length, 0),
+    tourSteps: records.filter((r) => r.kind === 'tour' && r.id.startsWith('step-')).length,
     seconds: Math.round((Date.now() - started) / 1000),
     records,
   };
   console.log(line);
-  (window as unknown as { __popupAuditShow?: unknown }).__popupAuditShow = showStep;
+  (window as unknown as { __popupAuditShow?: unknown }).__popupAuditShow = (id: string | null) => showStep(deps, id);
   return line;
 }
 
 /** Driver helper for evidence screenshots: open the tour at `stepId` (null closes it). */
-async function showStep(stepId: string | null): Promise<boolean> {
+async function showStep(deps: AuditDeps, stepId: string | null): Promise<boolean> {
+  const tour = deps.tour;
+  if (!tour) return false;
   const saved = snapshotSeen();
   try {
     if (!stepId) {
-      tutorialState.close();
+      tour.close();
       return true;
     }
-    const ci = tourChapters.findIndex((c) => c.steps.some((s) => s.id === stepId));
-    if (ci < 0) return false;
-    const si = tourChapters[ci].steps.findIndex((s) => s.id === stepId);
-    tutorialState.goToChapter(ci);
-    tutorialState.modelOfferDismissed = true;
-    for (let i = 0; i < si; i++) {
-      await frame();
-      tutorialState.next();
-    }
-    await waitFor(() => card()?.getAttribute('data-step-id') === stepId, 5000);
-    await waitFor(() => activeTarget(), 10000);
+    await tour.start(stepId);
+    if (!(await waitFor(() => card()?.getAttribute('data-step-id') === stepId, 5000))) return false;
+    if (tour.pointerCount() > 0) await waitFor(() => activeTarget(), 10000);
     await settle(card);
     await sleep(400);
     return true;

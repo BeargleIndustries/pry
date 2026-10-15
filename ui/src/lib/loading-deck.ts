@@ -1,21 +1,22 @@
-// The card deck on the loading screen: tips, experiments to try once the model
+// The card deck on the loading screen: tips, lessons to open once the model
 // is ready, and glossary words. Plain TS so the shuffling and navigation can be
 // tested without a DOM.
 
 import type { TipDef } from './tips/tips-registry';
-import type { Experiment } from './experiments/experiments';
 import type { GlossaryEntry } from './glossary';
+// Bundled lessons, read from the lesson loader by lessons/deck-lessons.ts.
+import type { DeckLesson } from './lessons/deck-lessons';
 
 export type DeckCard =
   | { kind: 'tip'; id: string; heading: string; body: string }
   | {
-      kind: 'experiment';
+      kind: 'lesson';
       id: string;
-      experimentId: string;
+      lessonId: string;
       title: string;
-      hook: string;
-      preset: string;
-      /** Running it means loading a different model afterwards. */
+      summary: string;
+      model: string | null;
+      /** The lesson runs on a different model than the one loading. */
       switchesModel: boolean;
     }
   | { kind: 'term'; id: string; term: string; definition: string };
@@ -44,9 +45,9 @@ export const LOADING_TIPS: Record<string, string> = {
 
 export interface DeckSources {
   tips: TipDef[];
-  experiments: Experiment[];
+  lessons: DeckLesson[];
   glossary: Record<string, GlossaryEntry>;
-  /** The model being loaded, to say whether an experiment switches models. */
+  /** The model being loaded, to say whether a lesson runs on another model. */
   presetId: string;
   /** 0..1 random source; pass a seeded one in tests. */
   random?: () => number;
@@ -87,16 +88,16 @@ export function buildDeck(src: DeckSources): DeckCard[] {
     .filter((t) => t.id in LOADING_TIPS)
     .map((t) => ({ kind: 'tip', id: `tip:${t.id}`, heading: LOADING_TIPS[t.id], body: t.blurb }));
 
-  // Experiments for this model first; others only if there aren't enough.
-  const exps = src.experiments.map(
-    (e): DeckCard => ({
-      kind: 'experiment',
-      id: `exp:${e.id}`,
-      experimentId: e.id,
-      title: e.title,
-      hook: e.hook,
-      preset: e.preset,
-      switchesModel: e.preset !== src.presetId,
+  // Lessons for this model first; others only if there aren't enough.
+  const lessons = src.lessons.map(
+    (l): DeckCard => ({
+      kind: 'lesson',
+      id: `lesson:${l.id}`,
+      lessonId: l.id,
+      title: l.title,
+      summary: l.summary,
+      model: l.model,
+      switchesModel: l.model !== null && l.model !== src.presetId,
     }),
   );
   const terms: DeckCard[] = Object.entries(src.glossary).map(([key, g]) => ({
@@ -106,19 +107,19 @@ export function buildDeck(src: DeckSources): DeckCard[] {
     definition: g.definition,
   }));
 
-  const pickedExps = freshFirst(exps, recent, random)
+  const pickedLessons = freshFirst(lessons, recent, random)
     .sort((a, b) => Number(isSwitch(a)) - Number(isSwitch(b)))
     .slice(0, perKind);
   const groups: DeckCard[][] = [
     freshFirst(terms, recent, random).slice(0, perKind),
     freshFirst(tips, recent, random).slice(0, perKind),
-    pickedExps,
+    pickedLessons,
   ];
   return interleave(groups);
 }
 
 function isSwitch(c: DeckCard): boolean {
-  return c.kind === 'experiment' && c.switchesModel;
+  return c.kind === 'lesson' && c.switchesModel;
 }
 
 /** Round-robin across groups so the same kind rarely sits twice in a row. */

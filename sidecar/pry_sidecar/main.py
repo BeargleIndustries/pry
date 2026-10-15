@@ -52,6 +52,7 @@ from pry_sidecar.schemas import (
     CircuitRequest,
     CustomValidateRequest,
     DLARequest,
+    EmbeddingRequest,
     FeatureResponse,
     GenerateRequest,
     HeadScoresRequest,
@@ -235,14 +236,19 @@ def _check_sae_feature(loaded, layer: int, feature_id: int) -> str | None:
 # ---------------------------------------------------------------------------
 
 
-def _torch_version() -> str | None:
-    """Installed torch version, read from package metadata (no import)."""
+def _package_version(name: str) -> str | None:
+    """Installed version of package ``name``, read from metadata (no import)."""
     try:
         from importlib.metadata import version
 
-        return version("torch")
+        return version(name)
     except Exception:
         return None
+
+
+def _torch_version() -> str | None:
+    """Installed torch version, read from package metadata (no import)."""
+    return _package_version("torch")
 
 
 async def health(request: Request) -> JSONResponse:
@@ -279,6 +285,10 @@ async def health(request: Request) -> JSONResponse:
         "gpu_name": gpu_name,
         "torch": torch.__version__ if torch is not None else _torch_version(),
         "cuda": cuda,
+        # MF-5 provenance: the analysis libraries' versions.
+        "transformer_lens": _package_version("transformer_lens"),
+        "sae_lens": _package_version("sae_lens"),
+        "transformers": _package_version("transformers"),
         "loaded_preset": preset_id if loaded is not None else None,
         "sae_layer": loaded.sae_layer if loaded is not None else None,
         "hf_token_present": bool(os.environ.get("HF_TOKEN")),
@@ -369,6 +379,7 @@ async def load(request: Request) -> Response:
         bytes_downloaded: int | None = None,
         bytes_total: int | None = None,
         elapsed_s: float | None = None,
+        provenance: dict | None = None,
     ) -> bytes:
         data = LoadProgressEvent(
             stage=stage,  # type: ignore[arg-type]
@@ -377,13 +388,28 @@ async def load(request: Request) -> Response:
             bytes_downloaded=bytes_downloaded,
             bytes_total=bytes_total,
             elapsed_s=elapsed_s,
+            **(provenance or {}),
         ).model_dump_json(exclude_none=True)
         return f"data: {data}\n\n".encode("utf-8")
+
+    def provenance_of(loaded) -> dict:
+        """MF-5: model_revision and sae {release, id} for the ready event."""
+        if loaded is None:
+            return {}
+        release = getattr(loaded, "sae_release", None)
+        sae_id = getattr(loaded, "sae_id", None)
+        return {
+            "model_revision": getattr(loaded, "model_revision", None),
+            "sae": {"release": release, "id": sae_id} if release and sae_id else None,
+        }
 
     async def byte_stream():
         # Fast-path: preset already loaded.
         if REGISTRY.is_loaded(preset_id):
-            yield sse_line("already_loaded", 1.0, f"Preset '{preset_id}' already loaded.")
+            yield sse_line(
+                "already_loaded", 1.0, f"Preset '{preset_id}' already loaded.",
+                provenance=provenance_of(REGISTRY.get(preset_id)),
+            )
             return
 
         loop = asyncio.get_running_loop()
@@ -396,9 +422,11 @@ async def load(request: Request) -> Response:
             bytes_downloaded: int | None = None,
             bytes_total: int | None = None,
             elapsed_s: float | None = None,
+            provenance: dict | None = None,
         ) -> None:
             loop.call_soon_threadsafe(
-                queue.put_nowait, (stage, progress, message, bytes_downloaded, bytes_total, elapsed_s)
+                queue.put_nowait,
+                (stage, progress, message, bytes_downloaded, bytes_total, elapsed_s, provenance),
             )
 
         weights_beat: list[Heartbeat] = []
@@ -458,9 +486,12 @@ async def load(request: Request) -> Response:
                     # T32 custom model: no SAE, so no feature-map download or stage.
                     tl_name = _prefetch_custom(custom_hf, push)
                     read_weights()
-                    REGISTRY.load_custom(preset_id, tl_name, on_stage=custom_on_stage)
+                    loaded = REGISTRY.load_custom(preset_id, tl_name, on_stage=custom_on_stage)
                     inflight.set_result(None)
-                    push("ready", 1.0, f"{custom_hf} ready (no feature dictionary).")
+                    push(
+                        "ready", 1.0, f"{custom_hf} ready (no feature dictionary).",
+                        provenance=provenance_of(loaded),
+                    )
                     return
                 # Gated preset without a token: say so before any download.
                 hf_token_for(manifest)
@@ -469,7 +500,7 @@ async def load(request: Request) -> Response:
                 loaded = REGISTRY.load(preset_id, manifest, on_stage=on_stage)
                 inflight.set_result(None)
                 push("load_sae", 0.97, f"Features ready (layer {loaded.sae_layer}).")
-                push("ready", 1.0, f"Preset '{preset_id}' ready.")
+                push("ready", 1.0, f"Preset '{preset_id}' ready.", provenance=provenance_of(loaded))
             except Exception as exc:
                 if owner and not inflight.done():
                     inflight.set_exception(exc)
@@ -715,10 +746,14 @@ async def logit_lens(request: Request) -> JSONResponse:
         return _error(f"preset {req.preset_id!r} not loaded; POST /load first", status=409)
 
     try:
-        from pry_sidecar.inference import run_logit_lens
+        from pry_sidecar.inference import UnprocessableError, run_logit_lens
 
         response = await asyncio.to_thread(run_logit_lens, req, loaded)
-        return _json(response.model_dump())
+        # No track_tokens: the body stays exactly as it was before ``tracked``.
+        return _json(response.model_dump(exclude={"tracked"} if response.tracked is None else None))
+    except UnprocessableError as e:
+        # A tracked token that isn't a single token
+        return _error(str(e), status=422)
     except Exception as e:
         logger.exception("logit_lens failed for preset %r", req.preset_id)
         return JSONResponse(
@@ -751,10 +786,13 @@ async def dla(request: Request) -> JSONResponse:
         return _error(f"preset {req.preset_id!r} not loaded; POST /load first", status=409)
 
     try:
-        from pry_sidecar.inference import run_dla
+        from pry_sidecar.inference import UnprocessableError, run_dla
 
         response = await asyncio.to_thread(run_dla, req, loaded)
         return _json(response.model_dump())
+    except UnprocessableError as e:
+        # Answer or contrast that isn't a single token
+        return _error(str(e), status=422)
     except ValueError as e:
         # Token position past the end of the prompt
         return _error(str(e), status=400)
@@ -937,6 +975,39 @@ async def patch(request: Request) -> JSONResponse:
         return _error(str(e), status=400)
     except Exception as e:
         logger.exception("patch failed for preset %r", req.preset_id)
+        return JSONResponse(
+            {"error": "inference_error", "detail": str(e)},
+            status_code=500,
+        )
+
+
+async def embedding(request: Request) -> JSONResponse:
+    """POST /embedding -- token and positional embedding vectors (TN-1)."""
+    try:
+        req = EmbeddingRequest.model_validate_json(await request.body())
+    except ValidationError as e:
+        return JSONResponse(
+            {"error": "validation_error", "detail": e.errors()},
+            status_code=400,
+        )
+
+    if not _known_preset(req.preset_id):
+        return _error(f"Unknown preset: {req.preset_id!r}", status=400)
+
+    loaded = REGISTRY.get(req.preset_id)
+    if loaded is None:
+        return _error(f"preset {req.preset_id!r} not loaded; POST /load first", status=409)
+
+    try:
+        from pry_sidecar.inference import UnprocessableError, run_embedding
+
+        response = await asyncio.to_thread(run_embedding, req, loaded)
+        return _json(response.model_dump())
+    except UnprocessableError as e:
+        # A position outside the prompt
+        return _error(str(e), status=422)
+    except Exception as e:
+        logger.exception("embedding failed for preset %r", req.preset_id)
         return JSONResponse(
             {"error": "inference_error", "detail": str(e)},
             status_code=500,
@@ -1196,6 +1267,7 @@ routes = [
     Route("/ablate-feature", ablate_feature, methods=["POST"]),
     Route("/patch", patch, methods=["POST"]),
     Route("/tokenize", tokenize, methods=["POST"]),
+    Route("/embedding", embedding, methods=["POST"]),
     Route("/circuit", circuit, methods=["POST"]),
     Route("/head-scores", head_scores, methods=["POST"]),
     Route("/feature/{feature_id:int}", feature_info, methods=["GET"]),

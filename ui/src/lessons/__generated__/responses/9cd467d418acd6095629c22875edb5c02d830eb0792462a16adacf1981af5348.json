@@ -1,0 +1,210 @@
+{
+ "key": "9cd467d418acd6095629c22875edb5c02d830eb0792462a16adacf1981af5348",
+ "variant": "r1",
+ "request": {
+  "endpoint": "/ablate-feature",
+  "model": "gpt2-small",
+  "body": {
+   "preset_id": "gpt2-small",
+   "prompt": "The nurse said that",
+   "feature_ablations": [
+    {
+     "feature_index": 7698,
+     "layer": 8
+    }
+   ]
+  }
+ },
+ "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+ "device": "cuda",
+ "libs": {
+  "python": "3.12.13",
+  "torch": "2.5.1+cu124",
+  "transformer_lens": "2.15.4",
+  "sae_lens": "5.11.0",
+  "transformers": "4.57.6",
+  "numpy": "1.26.4"
+ },
+ "recorded": "2026-10-15",
+ "neuronpedia_fetched": null,
+ "offline": false,
+ "trimmed": [],
+ "response": {
+  "preset_id": "gpt2-small",
+  "prompt": "The nurse said that",
+  "original_predictions": [
+   {
+    "token": " she",
+    "probability": 0.18969573080539703,
+    "rank": 1
+   },
+   {
+    "token": " the",
+    "probability": 0.08148098737001419,
+    "rank": 2
+   },
+   {
+    "token": " her",
+    "probability": 0.055305566638708115,
+    "rank": 3
+   },
+   {
+    "token": " while",
+    "probability": 0.052738629281520844,
+    "rank": 4
+   },
+   {
+    "token": " when",
+    "probability": 0.05238443613052368,
+    "rank": 5
+   },
+   {
+    "token": " after",
+    "probability": 0.041437529027462006,
+    "rank": 6
+   },
+   {
+    "token": " he",
+    "probability": 0.022767839953303337,
+    "rank": 7
+   },
+   {
+    "token": ",",
+    "probability": 0.01739364303648472,
+    "rank": 8
+   },
+   {
+    "token": " as",
+    "probability": 0.016499081626534462,
+    "rank": 9
+   },
+   {
+    "token": " in",
+    "probability": 0.016366468742489815,
+    "rank": 10
+   }
+  ],
+  "ablated_predictions": [
+   {
+    "token": " she",
+    "probability": 0.1906098574399948,
+    "rank": 1
+   },
+   {
+    "token": " the",
+    "probability": 0.08024787157773972,
+    "rank": 2
+   },
+   {
+    "token": " her",
+    "probability": 0.055853310972452164,
+    "rank": 3
+   },
+   {
+    "token": " when",
+    "probability": 0.05384494364261627,
+    "rank": 4
+   },
+   {
+    "token": " while",
+    "probability": 0.05348796769976616,
+    "rank": 5
+   },
+   {
+    "token": " after",
+    "probability": 0.0422724150121212,
+    "rank": 6
+   },
+   {
+    "token": " he",
+    "probability": 0.02133576013147831,
+    "rank": 7
+   },
+   {
+    "token": ",",
+    "probability": 0.017444008961319923,
+    "rank": 8
+   },
+   {
+    "token": " as",
+    "probability": 0.01645784266293049,
+    "rank": 9
+   },
+   {
+    "token": " in",
+    "probability": 0.016229704022407532,
+    "rank": 10
+   }
+  ],
+  "prediction_delta": [
+   {
+    "token": " when",
+    "original_prob": 0.05238443613052368,
+    "ablated_prob": 0.05384494364261627,
+    "delta": 0.0014605075120925903
+   },
+   {
+    "token": " he",
+    "original_prob": 0.022767839953303337,
+    "ablated_prob": 0.02133576013147831,
+    "delta": -0.0014320798218250275
+   },
+   {
+    "token": " the",
+    "original_prob": 0.08148098737001419,
+    "ablated_prob": 0.08024787157773972,
+    "delta": -0.001233115792274475
+   },
+   {
+    "token": " she",
+    "original_prob": 0.18969573080539703,
+    "ablated_prob": 0.1906098574399948,
+    "delta": 0.0009141266345977783
+   },
+   {
+    "token": " after",
+    "original_prob": 0.041437529027462006,
+    "ablated_prob": 0.0422724150121212,
+    "delta": 0.000834885984659195
+   },
+   {
+    "token": " while",
+    "original_prob": 0.052738629281520844,
+    "ablated_prob": 0.05348796769976616,
+    "delta": 0.0007493384182453156
+   },
+   {
+    "token": " her",
+    "original_prob": 0.055305566638708115,
+    "ablated_prob": 0.055853310972452164,
+    "delta": 0.0005477443337440491
+   },
+   {
+    "token": " in",
+    "original_prob": 0.016366468742489815,
+    "ablated_prob": 0.016229704022407532,
+    "delta": -0.00013676472008228302
+   },
+   {
+    "token": ",",
+    "original_prob": 0.01739364303648472,
+    "ablated_prob": 0.017444008961319923,
+    "delta": 5.036592483520508e-05
+   },
+   {
+    "token": " as",
+    "original_prob": 0.016499081626534462,
+    "ablated_prob": 0.01645784266293049,
+    "delta": -4.123896360397339e-05
+   }
+  ],
+  "ablations": null,
+  "feature_ablations": [
+   {
+    "feature_index": 7698,
+    "layer": 8
+   }
+  ],
+  "status": "ok"
+ }
+}

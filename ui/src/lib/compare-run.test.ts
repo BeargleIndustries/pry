@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { fetchMock } = vi.hoisted(() => ({ fetchMock: vi.fn() }));
-vi.mock('./sidecar', () => ({ sidecarFetch: fetchMock }));
+vi.mock('./sidecar', async (importOriginal) => ({ ...(await importOriginal<typeof import('./sidecar')>()), sidecarFetch: fetchMock }));
 
 import { COMPARE_TOP_K_FEATURES, CompareController, createInitialCompareState } from './compare-run';
 

@@ -94,7 +94,7 @@
         class="rounded px-2 py-1 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100">⇄</button>
       <label class="flex items-center gap-2">
         <span class="w-4 text-xs font-semibold text-amber-400">B</span>
-        <input type="text" bind:value={s.promptB} onkeydown={onKey} aria-label="Prompt B"
+        <input type="text" bind:value={s.promptB} onkeydown={onKey} aria-label="Prompt B" data-tour="compare-prompt-b"
           class="flex-1 rounded border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-100 focus:border-amber-500 focus:outline-none" />
       </label>
       <button type="button" onclick={() => compare.run()} disabled={runDisabled || s.running} title={runDisabledReason}
@@ -141,7 +141,7 @@
     <div class="grid gap-4 xl:grid-cols-2">
       <!-- 1. Predictions -->
       <div class="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
-        <h3 class="mb-1 text-sm font-semibold text-zinc-100">Next-word guesses</h3>
+        <h3 class="mb-1 text-sm font-semibold text-zinc-100">Next-token guesses</h3>
         <p class="mb-3 text-xs text-zinc-500">
           Change = B minus A, in percentage points. Pry only gets each prompt’s top 10 guesses, so a word missing from one
           list is shown as “under” that list’s lowest chance, and its change as “at least”.
@@ -178,7 +178,7 @@
 
       <!-- 2. Features -->
       <div class="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
-        <h3 class="mb-1 text-sm font-semibold text-zinc-100">Features on this word</h3>
+        <h3 class="mb-1 text-sm font-semibold text-zinc-100">Features on this token</h3>
         {#if ready.a.sae_layer_used == null || ready.b.sae_layer_used == null}
           <p class="text-xs text-zinc-500">{NO_SAE_MESSAGE}</p>
         {:else if !sameLayer}
@@ -215,7 +215,7 @@
 
     <!-- 3. Attention delta -->
     <div class="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
-      <h3 class="mb-1 text-sm font-semibold text-zinc-100">How differently each head looks from this word</h3>
+      <h3 class="mb-1 text-sm font-semibold text-zinc-100">How differently each head looks from this token</h3>
       {#if attn && !attn.ok}
         <p class="text-xs text-zinc-500">{attn.reason}</p>
       {:else if attn && attn.ok}

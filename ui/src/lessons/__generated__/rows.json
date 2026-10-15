@@ -1,0 +1,5272 @@
+{
+ "_about": "Written by `pytest sidecar/tests/test_lessons.py --record` (plan T6a). Do not edit.",
+ "model": "gpt2-small",
+ "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+ "device": "cuda",
+ "libs": {
+  "python": "3.12.13",
+  "torch": "2.5.1+cu124",
+  "transformer_lens": "2.15.4",
+  "sae_lens": "5.11.0",
+  "transformers": "4.57.6",
+  "numpy": "1.26.4"
+ },
+ "recorded": "2026-10-15",
+ "drift_checked": "2026-10-15",
+ "sidecar_hash": "2ad93049bb8d61264a3a3dff195dce4bc2d159339538744cd1b652476606a188",
+ "sidecar_hash_files": 15,
+ "status_counts": {
+  "verified": 66,
+  "narrowed": 5,
+  "failed": 0,
+  "needs-brad": 0,
+  "closed-by-task": 1
+ },
+ "rows": [
+  {
+   "id": 1,
+   "status": "verified",
+   "lessons": [
+    "P1.1",
+    "P1.3",
+    "P1.6",
+    "P2.3",
+    "P2.5",
+    "P3.6"
+   ],
+   "claim": "\" basketball\" 42.2%, \" football\" 4.7%, \" golf\" 4.1%, \" the\" 2.1%",
+   "values": {
+    "top4": [
+     [
+      " basketball",
+      0.42207759618759155,
+      15.962446212768555
+     ],
+     [
+      " football",
+      0.0471888966858387,
+      13.771415710449219
+     ],
+     [
+      " golf",
+      0.04147355258464813,
+      13.642313003540039
+     ],
+     [
+      " the",
+      0.021033653989434242,
+      12.963380813598633
+     ]
+    ],
+    "top10_total": 0.629787128418684,
+    "tokens": 7
+   },
+   "constants": {
+    "basketball": {
+     "value": 0.42207759618759155,
+     "unit": "probability"
+    },
+    "fid": {
+     "value": 12472,
+     "unit": "number"
+    },
+    "sae_layer": {
+     "value": 8,
+     "unit": "layer"
+    }
+   },
+   "checks": [
+    {
+     "claim": "top 4 as the lesson quotes",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "de870ae59653d02cb64f39674c39b3f8f7af8b94ef5ec7ae3a2b11e14a70226d"
+   ]
+  },
+  {
+   "id": 2,
+   "status": "verified",
+   "lessons": [
+    "P1.1"
+   ],
+   "claim": "\" now\" 4.8%, \" the\" 3.7%, \" a\" 3.5%, \" home\" 3.1%; top four hold 15.1%; \" Paris\" not in the top four (the feedback may say \"not in the top ten\")",
+   "values": {
+    "top4": [
+     [
+      " now",
+      0.04750591516494751,
+      14.389959335327148
+     ],
+     [
+      " the",
+      0.03744661435484886,
+      14.152021408081055
+     ],
+     [
+      " a",
+      0.03546111285686493,
+      14.097541809082031
+     ],
+     [
+      " home",
+      0.03092123754322529,
+      13.960548400878906
+     ]
+    ],
+    "top10_total": 0.27456285431981087,
+    "tokens": 6,
+    "top4_total": 0.1513348799198866,
+    "paris": null,
+    "paris_rank": "not in the top ten"
+   },
+   "checks": [
+    {
+     "claim": "top 4 as the lesson quotes",
+     "holds": true
+    },
+    {
+     "claim": "top four hold 15.1%",
+     "holds": true
+    },
+    {
+     "claim": "\" Paris\" not in the top four",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "ce84e8bcdec7307156bf7da570c6709b3f27be6ff15eeb4a2f585733953751fd"
+   ]
+  },
+  {
+   "id": 3,
+   "status": "verified",
+   "lessons": [
+    "P1.1",
+    "P1.4"
+   ],
+   "claim": "\" Paris\" 9.7%, \" Marse\" 8.9%, \" Saint\" 3.1%, \" St\" 2.8%: a near-tie with most chance elsewhere",
+   "values": {
+    "top4": [
+     [
+      " Paris",
+      0.09718378633260727,
+      14.94491195678711
+     ],
+     [
+      " Marse",
+      0.08912244439125061,
+      14.858319282531738
+     ],
+     [
+      " Saint",
+      0.030924243852496147,
+      13.799848556518555
+     ],
+     [
+      " St",
+      0.027856793254613876,
+      13.695384979248047
+     ]
+    ],
+    "top10_total": 0.36329547967761755,
+    "tokens": 9
+   },
+   "checks": [
+    {
+     "claim": "top 4 as the lesson quotes",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "a468eb96531897079e4892b2e22c4d4216db580be59c17633a37b5b61e4de64a"
+   ]
+  },
+  {
+   "id": 4,
+   "status": "verified",
+   "lessons": [
+    "P1.4"
+   ],
+   "claim": "\" one\" 34.2%, \" two\" 16.2%, \" four\" 7.0%, \" three\" 6.9%: a fluent wrong answer",
+   "values": {
+    "top4": [
+     [
+      " one",
+      0.3420523405075073,
+      16.43265151977539
+     ],
+     [
+      " two",
+      0.16224081814289093,
+      15.686769485473633
+     ],
+     [
+      " four",
+      0.06950779259204865,
+      14.839126586914062
+     ],
+     [
+      " three",
+      0.06891506910324097,
+      14.830562591552734
+     ]
+    ],
+    "top10_total": 0.7553917774930596,
+    "tokens": 5,
+    "logit_one": 16.43265151977539,
+    "logit_four": 14.839126586914062
+   },
+   "checks": [
+    {
+     "claim": "top 4 as the lesson quotes",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "6cbfa01a0cf51537e015464b871062ea6755335522325630603b56a1bf055d3e"
+   ]
+  },
+  {
+   "id": 5,
+   "status": "verified",
+   "lessons": [
+    "P1.4"
+   ],
+   "claim": "\" brains\" 12.7%, \" energy\" 11.5%, \" body\" 10.3%, \" bodies\" 7.3%",
+   "values": {
+    "top4": [
+     [
+      " brains",
+      0.12701007723808289,
+      16.737112045288086
+     ],
+     [
+      " energy",
+      0.1145985871553421,
+      16.634281158447266
+     ],
+     [
+      " body",
+      0.1026996597647667,
+      16.524654388427734
+     ],
+     [
+      " bodies",
+      0.0729883536696434,
+      16.18314552307129
+     ]
+    ],
+    "top10_total": 0.5828512161970139,
+    "tokens": 9
+   },
+   "checks": [
+    {
+     "claim": "top 4 as the lesson quotes",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "2cc2c967430f3864aef8886a8138954c04826ae8dc7c7271d99d174c5042ef97"
+   ]
+  },
+  {
+   "id": 6,
+   "status": "verified",
+   "lessons": [
+    "P1.2"
+   ],
+   "claim": "\" unbelievable\" is 1 token; \" Leclerc\" is \" Le\", \"cl\", \"erc\"",
+   "values": {
+    "unbelievable": [
+     "<|endoftext|>",
+     " unbelievable"
+    ],
+    "leclerc": [
+     "<|endoftext|>",
+     " Le",
+     "cl",
+     "erc"
+    ]
+   },
+   "checks": [
+    {
+     "claim": "\" unbelievable\" is one token",
+     "holds": true
+    },
+    {
+     "claim": "\" Leclerc\" is \" Le\", \"cl\", \"erc\"",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "0c1ecea76cc601a44b22deff5e6a4d621b770afdd5c4341e3ee7c7fb005ba79b",
+    "8ca9b39a1737953ea3f95845244fd62dd3dff59f0f7c90eb3013d04b8864c34f"
+   ]
+  },
+  {
+   "id": 7,
+   "status": "verified",
+   "lessons": [
+    "P1.2",
+    "P2.5"
+   ],
+   "claim": "\" bank\" at position 5: embedding identical (768 of 768) in both sentences; position 2 vs 5: embedding identical, positional embedding different; similarity of embedding plus positional embedding 0.957",
+   "values": {
+    "tokens": [
+     " bank",
+     " bank",
+     " bank"
+    ],
+    "dims": 768,
+    "embed_match_river_money": 768,
+    "pos_match_river_money": 768,
+    "embed_match_pos5_pos2": 768,
+    "pos_match_pos5_pos2": 0,
+    "summed_cosine_pos5_pos2": 0.9573173025322534,
+    "summed_match_pos5_pos2": 0
+   },
+   "constants": {
+    "river_bank_position": {
+     "value": 5,
+     "unit": "position"
+    },
+    "the_bank_position": {
+     "value": 2,
+     "unit": "position"
+    }
+   },
+   "checks": [
+    {
+     "claim": "embedding identical at position 5 in both sentences",
+     "holds": true
+    },
+    {
+     "claim": "position 2 vs 5: embedding identical, positional embedding different",
+     "holds": true
+    },
+    {
+     "claim": "summed similarity 0.957",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "0c6da7fe2049f4fffc0f47391ccb302cda6b663d217479bef20dc9dbc537e93d",
+    "9ad506fa2031af5443fb7b61904c04369b2bc5ff71009ea61094dc637c558f7f",
+    "a883b4e2f0564349c3dc86298053e6a06ee99085611e4684b7e6435dded5f4f1"
+   ]
+  },
+  {
+   "id": 8,
+   "status": "verified",
+   "lessons": [
+    "P1.5",
+    "P1.6"
+   ],
+   "claim": "continues \" was a great friend of mine. He was a great friend of mine, and\" (HF greedy)",
+   "values": {
+    "continuation": " was a great friend of mine. He was a great friend of mine, and I was very happy",
+    "new_tokens": 20
+   },
+   "checks": [
+    {
+     "claim": "continuation matches the HF greedy text",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "8bb7944332de4b287d590f5fb5c219b4018ae61fde26163cb97f388e98ea1c28",
+    "8bb7944332de4b287d590f5fb5c219b4018ae61fde26163cb97f388e98ea1c28.r2"
+   ]
+  },
+  {
+   "id": 9,
+   "status": "verified",
+   "lessons": [
+    "P1.6"
+   ],
+   "claim": "continues \" of this software and associated documentation files (the \"Software\"), to deal in the\" word for word",
+   "values": {
+    "continuation": " of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction,",
+    "new_tokens": 20
+   },
+   "checks": [
+    {
+     "claim": "continuation matches the HF greedy text",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "74f806eee847b1ea23e13cf873ff3fbcc36a743c919a9a9b415fc01f4676bdc2"
+   ]
+  },
+  {
+   "id": 10,
+   "status": "verified",
+   "lessons": [
+    "P1.6"
+   ],
+   "claim": "continues \" created equal, that every man is endowed by his Creator with certain unalienable\" (close to the real text, not exact)",
+   "values": {
+    "continuation": " created equal, that every man is endowed by his Creator with certain unalienable Rights, that among",
+    "new_tokens": 20
+   },
+   "checks": [
+    {
+     "claim": "continuation matches the HF greedy text",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "295e4075e1002198c6793556c8c2a297143855c4cdd0afa3fb83f10e6249a0f8"
+   ]
+  },
+  {
+   "id": 11,
+   "status": "verified",
+   "lessons": [
+    "P4.1"
+   ],
+   "claim": "continues \"\\n\\nWrite a short poem about the sea.\\n\\nWrite a short poem about the sea.\"",
+   "values": {
+    "continuation": "\n\nWrite a short poem about the sea.\n\nWrite a short poem about the sea.",
+    "new_tokens": 20
+   },
+   "checks": [
+    {
+     "claim": "continuation matches the HF greedy text",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "9e6a212541be5a2346ba87f8a4d2add3b20c10cf4d42e884133b62015544452f",
+    "9e6a212541be5a2346ba87f8a4d2add3b20c10cf4d42e884133b62015544452f.r2"
+   ]
+  },
+  {
+   "id": 12,
+   "status": "verified",
+   "lessons": [
+    "P4.1"
+   ],
+   "claim": "continues \"\\nThe sea is a sea of water\\n\\nAnd the sea is a sea\"",
+   "values": {
+    "continuation": "\nThe sea is a sea of water\n\nAnd the sea is a sea of water\n\n",
+    "new_tokens": 20
+   },
+   "checks": [
+    {
+     "claim": "continuation matches the HF greedy text",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "11a1a09a59bccdbaf6b8d26ea9bb8be716cfce608b4a2f361588c161f43cc26d",
+    "11a1a09a59bccdbaf6b8d26ea9bb8be716cfce608b4a2f361588c161f43cc26d.r2"
+   ]
+  },
+  {
+   "id": 13,
+   "status": "verified",
+   "lessons": [],
+   "claim": "both answer \"Paris\" and then loop",
+   "values": {
+    "question": "\n\nThe capital of France is Paris. The capital of France is Paris. The capital of France",
+    "qa": " The capital of France is Paris.\nQ: What is the capital of France?\nA:"
+   },
+   "checks": [
+    {
+     "claim": "both answer \"Paris\"",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "486470dc27c3e71e037b694f4c1076e278cc91d078527c61e1c105f378dd1d01",
+    "a6506e367d29c81df17e3b71cb2a479d1674d6a0fd44a9709866686119567043"
+   ]
+  },
+  {
+   "id": 14,
+   "status": "verified",
+   "lessons": [
+    "P2.4",
+    "P3.1",
+    "P3.2",
+    "P3.3"
+   ],
+   "claim": "\" Mary\" 67.7%, \" them\" 12.8%, \" the\" 4.8%, \" John\" 2.3%",
+   "values": {
+    "top4": [
+     [
+      " Mary",
+      0.676973819732666,
+      18.466381072998047
+     ],
+     [
+      " them",
+      0.1282569169998169,
+      16.802783966064453
+     ],
+     [
+      " the",
+      0.04757855087518692,
+      15.81113052368164
+     ],
+     [
+      " John",
+      0.023477984592318535,
+      15.104811668395996
+     ]
+    ],
+    "top10_total": 0.9260189679916948,
+    "tokens": 15
+   },
+   "constants": {
+    "to_position": {
+     "value": 14,
+     "unit": "position"
+    },
+    "mary_head_layer": {
+     "value": 10,
+     "unit": "layer"
+    },
+    "mary_head": {
+     "value": 7,
+     "unit": "head"
+    },
+    "mary_heads": {
+     "value": [
+      {
+       "layer": 9,
+       "head": 6
+      },
+      {
+       "layer": 9,
+       "head": 9
+      },
+      {
+       "layer": 10,
+       "head": 7
+      },
+      {
+       "layer": 11,
+       "head": 10
+      }
+     ],
+     "unit": "list",
+     "of": "record",
+     "kind": "literature",
+     "source": "Wang et al. 2022 (IOI), name-mover heads"
+    },
+    "store_position": {
+     "value": 8,
+     "unit": "position"
+    }
+   },
+   "checks": [
+    {
+     "claim": "top 4 as the lesson quotes",
+     "holds": true
+    },
+    {
+     "claim": "15 tokens",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "87d38913a998d48c37469b908b202f0be3c71fe6c3f482ae010319976825e93b"
+   ]
+  },
+  {
+   "id": 15,
+   "status": "verified",
+   "lessons": [
+    "P2.2"
+   ],
+   "claim": "\" Qu\" 31.9%, \" the\" 1.7%, \" Z\" 1.6%, \" Q\" 0.9%",
+   "values": {
+    "top4": [
+     [
+      " Qu",
+      0.31947842240333557,
+      13.577476501464844
+     ],
+     [
+      " the",
+      0.01724567450582981,
+      10.658348083496094
+     ],
+     [
+      " Z",
+      0.015874827280640602,
+      10.575521469116211
+     ],
+     [
+      " Q",
+      0.00859148520976305,
+      9.96155834197998
+     ]
+    ],
+    "top10_total": 0.3977150055579841,
+    "tokens": 17
+   },
+   "constants": {
+    "qu_prob": {
+     "value": 0.31947842240333557,
+     "unit": "probability"
+    },
+    "last_from_position": {
+     "value": 16,
+     "unit": "position"
+    },
+    "top_induction_layer": {
+     "value": 5,
+     "unit": "layer"
+    },
+    "top_induction_head": {
+     "value": 5,
+     "unit": "head"
+    },
+    "top_induction_head_ref": {
+     "value": {
+      "layer": 5,
+      "head": 5
+     },
+     "unit": "record"
+    },
+    "qu_position": {
+     "value": 8,
+     "unit": "position"
+    }
+   },
+   "checks": [
+    {
+     "claim": "top 4 as the lesson quotes",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "175351ba5277b309fc46cbf824211f349b0824a721df82a1300c34a6c24649ae"
+   ]
+  },
+  {
+   "id": 16,
+   "status": "verified",
+   "lessons": [
+    "P2.2"
+   ],
+   "claim": "\" Qu\" 11.6%, \" the\" 1.7%, \" Z\" 1.5%, \" D\" 1.1%: copying survives one change",
+   "values": {
+    "top4": [
+     [
+      " Qu",
+      0.1158151775598526,
+      12.978476524353027
+     ],
+     [
+      " the",
+      0.0169365331530571,
+      11.055953979492188
+     ],
+     [
+      " Z",
+      0.01524346973747015,
+      10.950632095336914
+     ],
+     [
+      " D",
+      0.010503504425287247,
+      10.578189849853516
+     ]
+    ],
+    "top10_total": 0.20436214841902256,
+    "tokens": 16
+   },
+   "checks": [
+    {
+     "claim": "top 4 as the lesson quotes",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "ebda32aacf0986d0757a30f1d1335d843b3e96e746c9ded950756851de962be8"
+   ]
+  },
+  {
+   "id": 17,
+   "status": "verified",
+   "lessons": [
+    "P2.3",
+    "P2.4",
+    "P3.1",
+    "P3.4"
+   ],
+   "claim": "nurse: \" she\" 19.0%, \" the\" 8.1%, \" her\" 5.5%. doctor: \" he\" 14.5%, \" the\" 10.5%, \" she\" 4.6%",
+   "values": {
+    "nurse_top4": [
+     [
+      " she",
+      0.18969573080539703,
+      14.617412567138672
+     ],
+     [
+      " the",
+      0.08148098737001419,
+      13.772360801696777
+     ],
+     [
+      " her",
+      0.055305566638708115,
+      13.384864807128906
+     ],
+     [
+      " while",
+      0.052738629281520844,
+      13.337339401245117
+     ]
+    ],
+    "doctor_top4": [
+     [
+      " he",
+      0.14449959993362427,
+      14.091415405273438
+     ],
+     [
+      " the",
+      0.10485425591468811,
+      13.770709991455078
+     ],
+     [
+      " she",
+      0.04582538828253746,
+      12.942976951599121
+     ],
+     [
+      " his",
+      0.041372593492269516,
+      12.840757369995117
+     ]
+    ]
+   },
+   "checks": [
+    {
+     "claim": "nurse top 3",
+     "holds": true
+    },
+    {
+     "claim": "doctor top 3",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "25e44d6e3ef82c34d09ad852e14b0e2c115af20d4b7fea65ef91919e9c691608",
+    "9a4bdd8fa9241ac5f6a78b51034d1ca9f332d82cfb26b1f9f0b10bcc465c49d0"
+   ]
+  },
+  {
+   "id": 18,
+   "status": "verified",
+   "lessons": [
+    "P1.3",
+    "P3.6"
+   ],
+   "claim": "\" football\" 48.6%, \" the\" 3.0%, \" basketball\" 2.3%; same token count as row 1, so \" of\" sits at the same position",
+   "values": {
+    "top4": [
+     [
+      " football",
+      0.4862903654575348,
+      16.145584106445312
+     ],
+     [
+      " the",
+      0.030450187623500824,
+      13.374870300292969
+     ],
+     [
+      " basketball",
+      0.02268098294734955,
+      13.080305099487305
+     ],
+     [
+      " sports",
+      0.019695211201906204,
+      12.939153671264648
+     ]
+    ],
+    "top10_total": 0.6348491217941046,
+    "tokens": 7,
+    "top4_total": 0.5591167472302914,
+    "jordan_tokens": 7
+   },
+   "checks": [
+    {
+     "claim": "top 4 as the lesson quotes",
+     "holds": true
+    },
+    {
+     "claim": "same token count as row 1",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "b925637bc30b3a3e09a11e8beb4b8912f50d95aae24352fdfbc6161c90ab0f9a",
+    "de870ae59653d02cb64f39674c39b3f8f7af8b94ef5ec7ae3a2b11e14a70226d"
+   ]
+  },
+  {
+   "id": 19,
+   "status": "verified",
+   "lessons": [
+    "P3.7"
+   ],
+   "claim": "\"49\" 5.8%, \"50\" 5.1%, \"45\" 3.4%, \"43\" 3.2%, all above 32",
+   "values": {
+    "top4": [
+     [
+      "49",
+      0.05795229226350784,
+      25.032733917236328
+     ],
+     [
+      "50",
+      0.0505671389400959,
+      24.89641571044922
+     ],
+     [
+      "45",
+      0.03358348459005356,
+      24.48714828491211
+     ],
+     [
+      "43",
+      0.03152494505047798,
+      24.423892974853516
+     ]
+    ],
+    "top10_total": 0.35411200672388077,
+    "tokens": 13
+   },
+   "constants": {
+    "map_head": {
+     "value": "L0H7",
+     "unit": "string"
+    },
+    "map_head_layer": {
+     "value": 0,
+     "unit": "layer"
+    },
+    "map_head_head": {
+     "value": 7,
+     "unit": "head"
+    },
+    "control_head": {
+     "value": "L9H9",
+     "unit": "string"
+    },
+    "control_head_layer": {
+     "value": 9,
+     "unit": "layer"
+    },
+    "control_head_head": {
+     "value": 9,
+     "unit": "head"
+    },
+    "margin_negative": {
+     "value": -0.05,
+     "unit": "probability",
+     "source": "outline P3.7:70"
+    }
+   },
+   "checks": [
+    {
+     "claim": "top 4 as the lesson quotes",
+     "holds": true
+    },
+    {
+     "claim": "top 4 all above 32",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "c05778a2cfba5d332b4b85ed645151bafb6634ca43bc465315499e38df55a052"
+   ]
+  },
+  {
+   "id": 20,
+   "status": "verified",
+   "lessons": [
+    "P2.3",
+    "P3.6"
+   ],
+   "claim": "Jordan: \" basketball\" first tops at L8 (42%), peaks at L9 (93%), ends at 42% at L11. Mary: tops at L9 (99.8%), ends at 67.7%. Nurse: \" she\" tops at L10 (41%), ends at 19%",
+   "values": {
+    "jordan": {
+     "column": [
+      [
+       "L0",
+       " the",
+       0.6686668395996094
+      ],
+      [
+       "L1",
+       " the",
+       0.7943925261497498
+      ],
+      [
+       "L2",
+       " the",
+       0.6200340986251831
+      ],
+      [
+       "L3",
+       " the",
+       0.46001967787742615
+      ],
+      [
+       "L4",
+       " the",
+       0.4228641092777252
+      ],
+      [
+       "L5",
+       " course",
+       0.5757063627243042
+      ],
+      [
+       "L6",
+       " course",
+       0.27205806970596313
+      ],
+      [
+       "L7",
+       " baseball",
+       0.27564555406570435
+      ],
+      [
+       "L8",
+       " basketball",
+       0.4222166836261749
+      ],
+      [
+       "L9",
+       " basketball",
+       0.9319502115249634
+      ],
+      [
+       "L10",
+       " basketball",
+       0.8335596919059753
+      ],
+      [
+       "L11",
+       " basketball",
+       0.42207759618759155
+      ]
+     ],
+     "first_top": 8,
+     "peak": [
+      9,
+      " basketball",
+      0.9319502115249634
+     ],
+     "final": [
+      11,
+      " basketball",
+      0.42207759618759155
+     ]
+    },
+    "mary": {
+     "column": [
+      [
+       "L0",
+       " get",
+       0.1509920060634613
+      ],
+      [
+       "L1",
+       " get",
+       0.13180387020111084
+      ],
+      [
+       "L2",
+       " get",
+       0.07946540415287018
+      ],
+      [
+       "L3",
+       " fill",
+       0.19895413517951965
+      ],
+      [
+       "L4",
+       " drink",
+       0.17650477588176727
+      ],
+      [
+       "L5",
+       " drink",
+       0.24254527688026428
+      ],
+      [
+       "L6",
+       " accompany",
+       0.3438750207424164
+      ],
+      [
+       "L7",
+       " the",
+       0.5293720960617065
+      ],
+      [
+       "L8",
+       " them",
+       0.7284667491912842
+      ],
+      [
+       "L9",
+       " Mary",
+       0.998386025428772
+      ],
+      [
+       "L10",
+       " Mary",
+       0.9684635996818542
+      ],
+      [
+       "L11",
+       " Mary",
+       0.6769737601280212
+      ]
+     ],
+     "first_top": 9,
+     "peak": [
+      9,
+      " Mary",
+      0.998386025428772
+     ],
+     "final": [
+      11,
+      " Mary",
+      0.6769737601280212
+     ]
+    },
+    "nurse": {
+     "column": [
+      [
+       "L0",
+       " the",
+       0.1312541961669922
+      ],
+      [
+       "L1",
+       " they",
+       0.23660169541835785
+      ],
+      [
+       "L2",
+       " they",
+       0.23123203217983246
+      ],
+      [
+       "L3",
+       " they",
+       0.22569644451141357
+      ],
+      [
+       "L4",
+       " they",
+       0.20839013159275055
+      ],
+      [
+       "L5",
+       " although",
+       0.49823155999183655
+      ],
+      [
+       "L6",
+       " although",
+       0.5824557542800903
+      ],
+      [
+       "L7",
+       " although",
+       0.7534831762313843
+      ],
+      [
+       "L8",
+       " although",
+       0.7205265760421753
+      ],
+      [
+       "L9",
+       " although",
+       0.2591744065284729
+      ],
+      [
+       "L10",
+       " she",
+       0.4082660675048828
+      ],
+      [
+       "L11",
+       " she",
+       0.18969570100307465
+      ]
+     ],
+     "first_top": 10,
+     "peak": [
+      10,
+      " she",
+      0.4082660675048828
+     ],
+     "final": [
+      11,
+      " she",
+      0.18969570100307465
+     ]
+    }
+   },
+   "checks": [
+    {
+     "claim": "Jordan tops at L8 (42%)",
+     "holds": true
+    },
+    {
+     "claim": "Jordan peaks at L9 (93%)",
+     "holds": true
+    },
+    {
+     "claim": "Jordan ends at 42% at L11",
+     "holds": true
+    },
+    {
+     "claim": "Mary tops at L9 (99.8%)",
+     "holds": true
+    },
+    {
+     "claim": "Mary ends at 67.7%",
+     "holds": true
+    },
+    {
+     "claim": "nurse \" she\" tops at L10 (41%)",
+     "holds": true
+    },
+    {
+     "claim": "nurse ends at 19%",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "b20b92ea77cabf5ab888cce7d3cc178029f4ee5d5d88716da97e72049f2a30c1",
+    "bbbe2204609ddf0e550115955c124d4b7b2c3fbb9d173fe964fddb851c548f8a",
+    "cfb0a0f8b1c8cf98cff5ae600ad8ca2581f726f77bb48d5f027295e711c82b59"
+   ]
+  },
+  {
+   "id": 21,
+   "status": "verified",
+   "lessons": [
+    "P2.3",
+    "P4.1"
+   ],
+   "claim": "lookahead is not visible in GPT-2 small; the fold cites the larger-model result",
+   "values": {
+    "rabbit": {
+     "rhyme": " rabbit",
+     "column": [
+      [
+       "L0",
+       " starving",
+       0.8860915899276733
+      ],
+      [
+       "L1",
+       " starving",
+       0.812829315662384
+      ],
+      [
+       "L2",
+       " starving",
+       0.5955588817596436
+      ],
+      [
+       "L3",
+       " white",
+       0.1610608994960785
+      ],
+      [
+       "L4",
+       " starving",
+       0.12758873403072357
+      ],
+      [
+       "L5",
+       " soul",
+       0.10032940655946732
+      ],
+      [
+       "L6",
+       " plague",
+       0.1823311150074005
+      ],
+      [
+       "L7",
+       " man",
+       0.18624377250671387
+      ],
+      [
+       "L8",
+       " animal",
+       0.2627510130405426
+      ],
+      [
+       "L9",
+       " animal",
+       0.32358497381210327
+      ],
+      [
+       "L10",
+       " man",
+       0.4850122630596161
+      ],
+      [
+       "L11",
+       " man",
+       0.11286851018667221
+      ]
+     ]
+    },
+    "still": {
+     "rhyme": " still",
+     "column": [
+      [
+       "L0",
+       " rare",
+       0.44866275787353516
+      ],
+      [
+       "L1",
+       " rare",
+       0.3661423325538635
+      ],
+      [
+       "L2",
+       " rare",
+       0.2581988275051117
+      ],
+      [
+       "L3",
+       " much",
+       0.19091834127902985
+      ],
+      [
+       "L4",
+       " much",
+       0.25064393877983093
+      ],
+      [
+       "L5",
+       " much",
+       0.339584618806839
+      ],
+      [
+       "L6",
+       " dark",
+       0.174061581492424
+      ],
+      [
+       "L7",
+       " dark",
+       0.31483450531959534
+      ],
+      [
+       "L8",
+       " cold",
+       0.5067442655563354
+      ],
+      [
+       "L9",
+       " cold",
+       0.8390322327613831
+      ],
+      [
+       "L10",
+       " cold",
+       0.9232323169708252
+      ],
+      [
+       "L11",
+       " cold",
+       0.4801568388938904
+      ]
+     ]
+    },
+    "pane": {
+     "rhyme": " pane",
+     "column": [
+      [
+       "L0",
+       " window",
+       0.9505869150161743
+      ],
+      [
+       "L1",
+       " window",
+       0.754144549369812
+      ],
+      [
+       "L2",
+       " window",
+       0.6635354161262512
+      ],
+      [
+       "L3",
+       " window",
+       0.6692187786102295
+      ],
+      [
+       "L4",
+       " window",
+       0.7975765466690063
+      ],
+      [
+       "L5",
+       " window",
+       0.6582298874855042
+      ],
+      [
+       "L6",
+       " windows",
+       0.5915877819061279
+      ],
+      [
+       "L7",
+       " windows",
+       0.406535804271698
+      ],
+      [
+       "L8",
+       " windows",
+       0.32049793004989624
+      ],
+      [
+       "L9",
+       " windows",
+       0.3799023926258087
+      ],
+      [
+       "L10",
+       ",",
+       0.21315932273864746
+      ],
+      [
+       "L11",
+       ",",
+       0.24783377349376678
+      ]
+     ]
+    },
+    "book": {
+     "rhyme": " book",
+     "column": [
+      [
+       "L0",
+       " few",
+       0.15626747906208038
+      ],
+      [
+       "L1",
+       " lot",
+       0.17278842628002167
+      ],
+      [
+       "L2",
+       " couple",
+       0.20376738905906677
+      ],
+      [
+       "L3",
+       " few",
+       0.36102405190467834
+      ],
+      [
+       "L4",
+       " couple",
+       0.27864840626716614
+      ],
+      [
+       "L5",
+       " couple",
+       0.19133073091506958
+      ],
+      [
+       "L6",
+       " lot",
+       0.14411164820194244
+      ],
+      [
+       "L7",
+       " few",
+       0.11421504616737366
+      ],
+      [
+       "L8",
+       " poem",
+       0.5579529404640198
+      ],
+      [
+       "L9",
+       " book",
+       0.6010115742683411
+      ],
+      [
+       "L10",
+       " book",
+       0.7590211033821106
+      ],
+      [
+       "L11",
+       " book",
+       0.44187119603157043
+      ]
+     ]
+    },
+    "rhyme_on_top_mid_stack": {
+     "rabbit": false,
+     "still": false,
+     "pane": false,
+     "book": true
+    }
+   },
+   "checks": [
+    {
+     "claim": "lookahead not visible: no rhyme prompt shows its rhyme word on top before L11 (book prompt not counted)",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "492f134e4292d701b2035d65b7536bd09d552d4e093aa6da4d6b01d661e19cdf",
+    "c593153a53771b460a3523daebe5dd864a067bb33d42bef8f0fc468503879858",
+    "c6fb2bc9bd1d8724cb3d2608c7eee8c61033d964c99fe36ccfe34d575ab5c5a6",
+    "ca5904d80de5b8b3d4983f91e4dbc8d3bf31da0524a7b4d4be288e33e59e6a75"
+   ]
+  },
+  {
+   "id": 22,
+   "status": "verified",
+   "lessons": [
+    "P2.4",
+    "P3.6"
+   ],
+   "claim": "several parts with large pushes; MLPs appear among the top",
+   "values": {
+    "top3": [
+     [
+      "MLP.9",
+      1.8497318029403687
+     ],
+     [
+      "MLP.10",
+      1.7779757976531982
+     ],
+     [
+      "L11.H3",
+      1.7494189739227295
+     ]
+    ],
+    "bars_total": 14.799415504094213,
+    "actual": 15.962446212768555,
+    "gap": 1.1630307086743414,
+    "answer": " basketball"
+   },
+   "constants": {
+    "top_mlp_layer": {
+     "value": 9,
+     "unit": "layer"
+    },
+    "push_threshold": {
+     "value": 1.75,
+     "unit": "logit"
+    }
+   },
+   "checks": [
+    {
+     "claim": "MLPs appear among the top 3",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "ed2b8389226f96d31f0ec85af9f1a6c17d576477b5d7e0bf5d4b6e322c023068"
+   ]
+  },
+  {
+   "id": 23,
+   "status": "verified",
+   "lessons": [
+    "P2.1",
+    "P3.2"
+   ],
+   "claim": "a heavy line to a word that doesn't matter (knockout moves p(\" Mary\") by under 1 point)",
+   "values": {
+    "ranked_top3": [
+     [
+      "L4H11",
+      " drink",
+      0.9998553991317749
+     ],
+     [
+      "L10H7",
+      " Mary",
+      0.8249081969261169
+     ],
+     [
+      "L2H8",
+      " gave",
+      0.8083963990211487
+     ]
+    ],
+    "deltas": {
+     "L4H11": -0.14858746528625488,
+     "L10H7": 0.1985105276107788,
+     "L2H8": -0.0028471946716308594
+    },
+    "pick": {
+     "head": "L2H8",
+     "token": " gave",
+     "position": 11,
+     "weight": 0.8083963990211487,
+     "delta": -0.0028471946716308594
+    }
+   },
+   "constants": {
+    "layer": {
+     "value": 2,
+     "unit": "layer"
+    },
+    "head": {
+     "value": 8,
+     "unit": "head"
+    },
+    "token": {
+     "value": " gave",
+     "unit": "string"
+    },
+    "position": {
+     "value": 11,
+     "unit": "position"
+    }
+   },
+   "checks": [
+    {
+     "claim": "a heavy-line head whose knockout moves p(\" Mary\") under 1 point",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "2b4ffc4e9b714afaaf6fb726494d5205b0ea5611c324bda0ec0174312c2d4e47",
+    "87d38913a998d48c37469b908b202f0be3c71fe6c3f482ae010319976825e93b",
+    "a1f1516e7b7a0b9f6f3d96b515f2592d19355afdc5b62e0f2bed98386b4ddac5",
+    "c019c1b8a5c3154599991027d7c8b09c67a015cf625c9e2307601743c1031492"
+   ]
+  },
+  {
+   "id": 24,
+   "status": "verified",
+   "lessons": [
+    "P3.4"
+   ],
+   "claim": "knocking out the top features lowers \" she\"; an active-but-unrelated control moves it less",
+   "values": {
+    "sae_layer": 8,
+    "sae": {
+     "release": "gpt2-small-res-jb",
+     "id": "blocks.8.hook_resid_pre"
+    },
+    "top3": [
+     21213,
+     19093,
+     821
+    ],
+    "labels": {
+     "21213": "phrases related to healthcare situations, particularly relating to nursing and nursing homes",
+     "19093": "profession or occupation titles",
+     "821": "words related to various job titles or roles, especially clerical or service-oriented positions",
+     "7698": "words related to processes or actions being performed",
+     "15707": "names of individuals or entities"
+    },
+    "top3_she": [
+     0.18969573080539703,
+     0.17817731201648712,
+     -0.011518418788909912
+    ],
+    "control": 7698,
+    "control_label": "words related to processes or actions being performed",
+    "control_she": [
+     0.18969573080539703,
+     0.1906098574399948,
+     0.0009141266345977783
+    ]
+   },
+   "constants": {
+    "sae_layer": {
+     "value": 8,
+     "unit": "layer"
+    },
+    "top_ids": {
+     "value": [
+      21213,
+      19093,
+      821
+     ],
+     "unit": "list",
+     "of": "number"
+    },
+    "n_top": {
+     "value": 3,
+     "unit": "count"
+    },
+    "control_id": {
+     "value": 7698,
+     "unit": "number"
+    },
+    "doctor_top_ids": {
+     "value": [
+      7195,
+      11067,
+      19093
+     ],
+     "unit": "list",
+     "of": "number"
+    }
+   },
+   "checks": [
+    {
+     "claim": "top 3 ids at \" nurse\"",
+     "holds": true
+    },
+    {
+     "claim": "knocking them out lowers \" she\"",
+     "holds": true
+    },
+    {
+     "claim": "control is active at \" nurse\"",
+     "holds": true
+    },
+    {
+     "claim": "control moves \" she\" less",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "25e44d6e3ef82c34d09ad852e14b0e2c115af20d4b7fea65ef91919e9c691608",
+    "9cd467d418acd6095629c22875edb5c02d830eb0792462a16adacf1981af5348",
+    "c7b8c0c8af995a49b8ef939b986b195eab5efc8e6b1d07b64beb31140acf53b1"
+   ]
+  },
+  {
+   "id": 25,
+   "status": "narrowed",
+   "lessons": [
+    "P3.5"
+   ],
+   "claim": "both texts change and only the target's moves toward its label",
+   "values": {
+    "base_top4": [
+     [
+      ".",
+      0.10398221760988235,
+      14.923948287963867
+     ],
+     [
+      " rise",
+      0.046554841101169586,
+      14.120359420776367
+     ],
+     [
+      " breeze",
+      0.034238722175359726,
+      13.813085556030273
+     ],
+     [
+      ",",
+      0.029482845216989517,
+      13.66353702545166
+     ]
+    ],
+    "first_pick": {
+     "feature_id": 8548,
+     "strength": 20.0,
+     "original": ". We were surprised to see the ocean. It was a beautiful place. We were surprised to see the ocean.\n\nWe were surprised to see the ocean. It was a beautiful place. We were surprised to see the ocean.\n\nWe",
+     "steered": ". The ocean was beautiful and the waves were calm. We were able to see the ocean and the ocean was beautiful. We were able to see the ocean and the ocean was beautiful. We were able to see the ocean and the ocean was beautiful.",
+     "control_text": ". We were surprised to see that the ocean was so clear and clear. We were also surprised to see that the ocean was so clear and clear. We were also surprised to see that the ocean was so clear and clear. We were also surprised to",
+     "changed_tokens": 47,
+     "control_changed_tokens": 41,
+     "coherence": {
+      "original": -1.0128780603408813,
+      "steered": -1.1133530139923096
+     },
+     "control_coherence": {
+      "original": -1.0128780603408813,
+      "steered": -1.026001214981079
+     },
+     "scale": {
+      "strength": 20.0,
+      "activation_p50": 0.0,
+      "activation_p99": 41.46479034423828,
+      "activation_max": 46.53974533081055
+     },
+     "control_id": 19137,
+     "control_method": "norm_matched_lowest_cos",
+     "decoder_norm_target": 1.0000085830688477,
+     "decoder_norm_control": 1.0001050233840942,
+     "cosine": -0.00026670700475069504,
+     "word": "ocean",
+     "word_in": {
+      "original": 4,
+      "steered": 7,
+      "control_text": 3
+     }
+    },
+    "target": {
+     "feature_id": 21791,
+     "strength": 25.0,
+     "original": ". We were surprised to see the ocean. It was a beautiful place. We were surprised to see the ocean.\n\nWe were surprised to see the ocean. It was a beautiful place. We were surprised to see the ocean.\n\nWe",
+     "steered": ". The sun was shining and the clouds were falling. The wind was blowing and the clouds were falling. The rain was falling and the clouds were falling. The rain was falling and the clouds were falling. The rain was falling and the clouds were falling",
+     "control_text": ". We were so excited to see the ocean. We were so excited to see the ocean.\n\nWe were so excited to see the ocean. We were so excited to see the ocean.\n\nWe were so excited to see the ocean.",
+     "changed_tokens": 48,
+     "control_changed_tokens": 46,
+     "coherence": {
+      "original": -1.0128780603408813,
+      "steered": -1.057970404624939
+     },
+     "control_coherence": {
+      "original": -1.0128780603408813,
+      "steered": -0.7377061247825623
+     },
+     "scale": {
+      "strength": 25.0,
+      "activation_p50": 0.0,
+      "activation_p99": 0.0,
+      "activation_max": 0.0
+     },
+     "control_id": 15662,
+     "control_method": "norm_matched_lowest_cos",
+     "decoder_norm_target": 1.0000393390655518,
+     "decoder_norm_control": 1.000022530555725,
+     "cosine": 8.002546026600908e-05,
+     "word": "rain",
+     "word_in": {
+      "original": 0,
+      "steered": 3,
+      "control_text": 0
+     }
+    },
+    "target_label": "references to rain or rainy conditions",
+    "control_label": "names of individuals, particularly those involved in politics and science"
+   },
+   "constants": {
+    "target_id": {
+     "value": 21791,
+     "unit": "number"
+    },
+    "control_id": {
+     "value": 15662,
+     "unit": "number"
+    },
+    "strength": {
+     "value": 25,
+     "unit": "number"
+    },
+    "strength_high": {
+     "value": 30,
+     "unit": "number"
+    },
+    "concept_words": {
+     "value": [
+      "rain"
+     ],
+     "unit": "list",
+     "of": "string"
+    },
+    "target_label": {
+     "value": "references to rain or rainy conditions",
+     "unit": "string"
+    },
+    "control_label": {
+     "value": "names of individuals, particularly those involved in politics and science",
+     "unit": "string"
+    }
+   },
+   "checks": [
+    {
+     "claim": "unsteered top 4",
+     "holds": true
+    },
+    {
+     "claim": "fallback condition: the ocean target can't beat the control on concept present",
+     "holds": true
+    },
+    {
+     "claim": "both texts change",
+     "holds": true
+    },
+    {
+     "claim": "only the target's text has its label's word",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "05171ed9fc2d25073dc074f2d6590b65a409a289ceb4e308594247617e0cd36b",
+    "068739dc2ffd4f8dbc264c479adbc148e5a050aaeb631c19150cb61a1fa8d1f5",
+    "24dc820a86b789420ac3596dcf3be373f6edb7acb64cced8f7aa317563010ce3",
+    "40f85add85e4180e079fe32fc15e4cd4aad42384960f370640b376035ebf0d7f",
+    "c644bd92bfc6324a44a2a981b90f22a24b2f992d668f66f504e48827b5cbc952"
+   ]
+  },
+  {
+   "id": 26,
+   "status": "verified",
+   "lessons": [
+    "P3.2"
+   ],
+   "claim": "the name movers' knockout drops \" Mary\" a lot; the random control barely moves it; L9H9's lines from \" to\" land on \" Mary\"",
+   "values": {
+    "movers": [
+     0.676973819732666,
+     0.4851751923561096,
+     -0.1917986273765564
+    ],
+    "random3": [
+     0.676973819732666,
+     0.6547910571098328,
+     -0.022182762622833252
+    ],
+    "random1": [
+     0.676973819732666,
+     0.631571352481842,
+     -0.045402467250823975
+    ],
+    "L9H9_argmax": " Mary",
+    "L9H9_weight_on_mary": 0.6651334762573242
+   },
+   "constants": {
+    "task_threshold": {
+     "value": 0.3,
+     "unit": "probability"
+    },
+    "task_threshold_negative": {
+     "value": -0.3,
+     "unit": "probability"
+    }
+   },
+   "checks": [
+    {
+     "claim": "name movers drop \" Mary\" more than the random control",
+     "holds": true
+    },
+    {
+     "claim": "L9H9's lines from \" to\" land on \" Mary\"",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "4841301e105e480595e5966b30145c682266c3e152ebdfa9926b4a36500d3a44",
+    "6a0bfc600596bea29c00cb82f0a091d434ea9f5bac0a2bfb856d3388fdecb26a",
+    "87d38913a998d48c37469b908b202f0be3c71fe6c3f482ae010319976825e93b",
+    "c6195ab4207da1e56b2a94073dd7aa7fe96644b67c614f3b357cafcb5eea76dc"
+   ]
+  },
+  {
+   "id": 27,
+   "status": "verified",
+   "lessons": [
+    "P3.3",
+    "P3.1"
+   ],
+   "claim": "pattern (b): the logit comes back at the swapped name in early layers, then at \" to\" in later layers",
+   "values": {
+    "target": " Mary",
+    "clean": 18.466384887695312,
+    "corrupted": 14.966814994812012,
+    "peak": [
+     {
+      "name": "L2@10",
+      "layer": 2,
+      "head": null,
+      "position": 10,
+      "word": " John",
+      "clean": 18.466384887695312,
+      "corrupted": 14.966814994812012,
+      "patched": 18.47494125366211,
+      "share": 1.0024449764481622
+     },
+     {
+      "name": "L1@10",
+      "layer": 1,
+      "head": null,
+      "position": 10,
+      "word": " John",
+      "clean": 18.466384887695312,
+      "corrupted": 14.966814994812012,
+      "patched": 18.473461151123047,
+      "share": 1.0020220380344809
+     },
+     {
+      "name": "L0@10",
+      "layer": 0,
+      "head": null,
+      "position": 10,
+      "word": " John",
+      "clean": 18.466384887695312,
+      "corrupted": 14.966814994812012,
+      "patched": 18.466384887695312,
+      "share": 1.0
+     }
+    ],
+    "per_layer_peak": {
+     "L0": " John",
+     "L1": " John",
+     "L2": " John",
+     "L3": " John",
+     "L4": " John",
+     "L5": " John",
+     "L6": " John",
+     "L7": " John",
+     "L8": " John",
+     "L9": " to",
+     "L10": " to",
+     "L11": " to"
+    },
+    "to_takes_over_at": 9
+   },
+   "constants": {
+    "peak_layer": {
+     "value": 2,
+     "unit": "layer"
+    },
+    "peak_position": {
+     "value": 10,
+     "unit": "position"
+    },
+    "peak_word": {
+     "value": " John",
+     "unit": "string"
+    }
+   },
+   "checks": [
+    {
+     "claim": "pattern (b): swapped name early, \" to\" late",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "77bbe4891999fd526093aa768d83fc1d46304de99c719a8c1951ff16d4aa3ab5"
+   ]
+  },
+  {
+   "id": 28,
+   "status": "verified",
+   "lessons": [
+    "P1.5",
+    "P1.6",
+    "P4.1"
+   ],
+   "claim": "Watch it write at temperature 0 gives the HF greedy texts, identical run to run",
+   "values": {
+    "baker": {
+     "continuation": " was a great friend of mine. He was a great friend of mine, and I was very happy",
+     "new_tokens": 20,
+     "runs": 2
+    },
+    "poem": {
+     "continuation": "\n\nWrite a short poem about the sea.\n\nWrite a short poem about the sea.",
+     "new_tokens": 20,
+     "runs": 2
+    },
+    "poemdoc": {
+     "continuation": "\nThe sea is a sea of water\n\nAnd the sea is a sea of water\n\n",
+     "new_tokens": 20,
+     "runs": 2
+    }
+   },
+   "checks": [
+    {
+     "claim": "baker: matches HF greedy",
+     "holds": true
+    },
+    {
+     "claim": "baker: repeats identical",
+     "holds": true
+    },
+    {
+     "claim": "poem: matches HF greedy",
+     "holds": true
+    },
+    {
+     "claim": "poem: repeats identical",
+     "holds": true
+    },
+    {
+     "claim": "poemdoc: matches HF greedy",
+     "holds": true
+    },
+    {
+     "claim": "poemdoc: repeats identical",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "11a1a09a59bccdbaf6b8d26ea9bb8be716cfce608b4a2f361588c161f43cc26d",
+    "11a1a09a59bccdbaf6b8d26ea9bb8be716cfce608b4a2f361588c161f43cc26d.r2",
+    "8bb7944332de4b287d590f5fb5c219b4018ae61fde26163cb97f388e98ea1c28",
+    "8bb7944332de4b287d590f5fb5c219b4018ae61fde26163cb97f388e98ea1c28.r2",
+    "9e6a212541be5a2346ba87f8a4d2add3b20c10cf4d42e884133b62015544452f",
+    "9e6a212541be5a2346ba87f8a4d2add3b20c10cf4d42e884133b62015544452f.r2"
+   ]
+  },
+  {
+   "id": 29,
+   "status": "verified",
+   "lessons": [
+    "P1.6"
+   ],
+   "claim": "\" Sam\" high in the first, absent from the top ten in the second",
+   "values": {
+    "first_top10": [
+     [
+      " Sam",
+      0.19151341915130615,
+      13.58652114868164
+     ],
+     [
+      " John",
+      0.009328808635473251,
+      10.56467056274414
+     ],
+     [
+      " James",
+      0.0072354888543486595,
+      10.310561180114746
+     ],
+     [
+      " Nick",
+      0.00677882507443428,
+      10.245367050170898
+     ],
+     [
+      " S",
+      0.006136616691946983,
+      10.14583683013916
+     ],
+     [
+      " Mark",
+      0.005681887269020081,
+      10.068846702575684
+     ],
+     [
+      " Jack",
+      0.005512911826372147,
+      10.038656234741211
+     ],
+     [
+      " Chris",
+      0.005358621943742037,
+      10.010270118713379
+     ],
+     [
+      " a",
+      0.005310566630214453,
+      10.001261711120605
+     ],
+     [
+      " Michael",
+      0.005192907992750406,
+      9.978857040405273
+     ]
+    ],
+    "second_top10": [
+     [
+      " John",
+      0.011065608821809292,
+      11.401509284973145
+     ],
+     [
+      " David",
+      0.010188993997871876,
+      11.318975448608398
+     ],
+     [
+      " Michael",
+      0.00905302818864584,
+      11.200766563415527
+     ],
+     [
+      " James",
+      0.008649001829326153,
+      11.155111312866211
+     ],
+     [
+      " Chris",
+      0.008473453111946583,
+      11.134605407714844
+     ],
+     [
+      " Daniel",
+      0.007915409281849861,
+      11.066478729248047
+     ],
+     [
+      " Ryan",
+      0.007383984047919512,
+      10.996980667114258
+     ],
+     [
+      " Mark",
+      0.007346993777900934,
+      10.991958618164062
+     ],
+     [
+      " Nick",
+      0.0070725600235164165,
+      10.953889846801758
+     ],
+     [
+      " K",
+      0.006955205928534269,
+      10.93715763092041
+     ]
+    ]
+   },
+   "constants": {
+    "top_head": {
+     "value": 6,
+     "unit": "head",
+     "alias": 51
+    },
+    "top_head_layer": {
+     "value": 9,
+     "unit": "layer",
+     "alias": 51
+    }
+   },
+   "checks": [
+    {
+     "claim": "\" Sam\" high in the first",
+     "holds": true
+    },
+    {
+     "claim": "\" Sam\" absent from the second's top ten",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "349b65f84216a996f49a9b7a75d7fa9ab0a9e5362bda3f55c0a4f08d19bc232a",
+    "a113a392e2a4d28d6b7d87c8689a3231031dbf20fa8cc578cd4ac1508aa0fe7b"
+   ]
+  },
+  {
+   "id": 30,
+   "status": "narrowed",
+   "lessons": [
+    "P1.3"
+   ],
+   "claim": "changing an early word moves the top guess; 7 tokens with the marker, so \" of\" keeps position 6",
+   "values": {
+    "tokens": [
+     "<|endoftext|>",
+     "T",
+     "iger",
+     " Woods",
+     " played",
+     " the",
+     " sport",
+     " of"
+    ],
+    "count": 8,
+    "jordan_count": 7,
+    "top4": [
+     [
+      " golf",
+      0.5591044425964355,
+      16.490612030029297
+     ],
+     [
+      " baseball",
+      0.024527763947844505,
+      13.364081382751465
+     ],
+     [
+      " tennis",
+      0.02413264475762844,
+      13.347841262817383
+     ],
+     [
+      " football",
+      0.019870880991220474,
+      13.153531074523926
+     ]
+    ],
+    "golf_rank": 1
+   },
+   "checks": [
+    {
+     "claim": "fallback condition: a name splits (count differs from row 1)",
+     "holds": true
+    },
+    {
+     "claim": "\" golf\" on top",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "3ed191ba1aa90230b88e8122abe85ef5e4e12fc8f1618793789badf4e0985117",
+    "de870ae59653d02cb64f39674c39b3f8f7af8b94ef5ec7ae3a2b11e14a70226d"
+   ]
+  },
+  {
+   "id": 31,
+   "status": "verified",
+   "lessons": [
+    "P3.1",
+    "P3.3"
+   ],
+   "claim": "\" John\" becomes the top token and \" Mary\" falls below 10%",
+   "values": {
+    "top4": [
+     [
+      " John",
+      0.41136395931243896,
+      17.445507049560547
+     ],
+     [
+      " them",
+      0.2043967992067337,
+      16.746091842651367
+     ],
+     [
+      " the",
+      0.11914266645908356,
+      16.206350326538086
+     ],
+     [
+      " Mary",
+      0.03449399769306183,
+      14.966814041137695
+     ]
+    ]
+   },
+   "checks": [
+    {
+     "claim": "\" John\" on top",
+     "holds": true
+    },
+    {
+     "claim": "\" Mary\" below 10%",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "7a6f0d18203fd26c0ea47ced3cd14f5bc070c98ad34b52c383fb66c36470c80e"
+   ]
+  },
+  {
+   "id": 32,
+   "status": "verified",
+   "lessons": [
+    "P3.3"
+   ],
+   "claim": "a second name pair; same token count as row 14",
+   "values": {
+    "clean": 16.29427719116211,
+    "corrupted": 11.835780143737793,
+    "target": " Tom",
+    "resid_peak": {
+     "name": "L4@10",
+     "layer": 4,
+     "head": null,
+     "position": 10,
+     "word": " Sarah",
+     "clean": 16.29427719116211,
+     "corrupted": 11.835780143737793,
+     "patched": 16.3637752532959,
+     "share": 1.0155877779876379
+    },
+    "per_layer_peak": {
+     "L0": " Sarah",
+     "L1": " Sarah",
+     "L2": " Sarah",
+     "L3": " Sarah",
+     "L4": " Sarah",
+     "L5": " Sarah",
+     "L6": " Sarah",
+     "L7": " Sarah",
+     "L8": " Sarah",
+     "L9": " to",
+     "L10": " to",
+     "L11": " to"
+    },
+    "head_max": [
+     {
+      "name": "L8.H6",
+      "layer": 8,
+      "head": 6,
+      "position": null,
+      "word": null,
+      "clean": 16.29427719116211,
+      "corrupted": 11.835780143737793,
+      "patched": 15.14958667755127,
+      "share": 0.74325641546132
+     },
+     {
+      "name": "L8.H10",
+      "layer": 8,
+      "head": 10,
+      "position": null,
+      "word": null,
+      "clean": 16.29427719116211,
+      "corrupted": 11.835780143737793,
+      "patched": 14.880105972290039,
+      "share": 0.6828143646099216
+     },
+     {
+      "name": "L5.H5",
+      "layer": 5,
+      "head": 5,
+      "position": null,
+      "word": null,
+      "clean": 16.29427719116211,
+      "corrupted": 11.835780143737793,
+      "patched": 14.614368438720703,
+      "share": 0.6232118728413438
+     }
+    ],
+    "tokens": 15,
+    "row14_tokens": 15
+   },
+   "checks": [
+    {
+     "claim": "same token count as row 14",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "87d38913a998d48c37469b908b202f0be3c71fe6c3f482ae010319976825e93b",
+    "cad0ddec5aa4b1044b07f07230f3fdfc40ae5bc78b15d38c620fb3359430e6dd",
+    "e7881768a8bb9ee2e14d8263582139dfef9dfc223e19eddab94ccda3e5e42a90",
+    "f9331e94489adadda22551e61ceed91b59df61c4f94f12744fdf43b3c410b4f3"
+   ]
+  },
+  {
+   "id": 33,
+   "status": "verified",
+   "lessons": [
+    "P3.5"
+   ],
+   "claim": "the same steer on another prompt (the lesson sets {coh_band} from these numbers)",
+   "values": {
+    "top4": [
+     [
+      " to",
+      0.301230251789093,
+      15.540274620056152
+     ],
+     [
+      " go",
+      0.036198150366544724,
+      13.421407699584961
+     ],
+     [
+      " just",
+      0.030737673863768578,
+      13.257888793945312
+     ],
+     [
+      " take",
+      0.026570407673716545,
+      13.112197875976562
+     ]
+    ],
+    "greedy": " to go to the pub and have a pint of beer. I've been to a lot of pubs",
+    "sat20": {
+     "feature_id": 21791,
+     "strength": 20.0,
+     "original": " to go to the pub and have a pint of beer. I've been to a lot of pubs and I've never been to a pub before. I've never been to a pub before, but I've been to a pub before. I've",
+     "steered": " to go to the beach and watch the sunset. I love the view of the ocean and the beautiful scenery. I love the fact that the sun is shining on the beach and the clouds are falling. I love the fact that the sun is shining on",
+     "control_text": " to go to the pub and have a pint of beer. I'm not sure if I'm going to be able to get a pint of beer, but I'm sure I'll be able to get a pint of beer.\n\nI'm not",
+     "changed_tokens": 44,
+     "control_changed_tokens": 37,
+     "coherence": {
+      "original": -1.259087085723877,
+      "steered": -1.5084658861160278
+     },
+     "control_coherence": {
+      "original": -1.259087085723877,
+      "steered": -1.299873948097229
+     },
+     "scale": {
+      "strength": 20.0,
+      "activation_p50": 0.0,
+      "activation_p99": 0.0,
+      "activation_max": 0.0
+     },
+     "control_id": 15662,
+     "control_method": "norm_matched_lowest_cos",
+     "decoder_norm_target": 1.0000393390655518,
+     "decoder_norm_control": 1.000022530555725,
+     "cosine": 8.002546026600908e-05,
+     "word": "rain",
+     "word_in": {
+      "original": 0,
+      "steered": 0,
+      "control_text": 0
+     }
+    },
+    "sat25": {
+     "feature_id": 21791,
+     "strength": 25.0,
+     "original": " to go to the pub and have a pint of beer. I've been to a lot of pubs and I've never been to a pub before. I've never been to a pub before, but I've been to a pub before. I've",
+     "steered": " to go to the beach and watch the sunset. I love the sunshine and the beautiful scenery. I love the fact that the rain is falling and the wind is blowing. I love the fact that the sun is shining on the beach. I love the",
+     "control_text": " to go to the pub and have a pint of beer. I'm not sure if it's because I'm a bit of a beer geek, or if I'm just a bit of a beer geek, but I'm sure it's a good idea",
+     "changed_tokens": 45,
+     "control_changed_tokens": 37,
+     "coherence": {
+      "original": -1.259087085723877,
+      "steered": -1.5250142812728882
+     },
+     "control_coherence": {
+      "original": -1.259087085723877,
+      "steered": -1.3472614288330078
+     },
+     "scale": {
+      "strength": 25.0,
+      "activation_p50": 0.0,
+      "activation_p99": 0.0,
+      "activation_max": 0.0
+     },
+     "control_id": 15662,
+     "control_method": "norm_matched_lowest_cos",
+     "decoder_norm_target": 1.0000393390655518,
+     "decoder_norm_control": 1.000022530555725,
+     "cosine": 8.002546026600908e-05,
+     "word": "rain",
+     "word_in": {
+      "original": 0,
+      "steered": 1,
+      "control_text": 0
+     }
+    },
+    "sat30": {
+     "feature_id": 21791,
+     "strength": 30.0,
+     "original": " to go to the pub and have a pint of beer. I've been to a lot of pubs and I've never been to a pub before. I've never been to a pub before, but I've been to a pub before. I've",
+     "steered": " to go to the beach. I love the sunshine and the sunshine is beautiful. I love the rain and the rain is beautiful. I love the sunshine and the rain is beautiful. I love the rain and the rain is beautiful. I love the rain",
+     "control_text": " to go to the pub and have a drink. I'm not sure if it's because I'm a bit of a drinker or if I'm just enjoying it. I'm not sure if it's because I'm a bit of a drinker",
+     "changed_tokens": 45,
+     "control_changed_tokens": 41,
+     "coherence": {
+      "original": -1.259087085723877,
+      "steered": -1.151493787765503
+     },
+     "control_coherence": {
+      "original": -1.259087085723877,
+      "steered": -1.2242908477783203
+     },
+     "scale": {
+      "strength": 30.0,
+      "activation_p50": 0.0,
+      "activation_p99": 0.0,
+      "activation_max": 0.0
+     },
+     "control_id": 15662,
+     "control_method": "norm_matched_lowest_cos",
+     "decoder_norm_target": 1.0000393390655518,
+     "decoder_norm_control": 1.000022530555725,
+     "cosine": 8.002546026600908e-05,
+     "word": "rain",
+     "word_in": {
+      "original": 0,
+      "steered": 6,
+      "control_text": 0
+     }
+    }
+   },
+   "checks": [
+    {
+     "claim": "steers recorded with the control",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "1c117265e3291a730402f88e08c85ede541d1357dc9babbfc8fd76dfd32145e0",
+    "40f7265c3000920be750ca89d5eb57fa4d4996178e3a50dbf49d21d050a5cc4e",
+    "47c91036b3b718398b1e0b7821e5ad80422dbac9ffe6033a0b58962f7665869f",
+    "524c1aff93cd06b5d3a5568bd4e622319fdf4faa96a00424c7abf207a9f7d096",
+    "ade627c78593c4b476339e009f6fcb2dbf085a23ecfffdc0f7dc01ad24f885b5"
+   ]
+  },
+  {
+   "id": 34,
+   "status": "verified",
+   "lessons": [
+    "P3.6"
+   ],
+   "claim": "MLPs appear among the biggest pushes",
+   "values": {
+    "top3": [
+     [
+      "L9.H8",
+      0.977446973323822
+     ],
+     [
+      "L10.H0",
+      0.7264913320541382
+     ],
+     [
+      "MLP.7",
+      0.47459205985069275
+     ]
+    ],
+    "bars_total": 3.1192233315669,
+    "actual": 2.191030502319336,
+    "gap": -0.9281928292475641
+   },
+   "constants": {
+    "last_position": {
+     "value": 6,
+     "unit": "position"
+    }
+   },
+   "checks": [
+    {
+     "claim": "MLPs appear among the top 3",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "b95205c9520d8da4fccbfee04e51005aa9ab3a04c1016993b84b0d1b873ea19a"
+   ]
+  },
+  {
+   "id": 35,
+   "status": "narrowed",
+   "lessons": [
+    "P3.6"
+   ],
+   "claim": "another athlete with the same token count; top token \" tennis\"",
+   "values": {
+    "serena_count": 9,
+    "serena_tokens": [
+     "<|endoftext|>",
+     "S",
+     "ere",
+     "na",
+     " Williams",
+     " played",
+     " the",
+     " sport",
+     " of"
+    ],
+    "murray_count": 7,
+    "jordan_count": 7,
+    "murray_top4": [
+     [
+      " tennis",
+      0.08430184423923492,
+      13.701236724853516
+     ],
+     [
+      " golf",
+      0.06675366312265396,
+      13.467842102050781
+     ],
+     [
+      " the",
+      0.03867907077074051,
+      12.922131538391113
+     ],
+     [
+      " football",
+      0.03507179394364357,
+      12.824230194091797
+     ]
+    ],
+    "target": " basketball",
+    "mlp_grid": [
+     {
+      "name": "MLP.0",
+      "layer": 0,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 15.962453842163086,
+      "corrupted": 11.889782905578613,
+      "patched": 15.573508262634277,
+      "share": 0.9044986482863268
+     },
+     {
+      "name": "MLP.1",
+      "layer": 1,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 15.962453842163086,
+      "corrupted": 11.889782905578613,
+      "patched": 13.108038902282715,
+      "share": 0.2991294940528111
+     },
+     {
+      "name": "MLP.2",
+      "layer": 2,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 15.962453842163086,
+      "corrupted": 11.889782905578613,
+      "patched": 11.887299537658691,
+      "share": -0.0006097639506334731
+     },
+     {
+      "name": "MLP.3",
+      "layer": 3,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 15.962453842163086,
+      "corrupted": 11.889782905578613,
+      "patched": 12.918145179748535,
+      "share": 0.25250315829158376
+     },
+     {
+      "name": "MLP.4",
+      "layer": 4,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 15.962453842163086,
+      "corrupted": 11.889782905578613,
+      "patched": 12.240921974182129,
+      "share": 0.0862183746418749
+     },
+     {
+      "name": "MLP.5",
+      "layer": 5,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 15.962453842163086,
+      "corrupted": 11.889782905578613,
+      "patched": 11.93871021270752,
+      "share": 0.012013567482065939
+     },
+     {
+      "name": "MLP.6",
+      "layer": 6,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 15.962453842163086,
+      "corrupted": 11.889782905578613,
+      "patched": 12.435986518859863,
+      "share": 0.13411434947389125
+     },
+     {
+      "name": "MLP.7",
+      "layer": 7,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 15.962453842163086,
+      "corrupted": 11.889782905578613,
+      "patched": 11.810896873474121,
+      "share": -0.019369606170698783
+     },
+     {
+      "name": "MLP.8",
+      "layer": 8,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 15.962453842163086,
+      "corrupted": 11.889782905578613,
+      "patched": 11.841357231140137,
+      "share": -0.011890397037352726
+     },
+     {
+      "name": "MLP.9",
+      "layer": 9,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 15.962453842163086,
+      "corrupted": 11.889782905578613,
+      "patched": 11.977025032043457,
+      "share": 0.02142135414898238
+     },
+     {
+      "name": "MLP.10",
+      "layer": 10,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 15.962453842163086,
+      "corrupted": 11.889782905578613,
+      "patched": 12.375100135803223,
+      "share": 0.11916436112356735
+     },
+     {
+      "name": "MLP.11",
+      "layer": 11,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 15.962453842163086,
+      "corrupted": 11.889782905578613,
+      "patched": 11.45560359954834,
+      "share": -0.10660800069312645
+     }
+    ]
+   },
+   "constants": {
+    "best_mlp_not_l0": {
+     "value": 1,
+     "unit": "layer"
+    }
+   },
+   "checks": [
+    {
+     "claim": "fallback condition: Serena's token count differs",
+     "holds": true
+    },
+    {
+     "claim": "replacement has row 1's token count",
+     "holds": true
+    },
+    {
+     "claim": "replacement top token \" tennis\"",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "95d13b04f4c2fce95d0420c75fdc264c8e1342ff5a85cd3e2f4eefc71bbc8aea",
+    "bacaf0c660c92fb73cc1aa1dca880fb6c8596031615b0eff7ebbc3b53cb105fb",
+    "d93ded247a5ab68a79f8a85416da8283f177c364697c41348a8c47c9001680cf",
+    "de870ae59653d02cb64f39674c39b3f8f7af8b94ef5ec7ae3a2b11e14a70226d"
+   ]
+  },
+  {
+   "id": 36,
+   "status": "verified",
+   "lessons": [
+    "P3.7"
+   ],
+   "claim": "top 4 all at or above 50",
+   "values": {
+    "top4": [
+     [
+      "60",
+      0.355130672454834,
+      29.672523498535156
+     ],
+     [
+      "70",
+      0.08509199321269989,
+      28.243770599365234
+     ],
+     [
+      "50",
+      0.05675359442830086,
+      27.838756561279297
+     ],
+     [
+      "90",
+      0.054989635944366455,
+      27.80718231201172
+     ]
+    ],
+    "nodes": [
+     "L0.H1",
+     "MLP.0",
+     "L2.H0",
+     "MLP.2",
+     "MLP.3",
+     "MLP.4",
+     "L5.H0",
+     "L5.H1",
+     "L5.H5",
+     "MLP.5",
+     "L6.H1",
+     "L6.H9",
+     "MLP.6",
+     "L7.H6",
+     "L7.H10",
+     "L7.H11",
+     "MLP.7",
+     "L8.H6",
+     "L8.H7",
+     "L8.H8",
+     "L8.H10",
+     "MLP.8",
+     "L9.H1",
+     "L9.H5",
+     "MLP.9",
+     "L10.H2",
+     "L10.H4",
+     "L10.H7",
+     "MLP.10",
+     "L11.H4",
+     "L11.H8",
+     "MLP.11"
+    ],
+    "L0H7_on_map": false,
+    "maphead": [
+     0.355130672454834,
+     0.3474034070968628,
+     -0.007727265357971191
+    ],
+    "top_token": "60"
+   },
+   "checks": [
+    {
+     "claim": "top 4 all at or above 50",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "13d1b12f0976b7bb2036899dd258ff426ec52e87742baa44c881b427767916ce",
+    "802c5f9fb33197278bcdc2d7d4e675f2f9804ca36106195e7605702726a4763b",
+    "888792713e1c165a9a54bcbf504461b52f8073bcdecfb77ad263ec87769df8d9"
+   ]
+  },
+  {
+   "id": 37,
+   "status": "verified",
+   "lessons": [
+    "P4.1"
+   ],
+   "claim": "record whether any run produces poem-like text (feeds 3.2's leaves_open wording)",
+   "values": {
+    "texts": {
+     "poem1": " Write a short poem about the sea. Have yourself a reading party and drink from an oceanarium of",
+     "poem2": " John Lennon used to stroll along, walk or press his hot potato button at bedtime, thinking \"",
+     "poem3": " Surrender. Take a bath. Write your next letter. Here's the reply you might like:"
+    },
+    "seeds": {
+     "poem1": 1,
+     "poem2": 2,
+     "poem3": 3
+    },
+    "line_breaks": {
+     "poem1": 0,
+     "poem2": 0,
+     "poem3": 0
+    }
+   },
+   "checks": [
+    {
+     "claim": "seeds honoured",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "56591372ff175af370ebbfb8c59eafc48046b237a83acc2d97251dcdbb291da1",
+    "579d45bfe97436bd6232547a365d5232538c65a17398f83454eba17d8269d8a4",
+    "70be8c0f64c920995b9b2ea7cf4c40a56a0e0b4ad2c4ab19a658b9953de238c1"
+   ]
+  },
+  {
+   "id": 38,
+   "status": "narrowed",
+   "lessons": [
+    "P4.1"
+   ],
+   "claim": "GPT-2 continues the text as a document, not a reliable poem",
+   "values": {
+    "poet": "\nWrite a short poem about the sea. Write a short poem about the sea. Write a short",
+    "assistant": "\n\nWrite a short poem about the sea. Write a short poem about the sea. Write a"
+   },
+   "checks": [
+    {
+     "claim": "fallback condition: the poet prompt's output is degenerate (repeats the instruction)",
+     "holds": true
+    },
+    {
+     "claim": "alternate recorded",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "34cb0d67d0ddf2424dcc1c33bedc649e7fccd6c624613cacab8d4f77b0d261a4",
+    "3f9a6758fc39691e51f9c9b661466dcd088a3826edf51eb6781c415d5220f14b"
+   ]
+  },
+  {
+   "id": 39,
+   "status": "narrowed",
+   "lessons": [
+    "P4.1"
+   ],
+   "claim": "document framing vs instruction (\" merci\" near the top of the second)",
+   "values": {
+    "translate": "\n\nTranslate \"thank you\" into French.\n\nTranslate \"thank you\" into",
+    "frenchword_top4": [
+     [
+      " \"",
+      0.25495588779449463,
+      13.782620429992676
+     ],
+     [
+      " a",
+      0.02692851424217224,
+      11.53471565246582
+     ],
+     [
+      " also",
+      0.02301175147294998,
+      11.377534866333008
+     ],
+     [
+      " the",
+      0.0140670295804739,
+      10.885363578796387
+     ]
+    ],
+    "hotqa": " The opposite of hot is the opposite of hot.\nQ: What is the opposite of hot?",
+    "hotq": "\n\nThe opposite of hot is the opposite of hot.\n\nThe opposite of hot is the",
+    "hotqa_top4": [
+     [
+      " The",
+      0.15721753239631653,
+      16.31781578063965
+     ],
+     [
+      " It",
+      0.09209056943655014,
+      15.782958030700684
+     ],
+     [
+      " Hot",
+      0.05423792451620102,
+      15.253565788269043
+     ],
+     [
+      " This",
+      0.036230411380529404,
+      14.85008430480957
+     ]
+    ],
+    "hotq_top4": [
+     [
+      "\n",
+      0.38509947061538696,
+      15.44108772277832
+     ],
+     [
+      " What",
+      0.05027798190712929,
+      13.405153274536133
+     ],
+     [
+      " It",
+      0.02828112244606018,
+      12.829780578613281
+     ],
+     [
+      " The",
+      0.02716580405831337,
+      12.789545059204102
+     ]
+    ]
+   },
+   "checks": [
+    {
+     "claim": "fallback condition: \" merci\" not in the top 4",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "08776d603e6bba42ad7f56d875eebb317dfa1430f6e9cf3d8f7cc61e8ca63401",
+    "0d178fe872087441dd7d58d0fc59839821f5a547df5fd7fec124a062f4f8ac44",
+    "36f3bf2620929b18a648c77dea15f169fd54846eb84c8df6b9a5143aae81f3f8",
+    "433d265c39f9e2a5b1eb12d585aecaf2ada46c52291c0e808baae580736e967a",
+    "7b940fd0916456a4e57319e3790893b1a77454d20e6ee10682f916795902f617",
+    "cc0813cae65111d064936a53a2c0fd196a26da2ebe2b8a8087ec0faac80d38f5"
+   ]
+  },
+  {
+   "id": 40,
+   "status": "verified",
+   "lessons": [
+    "P1.1"
+   ],
+   "claim": "a Run with the model cached makes no network request and gives identical displayed numbers offline",
+   "values": {
+    "online_top4": [
+     [
+      " basketball",
+      0.42207759618759155,
+      15.962446212768555
+     ],
+     [
+      " football",
+      0.0471888966858387,
+      13.771415710449219
+     ],
+     [
+      " golf",
+      0.04147355258464813,
+      13.642313003540039
+     ],
+     [
+      " the",
+      0.021033653989434242,
+      12.963380813598633
+     ]
+    ],
+    "offline_top4": [
+     [
+      " basketball",
+      0.42207759618759155,
+      15.962446212768555
+     ],
+     [
+      " football",
+      0.0471888966858387,
+      13.771415710449219
+     ],
+     [
+      " golf",
+      0.04147355258464813,
+      13.642313003540039
+     ],
+     [
+      " the",
+      0.021033653989434242,
+      12.963380813598633
+     ]
+    ]
+   },
+   "checks": [
+    {
+     "claim": "offline Run gives identical numbers",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "de870ae59653d02cb64f39674c39b3f8f7af8b94ef5ec7ae3a2b11e14a70226d",
+    "de870ae59653d02cb64f39674c39b3f8f7af8b94ef5ec7ae3a2b11e14a70226d.offline"
+   ]
+  },
+  {
+   "id": 41,
+   "status": "verified",
+   "lessons": [
+    "P1.1",
+    "P1.5"
+   ],
+   "claim": "continues \" now home to\" (watch-it-write.test.ts pins it)",
+   "values": {
+    "continuation": " now home to the world's largest concentration of the world's largest concentration of the world's largest concentration"
+   },
+   "checks": [
+    {
+     "claim": "continues \" now home to\"",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "225c4e11030667daed5e07bcfd5fdbd7645e523d29a36d32c90eb290c4c71839"
+   ]
+  },
+  {
+   "id": 42,
+   "status": "verified",
+   "lessons": [
+    "P1.2"
+   ],
+   "claim": "\" unbelievable\" is one token and \" Le\", \"cl\", \"erc\" in the sentence; the token strip starts with the start-of-text marker",
+   "values": {
+    "tokens": [
+     "<|endoftext|>",
+     "It",
+     " was",
+     " unbelievable",
+     ",",
+     " said",
+     " Le",
+     "cl",
+     "erc"
+    ]
+   },
+   "checks": [
+    {
+     "claim": "sentence tokens",
+     "holds": true
+    },
+    {
+     "claim": "strip starts with the start-of-text marker",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "e22911d27439eb6ce2557062982928b6ee3b0e01677fe8da5a9c98b45d2911b3"
+   ]
+  },
+  {
+   "id": 43,
+   "status": "verified",
+   "lessons": [
+    "P1.5"
+   ],
+   "claim": "temperature 0 gives the same text run to run (A = B)",
+   "values": {
+    "continuation": " basketball for the first time in his life in the 1980s. He was a member of the NBA",
+    "new_tokens": 20,
+    "steps": [
+     [
+      " basketball",
+      0.42207759618759155,
+      " football",
+      0.0471888966858387
+     ],
+     [
+      " for",
+      0.2990291714668274,
+      " in",
+      0.10860155522823334
+     ],
+     [
+      " the",
+      0.07002301514148712,
+      " over",
+      0.06187564507126808
+     ],
+     [
+      " first",
+      0.08781354874372482,
+      " NBA",
+      0.04006996750831604
+     ],
+     [
+      " time",
+      0.7914730310440063,
+      " half",
+      0.02461806870996952
+     ],
+     [
+      " in",
+      0.4195777475833893,
+      " since",
+      0.0993538349866867
+     ],
+     [
+      " his",
+      0.20979547500610352,
+      " the",
+      0.036132797598838806
+     ],
+     [
+      " life",
+      0.6519438624382019,
+      " career",
+      0.13774031400680542
+     ],
+     [
+      " in",
+      0.20313909649848938,
+      ".",
+      0.19754444062709808
+     ],
+     [
+      " the",
+      0.06379218399524689,
+      " 1996",
+      0.03269316256046295
+     ],
+     [
+      " 1980",
+      0.09796182811260223,
+      " late",
+      0.09424509853124619
+     ],
+     [
+      "s",
+      0.8576381206512451,
+      "'s",
+      0.1347905546426773
+     ],
+     [
+      ".",
+      0.46723347902297974,
+      ",",
+      0.22599667310714722
+     ],
+     [
+      " He",
+      0.31900554895401,
+      "\n",
+      0.10168897360563278
+     ],
+     [
+      " was",
+      0.24100087583065033,
+      " played",
+      0.06417255848646164
+     ],
+     [
+      " a",
+      0.18335005640983582,
+      " the",
+      0.07812437415122986
+     ],
+     [
+      " member",
+      0.05144428461790085,
+      " former",
+      0.025969600304961205
+     ],
+     [
+      " of",
+      0.9937625527381897,
+      " and",
+      0.001827844651415944
+     ],
+     [
+      " the",
+      0.7625442147254944,
+      " a",
+      0.03252611309289932
+     ],
+     [
+      " NBA",
+      0.04801999032497406,
+      " New",
+      0.04207947850227356
+     ]
+    ]
+   },
+   "checks": [
+    {
+     "claim": "A = B",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "1dafa01dec71cce8736eceb35a30d5be726da8e68752414af5a0c7d675c308ed",
+    "1dafa01dec71cce8736eceb35a30d5be726da8e68752414af5a0c7d675c308ed.r2"
+   ]
+  },
+  {
+   "id": 44,
+   "status": "verified",
+   "lessons": [
+    "P1.5"
+   ],
+   "claim": "seeds 1 and 2 give different texts (C differs from D); seed 1 repeated gives the same text (E = C); the sidecar honours an explicit seed",
+   "values": {
+    "seed1": " football in 1974. He did not return from the 1976 Olympics to Arizona, but he was Deacon",
+    "seed2": " shot who cared about red as a kid or A-game for his team. Those days are gone",
+    "seed_used": [
+     1,
+     2
+    ]
+   },
+   "checks": [
+    {
+     "claim": "C differs from D",
+     "holds": true
+    },
+    {
+     "claim": "E = C",
+     "holds": true
+    },
+    {
+     "claim": "explicit seed honoured",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "51b65c580233fc51449ee132ffb3aebb054e92abf8b0d9d8f4c3d3ffd13440db",
+    "a3235e72149c49eda34a91d80f617549965e4800325d76cd2d4ab023f17ed6d0",
+    "a3235e72149c49eda34a91d80f617549965e4800325d76cd2d4ab023f17ed6d0.r2"
+   ]
+  },
+  {
+   "id": 45,
+   "status": "verified",
+   "lessons": [
+    "P2.1"
+   ],
+   "claim": "from \" to\", the thickest line goes to the start-of-text marker",
+   "values": {
+    "argmax": "<|endoftext|>",
+    "share": 0.43996917471728103
+   },
+   "checks": [
+    {
+     "claim": "thickest line to the start-of-text marker",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "87d38913a998d48c37469b908b202f0be3c71fe6c3f482ae010319976825e93b"
+   ]
+  },
+  {
+   "id": 46,
+   "status": "verified",
+   "lessons": [
+    "P2.1"
+   ],
+   "claim": "the biggest share, about 2 in 5, goes to position 0",
+   "values": {
+    "share_position0": 0.43996917471728103
+   },
+   "checks": [
+    {
+     "claim": "position 0 has the biggest share",
+     "holds": true
+    },
+    {
+     "claim": "about 2 in 5 on position 0",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "87d38913a998d48c37469b908b202f0be3c71fe6c3f482ae010319976825e93b"
+   ]
+  },
+  {
+   "id": 47,
+   "status": "verified",
+   "lessons": [
+    "P2.1"
+   ],
+   "claim": "at least one L9-L10 head draws mostly from \" Mary\"",
+   "values": {
+    "head": "L10H7",
+    "weight_on_mary": 0.8249081969261169
+   },
+   "checks": [
+    {
+     "claim": "an L9-L10 head draws mostly from \" Mary\"",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "87d38913a998d48c37469b908b202f0be3c71fe6c3f482ae010319976825e93b"
+   ]
+  },
+  {
+   "id": 48,
+   "status": "verified",
+   "lessons": [
+    "P2.2"
+   ],
+   "claim": "the top induction scores sit in middle layers",
+   "values": {
+    "top_induction": [
+     [
+      "L5H5",
+      0.9388914108276367
+     ],
+     [
+      "L7H10",
+      0.8859726786613464
+     ],
+     [
+      "L6H9",
+      0.8556434512138367
+     ],
+     [
+      "L5H1",
+      0.7849119305610657
+     ]
+    ],
+    "top_previous_token": [
+     [
+      "L4H11",
+      0.9797033667564392
+     ],
+     [
+      "L3H7",
+      0.5226079225540161
+     ],
+     [
+      "L6H8",
+      0.4935183823108673
+     ],
+     [
+      "L2H2",
+      0.4867393672466278
+     ]
+    ]
+   },
+   "checks": [
+    {
+     "claim": "top induction scores in middle layers (L3-L8)",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "25c47d19f4c2d8efb988542e7065fa50d4966c4c866ad65fa9b2fd3bd1c2afdc"
+   ]
+  },
+  {
+   "id": 49,
+   "status": "verified",
+   "lessons": [
+    "P2.2"
+   ],
+   "claim": "the head's biggest weight from the last \" from\" goes to \" Qu\" (the token after the first \" from\")",
+   "values": {
+    "head": "L5H5",
+    "argmax": " Qu",
+    "position": 8,
+    "weight": 0.752322256565094
+   },
+   "checks": [
+    {
+     "claim": "biggest weight from the last \" from\" goes to \" Qu\" (position 8)",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "175351ba5277b309fc46cbf824211f349b0824a721df82a1300c34a6c24649ae",
+    "25c47d19f4c2d8efb988542e7065fa50d4966c4c866ad65fa9b2fd3bd1c2afdc"
+   ]
+  },
+  {
+   "id": 50,
+   "status": "verified",
+   "lessons": [
+    "P2.3"
+   ],
+   "claim": "\" basketball\" climbs before L8 (it's not absent, just not on top)",
+   "values": {
+    "L5_L7_top": [
+     [
+      "L5",
+      " course",
+      0.5757063627243042
+     ],
+     [
+      "L6",
+      " course",
+      0.27205806970596313
+     ],
+     [
+      "L7",
+      " baseball",
+      0.27564555406570435
+     ]
+    ],
+    "basketball_L5_L8": [
+     [
+      "L5",
+      9,
+      0.00599645497277379
+     ],
+     [
+      "L6",
+      6,
+      0.021361874416470528
+     ],
+     [
+      "L7",
+      2,
+      0.16877280175685883
+     ],
+     [
+      "L8",
+      1,
+      0.4222166836261749
+     ]
+    ]
+   },
+   "constants": {
+    "rank_L5": {
+     "value": 9,
+     "unit": "count"
+    },
+    "rank_L6": {
+     "value": 6,
+     "unit": "count"
+    },
+    "rank_L7": {
+     "value": 2,
+     "unit": "count"
+    }
+   },
+   "checks": [
+    {
+     "claim": "\" basketball\" not on top at L5-L7",
+     "holds": true
+    },
+    {
+     "claim": "\" basketball\" climbs from L5 to L7",
+     "holds": true
+    },
+    {
+     "claim": "\" basketball\" tops at L8",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "8e357c8dda9479a372a2f612d16ef30fcc3353d7a53285b84d5d1e5908f76bd9"
+   ]
+  },
+  {
+   "id": 51,
+   "label": "29",
+   "status": "verified",
+   "lessons": [
+    "P2.4"
+   ],
+   "claim": "the largest bars are heads in L9-L11; the logit difference is about 3.4",
+   "values": {
+    "top3": [
+     [
+      "L9.H6",
+      2.107902765274048
+     ],
+     [
+      "L9.H9",
+      2.0956978797912598
+     ],
+     [
+      "L10.H0",
+      0.8184874653816223
+     ]
+    ],
+    "bars_total": 4.5642213192768395,
+    "actual": 3.361569404602051,
+    "gap": -1.2026519146747887,
+    "logit_difference": 3.361569404602051
+   },
+   "constants": {
+    "top_head_layer": {
+     "value": 9,
+     "unit": "layer"
+    },
+    "top_head": {
+     "value": 6,
+     "unit": "head"
+    }
+   },
+   "checks": [
+    {
+     "claim": "largest bars are heads in L9-L11",
+     "holds": true
+    },
+    {
+     "claim": "logit difference about 3.4",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "f606cff3e0aa657d3eb80487434871e3a35a15bffd31d374ff6efde5b6dc4878"
+   ]
+  },
+  {
+   "id": 52,
+   "label": "30",
+   "status": "verified",
+   "lessons": [
+    "P2.4"
+   ],
+   "claim": "\" she\" minus \" he\" on the nurse prompt, with p(\" he\") shown",
+   "values": {
+    "top3": [
+     [
+      "L10.H9",
+      0.9300795197486877
+     ],
+     [
+      "L9.H7",
+      0.6110196709632874
+     ],
+     [
+      "L9.H2",
+      0.34487384557724
+     ]
+    ],
+    "bars_total": 2.8234410497825593,
+    "actual": 2.120072364807129,
+    "gap": -0.7033686849754304,
+    "p_he": 0.022767839953303337
+   },
+   "checks": [
+    {
+     "claim": "p(\" he\") is in the nurse top ten",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "25e44d6e3ef82c34d09ad852e14b0e2c115af20d4b7fea65ef91919e9c691608",
+    "d0d2d963917bac036d74fdf39374f2d045269b4b1aa6b6b26212d51318e69829"
+   ]
+  },
+  {
+   "id": 53,
+   "label": "31",
+   "status": "verified",
+   "lessons": [
+    "P2.5"
+   ],
+   "claim": "the learner can guess the label from the snippets; at least one top example the label doesn't cover",
+   "values": {
+    "top5": [
+     [
+      13856,
+      40.64704132080078,
+      "proper nouns, specifically the name \"Jordan.\""
+     ],
+     [
+      13526,
+      16.537864685058594,
+      "famous names or personalities"
+     ],
+     [
+      19016,
+      8.033834457397461,
+      "proper nouns related to organizations, people, and places"
+     ],
+     [
+      12472,
+      7.488931179046631,
+      "names of basketball players"
+     ],
+     [
+      131,
+      6.863730430603027,
+      "references to famous historical figures and universities"
+     ]
+    ],
+    "fid": 12472,
+    "label": "names of basketball players",
+    "snippets": [
+     "they re-signed Kevin Durant, Steph Curry, Andre Iguodala, Shaun",
+     "clean sweep as they re-signed Kevin Durant, Steph Curry, Andre Iguod",
+     "not like we're talking (Stephen) Curry. Korver, he's a great",
+     "truly started in February, when DeMarcus Cousins was traded to the New Orleans",
+     "ETAIRIE, La. -- Drew Brees was critical Wednesday of the way NFL commissioner"
+    ],
+    "distractors": [
+     "proper nouns, specifically the name \"Jordan.\"",
+     "famous names or personalities"
+    ],
+    "uncovered_snippet": "ETAIRIE, La. -- Drew Brees was critical Wednesday of the way NFL commissioner"
+   },
+   "constants": {
+    "fid": {
+     "value": 12472,
+     "unit": "number"
+    },
+    "label": {
+     "value": "names of basketball players",
+     "unit": "string"
+    },
+    "sae_layer": {
+     "value": 8,
+     "unit": "layer"
+    }
+   },
+   "checks": [
+    {
+     "claim": "{fid} among the top features at \" Jordan\"",
+     "holds": true
+    },
+    {
+     "claim": "a snippet the label doesn't describe",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "de870ae59653d02cb64f39674c39b3f8f7af8b94ef5ec7ae3a2b11e14a70226d"
+   ]
+  },
+  {
+   "id": 54,
+   "label": "32",
+   "status": "verified",
+   "lessons": [
+    "P2.5"
+   ],
+   "claim": "the skeptic check: does {fid} fire at \" Jordan\" in a sentence with no basketball",
+   "values": {
+    "country_activation": null,
+    "country_top50_min": 0.3376513719558716,
+    "row1_activation": 7.488931179046631
+   },
+   "checks": [
+    {
+     "claim": "{fid} fires at \" Jordan\" in row 1",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "0674f5128c8ac021daa01d14de5c361507621c056e7a49f26a634946050c0d21",
+    "4caa426196558f6d8aae0190d6aa513ebba8b13362bd111fb253b108b4ef2740"
+   ]
+  },
+  {
+   "id": 55,
+   "label": "33",
+   "status": "verified",
+   "lessons": [
+    "P2.5"
+   ],
+   "claim": "by layer 8 the residual streams differ, so the features differ",
+   "values": {
+    "river": [
+     2795,
+     6432,
+     3015,
+     4850,
+     14067
+    ],
+    "money": [
+     2795,
+     13150,
+     24345,
+     14067,
+     6432
+    ],
+    "overlap": [
+     2795,
+     6432,
+     14067
+    ],
+    "river_only": [
+     3015,
+     4850
+    ],
+    "money_only": [
+     13150,
+     24345
+    ],
+    "labels": {
+     "2795": "words related to financial institutions, especially banks",
+     "6432": "phrases related to positive feedback or appreciation",
+     "3015": "words related to objects or actions involving water",
+     "4850": "locations, particularly in the Middle East, related to political or geographical reference",
+     "14067": "abstract concepts related to laws, structures, or systems",
+     "13150": "phrases related to financial institutions, specifically banks",
+     "24345": "phrases related to money"
+    }
+   },
+   "checks": [
+    {
+     "claim": "the features differ",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "0a8f4630e043329b84b393eab35fd7c746bfbffe0dbfe2c2a3615e2fb44385b0",
+    "de810e444e775184e4b7167b63c09281a28f7d7cee4282b9941146b7316fe0cc"
+   ]
+  },
+  {
+   "id": 56,
+   "status": "verified",
+   "lessons": [
+    "P3.1"
+   ],
+   "claim": "delta exactly 0 (abs(delta) < 1e-6)",
+   "values": {
+    "max_delta": 0.0
+   },
+   "checks": [
+    {
+     "claim": "delta exactly 0",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "540238e920be6a3620bce62aae3976861c73db183561ee06e88843db439e98be",
+    "540238e920be6a3620bce62aae3976861c73db183561ee06e88843db439e98be.r2"
+   ]
+  },
+  {
+   "id": 57,
+   "status": "verified",
+   "lessons": [
+    "P3.2"
+   ],
+   "claim": "at least one single head reaches {task_threshold} (about half the largest single-head drop)",
+   "values": {
+    "deltas": {
+     "L0H0": 0.02158910036087036,
+     "L0H1": 0.10168653726577759,
+     "L0H2": -0.002211451530456543,
+     "L0H3": -0.015082478523254395,
+     "L0H4": 0.06643462181091309,
+     "L0H5": -0.028977632522583008,
+     "L0H6": 0.16673314571380615,
+     "L0H7": 0.08825957775115967,
+     "L0H8": -0.47300636768341064,
+     "L0H9": -0.595452569425106,
+     "L0H10": 0.11796313524246216,
+     "L0H11": -0.022248268127441406,
+     "L1H0": -0.0005993247032165527,
+     "L1H1": -0.05613476037979126,
+     "L1H2": 0.006703376770019531,
+     "L1H3": -0.23497089743614197,
+     "L1H4": 0.036024510860443115,
+     "L1H5": -0.022642850875854492,
+     "L1H6": 0.04722416400909424,
+     "L1H7": -0.06064039468765259,
+     "L1H8": -0.0469135046005249,
+     "L1H9": 0.006433963775634766,
+     "L1H10": 0.0630597472190857,
+     "L1H11": -0.04221922159194946,
+     "L2H0": -0.03284531831741333,
+     "L2H1": 0.021881043910980225,
+     "L2H2": 0.008740246295928955,
+     "L2H3": 0.0029459595680236816,
+     "L2H4": -0.0401768684387207,
+     "L2H5": -0.06254243850708008,
+     "L2H6": -0.034140944480895996,
+     "L2H7": 0.008776843547821045,
+     "L2H8": -0.0028471946716308594,
+     "L2H9": -0.004511475563049316,
+     "L2H10": -0.00042253732681274414,
+     "L2H11": -0.10524648427963257,
+     "L3H0": -0.00967705249786377,
+     "L3H1": 0.018515706062316895,
+     "L3H2": -0.022121965885162354,
+     "L3H3": -0.053551435470581055,
+     "L3H4": -0.034566283226013184,
+     "L3H5": -0.02017277479171753,
+     "L3H6": 0.033913612365722656,
+     "L3H7": -0.003569662570953369,
+     "L3H8": -0.05920130014419556,
+     "L3H9": -0.022583842277526855,
+     "L3H10": 0.006529629230499268,
+     "L3H11": -0.035488784313201904,
+     "L4H0": 0.014997541904449463,
+     "L4H1": -0.006148278713226318,
+     "L4H2": -0.03138768672943115,
+     "L4H3": -0.012611448764801025,
+     "L4H4": -0.002234220504760742,
+     "L4H5": -0.05106538534164429,
+     "L4H6": -0.019614338874816895,
+     "L4H7": -0.08315473794937134,
+     "L4H8": -0.061922669410705566,
+     "L4H9": -0.029978930950164795,
+     "L4H10": -0.01781684160232544,
+     "L4H11": -0.14858746528625488,
+     "L5H0": 0.018071293830871582,
+     "L5H1": -0.06368124485015869,
+     "L5H2": -0.0394168496131897,
+     "L5H3": 0.01372295618057251,
+     "L5H4": -0.0007390379905700684,
+     "L5H5": 0.016242146492004395,
+     "L5H6": -0.014706552028656006,
+     "L5H7": 0.01982361078262329,
+     "L5H8": -0.03419739007949829,
+     "L5H9": -0.22012972831726074,
+     "L5H10": 0.0578342080116272,
+     "L5H11": -0.06771910190582275,
+     "L6H0": -0.05932551622390747,
+     "L6H1": -0.017357707023620605,
+     "L6H2": -0.026978611946105957,
+     "L6H3": -0.07318753004074097,
+     "L6H4": -0.030328750610351562,
+     "L6H5": -0.028161585330963135,
+     "L6H6": -0.09132552146911621,
+     "L6H7": -0.07725948095321655,
+     "L6H8": -0.013944506645202637,
+     "L6H9": 0.0038584470748901367,
+     "L6H10": -0.011385202407836914,
+     "L6H11": 0.03750878572463989,
+     "L7H0": -0.0007662177085876465,
+     "L7H1": -0.01210552453994751,
+     "L7H2": -0.005264222621917725,
+     "L7H3": -0.12508487701416016,
+     "L7H4": -0.010768413543701172,
+     "L7H5": -0.012312114238739014,
+     "L7H6": -0.032960712909698486,
+     "L7H7": -0.025114834308624268,
+     "L7H8": 0.02982991933822632,
+     "L7H9": 0.0008768439292907715,
+     "L7H10": -0.015069842338562012,
+     "L7H11": 0.0010352134704589844,
+     "L8H0": -0.0257338285446167,
+     "L8H1": -0.006885945796966553,
+     "L8H2": 0.03656560182571411,
+     "L8H3": -0.20656219124794006,
+     "L8H4": 2.1755695343017578e-05,
+     "L8H5": -0.011493206024169922,
+     "L8H6": -0.19870835542678833,
+     "L8H7": 0.008517146110534668,
+     "L8H8": 0.028732657432556152,
+     "L8H9": -0.0665627121925354,
+     "L8H10": 0.04037684202194214,
+     "L8H11": 0.05113619565963745,
+     "L9H0": 0.01965385675430298,
+     "L9H1": -0.00708770751953125,
+     "L9H2": 0.009019851684570312,
+     "L9H3": -0.06537258625030518,
+     "L9H4": -0.045402467250823975,
+     "L9H5": 0.030751466751098633,
+     "L9H6": 0.014014482498168945,
+     "L9H7": 0.007413268089294434,
+     "L9H8": -0.016286849975585938,
+     "L9H9": -0.07511675357818604,
+     "L9H10": -0.0034486055374145508,
+     "L9H11": -0.012346446514129639,
+     "L10H0": -0.10856717824935913,
+     "L10H1": 0.010962367057800293,
+     "L10H2": -0.0929756760597229,
+     "L10H3": -0.02552121877670288,
+     "L10H4": -0.014308333396911621,
+     "L10H5": 0.005661606788635254,
+     "L10H6": -0.017555654048919678,
+     "L10H7": 0.1985105276107788,
+     "L10H8": -0.0114632248878479,
+     "L10H9": 0.025459647178649902,
+     "L10H10": 0.008613944053649902,
+     "L10H11": -0.01708000898361206,
+     "L11H0": -0.3133397400379181,
+     "L11H1": -0.12696242332458496,
+     "L11H2": -0.07528072595596313,
+     "L11H3": -0.059216439723968506,
+     "L11H4": -0.031065523624420166,
+     "L11H5": -0.01398015022277832,
+     "L11H6": -0.0026897192001342773,
+     "L11H7": -0.013251006603240967,
+     "L11H8": 0.012583792209625244,
+     "L11H9": 0.022761046886444092,
+     "L11H10": 0.21787363290786743,
+     "L11H11": -0.03196436166763306
+    },
+    "largest_drop": [
+     "L0H9",
+     -0.595452569425106
+    ],
+    "suggested_threshold": 30
+   },
+   "checks": [
+    {
+     "claim": "144 single-head knockouts recorded",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "0103802ad6ec979c12e4643e9676b857539d2d59cf35eaf08dcbac667a831228",
+    "053e5b01c62d5ad3f980003ac581f9f8ad220636b83ce0b5c79160a025b8a989",
+    "060a2da606de4441cbc0412fbb50a94e1223786022ac1ef5642e499aebc30d50",
+    "068cdfa31ebd1947cdb1e7262e34ea1d0b25d306886fd6d48272cdedbf1a1c5e",
+    "06fdaf6998ef3bba90f67e1c642c2949fc147b24e9e73d646bfac91d25b71a5c",
+    "086364895d9728b852bba7deec8649478b7d6987ee5a12850a0d02d73d7311d8",
+    "096ed75a45200633317f5084cb5c0a32a4cd04f787eadce95f90fc697431dd02",
+    "0a7d4fc5e92d147c3121e11a7997005284c69a9c69696e7319e5cdb52751c1f6",
+    "0bc8bc92d6f0689deed867d77a78fb9ade0df2ef43db1e8c8c94991a43cc339d",
+    "0bceb43bf337b7684bf7065d57adb2ce50b3b1907cec9f6721d5e90c0d99dc48",
+    "10883dd64835c348632162170502e04adc63d41e33080733b5d18681503f71f7",
+    "10c23a4c381f0e8ae46d2250ad76636285572eec9c381686cdee3b8d3566e817",
+    "11822aeca2e2067030447074d07f512a7d5533e47db22fe19fb4c99e88ebfe80",
+    "14514f34afbae2e0b48e886a9973063eb4e4712964ead8f78d3757724bf54ba1",
+    "147ce0b53ae37db4b2bd1e18986dea1eed59ab24ecdaab294e42ad2ce5dae071",
+    "1493cc145e3c5041373d171c6d64c6d73a90c12ce200a4ac721dc3d00c780669",
+    "1578376d0dcac93fc79763fec11c20d8bc5d9bb52fe0c187a87bad6f146bfcd0",
+    "17b49aad37a6e3e788f17da0d041203000f925f2a2c3f6d3ec1f8a10f2a56774",
+    "17c6ab786c3a83e9d927b9fc4e1a5d1f142e4fa7718969383ca6abb05df99e3e",
+    "184aa9eb503559c2c5d90883da5ab739125f534b2969e40001b9933b45b2ff61",
+    "18791597b9bcb7d7f842ebd1fd30bdc2defb2d1183bdcf915a27c9736cfa2263",
+    "21a17db27b5be4e201b7783d10fe77bdbbad8803ea6c20db50bf3f1a6d02cecf",
+    "23a61be0061f1398b12364382eeaae41ee5e6d4b07c6afa2d8c79e17752f4646",
+    "25db51467cae2ae85992b3e4e0bd78d8db2be019fd284eada9b1598d25832ae4",
+    "25e060560febf8a434c07d588cf3790b3805715cbd47d986bc4e52e855604c33",
+    "264d0d0e238929aa73ccd5ee04a5080cee92c8bfd4088cf0768b1bc73a12d652",
+    "26914e27149797ee8045565bd9f79e951facd631eaaaa068dd64436bbbb2d1f6",
+    "287bbd25606ac169527f7a996cf6d4024f1ff382840e59e40814953552b1f368",
+    "29c5c5db51cf90794802ac564e4d6e38774becabf7a4a5cd6e7f8288d6841647",
+    "29d5f654fb5c69c012537d96e0a0cc12a34c8efe6cc6ced1ffa2d378d9da71ff",
+    "2b4ffc4e9b714afaaf6fb726494d5205b0ea5611c324bda0ec0174312c2d4e47",
+    "2d37f45e454df1a79cfc07cc2c860a1a5447f0ed3096017d5d7794f28bd73abd",
+    "2e64f2e5ba03c11444e8841a76fb06c69d4b47af62447b172b0894bd9442a97b",
+    "2f5ae5a0bcee6ab2e3fdf29ea8823fbc18119fd29e196bce4b0b1ac2d70f1ad8",
+    "3112ffafa2ebe9b161655663d558801dbd64c2026e0f6ce8215f355a6a6b094b",
+    "3202ba99db15a39ca43649404f3df69ca30174bc8924c1fc992e04c0ca18adaf",
+    "36a2e0a53631fbec988b73958cc45230a63c7baf484004e35894280518988716",
+    "37622cd4d09b2b3c396fe0ff6ded20c85d4e415cbf5975dbb60e22898d0f38b8",
+    "3dcdd95f3191817c0d332ab3fa407faff8d161dcbbc71067d0338248f5f98682",
+    "3ddfa31ccf0f99fd2295c219798f02bb7bbb26d55af92ad767695407dd8fccf0",
+    "3fb69ee064f522874df7e80529b697c4bfdf0a17846537ab68cc4cdd52b2ac35",
+    "4394d3be9c9e29310f656d5f68065ee02d48ca46f9b20e5e8bcb71e5accb3db4",
+    "4428aa84b8f1dd908a03413291e77cc33d3fd98fa4ee1ae241be24b870498c9f",
+    "45529841426ce3ffb713bf7fdfb0de2945ef18849ba5800ac122dc0545caa53f",
+    "471cab08c64ec8f727c9c78dfbd787822d1c4c39240ffa84e9ba1f32a35fbefc",
+    "47aac17a362d92864806b49cd7e5e73735dcbc48f430d24e2ad4fd82d14d02a2",
+    "4b2daf9a8c08c1dee6abbc75ba59bf8cf9df419aceac58738321a6c0ec01c622",
+    "4be5e560780f85d285d3ca8c83d0c192671ba7e57579b5d50eec1cf5adc0737a",
+    "50da43e7dd233295d5b6278269cff66cf4a2c46147624f8ef3a8289e15de7fc9",
+    "51c5aa7156f094d56e3596bf260fd805b68318438a92a9a405060f607a38f7f0",
+    "526b1290a4eb1aa6607c701bd5b71fc2f310d5639fcf4843f462590c5fe0cd22",
+    "52a56ead0a595b205173229baf0d38937efac2a089ae40bad16f76b47343ac37",
+    "5a23cfdcf32bf8ef0d65727bc8578326de7972c0ac30b60531c44f6b0ebe5cab",
+    "5ad4dde22fa8e6a70364e9d5d7dafe8b43841799770efa9f19a01dbaa2da7fae",
+    "5ba2d8b7e97f54e8e24558315a9d6db2f8dafffb3a743c0b6a1fb25ef915b5a4",
+    "5ce360ab80018eca4935f15279b40f31a086d9ffdce4400f0b4a28c5dd8ecf84",
+    "634ce871b8080587338cdba062ec1451bb1eb5cdda3639b94f97519909c5b541",
+    "636180c6d176335dc03d32390af4b1915f402c8f8ec65d599bc46e81d004e0a9",
+    "66c426519d8d24012369663192348f86f98ac5ee5cf94141d5a783c54952e8b4",
+    "677081ae1b1b89dee435bdaf2b09997ef90651d75531dc0d63989de34e5f8afc",
+    "68373091eef364bf0cfedfec106605f2c871e3c677f8856eb1e7694b2f52ba8b",
+    "6ac5a6029747229012d8edd4022dce54141482eb0398a514237c1d76c6cc7a6a",
+    "6f4b31ce1cba8dfdf06d052bfcfe481d632c068affbd2d9f08aa4109352754f9",
+    "751169bcb983dfc545834c706ead727b1a409bed6e26c3e99b8533bf2609b6e0",
+    "7676af1f305ee85e1e4c914f393ee916551985e1acbf4235610d3803ad6dd9af",
+    "77e9d0a5c389ea779bd3143a291f8cc95f16de49ca279422100c2fd085e42ac3",
+    "7ff9887f876b738279d5ccb00492f527840742547fcec3c76c813ace4f41bd8f",
+    "802e1ebb9093eb555c7e9cc45778a2123b8dc918c4e1bd353578d28e66d7539e",
+    "806636d0a0a633134946634ec47c7a6eb8387557bb1f312e30320d329496daef",
+    "80e3d56e221c6d01e76405f817f172dfa0668ccecf866b8c61f0e54f1e7e43f5",
+    "82cba254bb1d420c9c4c3cffe3a2ecb687beba2cf667ce735e065b664e17a050",
+    "845a53c05c2f479286d7941899b7be9eb17bbfdd5c39d5e397ec04e64da488b6",
+    "84b2d67f70fd3feb25b9974f1bfdabf17cf22f9382fc6fb3640cc1c563472b4c",
+    "8618e838c9fe4a1e64cede2c28ebbe1a9a00839297ea993f0a1a760db2e79d43",
+    "87952a4153dcdaac1bba5cb8dbd6168267606bc4eab49eb04aa3e3e8e60f7e92",
+    "8b346966b88daf2eb828eba9520f2f200303863488a47d51fb370bc953379613",
+    "8be332f98cd3cc8a20fc920b4510d405bdf2712c8a1c98d032b193e64f20204b",
+    "8c90274312c8b34fca96b843e4ae51ff0185df4c2ee0924bd0d8e2ef9f450664",
+    "8eba817645060afffe366d5e5c3875fcc2b99f16cd3f1981ba494b201f2c1da3",
+    "91f8d5d6c166defad98d88b440307f1b6496dee9e16601bbc037ded656e58877",
+    "92f08e66b8dad8305886a8ef53b5582db518a0ae9b0e97d39babd2900f38dd97",
+    "959d942c0cdc5174a72ffe928024f7d24e411a95fc16f02ed473faab8f1f9cb2",
+    "9898ff226821b89318cbf424f281e43f7421ba62911fb62c581b92ab080b4994",
+    "992923a5d7f65bcde974ae13739418a059f694e8899cec3709277cb737b90852",
+    "9c2e7cb1331b11cddf07bb1a613b776b6b4101baa4631fa5692fa1fa5596dd90",
+    "9d4c2ae8abcb36458f79de8e0b74390aa8009ecf7881cff8e75843d4e14b9e31",
+    "a0ae76476e12143d30bcb7c1176af4d955d5177ca8bd199d21c934489005e9f5",
+    "a1f1516e7b7a0b9f6f3d96b515f2592d19355afdc5b62e0f2bed98386b4ddac5",
+    "a27a64d5f81c44da355a9c0e109ebe486d6bc08fcd2dc996c65f8389310d62df",
+    "a3a4a00aea89407def895e40da671dbd1bb4ed2d617c880efd848cb9efa56272",
+    "a3bfb0d2e0ec300afa2dc927a5e091b3e423ffc0f6e84900f5924803e8b035fd",
+    "a58c8fde6c191cefcd9297acc9ebaa232daf636a3036d9f24feca07bc7973294",
+    "aa9c6c14fbf77afcb54b86ff0a7f1ba8937d66561992c878140933a82f3523cd",
+    "ac4686038c6b6a9c08fb3b9b885585c3fcf9be50878afc78f4c7b482c9bb8234",
+    "ac9a93113cdb30032fb367f4b6477dc6b6cd7f8d29a14123ae8ce71ed9efa8d3",
+    "b51c97d41f38d1fc69269b448aaf33d68c63809b88485da27d8fc88b9eeb2b4f",
+    "b5c92a56fcbe48a1c9e4fd662a193139acd7cb1f19e7d437b411d37515a3ea10",
+    "b9ac31be00377b8ada464a08d3448db153ab905d349505bb286e1a74a7fe23d6",
+    "bdfc5b029d49fe841ec40b777c614be9922b8aefef39d394c3f50b20de42458e",
+    "be6bdd1edb364420e60ace0ffce0e67eb56e7d65b5ccebaaf73ea9e9e89cd635",
+    "beaa93b3175d1dc10dc2e94cefab5b350f34095aa680d5827f740ec6614f40a7",
+    "c019c1b8a5c3154599991027d7c8b09c67a015cf625c9e2307601743c1031492",
+    "c27a958271cdc70e9e646f20ea902e93cb402bcdc5da0b89574c9cb019065ba5",
+    "c29b3e88a765925f896d787d14f0f44151a7377e01900ca18025d49a663f9cca",
+    "c6195ab4207da1e56b2a94073dd7aa7fe96644b67c614f3b357cafcb5eea76dc",
+    "c7a8a2f1f47d8d94d079e70e65f490408134d7eea9ef8b2d8bf4848f1ad15492",
+    "ca92af930afd16f795a60b45f536c6522bc85a0c72400dd101663b52402ccfcd",
+    "cab8f9bf1b93c039e67cc62f21af3384c8211d0a4d89f8bc857c2f3196e0fdd5",
+    "cabd17c22ccd280f5a8116fb4bb8812b332a237f61ba1a14d298e9678aebc6b3",
+    "cf92223d899f62ea64840709eef6c490c4a4bac790ff188e306ae64e556e06a1",
+    "d19ae4e3240f02f2e2bb250a5152e29a5fa80c4850d2ae9566cd1fb56bcc5083",
+    "d3ba0eb1e0daf40d8290e74df4559050938934829eec00b4ecb2c96f86679c78",
+    "d3c4477f60c2fd288e0c0faef0694e1d3c1d11042bce694395ef677ca271bb9e",
+    "d4a84645e315d0a19c9c6a344d5a6dffc8a462679c67b2b11c0e450031bcff0c",
+    "d57ae345490beed0cc22483570eae154776c8335bb2456dd8226afc60132c18d",
+    "d873da75c9fa693ef02b8dfdb5ad53aa0658d47828399d6119602d2ecf859e77",
+    "da88ed22c7049f1b07f0e9e98412748f1bf2fd77e63f37e0019ad87a0c7fce1c",
+    "db1d744b458a32760e278870eeb1370a2ee73f51ff0a9d419e873be7d17a20c4",
+    "dbbfb69cdcae7612efc3b3dc10b61482e7fb8bf186291646b7e0b9b3ac47357c",
+    "dc0ed54016b6b00432206883c6fde0828d44bd4b7fd12019a86390e685a2dd99",
+    "ddabb8a4d63837662b09a4ce9d1cacfbe231d75c8757c8f646f8e7653b2d659c",
+    "de8d1d485d994ac5d77b10353a18d31f39867ca1fb969ceec55d58185da0c36d",
+    "e1af9b01d639ed65276a4ecc7bbabf1813840b4b3f3b1f5c8b00245581eb6ff4",
+    "e214bec7732eea0bc0a4b9a819ca61997264ab65f456c96d8340a126ed3de1a2",
+    "e3b7a20d305cdad512b528f38f60a34a9955e97c7049f608ce5fb0eea6c7a8df",
+    "e45fbb24792dd188b6d7695ed965ea980c89848262a0f335a9f702ff6b415e0d",
+    "e8057eb19f41049b2dc917754349f99120d7a72fe3b810193ce1574edb1648af",
+    "e8d6fc7fba5e5678eca53a7023c1a6f7c6fc73e64cf8100caee7b1b8e6049f0d",
+    "e8f9edf16d8bd78490f4b085a0b5f0aec0683d88221973c58102036f52150e4d",
+    "e9d4aa1665ae86377715a414e560e36ddde5e9494c7a0c526bf53d7f96f36db6",
+    "ea19b8920c99bda529e84589cee304e8d676d8c6186126c68ec6841b8c1aab62",
+    "ea4f7472a23a01363d82bf15ee576fda2748486466a04f58c82a3d84fb5ddf2d",
+    "ec9b64ffe57798318ffa3aa063bd562cbeb1bc72fcf32b347810b8ecf3339d21",
+    "eca23b7cf0c1ac6f0bf87dae840013a16d95dc8539274f9efbdc5c920d35cef1",
+    "eda3912d9ebf10c13f3025279176929cbdcea8805875c6f43cba15402b018709",
+    "ef14ce912acaba382643dd69983e9c02c4bdfac27853b7e2d265aa318611f5f8",
+    "f33cef8343347a584d6b0c99e0c31bf353fe222f98b75aec84b814e8f232f410",
+    "f64b8bf28012cc0b41eea835b84c1378120ff2d0f1ee9987acd0e145a9fac950",
+    "fae5e920741402c2b8735e862ecf43e44dd7076bd95a774ccfc25955467118ef",
+    "fc65ba09f30d0efbcf53a58e0cf62aa7c1e0830a74de038a38e32407f64bbe70",
+    "fd0d1f7bd15061cd6ab9d5808b7e272c8ddb3ba70f22cea4542dc2a9d5c26498",
+    "fe16f113ed10ec74dbd74372338f3a33baa35ea5fbcb52f0399b026c6a5924c4",
+    "ff3c6864dffba720a38c91ce6861d80583041171824a775b97612f1a3100ca76",
+    "ff61b187af29f4fd33c905c523cc4b78af1241911c37e1fbd925ab6e85291af4"
+   ]
+  },
+  {
+   "id": 58,
+   "status": "verified",
+   "lessons": [
+    "P3.2"
+   ],
+   "claim": "\" Tom\" is top unablated",
+   "values": {
+    "top4": [
+     [
+      " Tom",
+      0.4247112572193146,
+      16.294282913208008
+     ],
+     [
+      " the",
+      0.09786737710237503,
+      14.826486587524414
+     ],
+     [
+      " her",
+      0.06970905512571335,
+      14.487203598022461
+     ],
+     [
+      " them",
+      0.05240211635828018,
+      14.201820373535156
+     ]
+    ],
+    "movers": [
+     0.4247112572193146,
+     0.47408244013786316,
+     0.049371182918548584
+    ],
+    "random3": [
+     0.4247112572193146,
+     0.49002861976623535,
+     0.06531736254692078
+    ]
+   },
+   "checks": [
+    {
+     "claim": "\" Tom\" on top",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "7d45f15701b40e49b53e87a5185c3f7fd796b572f221b6d30ad4c6a2c489eec1",
+    "93b377ef471cbb66485674c60555cbe92e9297de19b5edc2f2016dcc2dc05965",
+    "e7881768a8bb9ee2e14d8263582139dfef9dfc223e19eddab94ccda3e5e42a90"
+   ]
+  },
+  {
+   "id": 59,
+   "status": "verified",
+   "lessons": [
+    "P3.3"
+   ],
+   "claim": "patched = corrupted at every layer in the \" store\" column (abs < 1e-4), share 0%",
+   "values": {
+    "word": " store",
+    "max_abs_patched_minus_corrupted": 0.0,
+    "layers": 12
+   },
+   "checks": [
+    {
+     "claim": "\" store\" column: patched = corrupted",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "77bbe4891999fd526093aa768d83fc1d46304de99c719a8c1951ff16d4aa3ab5"
+   ]
+  },
+  {
+   "id": 60,
+   "status": "verified",
+   "lessons": [
+    "P3.3"
+   ],
+   "claim": "the max head cell sits in layers 8 to 9; the slot shows L8H10 (L9H9 second)",
+   "values": {
+    "max_cells": [
+     {
+      "name": "L8.H10",
+      "layer": 8,
+      "head": 10,
+      "position": null,
+      "word": null,
+      "clean": 18.466384887695312,
+      "corrupted": 14.966814994812012,
+      "patched": 16.252487182617188,
+      "share": 0.3673800573092451
+     },
+     {
+      "name": "L9.H9",
+      "layer": 9,
+      "head": 9,
+      "position": null,
+      "word": null,
+      "clean": 18.466384887695312,
+      "corrupted": 14.966814994812012,
+      "patched": 15.932515144348145,
+      "share": 0.27594823909645966
+     },
+     {
+      "name": "L5.H5",
+      "layer": 5,
+      "head": 5,
+      "position": null,
+      "word": null,
+      "clean": 18.466384887695312,
+      "corrupted": 14.966814994812012,
+      "patched": 15.916948318481445,
+      "share": 0.27150002793246614
+     }
+    ]
+   },
+   "checks": [
+    {
+     "claim": "max head cell in layers 8 to 9",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "554e63564265ce8b374d07cf22076e7950a1f9718b9ab2a4aae266610f07c42c"
+   ]
+  },
+  {
+   "id": 61,
+   "status": "verified",
+   "lessons": [
+    "P3.4"
+   ],
+   "claim": "the task is reachable: at least one feature alone lowers \" she\" by more than the control (row 24)",
+   "values": {
+    "deltas": {
+     "f21213": -0.006879791617393494,
+     "f19093": -0.0010274946689605713,
+     "f821": -0.0030881762504577637,
+     "f7698": 0.0009141266345977783,
+     "f15707": -0.009390175342559814
+    },
+    "control": 0.0009141266345977783
+   },
+   "checks": [
+    {
+     "claim": "at least one feature beats the control",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "2ce564c9ce459e65eb4a267ba9766af79bd001ca3c0fb6c68aff5a69a4c0ccd6",
+    "2d490bc7ee5bf150e476bb2db06b6129a0c922eb62d219f623506c499fdfa837",
+    "4c6cf9555b91885dd51315d84915740148c8910795f0abd8798b07d5c12af1fd",
+    "9cd467d418acd6095629c22875edb5c02d830eb0792462a16adacf1981af5348",
+    "e61bb437db56ddefac31fd5d6702874bc4f4a5d5175a185a7fae929793e2367e"
+   ]
+  },
+  {
+   "id": 62,
+   "status": "verified",
+   "lessons": [
+    "P3.4"
+   ],
+   "claim": "the doctor transfer: the top features' knockout lowers \" he\" more than a control",
+   "values": {
+    "top3": [
+     7195,
+     11067,
+     19093
+    ],
+    "labels": {
+     "7195": "references to doctors or medical professionals",
+     "11067": "mentions of the TV show \"Doctor Who\"",
+     "19093": "profession or occupation titles",
+     "7698": "words related to processes or actions being performed",
+     "5926": "medical terms and concepts"
+    },
+    "top3_he": [
+     0.14449959993362427,
+     0.12988723814487457,
+     -0.014612361788749695
+    ],
+    "control": 7698,
+    "control_label": "words related to processes or actions being performed",
+    "control_he": [
+     0.14449959993362427,
+     0.15015846490859985,
+     0.005658864974975586
+    ],
+    "sae": {
+     "release": "gpt2-small-res-jb",
+     "id": "blocks.8.hook_resid_pre"
+    },
+    "sae_layer": 8
+   },
+   "checks": [
+    {
+     "claim": "top 3 ids at \" doctor\"",
+     "holds": true
+    },
+    {
+     "claim": "top 3 drop \" he\" more than the control",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "06f5796d9c90f1f687dd1902d67222154c100d3c61fa9d9c1ecb9c72db6636a0",
+    "86e4a6466bbac36fa3efcee9cf328c9acebfd8c2ffdfa826383f79da3d8f8f55",
+    "9a4bdd8fa9241ac5f6a78b51034d1ca9f332d82cfb26b1f9f0b10bcc465c49d0"
+   ]
+  },
+  {
+   "id": 63,
+   "status": "verified",
+   "lessons": [
+    "P3.5"
+   ],
+   "claim": "coherence does not drop at s_high on this feature (-1.058 nats per token at s = 25 and at s_high = 30; the two steered texts are identical)",
+   "values": {
+    "s": {
+     "feature_id": 21791,
+     "strength": 25.0,
+     "original": ". We were surprised to see the ocean. It was a beautiful place. We were surprised to see the ocean.\n\nWe were surprised to see the ocean. It was a beautiful place. We were surprised to see the ocean.\n\nWe",
+     "steered": ". The sun was shining and the clouds were falling. The wind was blowing and the clouds were falling. The rain was falling and the clouds were falling. The rain was falling and the clouds were falling. The rain was falling and the clouds were falling",
+     "control_text": ". We were so excited to see the ocean. We were so excited to see the ocean.\n\nWe were so excited to see the ocean. We were so excited to see the ocean.\n\nWe were so excited to see the ocean.",
+     "changed_tokens": 48,
+     "control_changed_tokens": 46,
+     "coherence": {
+      "original": -1.0128780603408813,
+      "steered": -1.057970404624939
+     },
+     "control_coherence": {
+      "original": -1.0128780603408813,
+      "steered": -0.7377061247825623
+     },
+     "scale": {
+      "strength": 25.0,
+      "activation_p50": 0.0,
+      "activation_p99": 0.0,
+      "activation_max": 0.0
+     },
+     "control_id": 15662,
+     "control_method": "norm_matched_lowest_cos",
+     "decoder_norm_target": 1.0000393390655518,
+     "decoder_norm_control": 1.000022530555725,
+     "cosine": 8.002546026600908e-05,
+     "word": "rain",
+     "word_in": {
+      "original": 0,
+      "steered": 3,
+      "control_text": 0
+     }
+    },
+    "s_high": {
+     "feature_id": 21791,
+     "strength": 30.0,
+     "original": ". We were surprised to see the ocean. It was a beautiful place. We were surprised to see the ocean.\n\nWe were surprised to see the ocean. It was a beautiful place. We were surprised to see the ocean.\n\nWe",
+     "steered": ". The sun was shining and the clouds were falling. The wind was blowing and the clouds were falling. The rain was falling and the clouds were falling. The rain was falling and the clouds were falling. The rain was falling and the clouds were falling",
+     "control_text": ". We were so happy to see the ocean. We were so happy to see the ocean.\n\nWe were so happy to see the ocean. We were so happy to see the ocean.\n\nWe were so happy to see the ocean.",
+     "changed_tokens": 48,
+     "control_changed_tokens": 46,
+     "coherence": {
+      "original": -1.0128780603408813,
+      "steered": -1.057970404624939
+     },
+     "control_coherence": {
+      "original": -1.0128780603408813,
+      "steered": -0.7553429007530212
+     },
+     "scale": {
+      "strength": 30.0,
+      "activation_p50": 0.0,
+      "activation_p99": 0.0,
+      "activation_max": 0.0
+     },
+     "control_id": 15662,
+     "control_method": "norm_matched_lowest_cos",
+     "decoder_norm_target": 1.0000393390655518,
+     "decoder_norm_control": 1.000022530555725,
+     "cosine": 8.002546026600908e-05,
+     "word": "rain",
+     "word_in": {
+      "original": 0,
+      "steered": 3,
+      "control_text": 0
+     }
+    }
+   },
+   "checks": [
+    {
+     "claim": "coherence does not drop at s_high",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "068739dc2ffd4f8dbc264c479adbc148e5a050aaeb631c19150cb61a1fa8d1f5",
+    "64a458da366be6f590c92423bc9573a04007614d94941754a3aaae38ef7fcb5a"
+   ]
+  },
+  {
+   "id": 64,
+   "status": "verified",
+   "lessons": [
+    "P3.5"
+   ],
+   "claim": "steering generation is deterministic (run_steer decodes greedily), so checks can read it",
+   "values": {
+    "runs": 2
+   },
+   "checks": [
+    {
+     "claim": "steer repeats identical",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "068739dc2ffd4f8dbc264c479adbc148e5a050aaeb631c19150cb61a1fa8d1f5",
+    "068739dc2ffd4f8dbc264c479adbc148e5a050aaeb631c19150cb61a1fa8d1f5.r2"
+   ]
+  },
+  {
+   "id": 65,
+   "status": "verified",
+   "lessons": [
+    "P3.5"
+   ],
+   "claim": "whether the preset SAE's decoder rows are unit norm",
+   "values": {
+    "target": 1.0000393390655518,
+    "control": 1.000022530555725,
+    "method": "norm_matched_lowest_cos"
+   },
+   "checks": [
+    {
+     "claim": "decoder rows unit norm",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "068739dc2ffd4f8dbc264c479adbc148e5a050aaeb631c19150cb61a1fa8d1f5"
+   ]
+  },
+  {
+   "id": 66,
+   "status": "verified",
+   "lessons": [
+    "P3.6"
+   ],
+   "claim": "L0 wins by a mile, L2 brings back a good chunk, and L11 pushes the other way",
+   "values": {
+    "target": " basketball",
+    "grid": [
+     {
+      "name": "MLP.0",
+      "layer": 0,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 15.962453842163086,
+      "corrupted": 13.080305099487305,
+      "patched": 15.456530570983887,
+      "share": 0.8244631639970458
+     },
+     {
+      "name": "MLP.1",
+      "layer": 1,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 15.962453842163086,
+      "corrupted": 13.080305099487305,
+      "patched": 13.197224617004395,
+      "share": 0.04056678816948982
+     },
+     {
+      "name": "MLP.2",
+      "layer": 2,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 15.962453842163086,
+      "corrupted": 13.080305099487305,
+      "patched": 14.242527961730957,
+      "share": 0.40324874460318344
+     },
+     {
+      "name": "MLP.3",
+      "layer": 3,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 15.962453842163086,
+      "corrupted": 13.080305099487305,
+      "patched": 13.201170921325684,
+      "share": 0.041936011160259315
+     },
+     {
+      "name": "MLP.4",
+      "layer": 4,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 15.962453842163086,
+      "corrupted": 13.080305099487305,
+      "patched": 13.310225486755371,
+      "share": 0.07977394915940694
+     },
+     {
+      "name": "MLP.5",
+      "layer": 5,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 15.962453842163086,
+      "corrupted": 13.080305099487305,
+      "patched": 13.532991409301758,
+      "share": 0.1570655612292168
+     },
+     {
+      "name": "MLP.6",
+      "layer": 6,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 15.962453842163086,
+      "corrupted": 13.080305099487305,
+      "patched": 13.489779472351074,
+      "share": 0.142072602569295
+     },
+     {
+      "name": "MLP.7",
+      "layer": 7,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 15.962453842163086,
+      "corrupted": 13.080305099487305,
+      "patched": 13.544482231140137,
+      "share": 0.16105245533646223
+     },
+     {
+      "name": "MLP.8",
+      "layer": 8,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 15.962453842163086,
+      "corrupted": 13.080305099487305,
+      "patched": 13.318137168884277,
+      "share": 0.08251901294177129
+     },
+     {
+      "name": "MLP.9",
+      "layer": 9,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 15.962453842163086,
+      "corrupted": 13.080305099487305,
+      "patched": 13.213418006896973,
+      "share": 0.04618530107023075
+     },
+     {
+      "name": "MLP.10",
+      "layer": 10,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 15.962453842163086,
+      "corrupted": 13.080305099487305,
+      "patched": 13.73778247833252,
+      "share": 0.22812055780119597
+     },
+     {
+      "name": "MLP.11",
+      "layer": 11,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 15.962453842163086,
+      "corrupted": 13.080305099487305,
+      "patched": 11.970666885375977,
+      "share": -0.38500379861767375
+     }
+    ]
+   },
+   "checks": [
+    {
+     "claim": "L0 wins",
+     "holds": true
+    },
+    {
+     "claim": "L2 brings back a good chunk (second)",
+     "holds": true
+    },
+    {
+     "claim": "L11 pushes the other way",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "c2499046eb1242e49600c33d2f5c7a92322276832c08638ea0ff775a38399aca"
+   ]
+  },
+  {
+   "id": 67,
+   "status": "verified",
+   "lessons": [
+    "P3.6"
+   ],
+   "claim": "the marker column stays at exactly 0%; \" basketball\" comes back at \" Jordan\" early and at \" of\" late",
+   "values": {
+    "peaks": [
+     {
+      "name": "L9@2",
+      "layer": 9,
+      "head": null,
+      "position": 2,
+      "word": " Jordan",
+      "clean": 15.962453842163086,
+      "corrupted": 13.080305099487305,
+      "patched": 15.884493827819824,
+      "share": 0.9729507317964152
+     },
+     {
+      "name": "L7@2",
+      "layer": 7,
+      "head": null,
+      "position": 2,
+      "word": " Jordan",
+      "clean": 15.962453842163086,
+      "corrupted": 13.080305099487305,
+      "patched": 15.729802131652832,
+      "share": 0.9192783817623997
+     },
+     {
+      "name": "L8@2",
+      "layer": 8,
+      "head": null,
+      "position": 2,
+      "word": " Jordan",
+      "clean": 15.962453842163086,
+      "corrupted": 13.080305099487305,
+      "patched": 15.699280738830566,
+      "share": 0.9086885768816393
+     }
+    ],
+    "per_layer_peak": {
+     "L0": "<|endoftext|>",
+     "L1": " Jordan",
+     "L2": " Jordan",
+     "L3": " Jordan",
+     "L4": " Jordan",
+     "L5": " Jordan",
+     "L6": " Jordan",
+     "L7": " Jordan",
+     "L8": " Jordan",
+     "L9": " Jordan",
+     "L10": " of",
+     "L11": " of"
+    },
+    "of_takes_over_at": 10,
+    "marker_max_abs": 0.0
+   },
+   "checks": [
+    {
+     "claim": "marker column exactly 0",
+     "holds": true
+    },
+    {
+     "claim": "\" Jordan\" early, \" of\" late",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "ffcb90ba9575101da93e7055f3910a50f7b184a100d777e8e821f16f4cfcdf3a"
+   ]
+  },
+  {
+   "id": 68,
+   "status": "verified",
+   "lessons": [
+    "P3.7"
+   ],
+   "claim": "the Key parts map for row 19 (recorded, shown live)",
+   "values": {
+    "threshold": 0.08263052999973297,
+    "nodes": [
+     [
+      "L0.H1",
+      0.1257365643978119
+     ],
+     [
+      "L0.H7",
+      0.08502767980098724
+     ],
+     [
+      "MLP.0",
+      0.6708727478981018
+     ],
+     [
+      "L2.H0",
+      -0.13284385204315186
+     ],
+     [
+      "L2.H5",
+      -0.08263052999973297
+     ],
+     [
+      "L3.H0",
+      -0.10111492872238159
+     ],
+     [
+      "L3.H4",
+      0.11697209626436234
+     ],
+     [
+      "MLP.3",
+      0.14291414618492126
+     ],
+     [
+      "MLP.4",
+      0.19795550405979156
+     ],
+     [
+      "L5.H0",
+      0.4437774419784546
+     ],
+     [
+      "L5.H5",
+      0.14959049224853516
+     ],
+     [
+      "MLP.5",
+      0.10548000782728195
+     ],
+     [
+      "L6.H1",
+      0.11822596937417984
+     ],
+     [
+      "L6.H9",
+      0.20723643898963928
+     ],
+     [
+      "MLP.6",
+      0.556772768497467
+     ],
+     [
+      "L7.H6",
+      -0.08682213723659515
+     ],
+     [
+      "L7.H10",
+      0.24870766699314117
+     ],
+     [
+      "L7.H11",
+      0.26328182220458984
+     ],
+     [
+      "MLP.7",
+      0.6837229132652283
+     ],
+     [
+      "L8.H6",
+      0.2671610713005066
+     ],
+     [
+      "L8.H7",
+      0.24742206931114197
+     ],
+     [
+      "L8.H8",
+      0.08474943786859512
+     ],
+     [
+      "MLP.8",
+      1.079034447669983
+     ],
+     [
+      "L9.H1",
+      0.905763566493988
+     ],
+     [
+      "L9.H5",
+      -0.133322075009346
+     ],
+     [
+      "MLP.9",
+      2.2722363471984863
+     ],
+     [
+      "L10.H4",
+      0.1655951738357544
+     ],
+     [
+      "L10.H7",
+      -0.10171225666999817
+     ],
+     [
+      "MLP.10",
+      4.138849258422852
+     ],
+     [
+      "L11.H4",
+      -0.12424317002296448
+     ],
+     [
+      "L11.H8",
+      0.45015639066696167
+     ],
+     [
+      "MLP.11",
+      10.271003723144531
+     ]
+    ],
+    "edges": [
+     [
+      "MLP.0",
+      "L9.H1",
+      0.36281418800354004
+     ],
+     [
+      "MLP.0",
+      "L5.H0",
+      0.17595882713794708
+     ],
+     [
+      "MLP.0",
+      "L6.H9",
+      0.1711057871580124
+     ],
+     [
+      "MLP.10",
+      "L11.H8",
+      0.17085257172584534
+     ],
+     [
+      "MLP.0",
+      "L7.H10",
+      0.14856493473052979
+     ],
+     [
+      "MLP.0",
+      "L7.H11",
+      0.1184566393494606
+     ],
+     [
+      "MLP.0",
+      "L8.H6",
+      0.11284570395946503
+     ],
+     [
+      "MLP.0",
+      "L5.H5",
+      0.10859212279319763
+     ],
+     [
+      "MLP.7",
+      "L9.H1",
+      0.09456801414489746
+     ],
+     [
+      "L0.H1",
+      "L9.H1",
+      0.0849117785692215
+     ],
+     [
+      "MLP.9",
+      "L11.H8",
+      0.07659823447465897
+     ],
+     [
+      "MLP.6",
+      "L7.H10",
+      -0.06248771771788597
+     ],
+     [
+      "MLP.6",
+      "L8.H6",
+      0.062159933149814606
+     ],
+     [
+      "MLP.8",
+      "L9.H1",
+      0.06017531454563141
+     ],
+     [
+      "MLP.0",
+      "L3.H4",
+      0.059689488261938095
+     ],
+     [
+      "MLP.6",
+      "L7.H11",
+      0.05672970041632652
+     ],
+     [
+      "MLP.9",
+      "L10.H4",
+      0.05195532366633415
+     ]
+    ],
+    "edges_method": "direct_value_path"
+   },
+   "checks": [
+    {
+     "claim": "nodes recorded",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "6fbc4ce57ed05bb52c601c11a8b12ef14e81cc2f5927ecd548439e71fac81198"
+   ]
+  },
+  {
+   "id": 69,
+   "status": "verified",
+   "lessons": [
+    "P3.7"
+   ],
+   "claim": "a head on the map lowers p(\"49\"); the control head moves it less",
+   "values": {
+    "map_heads": [
+     "L0H1",
+     "L0H7",
+     "L2H0",
+     "L2H5",
+     "L3H0",
+     "L3H4",
+     "L5H0",
+     "L5H5",
+     "L6H1",
+     "L6H9",
+     "L7H6",
+     "L7H10",
+     "L7H11",
+     "L8H6",
+     "L8H7",
+     "L8H8",
+     "L9H1",
+     "L9H5",
+     "L10H4",
+     "L10H7",
+     "L11H4",
+     "L11H8"
+    ],
+    "deltas": {
+     "L0H1": 0.015889093279838562,
+     "L0H7": -0.03274345397949219,
+     "L2H0": 0.0005806908011436462,
+     "L2H5": -0.001990538090467453,
+     "L3H0": 0.0026130788028240204,
+     "L3H4": -0.0024786144495010376,
+     "L5H0": 0.00167151540517807,
+     "L5H5": 0.015612713992595673,
+     "L6H1": -0.0015452094376087189,
+     "L6H9": -0.006437618285417557,
+     "L7H6": 0.003071531653404236,
+     "L7H10": -0.0010729283094406128,
+     "L7H11": -0.003555774688720703,
+     "L8H6": 0.00813324749469757,
+     "L8H7": 0.005838356912136078,
+     "L8H8": -0.005790278315544128,
+     "L9H1": -0.027368398383259773,
+     "L9H5": 0.0012735240161418915,
+     "L10H4": 0.0017638355493545532,
+     "L10H7": -0.010677460581064224,
+     "L11H4": -0.0008986741304397583,
+     "L11H8": 0.0009094104170799255
+    },
+    "best": [
+     "L0H7",
+     -0.03274345397949219
+    ],
+    "control": [
+     "L9H9",
+     [
+      0.05795229226350784,
+      0.05607428029179573,
+      -0.0018780119717121124
+     ]
+    ]
+   },
+   "checks": [
+    {
+     "claim": "knockouts cover every map head",
+     "holds": true
+    },
+    {
+     "claim": "best map head is L0H7 (row 36 uses it)",
+     "holds": true
+    },
+    {
+     "claim": "control moves \"49\" less",
+     "holds": true
+    },
+    {
+     "claim": "control is off the map",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "04457bb8f2b0df674170a8f9b87f9d70616287013198862a1bc5f39620a5795d",
+    "04f0ea6446c6fcf454a2fab22010b2c0577607e84716eff5b936ce07f1a174db",
+    "09790672c8a1b5e7c84496e9041587b0f3a858e890512696053e6aead044f39c",
+    "1c1779818517d468fed78a2bb63ae0b874b7fd8fad86b2c3a09659158ac29084",
+    "22b61b1e42685dcef771297ead9bea13f240840f670a8acdd013e19844766f30",
+    "2b767884d1da4191cf4bbe67ce96914f715a2f8b3d33e8f02f687d32a988046d",
+    "2d352fb888aa245a2533b38d495b71b1ba3c5b31de39682ee8d03403fdb8eab6",
+    "304543657129aa6d876056b4066fdd7a667b34558f2a153694709db8db840c3c",
+    "41ae35a4cc2bb87e16e68cbb2c5f1e48698a90d8f2f98581188d6390046fd3fd",
+    "4358062867fb8ed284118d9afcd3bdaad8e6b1d1be43589332900529ff8573e2",
+    "493a048097532cf3c30a9421f900fca60b8d02a73b801ccf20aaa3488fabdaaf",
+    "6fbc4ce57ed05bb52c601c11a8b12ef14e81cc2f5927ecd548439e71fac81198",
+    "7d5a7f1569ad52f151b26c44c4fc091df75d036bb271ecccd3f7642b917b7c51",
+    "8627656ea8e3c71f5e1d2b4f247c4c8096dd79b7ad1179bff4ecca173c870dae",
+    "89a887fd051be05268a4e74cd01f9b45340b763bb8632d55333001648abdf6fc",
+    "938c625e4094a0c80d15f9ae4e9ea5a59c8f0aa42603cadedebb101ceb617dcd",
+    "a3da50e7ff140a68dd220da845fe745fd3bff22f7e145cbdcabd801a7e8ac5d2",
+    "a8a528ff80d5555e061757ef4404d1f4494d7e03041531084a21d1a4c865f735",
+    "b294b77bc867d9b77c7d8f78d57224951711b0ba299406adda168ab82fe7c5fd",
+    "c05778a2cfba5d332b4b85ed645151bafb6634ca43bc465315499e38df55a052",
+    "c19d67cda6546de1f7b8b5c6a8ab5dc1e5d8b9f101e055acc3c80cc8334c9636",
+    "da41998e8e8cbe03d66af379db47c8c7e513e12abb307ebfb1e1fdb2aa23e9a6",
+    "f0936fe894878391f167a431d1e2ea38392ef88d05e460c34d58857ecc774951",
+    "f5f5e177a117af78d484b09bccc92e1a32b4446ea3ecda5cca0494ab8f508f36",
+    "f98266276a3ffb5988d531e46afde248debe8af4c82413c4647ecb859827c97f"
+   ]
+  },
+  {
+   "id": 70,
+   "status": "verified",
+   "lessons": [
+    "P3.7"
+   ],
+   "claim": "the optional fold's MLP Swap test, with its three logits",
+   "values": {
+    "target": "49",
+    "grid": [
+     {
+      "name": "MLP.0",
+      "layer": 0,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 25.032711029052734,
+      "corrupted": 23.82845687866211,
+      "patched": 25.159503936767578,
+      "share": 1.1052874990496946
+     },
+     {
+      "name": "MLP.1",
+      "layer": 1,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 25.032711029052734,
+      "corrupted": 23.82845687866211,
+      "patched": 24.660850524902344,
+      "share": 0.6912109424495071
+     },
+     {
+      "name": "MLP.2",
+      "layer": 2,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 25.032711029052734,
+      "corrupted": 23.82845687866211,
+      "patched": 24.097492218017578,
+      "share": 0.22340412052406172
+     },
+     {
+      "name": "MLP.3",
+      "layer": 3,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 25.032711029052734,
+      "corrupted": 23.82845687866211,
+      "patched": 23.373043060302734,
+      "share": -0.37817085223385116
+     },
+     {
+      "name": "MLP.4",
+      "layer": 4,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 25.032711029052734,
+      "corrupted": 23.82845687866211,
+      "patched": 23.486560821533203,
+      "share": -0.28390689541572695
+     },
+     {
+      "name": "MLP.5",
+      "layer": 5,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 25.032711029052734,
+      "corrupted": 23.82845687866211,
+      "patched": 22.866592407226562,
+      "share": -0.7987221560528116
+     },
+     {
+      "name": "MLP.6",
+      "layer": 6,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 25.032711029052734,
+      "corrupted": 23.82845687866211,
+      "patched": 23.89246368408203,
+      "share": 0.05315057905273561
+     },
+     {
+      "name": "MLP.7",
+      "layer": 7,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 25.032711029052734,
+      "corrupted": 23.82845687866211,
+      "patched": 23.72467041015625,
+      "share": -0.08618319353285522
+     },
+     {
+      "name": "MLP.8",
+      "layer": 8,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 25.032711029052734,
+      "corrupted": 23.82845687866211,
+      "patched": 23.94210433959961,
+      "share": 0.09437165809280049
+     },
+     {
+      "name": "MLP.9",
+      "layer": 9,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 25.032711029052734,
+      "corrupted": 23.82845687866211,
+      "patched": 25.474349975585938,
+      "share": 1.366732343326322
+     },
+     {
+      "name": "MLP.10",
+      "layer": 10,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 25.032711029052734,
+      "corrupted": 23.82845687866211,
+      "patched": 22.594646453857422,
+      "share": -1.0245432198879907
+     },
+     {
+      "name": "MLP.11",
+      "layer": 11,
+      "head": null,
+      "position": null,
+      "word": null,
+      "clean": 25.032711029052734,
+      "corrupted": 23.82845687866211,
+      "patched": 22.824981689453125,
+      "share": -0.8332752591165962
+     }
+    ]
+   },
+   "checks": [
+    {
+     "claim": "12 layers recorded",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "3cb1d7972d159fb5e81650dd46343dee33634c5e76331fa25d7648ad35977745"
+   ]
+  },
+  {
+   "id": 71,
+   "status": "verified",
+   "lessons": [
+    "P3.7"
+   ],
+   "claim": "the P3.7 task target is reachable on row 14: a head on the map lowers the top token by at least 5 points more than a control head",
+   "values": {
+    "map_heads": 26,
+    "best": [
+     "L8H3",
+     -0.20656219124794006
+    ],
+    "control": [
+     "L8H8",
+     [
+      0.676973819732666,
+      0.7057064771652222,
+      0.028732657432556152
+     ]
+    ]
+   },
+   "checks": [
+    {
+     "claim": "knockouts cover every map head",
+     "holds": true
+    },
+    {
+     "claim": "control is off the map",
+     "holds": true
+    },
+    {
+     "claim": "reachable: best map head beats the control by 5+ points",
+     "holds": true
+    }
+   ],
+   "responses": [
+    "053e5b01c62d5ad3f980003ac581f9f8ad220636b83ce0b5c79160a025b8a989",
+    "060a2da606de4441cbc0412fbb50a94e1223786022ac1ef5642e499aebc30d50",
+    "29c5c5db51cf90794802ac564e4d6e38774becabf7a4a5cd6e7f8288d6841647",
+    "2b4ffc4e9b714afaaf6fb726494d5205b0ea5611c324bda0ec0174312c2d4e47",
+    "3fb69ee064f522874df7e80529b697c4bfdf0a17846537ab68cc4cdd52b2ac35",
+    "471cab08c64ec8f727c9c78dfbd787822d1c4c39240ffa84e9ba1f32a35fbefc",
+    "4be5e560780f85d285d3ca8c83d0c192671ba7e57579b5d50eec1cf5adc0737a",
+    "51c5aa7156f094d56e3596bf260fd805b68318438a92a9a405060f607a38f7f0",
+    "526b1290a4eb1aa6607c701bd5b71fc2f310d5639fcf4843f462590c5fe0cd22",
+    "5a23cfdcf32bf8ef0d65727bc8578326de7972c0ac30b60531c44f6b0ebe5cab",
+    "634ce871b8080587338cdba062ec1451bb1eb5cdda3639b94f97519909c5b541",
+    "7676af1f305ee85e1e4c914f393ee916551985e1acbf4235610d3803ad6dd9af",
+    "802e1ebb9093eb555c7e9cc45778a2123b8dc918c4e1bd353578d28e66d7539e",
+    "845a53c05c2f479286d7941899b7be9eb17bbfdd5c39d5e397ec04e64da488b6",
+    "959d942c0cdc5174a72ffe928024f7d24e411a95fc16f02ed473faab8f1f9cb2",
+    "a3a4a00aea89407def895e40da671dbd1bb4ed2d617c880efd848cb9efa56272",
+    "a58c8fde6c191cefcd9297acc9ebaa232daf636a3036d9f24feca07bc7973294",
+    "b37d586eccec03be552be5cf7ac336cc8181d4bb863b79b3b609739671a823d4",
+    "b5c92a56fcbe48a1c9e4fd662a193139acd7cb1f19e7d437b411d37515a3ea10",
+    "d19ae4e3240f02f2e2bb250a5152e29a5fa80c4850d2ae9566cd1fb56bcc5083",
+    "d57ae345490beed0cc22483570eae154776c8335bb2456dd8226afc60132c18d",
+    "d873da75c9fa693ef02b8dfdb5ad53aa0658d47828399d6119602d2ecf859e77",
+    "de8d1d485d994ac5d77b10353a18d31f39867ca1fb969ceec55d58185da0c36d",
+    "e8057eb19f41049b2dc917754349f99120d7a72fe3b810193ce1574edb1648af",
+    "e8d6fc7fba5e5678eca53a7023c1a6f7c6fc73e64cf8100caee7b1b8e6049f0d",
+    "e8f9edf16d8bd78490f4b085a0b5f0aec0683d88221973c58102036f52150e4d",
+    "eca23b7cf0c1ac6f0bf87dae840013a16d95dc8539274f9efbdc5c920d35cef1",
+    "ff3c6864dffba720a38c91ce6861d80583041171824a775b97612f1a3100ca76"
+   ]
+  },
+  {
+   "id": 72,
+   "status": "closed-by-task",
+   "lessons": [
+    "quick-tour"
+   ],
+   "claim": "watch-it-write anchor on screen without a run; step 12 quotes P1.1's shipped title; the overlay re-anchors at 1024 wide; tour copy passes brad-voice",
+   "values": {},
+   "checks": [],
+   "responses": []
+  }
+ ]
+}

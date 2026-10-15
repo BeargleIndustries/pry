@@ -1,0 +1,416 @@
+{
+ "key": "b37d586eccec03be552be5cf7ac336cc8181d4bb863b79b3b609739671a823d4",
+ "variant": "r1",
+ "request": {
+  "endpoint": "/circuit",
+  "model": "gpt2-small",
+  "body": {
+   "preset_id": "gpt2-small",
+   "prompt": "When Mary and John went to the store, John gave a drink to",
+   "source": "dla",
+   "target_token_index": 14
+  }
+ },
+ "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+ "device": "cuda",
+ "libs": {
+  "python": "3.12.13",
+  "torch": "2.5.1+cu124",
+  "transformer_lens": "2.15.4",
+  "sae_lens": "5.11.0",
+  "transformers": "4.57.6",
+  "numpy": "1.26.4"
+ },
+ "recorded": "2026-10-15",
+ "neuronpedia_fetched": null,
+ "offline": false,
+ "trimmed": [],
+ "response": {
+  "preset_id": "gpt2-small",
+  "prompt": "When Mary and John went to the store, John gave a drink to",
+  "threshold": 0.1460752934217453,
+  "source": "dla",
+  "nodes": [
+   {
+    "id": "MLP.5",
+    "type": "mlp",
+    "layer": 5,
+    "head": null,
+    "importance": 0.1460752934217453
+   },
+   {
+    "id": "L6.H4",
+    "type": "attention",
+    "layer": 6,
+    "head": 4,
+    "importance": 0.15817438066005707
+   },
+   {
+    "id": "L7.H3",
+    "type": "attention",
+    "layer": 7,
+    "head": 3,
+    "importance": 0.16294187307357788
+   },
+   {
+    "id": "MLP.7",
+    "type": "mlp",
+    "layer": 7,
+    "head": null,
+    "importance": 0.44853487610816956
+   },
+   {
+    "id": "L8.H2",
+    "type": "attention",
+    "layer": 8,
+    "head": 2,
+    "importance": 0.21078521013259888
+   },
+   {
+    "id": "L8.H3",
+    "type": "attention",
+    "layer": 8,
+    "head": 3,
+    "importance": 0.4064290523529053
+   },
+   {
+    "id": "L8.H6",
+    "type": "attention",
+    "layer": 8,
+    "head": 6,
+    "importance": 0.678313136100769
+   },
+   {
+    "id": "L8.H10",
+    "type": "attention",
+    "layer": 8,
+    "head": 10,
+    "importance": -0.5831142067909241
+   },
+   {
+    "id": "L8.H11",
+    "type": "attention",
+    "layer": 8,
+    "head": 11,
+    "importance": 0.19652152061462402
+   },
+   {
+    "id": "MLP.8",
+    "type": "mlp",
+    "layer": 8,
+    "head": null,
+    "importance": 1.1439793109893799
+   },
+   {
+    "id": "L9.H3",
+    "type": "attention",
+    "layer": 9,
+    "head": 3,
+    "importance": 0.18797659873962402
+   },
+   {
+    "id": "L9.H5",
+    "type": "attention",
+    "layer": 9,
+    "head": 5,
+    "importance": -0.26421335339546204
+   },
+   {
+    "id": "L9.H6",
+    "type": "attention",
+    "layer": 9,
+    "head": 6,
+    "importance": 2.751086473464966
+   },
+   {
+    "id": "L9.H8",
+    "type": "attention",
+    "layer": 9,
+    "head": 8,
+    "importance": 0.888910174369812
+   },
+   {
+    "id": "L9.H9",
+    "type": "attention",
+    "layer": 9,
+    "head": 9,
+    "importance": 3.032203435897827
+   },
+   {
+    "id": "MLP.9",
+    "type": "mlp",
+    "layer": 9,
+    "head": null,
+    "importance": 0.40263110399246216
+   },
+   {
+    "id": "L10.H0",
+    "type": "attention",
+    "layer": 10,
+    "head": 0,
+    "importance": 1.216146469116211
+   },
+   {
+    "id": "L10.H1",
+    "type": "attention",
+    "layer": 10,
+    "head": 1,
+    "importance": 0.516060471534729
+   },
+   {
+    "id": "L10.H2",
+    "type": "attention",
+    "layer": 10,
+    "head": 2,
+    "importance": 1.0273081064224243
+   },
+   {
+    "id": "L10.H3",
+    "type": "attention",
+    "layer": 10,
+    "head": 3,
+    "importance": 0.25418391823768616
+   },
+   {
+    "id": "L10.H7",
+    "type": "attention",
+    "layer": 10,
+    "head": 7,
+    "importance": -3.1648473739624023
+   },
+   {
+    "id": "L10.H9",
+    "type": "attention",
+    "layer": 10,
+    "head": 9,
+    "importance": 0.3488715887069702
+   },
+   {
+    "id": "L10.H10",
+    "type": "attention",
+    "layer": 10,
+    "head": 10,
+    "importance": 0.6645773649215698
+   },
+   {
+    "id": "MLP.10",
+    "type": "mlp",
+    "layer": 10,
+    "head": null,
+    "importance": 1.5456000566482544
+   },
+   {
+    "id": "L11.H1",
+    "type": "attention",
+    "layer": 11,
+    "head": 1,
+    "importance": 0.8693400621414185
+   },
+   {
+    "id": "L11.H2",
+    "type": "attention",
+    "layer": 11,
+    "head": 2,
+    "importance": 0.6117805242538452
+   },
+   {
+    "id": "L11.H3",
+    "type": "attention",
+    "layer": 11,
+    "head": 3,
+    "importance": 0.546450138092041
+   },
+   {
+    "id": "L11.H6",
+    "type": "attention",
+    "layer": 11,
+    "head": 6,
+    "importance": 0.2169121652841568
+   },
+   {
+    "id": "L11.H8",
+    "type": "attention",
+    "layer": 11,
+    "head": 8,
+    "importance": 0.4571496248245239
+   },
+   {
+    "id": "L11.H10",
+    "type": "attention",
+    "layer": 11,
+    "head": 10,
+    "importance": -1.945697546005249
+   },
+   {
+    "id": "L11.H11",
+    "type": "attention",
+    "layer": 11,
+    "head": 11,
+    "importance": 0.3489648401737213
+   },
+   {
+    "id": "MLP.11",
+    "type": "mlp",
+    "layer": 11,
+    "head": null,
+    "importance": 1.1474659442901611
+   }
+  ],
+  "edges": [
+   {
+    "source": "MLP.7",
+    "target": "L9.H9",
+    "weight": 0.2984430491924286
+   },
+   {
+    "source": "MLP.7",
+    "target": "L10.H7",
+    "weight": -0.2781820595264435
+   },
+   {
+    "source": "MLP.7",
+    "target": "L9.H6",
+    "weight": 0.24829889833927155
+   },
+   {
+    "source": "MLP.5",
+    "target": "L10.H7",
+    "weight": -0.23984602093696594
+   },
+   {
+    "source": "MLP.5",
+    "target": "L9.H6",
+    "weight": 0.20534084737300873
+   },
+   {
+    "source": "MLP.5",
+    "target": "L9.H9",
+    "weight": 0.19967272877693176
+   },
+   {
+    "source": "MLP.7",
+    "target": "L11.H10",
+    "weight": -0.1645822525024414
+   },
+   {
+    "source": "MLP.5",
+    "target": "L11.H10",
+    "weight": -0.1634541153907776
+   },
+   {
+    "source": "L10.H0",
+    "target": "L11.H3",
+    "weight": 0.16247330605983734
+   },
+   {
+    "source": "MLP.8",
+    "target": "L9.H6",
+    "weight": 0.15901495516300201
+   },
+   {
+    "source": "MLP.8",
+    "target": "L10.H7",
+    "weight": -0.14504411816596985
+   },
+   {
+    "source": "MLP.8",
+    "target": "L9.H9",
+    "weight": 0.12077201902866364
+   },
+   {
+    "source": "L9.H6",
+    "target": "L11.H3",
+    "weight": 0.11582837998867035
+   },
+   {
+    "source": "MLP.5",
+    "target": "L8.H6",
+    "weight": 0.11309229582548141
+   },
+   {
+    "source": "MLP.5",
+    "target": "L11.H1",
+    "weight": 0.10979253053665161
+   },
+   {
+    "source": "MLP.9",
+    "target": "L11.H1",
+    "weight": 0.10575791448354721
+   },
+   {
+    "source": "MLP.8",
+    "target": "L11.H10",
+    "weight": -0.10258601605892181
+   },
+   {
+    "source": "MLP.8",
+    "target": "L11.H1",
+    "weight": 0.09877050668001175
+   },
+   {
+    "source": "MLP.5",
+    "target": "L10.H0",
+    "weight": 0.08861108869314194
+   },
+   {
+    "source": "MLP.8",
+    "target": "L9.H8",
+    "weight": 0.08859672397375107
+   },
+   {
+    "source": "MLP.5",
+    "target": "L10.H2",
+    "weight": 0.08701945841312408
+   },
+   {
+    "source": "MLP.10",
+    "target": "L11.H1",
+    "weight": -0.08605780452489853
+   },
+   {
+    "source": "MLP.7",
+    "target": "L10.H0",
+    "weight": 0.08351878821849823
+   },
+   {
+    "source": "L10.H7",
+    "target": "L11.H10",
+    "weight": -0.08209288120269775
+   },
+   {
+    "source": "MLP.9",
+    "target": "L10.H2",
+    "weight": 0.07485845685005188
+   },
+   {
+    "source": "L8.H10",
+    "target": "L9.H3",
+    "weight": -0.07385062426328659
+   },
+   {
+    "source": "L8.H10",
+    "target": "L10.H9",
+    "weight": -0.06636916100978851
+   },
+   {
+    "source": "L10.H7",
+    "target": "L11.H8",
+    "weight": -0.06120690703392029
+   },
+   {
+    "source": "MLP.5",
+    "target": "L10.H10",
+    "weight": 0.059098340570926666
+   },
+   {
+    "source": "L6.H4",
+    "target": "L9.H8",
+    "weight": 0.058884575963020325
+   }
+  ],
+  "edges_method": "direct_value_path",
+  "edge_threshold": 0.05,
+  "real_weights_verified": true,
+  "status": "ok"
+ }
+}

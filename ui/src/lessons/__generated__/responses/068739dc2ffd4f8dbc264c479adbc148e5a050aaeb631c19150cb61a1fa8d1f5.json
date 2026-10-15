@@ -1,0 +1,379 @@
+{
+ "key": "068739dc2ffd4f8dbc264c479adbc148e5a050aaeb631c19150cb61a1fa8d1f5",
+ "variant": "r1",
+ "request": {
+  "endpoint": "/steer",
+  "model": "gpt2-small",
+  "body": {
+   "preset_id": "gpt2-small",
+   "prompt": "On our trip we walked along the beach and watched the ocean",
+   "feature_id": 21791,
+   "sae_layer": 8,
+   "alpha": 25,
+   "max_new_tokens": 50,
+   "control": true
+  }
+ },
+ "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+ "device": "cuda",
+ "libs": {
+  "python": "3.12.13",
+  "torch": "2.5.1+cu124",
+  "transformer_lens": "2.15.4",
+  "sae_lens": "5.11.0",
+  "transformers": "4.57.6",
+  "numpy": "1.26.4"
+ },
+ "recorded": "2026-10-15",
+ "neuronpedia_fetched": null,
+ "offline": false,
+ "trimmed": [],
+ "response": {
+  "preset_id": "gpt2-small",
+  "prompt": "On our trip we walked along the beach and watched the ocean",
+  "feature_id": 21791,
+  "alpha": 25.0,
+  "sae_layer": 8,
+  "original_generation": ". We were surprised to see the ocean. It was a beautiful place. We were surprised to see the ocean.\n\nWe were surprised to see the ocean. It was a beautiful place. We were surprised to see the ocean.\n\nWe",
+  "steered_generation": ". The sun was shining and the clouds were falling. The wind was blowing and the clouds were falling. The rain was falling and the clouds were falling. The rain was falling and the clouds were falling. The rain was falling and the clouds were falling",
+  "original_top_predictions": [
+   {
+    "token": ".",
+    "probability": 0.10398221760988235,
+    "rank": 1,
+    "logit": null
+   },
+   {
+    "token": " rise",
+    "probability": 0.046554841101169586,
+    "rank": 2,
+    "logit": null
+   },
+   {
+    "token": " breeze",
+    "probability": 0.034238722175359726,
+    "rank": 3,
+    "logit": null
+   },
+   {
+    "token": ",",
+    "probability": 0.029482845216989517,
+    "rank": 4,
+    "logit": null
+   },
+   {
+    "token": " turn",
+    "probability": 0.02685854397714138,
+    "rank": 5,
+    "logit": null
+   },
+   {
+    "token": " swell",
+    "probability": 0.02549397014081478,
+    "rank": 6,
+    "logit": null
+   },
+   {
+    "token": " as",
+    "probability": 0.02444663643836975,
+    "rank": 7,
+    "logit": null
+   },
+   {
+    "token": " and",
+    "probability": 0.019097669050097466,
+    "rank": 8,
+    "logit": null
+   },
+   {
+    "token": " slowly",
+    "probability": 0.017911793664097786,
+    "rank": 9,
+    "logit": null
+   },
+   {
+    "token": " go",
+    "probability": 0.01763586327433586,
+    "rank": 10,
+    "logit": null
+   }
+  ],
+  "steered_top_predictions": [
+   {
+    "token": ".",
+    "probability": 0.12841233611106873,
+    "rank": 1,
+    "logit": null
+   },
+   {
+    "token": " rise",
+    "probability": 0.04164304956793785,
+    "rank": 2,
+    "logit": null
+   },
+   {
+    "token": ",",
+    "probability": 0.03581825643777847,
+    "rank": 3,
+    "logit": null
+   },
+   {
+    "token": " and",
+    "probability": 0.02210489846765995,
+    "rank": 4,
+    "logit": null
+   },
+   {
+    "token": " turn",
+    "probability": 0.018909145146608353,
+    "rank": 5,
+    "logit": null
+   },
+   {
+    "token": " as",
+    "probability": 0.016919121146202087,
+    "rank": 6,
+    "logit": null
+   },
+   {
+    "token": " roll",
+    "probability": 0.0167401023209095,
+    "rank": 7,
+    "logit": null
+   },
+   {
+    "token": " wash",
+    "probability": 0.016630560159683228,
+    "rank": 8,
+    "logit": null
+   },
+   {
+    "token": " for",
+    "probability": 0.01469640526920557,
+    "rank": 9,
+    "logit": null
+   },
+   {
+    "token": " go",
+    "probability": 0.014520006254315376,
+    "rank": 10,
+    "logit": null
+   }
+  ],
+  "changed_token_indices": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29,
+   30,
+   31,
+   32,
+   33,
+   34,
+   35,
+   36,
+   37,
+   38,
+   39,
+   40,
+   41,
+   42,
+   43,
+   44,
+   45,
+   46,
+   47,
+   48,
+   49
+  ],
+  "coherence": {
+   "original": -1.0128780603408813,
+   "steered": -1.057970404624939
+  },
+  "scale": {
+   "strength": 25.0,
+   "activation_p50": 0.0,
+   "activation_p99": 0.0,
+   "activation_max": 0.0
+  },
+  "control": {
+   "feature_id": 15662,
+   "decoder_norm": 1.000022530555725,
+   "steered_decoder_norm": 1.0000393390655518,
+   "cosine": 8.002546026600908e-05,
+   "method": "norm_matched_lowest_cos",
+   "generation": ". We were so excited to see the ocean. We were so excited to see the ocean.\n\nWe were so excited to see the ocean. We were so excited to see the ocean.\n\nWe were so excited to see the ocean.",
+   "changed_token_indices": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49
+   ],
+   "coherence": {
+    "original": -1.0128780603408813,
+    "steered": -0.7377061247825623
+   },
+   "top_predictions": [
+    {
+     "token": ".",
+     "probability": 0.07526383548974991,
+     "rank": 1,
+     "logit": null
+    },
+    {
+     "token": " turn",
+     "probability": 0.03562482073903084,
+     "rank": 2,
+     "logit": null
+    },
+    {
+     "token": " rise",
+     "probability": 0.03477442264556885,
+     "rank": 3,
+     "logit": null
+    },
+    {
+     "token": " and",
+     "probability": 0.031493768095970154,
+     "rank": 4,
+     "logit": null
+    },
+    {
+     "token": " go",
+     "probability": 0.02652129717171192,
+     "rank": 5,
+     "logit": null
+    },
+    {
+     "token": ",",
+     "probability": 0.02420324832201004,
+     "rank": 6,
+     "logit": null
+    },
+    {
+     "token": " as",
+     "probability": 0.02079448103904724,
+     "rank": 7,
+     "logit": null
+    },
+    {
+     "token": " breeze",
+     "probability": 0.01777661219239235,
+     "rank": 8,
+     "logit": null
+    },
+    {
+     "token": " in",
+     "probability": 0.01776730641722679,
+     "rank": 9,
+     "logit": null
+    },
+    {
+     "token": " slowly",
+     "probability": 0.016320623457431793,
+     "rank": 10,
+     "logit": null
+    }
+   ],
+   "top_changed": [
+    {
+     "token": ".",
+     "original_prob": 0.10398221760988235,
+     "steered_prob": 0.07526383548974991,
+     "delta": -0.028718382120132446
+    },
+    {
+     "token": " swell",
+     "original_prob": 0.02549397014081478,
+     "steered_prob": 0.0,
+     "delta": -0.02549397014081478
+    },
+    {
+     "token": " in",
+     "original_prob": 0.0,
+     "steered_prob": 0.01776730641722679,
+     "delta": 0.01776730641722679
+    },
+    {
+     "token": " breeze",
+     "original_prob": 0.034238722175359726,
+     "steered_prob": 0.01777661219239235,
+     "delta": -0.016462109982967377
+    },
+    {
+     "token": " and",
+     "original_prob": 0.019097669050097466,
+     "steered_prob": 0.031493768095970154,
+     "delta": 0.012396099045872688
+    }
+   ]
+  },
+  "status": "ok"
+ }
+}

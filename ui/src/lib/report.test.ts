@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildEntry, type NotebookEntry } from './notebook';
+import { buildEntry, type JournalEntry, type NotebookEntry } from './notebook';
+import { fullExtras, fullRun } from './__fixtures__/provenance';
 import { buildReport, escapeHtml, reportFileName } from './report';
 import type { DLAResponse, GenerateResponse, LogitLensResponse } from './types';
 import generateJson from './__fixtures__/readouts/generate.json';
@@ -141,6 +142,98 @@ describe('buildReport', () => {
     const out = buildReport([withPatch]);
     expect(out).toContain('Swap test (heads)');
     expect(out).not.toContain('Swap &amp; Compare');
+  });
+});
+
+describe('How this was run', () => {
+  const full = buildEntry({
+    id: 'full',
+    now: new Date('2026-10-11T12:00:00Z'),
+    modelName: 'GPT-2 small',
+    display: null,
+    run: fullRun(),
+    provenance: { ...fullExtras(), compare: { a: 'A <b>', b: 'B' } },
+  });
+
+  it('lists every recorded setting of the run', () => {
+    const out = buildReport([full]);
+    expect(out).toContain('<h3>How this was run</h3>');
+    for (const text of [
+      'Pry version</th><td>0.4.0',
+      'Engine version</th><td>0.4.0',
+      'Device</th><td>cuda',
+      'PyTorch</th><td>2.5.1+cu124',
+      'CUDA</th><td>12.4',
+      'TransformerLens</th><td>2.15.4',
+      'SAELens</th><td>6.5.1',
+      'transformers</th><td>4.46.3',
+      'Model</th><td>gpt2-small',
+      'Model revision</th><td>607a30d783dfa663caf39e06633721c8d4cfcd7e',
+      'SAE</th><td>gpt2-small-res-jb / blocks.8.hook_resid_pre, layer 8',
+      'Temperature</th><td>0.7',
+      'Seed</th><td>42',
+      'Heads knocked out</th><td>9.9',
+      'Features knocked out</th><td>#1234',
+      'feature #1234 at strength 8, layer 8, with a control feature; also tried on: I went to the',
+      'Why (DLA) target',
+      'patching head',
+      'Key parts threshold</th><td>0.05',
+    ]) {
+      expect(out).toContain(text);
+    }
+    // Compare prompts are user text: escaped.
+    expect(out).toContain('&quot;A &lt;b&gt;&quot;');
+  });
+
+  it('is left out for a run migrated from v1, which has no provenance', () => {
+    expect(buildReport([entry({ provenance: null })])).not.toContain('How this was run');
+  });
+});
+
+describe('Your predictions and what happened', () => {
+  const base = buildEntry({
+    id: 'r', now: new Date('2026-10-11T12:00:00Z'), modelName: 'GPT-2 small', display: null, run: fullRun(),
+  });
+  const step = (over: Partial<JournalEntry>): JournalEntry => ({
+    id: 'j',
+    at: '2026-10-11T12:00:00.000Z',
+    lesson: { id: 'pry.p3-2', version: '1', source: 'bundled' },
+    sectionId: 's1',
+    stepId: 'guess',
+    kind: 'predict',
+    question: 'Which name comes next?',
+    answer: { choice: ' Mary' },
+    skipped: false,
+    committedAt: '2026-10-11T12:00:00.000Z',
+    provenance: base.provenance!,
+    ...over,
+  });
+
+  it('shows each prediction, the check Pry ran and what it measured', () => {
+    const out = buildReport([base], {
+      journal: [
+        step({
+          id: 'a',
+          check: { read: 'top_guess.prob', op: 'gt', binding: 'answer', expected: 0.5, actual: 0.62, agrees: true },
+        }),
+        step({ id: 'b', stepId: 'second', question: `Guess <i>again</i>`, skipped: true, answer: {} }),
+        step({ id: 'c', kind: 'recall', question: 'Not a prediction' }),
+      ],
+    });
+    expect(out).toContain('<h2>Your predictions and what happened</h2>');
+    expect(out).toContain('pry.p3-2, step guess');
+    expect(out).toContain('You said</span>  Mary');
+    expect(out).toContain('top_guess.prob gt 0.5');
+    expect(out).toContain('<code>0.62</code> (matches your answer)');
+    expect(out).toContain('You said</span> skipped');
+    expect(out).toContain('Guess &lt;i&gt;again&lt;/i&gt;');
+    expect(out).not.toContain('Not a prediction');
+    expect(tags(out)).not.toMatch(/<script/i);
+  });
+
+  it('is left out when there are no predictions', () => {
+    expect(buildReport([base])).not.toContain('Your predictions and what happened');
+    expect(buildReport([base], { journal: [step({ kind: 'recall' })] })).not.toContain('Your predictions');
   });
 });
 

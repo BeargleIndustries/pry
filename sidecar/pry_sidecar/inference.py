@@ -33,6 +33,9 @@ from .schemas import (
     DLAComponent,
     DLARequest,
     DLAResponse,
+    EmbeddingPosition,
+    EmbeddingRequest,
+    EmbeddingResponse,
     FeatureHit,
     GenerationStep,
     GenerateRequest,
@@ -43,13 +46,19 @@ from .schemas import (
     LogitLensCell,
     LogitLensRequest,
     LogitLensResponse,
+    LogitLensTracked,
     PatchComponent,
     PatchRequest,
     PatchResponse,
     SAEFeaturesRequest,
     SAEFeaturesResponse,
+    SAERef,
+    SteerCoherence,
+    SteerControl,
     SteerRequest,
     SteerResponse,
+    SteerScale,
+    SteerTopChange,
     TokenFeatures,
     TokenInfo,
     TokenizeRequest,
@@ -92,6 +101,29 @@ def _target_position(requested: Optional[int], seq_len: int) -> int:
     return requested
 
 
+class UnprocessableError(ValueError):
+    """A request that is well-formed but can't be answered as asked (a 422):
+    a position past the end of the prompt, or an answer that isn't one token."""
+
+
+def _single_token_id(model, text: str) -> int:
+    """The vocabulary id of ``text`` when it is exactly one token, else a 422."""
+    ids = model.to_tokens(text, prepend_bos=False)[0]
+    if ids.numel() != 1:
+        raise UnprocessableError(
+            f"{text!r} is {ids.numel()} tokens for this model; pick a single token."
+        )
+    return int(ids[0].item())
+
+
+def _sae_ref(loaded: LoadedModel) -> Optional[SAERef]:
+    release = getattr(loaded, "sae_release", None)
+    sae_id = getattr(loaded, "sae_id", None)
+    if release is None or sae_id is None:
+        return None
+    return SAERef(release=release, id=sae_id)
+
+
 def run_tokenize(req: TokenizeRequest, loaded: LoadedModel) -> TokenizeResponse:
     """Tokenize ``req.text`` exactly as the analyses do (BOS prepended)."""
     if loaded.model is None:
@@ -100,8 +132,53 @@ def run_tokenize(req: TokenizeRequest, loaded: LoadedModel) -> TokenizeResponse:
     return TokenizeResponse(tokens=tokens, count=len(tokens))
 
 
-def _generate_continuation(model, prompt_tokens, max_new_tokens: int) -> str:
-    """Greedy-generate from ``prompt_tokens`` and decode only the new tokens.
+def run_embedding(req: EmbeddingRequest, loaded: LoadedModel) -> EmbeddingResponse:
+    """The token embedding (``hook_embed``) and positional embedding
+    (``hook_pos_embed``) at each requested position, BOS prepended as the
+    analyses do. A position outside the prompt is a 422."""
+    import torch
+
+    if loaded.model is None:
+        raise RuntimeError(f"model '{req.preset_id}' was unloaded during embedding")
+    model = loaded.model
+
+    lock = REGISTRY._get_lock(req.preset_id)
+    with lock:
+        tokens_tensor = model.to_tokens(req.prompt)
+        token_strs = [str(s) for s in model.to_str_tokens(req.prompt)]
+        seq_len = len(token_strs)
+        for p in req.positions:
+            if not 0 <= p < seq_len:
+                raise UnprocessableError(
+                    f"Token position {p} is out of range; this prompt has "
+                    f"positions 0-{seq_len - 1}."
+                )
+        with torch.no_grad():
+            _, cache = model.run_with_cache(
+                tokens_tensor,
+                names_filter=lambda n: n in ("hook_embed", "hook_pos_embed"),
+            )
+        embed = cache["hook_embed"][0].float().cpu()
+        pos_embed = cache["hook_pos_embed"][0].float().cpu() if "hook_pos_embed" in cache else None
+
+    return EmbeddingResponse(
+        preset_id=req.preset_id,
+        prompt=req.prompt,
+        tokens=token_strs,
+        positions=[
+            EmbeddingPosition(
+                position=p,
+                token=token_strs[p],
+                embed=embed[p].tolist(),
+                pos_embed=pos_embed[p].tolist() if pos_embed is not None else None,
+            )
+            for p in req.positions
+        ],
+    )
+
+
+def _continuation_ids(model, prompt_tokens, max_new_tokens: int) -> list[int]:
+    """Greedy-generate from ``prompt_tokens``; the new token ids, cut at EOS.
 
     Works at the token level (generate returns prompt + new ids), so the
     prompt is removed exactly even when decoding it wouldn't round-trip.
@@ -116,6 +193,12 @@ def _generate_continuation(model, prompt_tokens, max_new_tokens: int) -> str:
     eos = getattr(getattr(model, "tokenizer", None), "eos_token_id", None)
     if eos is not None and eos in new_ids:
         new_ids = new_ids[: new_ids.index(eos)]  # generate pads with EOS after stopping
+    return new_ids
+
+
+def _generate_continuation(model, prompt_tokens, max_new_tokens: int) -> str:
+    """Greedy-generate from ``prompt_tokens`` and decode only the new tokens."""
+    new_ids = _continuation_ids(model, prompt_tokens, max_new_tokens)
     return model.to_string(new_ids) if new_ids else ""
 
 
@@ -476,15 +559,20 @@ def run_generate(req: GenerateRequest, loaded: LoadedModel) -> GenerateResponse:
         # -- top-k next-token predictions ------------------------------------
         top_predictions: list[TopPrediction] = []
         try:
-            final_logits = _logits[0, -1, :]  # last position logits
-            top_probs = torch.softmax(final_logits.float(), dim=-1)
+            final_logits = _logits[0, -1, :].float()  # last position logits
+            top_probs = torch.softmax(final_logits, dim=-1)
             top_vals, top_ids = torch.topk(top_probs, 10)
             for rank, (prob, tid) in enumerate(
                 zip(top_vals.tolist(), top_ids.tolist()), start=1
             ):
                 tok_str = model.to_single_str_token(tid)
                 top_predictions.append(
-                    TopPrediction(token=tok_str, probability=float(prob), rank=rank)
+                    TopPrediction(
+                        token=tok_str,
+                        probability=float(prob),
+                        rank=rank,
+                        logit=float(final_logits[tid].item()),
+                    )
                 )
         except Exception:
             pass  # non-critical — degrade gracefully
@@ -555,6 +643,8 @@ def run_generate(req: GenerateRequest, loaded: LoadedModel) -> GenerateResponse:
         sae_features=sae_features,
         sae_layer_used=sae_layer,
         top_predictions=top_predictions,
+        model_revision=getattr(loaded, "model_revision", None),
+        sae=_sae_ref(loaded) if has_sae else None,
         timing_ms={
             "forward_ms": forward_ms,
             "sae_ms": sae_ms,
@@ -722,6 +812,7 @@ def run_logit_lens(req: LogitLensRequest, loaded: LoadedModel) -> LogitLensRespo
         token_strs = model.to_str_tokens(req.prompt)
         tokens = [TokenInfo(index=i, text=str(s)) for i, s in enumerate(token_strs)]
         seq_len = len(tokens)
+        track_ids = {t: _single_token_id(model, t) for t in req.track_tokens}
 
         # Cache hook_resid_post at ALL layers
         def names_filter(name: str) -> bool:
@@ -745,6 +836,7 @@ def run_logit_lens(req: LogitLensRequest, loaded: LoadedModel) -> LogitLensRespo
 
         # Build grid: [layer][token_pos]
         grid: list[list[LogitLensCell]] = []
+        tracked: list[dict[str, LogitLensTracked]] | None = [] if track_ids else None
         for layer_idx in range(n_layers):
             key = f"blocks.{layer_idx}.hook_resid_post"
             if key not in cache:
@@ -753,6 +845,8 @@ def run_logit_lens(req: LogitLensRequest, loaded: LoadedModel) -> LogitLensRespo
                     LogitLensCell(predicted_token="?", probability=0.0, matches_final=False)
                     for _ in range(seq_len)
                 ])
+                if tracked is not None:
+                    tracked.append({})
                 continue
 
             resid = cache[key][0]  # [seq, d_model]
@@ -780,6 +874,19 @@ def run_logit_lens(req: LogitLensRequest, loaded: LoadedModel) -> LogitLensRespo
                 ))
             grid.append(row)
 
+            if tracked is not None:
+                last_logits = layer_logits[seq_len - 1]
+                readouts: dict[str, LogitLensTracked] = {}
+                for text, tid in track_ids.items():
+                    logit = last_logits[tid]
+                    readouts[text] = LogitLensTracked(
+                        prob=float(layer_probs[seq_len - 1, tid].item()),
+                        logit=float(logit.item()),
+                        # 1 + how many tokens score strictly higher
+                        rank=int((last_logits > logit).sum().item()) + 1,
+                    )
+                tracked.append(readouts)
+
         lens_ms = (time.perf_counter() - lens_start) * 1000
     total_ms = (time.perf_counter() - total_start) * 1000
 
@@ -788,6 +895,7 @@ def run_logit_lens(req: LogitLensRequest, loaded: LoadedModel) -> LogitLensRespo
         prompt=req.prompt,
         tokens=tokens,
         grid=grid,
+        tracked=tracked,
         n_layers=n_layers,
         timing_ms={
             "forward_ms": forward_ms,
@@ -804,8 +912,13 @@ def run_logit_lens(req: LogitLensRequest, loaded: LoadedModel) -> LogitLensRespo
 
 
 def run_dla(req: DLARequest, loaded: LoadedModel) -> DLAResponse:
-    """Compute per-component logit contribution toward the predicted token
-    at a target position."""
+    """Compute per-component logit contribution toward the answer token (the
+    predicted token unless ``answer_token`` is given) at a target position.
+
+    With ``contrast_token`` the direction is answer minus contrast, so the bars
+    explain the logit difference. The response also carries the bars' total,
+    the real logit(s) and the gap between them, split into the embeddings'
+    direct path and the bias terms (MF-2b)."""
     import torch
 
     total_start = time.perf_counter()
@@ -828,34 +941,55 @@ def run_dla(req: DLARequest, loaded: LoadedModel) -> DLAResponse:
 
         # Target position: default to last token
         target_pos = _target_position(req.target_token_index, seq_len)
+        answer_id = (
+            _single_token_id(model, req.answer_token) if req.answer_token is not None else None
+        )
+        contrast_id = (
+            _single_token_id(model, req.contrast_token) if req.contrast_token is not None else None
+        )
 
         # Cache: hook_result (attention output per head) + hook_mlp_out, and
         # the final LN scale (+ ln1_post scales on post-norm models) so
-        # contributions come out in logits.
+        # contributions come out in logits; plus the layer-0 residual input
+        # (token + positional embedding) for the gap's embedding part.
+        base_filter = dla_hook_filter(model)
         forward_start = time.perf_counter()
         with torch.no_grad():
             logits, cache = model.run_with_cache(
                 tokens_tensor,
-                names_filter=dla_hook_filter(model),
+                names_filter=lambda n: base_filter(n) or n == "blocks.0.hook_resid_pre",
             )
         forward_ms = (time.perf_counter() - forward_start) * 1000
 
         # Determine predicted token at target position
-        final_logits = logits[0, target_pos, :]  # [vocab]
+        final_logits = logits[0, target_pos, :].float()  # [vocab]
         predicted_id = int(torch.argmax(final_logits).item())
         predicted_token = model.to_single_str_token(predicted_id)
+        if answer_id is None:
+            answer_id = predicted_id
 
-        # Get the unembedding direction for the predicted token
+        # Get the unembedding direction for the answer token
         # W_U shape: [d_model, vocab]
         dla_start = time.perf_counter()
         # Pulled back through the final LayerNorm (scale frozen at target_pos),
         # so each contribution is in logits. The unembedding bias is per-token,
-        # not per-component, so it isn't attributed to anything.
-        unembed_dir = final_ln_logit_direction(model, cache, predicted_id, target_pos)
+        # not per-component, so it goes in the gap (gap_parts.biases).
+        unembed_dir = final_ln_logit_direction(model, cache, answer_id, target_pos)
+        if contrast_id is not None:
+            unembed_dir = unembed_dir - final_ln_logit_direction(
+                model, cache, contrast_id, target_pos
+            )
 
         components: list[DLAComponent] = []
+        bias_part = 0.0
 
         for layer_idx in range(n_layers):
+            # The layer's shared attention-output bias b_O (not in hook_result).
+            b_o = getattr(model.blocks[layer_idx].attn, "b_O", None)
+            if b_o is not None:
+                b_dir = _head_logit_direction(model, cache, layer_idx, target_pos, unembed_dir)
+                bias_part += float((b_o.float() @ b_dir).item())
+
             # Attention heads: hook_result has shape [batch, seq, n_heads, d_model]
             result_key = f"blocks.{layer_idx}.attn.hook_result"
             if result_key in cache:
@@ -885,10 +1019,38 @@ def run_dla(req: DLARequest, loaded: LoadedModel) -> DLAResponse:
                     contribution=contribution,
                 ))
 
+        # The gap (MF-2b): what reaches the logit without a bar. The token +
+        # positional embedding's own direct path through the frozen final LN,
+        # and the bias terms: b_O (above), the unembedding bias b_U and, on a
+        # model whose final LN keeps a bias, that bias through W_U.
+        embedding_direct = float(
+            (cache["blocks.0.hook_resid_pre"][0, target_pos].float() @ unembed_dir).item()
+        )
+        token_ids = [answer_id] + ([contrast_id] if contrast_id is not None else [])
+        signs = [1.0, -1.0]
+        b_u = getattr(model, "b_U", None)
+        ln_b = getattr(getattr(model, "ln_final", None), "b", None)
+        for sign, tid in zip(signs, token_ids):
+            if b_u is not None:
+                bias_part += sign * float(b_u[tid].float().item())
+            if isinstance(ln_b, torch.Tensor):
+                bias_part += sign * float((ln_b.float() @ model.W_U[:, tid].float()).item())
+
+        answer_logit = float(final_logits[answer_id].item())
+        contrast_logit = (
+            float(final_logits[contrast_id].item()) if contrast_id is not None else None
+        )
+        actual = answer_logit - (contrast_logit if contrast_logit is not None else 0.0)
+        answer_token = model.to_single_str_token(answer_id)
+        contrast_token = (
+            model.to_single_str_token(contrast_id) if contrast_id is not None else None
+        )
+
         dla_ms = (time.perf_counter() - dla_start) * 1000
 
     # Lock released — sort and build response outside lock
     components.sort(key=lambda c: abs(c.contribution), reverse=True)
+    bars_total = sum(c.contribution for c in components)
 
     total_ms = (time.perf_counter() - total_start) * 1000
 
@@ -900,6 +1062,14 @@ def run_dla(req: DLARequest, loaded: LoadedModel) -> DLAResponse:
         target_token=str(token_strs[target_pos]) if target_pos < len(token_strs) else "",
         predicted_token=predicted_token,
         components=components,
+        answer_token=answer_token,
+        contrast_token=contrast_token,
+        bars_total=bars_total,
+        answer_logit=answer_logit,
+        contrast_logit=contrast_logit,
+        actual=actual,
+        gap=actual - bars_total,
+        gap_parts={"embedding_direct": embedding_direct, "biases": bias_part},
         real_weights_verified=real_weights_verified(model),
         timing_ms={
             "forward_ms": forward_ms,
@@ -930,8 +1100,102 @@ def _extract_top_predictions(model, logits_2d, position: int = -1, k: int = 10) 
     return results
 
 
+# Coherence is reported only for continuations at least this many tokens long.
+COHERENCE_MIN_TOKENS = 5
+# Control feature (MF-4): sample this many feature ids (seeded by the steered
+# feature id), keep those whose decoder norm is within CONTROL_NORM_BAND of the
+# steered feature's, and take the one least aligned with it.
+CONTROL_SAMPLE = 256
+CONTROL_NORM_BAND = 0.2
+
+
+def continuation_logprob(model, prompt_tokens, cont_ids: list[int]) -> Optional[float]:
+    """Mean log-probability per token, in nats, of ``cont_ids`` following
+    ``prompt_tokens`` under ``model`` as it is now (call it with no steering
+    hook installed). Prompt tokens are not scored. None under
+    COHERENCE_MIN_TOKENS tokens."""
+    import torch
+
+    if len(cont_ids) < COHERENCE_MIN_TOKENS:
+        return None
+    n_prompt = prompt_tokens.shape[1]
+    cont = torch.tensor([cont_ids], device=prompt_tokens.device, dtype=prompt_tokens.dtype)
+    with torch.no_grad():
+        logits = model(torch.cat([prompt_tokens, cont], dim=1))
+    # Logits at position i predict token i + 1: the continuation's tokens are
+    # predicted from positions n_prompt - 1 .. end - 1.
+    logp = torch.log_softmax(logits[0, n_prompt - 1:-1].float(), dim=-1)
+    picked = logp.gather(1, cont[0].unsqueeze(1)).squeeze(1)
+    return float(picked.mean().item())
+
+
+def changed_token_indices(original_ids: list[int], steered_ids: list[int]) -> list[int]:
+    """Indices of the steered continuation whose token differs from the
+    original continuation's token at the same index (or has none there)."""
+    return [
+        i for i, tid in enumerate(steered_ids)
+        if i >= len(original_ids) or original_ids[i] != tid
+    ]
+
+
+def control_candidates(d_sae: int, feature_id: int, n: int = CONTROL_SAMPLE) -> list[int]:
+    """``n`` feature ids other than ``feature_id``, drawn without replacement
+    from a generator seeded by ``feature_id`` (the same feature always gets
+    the same candidates)."""
+    import torch
+
+    gen = torch.Generator().manual_seed(int(feature_id))
+    perm = torch.randperm(d_sae, generator=gen)[: n + 1].tolist()
+    return [i for i in perm if i != feature_id][:n]
+
+
+def pick_control_feature(W_dec, feature_id: int) -> tuple[int, str]:
+    """The control feature for steering ``feature_id`` and how it was chosen.
+
+    Among ``control_candidates``, keep those whose decoder norm is within
+    ±CONTROL_NORM_BAND of the steered feature's and take the lowest |cosine|
+    with it ("norm_matched_lowest_cos"). If none is in the band, take the
+    candidate with the nearest norm ("nearest_norm").
+    """
+    import torch
+
+    W = W_dec.detach().float()
+    target = W[feature_id]
+    target_norm = target.norm()
+    ids = control_candidates(W.shape[0], feature_id)
+    cand = W[ids]
+    norms = cand.norm(dim=-1)
+    in_band = (norms - target_norm).abs() <= CONTROL_NORM_BAND * target_norm
+    if bool(in_band.any()):
+        cos = (cand @ target) / (norms * target_norm).clamp_min(1e-12)
+        cos = torch.where(in_band, cos.abs(), torch.full_like(cos, float("inf")))
+        return ids[int(cos.argmin().item())], "norm_matched_lowest_cos"
+    return ids[int((norms - target_norm).abs().argmin().item())], "nearest_norm"
+
+
+def _top_changes(original: list[dict], steered: list[dict], k: int = 5) -> list[SteerTopChange]:
+    """The ``k`` next-token probabilities (over both top-10 lists) that moved most."""
+    o = {p["token"]: p["probability"] for p in original}
+    s = {p["token"]: p["probability"] for p in steered}
+    rows = [
+        SteerTopChange(
+            token=t, original_prob=o.get(t, 0.0), steered_prob=s.get(t, 0.0),
+            delta=s.get(t, 0.0) - o.get(t, 0.0),
+        )
+        for t in dict.fromkeys([*o, *s])
+    ]
+    rows.sort(key=lambda r: abs(r.delta), reverse=True)
+    return rows[:k]
+
+
 def run_steer(req: SteerRequest, loaded: LoadedModel) -> SteerResponse:
-    """Run steered generation: original vs steered output comparison."""
+    """Run steered generation: original vs steered output comparison.
+
+    Alongside the two texts (MF-4): which continuation tokens changed, each
+    text's coherence under the unsteered model, the steering strength beside
+    the feature's own activation on this prompt, and with ``control`` the same
+    steering on a norm-matched control feature.
+    """
     import torch
 
     total_start = time.perf_counter()
@@ -963,38 +1227,94 @@ def run_steer(req: SteerRequest, loaded: LoadedModel) -> SteerResponse:
 
         # Get the feature direction from the SAE decoder
         direction = sae.W_dec[req.feature_id].detach().clone()  # [d_model]
+        alpha = req.alpha
 
         # -- Original generation (no hooks) --
         orig_start = time.perf_counter()
         with torch.no_grad():
             orig_tokens = model.to_tokens(req.prompt)
-            orig_logits = model(orig_tokens)
+            orig_logits, cache = model.run_with_cache(
+                orig_tokens, names_filter=lambda n: n == hook_name
+            )
             orig_preds = _extract_top_predictions(model, orig_logits[0])
 
             # Continuation only; the response carries the prompt separately.
-            orig_text = _generate_continuation(model, orig_tokens, req.max_new_tokens)
+            orig_ids = _continuation_ids(model, orig_tokens, req.max_new_tokens)
+
+            # The feature's own activation over the prompt (BOS excluded when
+            # there is anything after it), to set the strength against.
+            resid = cache[hook_name][0]
+            resid = resid.to(device=sae.device, dtype=getattr(sae, "dtype", resid.dtype))
+            acts = sae.encode(resid)[:, req.feature_id].float()
+            if acts.shape[0] > 1:
+                acts = acts[1:]
+            scale = SteerScale(
+                strength=alpha,
+                activation_p50=float(torch.quantile(acts, 0.5).item()),
+                activation_p99=float(torch.quantile(acts, 0.99).item()),
+                activation_max=float(acts.max().item()),
+            )
         orig_ms = (time.perf_counter() - orig_start) * 1000
+
+        def steer_with(dir_vec):
+            """(top predictions, continuation ids) with ``alpha * dir_vec``
+            added to the residual stream at every position."""
+            def steering_hook(value, hook):
+                value[:, :, :] = value + alpha * dir_vec
+                return value
+
+            with torch.no_grad():
+                # Install persistent hook, generate, then clean up
+                model.add_hook(hook_name, steering_hook)
+                try:
+                    logits = model(orig_tokens)
+                    preds = _extract_top_predictions(model, logits[0])
+                    ids = _continuation_ids(model, orig_tokens, req.max_new_tokens)
+                finally:
+                    model.reset_hooks()
+            return preds, ids
 
         # -- Steered generation (persistent hook approach) --
         steer_start = time.perf_counter()
-        alpha = req.alpha
-
-        def steering_hook(value, hook):
-            value[:, :, :] = value + alpha * direction
-            return value
-
-        with torch.no_grad():
-            # Install persistent hook, generate, then clean up
-            model.add_hook(hook_name, steering_hook)
-            try:
-                # Get steered logits for predictions
-                steered_logits = model(orig_tokens)
-                steered_preds = _extract_top_predictions(model, steered_logits[0])
-
-                steered_text = _generate_continuation(model, orig_tokens, req.max_new_tokens)
-            finally:
-                model.reset_hooks()
+        steered_preds, steered_ids = steer_with(direction)
         steer_ms = (time.perf_counter() - steer_start) * 1000
+
+        # -- Coherence: both texts scored by the unsteered model --
+        coherence = SteerCoherence(
+            original=continuation_logprob(model, orig_tokens, orig_ids),
+            steered=continuation_logprob(model, orig_tokens, steered_ids),
+        )
+
+        # -- Control feature: same strength, same layer --
+        control: Optional[SteerControl] = None
+        control_ms = 0.0
+        if req.control:
+            control_start = time.perf_counter()
+            cid, method = pick_control_feature(sae.W_dec, req.feature_id)
+            c_dir = sae.W_dec[cid].detach().clone()
+            c_preds, c_ids = steer_with(c_dir)
+            t_norm = float(direction.float().norm().item())
+            c_norm = float(c_dir.float().norm().item())
+            cos = float((c_dir.float() @ direction.float()).item()) / max(t_norm * c_norm, 1e-12)
+            control = SteerControl(
+                feature_id=cid,
+                decoder_norm=c_norm,
+                steered_decoder_norm=t_norm,
+                cosine=cos,
+                method=method,
+                generation=model.to_string(c_ids) if c_ids else "",
+                changed_token_indices=changed_token_indices(orig_ids, c_ids),
+                coherence=SteerCoherence(
+                    original=coherence.original,
+                    steered=continuation_logprob(model, orig_tokens, c_ids),
+                ),
+                top_predictions=[TopPrediction(**p) for p in c_preds],
+                top_changed=_top_changes(orig_preds, c_preds),
+            )
+            control_ms = (time.perf_counter() - control_start) * 1000
+
+        orig_text = model.to_string(orig_ids) if orig_ids else ""
+        steered_text = model.to_string(steered_ids) if steered_ids else ""
     total_ms = (time.perf_counter() - total_start) * 1000
 
     return SteerResponse(
@@ -1002,6 +1322,7 @@ def run_steer(req: SteerRequest, loaded: LoadedModel) -> SteerResponse:
         prompt=req.prompt,
         feature_id=req.feature_id,
         alpha=req.alpha,
+        sae_layer=req.sae_layer,
         original_generation=orig_text,
         steered_generation=steered_text,
         original_top_predictions=[
@@ -1010,9 +1331,14 @@ def run_steer(req: SteerRequest, loaded: LoadedModel) -> SteerResponse:
         steered_top_predictions=[
             TopPrediction(**p) for p in steered_preds
         ],
+        changed_token_indices=changed_token_indices(orig_ids, steered_ids),
+        coherence=coherence,
+        scale=scale,
+        control=control,
         timing_ms={
             "original_ms": orig_ms,
             "steered_ms": steer_ms,
+            "control_ms": control_ms,
             "total_ms": total_ms,
         },
         status="ok",
@@ -1098,6 +1424,7 @@ def run_ablate_heads(req: AblateHeadRequest, loaded: LoadedModel) -> AblateRespo
         original_predictions=[AblationPrediction(**p) for p in orig_preds],
         ablated_predictions=[AblationPrediction(**p) for p in ablated_preds],
         prediction_delta=prediction_delta,
+        ablations=list(req.ablations),
         timing_ms={
             "original_ms": orig_ms,
             "ablate_ms": ablate_ms,
@@ -1199,6 +1526,7 @@ def run_ablate_features(req: AblateFeatureRequest, loaded: LoadedModel) -> Ablat
         original_predictions=[AblationPrediction(**p) for p in orig_preds],
         ablated_predictions=[AblationPrediction(**p) for p in ablated_preds],
         prediction_delta=prediction_delta,
+        feature_ablations=list(req.feature_ablations),
         timing_ms={
             "original_ms": orig_ms,
             "ablate_ms": ablate_ms,
@@ -1244,6 +1572,18 @@ def _forward_with_fp32_logit(model, tokens, target_pos: int, token_id: int):
 
 # Residual patching runs one forward pass per (layer, position); ~12 x 50.
 MAX_RESID_PATCH_RUNS = 600
+# Below this many logits between the clean and corrupted runs a share is
+# meaningless (it divides by almost nothing), so it is reported as None.
+SHARE_MIN_GAP = 0.1
+
+
+def patch_share(clean: float, corrupted: float, patched: float) -> Optional[float]:
+    """(patched - corrupted) / (clean - corrupted): 1.0 = the swap restores the
+    clean logit, 0.0 = no change. None when |clean - corrupted| < SHARE_MIN_GAP."""
+    gap = clean - corrupted
+    if abs(gap) < SHARE_MIN_GAP:
+        return None
+    return (patched - corrupted) / gap
 
 
 def run_patching(req: PatchRequest, loaded: LoadedModel) -> PatchResponse:
@@ -1453,6 +1793,8 @@ def run_patching(req: PatchRequest, loaded: LoadedModel) -> PatchResponse:
         patch_ms = (time.perf_counter() - patch_start) * 1000
 
     # Lock released — sort and build response outside lock
+    for c in components:
+        c.share = patch_share(c.clean_logit, c.corrupted_logit, c.patched_logit)
     components.sort(key=lambda c: abs(c.effect), reverse=True)
 
     total_ms = (time.perf_counter() - total_start) * 1000
@@ -1465,6 +1807,9 @@ def run_patching(req: PatchRequest, loaded: LoadedModel) -> PatchResponse:
         target_token_index=target_pos,
         clean_predicted_token=clean_predicted_token,
         corrupted_predicted_token=corrupted_predicted_token,
+        target_token=clean_predicted_token,
+        clean_logit=clean_logit_val,
+        corrupted_logit=corrupted_logit_val,
         tokens=list(clean_strs),
         components=components,
         timing_ms={

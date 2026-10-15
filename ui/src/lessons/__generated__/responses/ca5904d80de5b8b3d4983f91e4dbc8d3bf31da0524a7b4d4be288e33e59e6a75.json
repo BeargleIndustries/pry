@@ -1,0 +1,1212 @@
+{
+ "key": "ca5904d80de5b8b3d4983f91e4dbc8d3bf31da0524a7b4d4be288e33e59e6a75",
+ "variant": "r1",
+ "request": {
+  "endpoint": "/logit-lens",
+  "model": "gpt2-small",
+  "body": {
+   "preset_id": "gpt2-small",
+   "prompt": "He saw a carrot and had to grab it,\nHis hunger was like a starving"
+  }
+ },
+ "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+ "device": "cuda",
+ "libs": {
+  "python": "3.12.13",
+  "torch": "2.5.1+cu124",
+  "transformer_lens": "2.15.4",
+  "sae_lens": "5.11.0",
+  "transformers": "4.57.6",
+  "numpy": "1.26.4"
+ },
+ "recorded": "2026-10-15",
+ "neuronpedia_fetched": null,
+ "offline": false,
+ "trimmed": [],
+ "response": {
+  "preset_id": "gpt2-small",
+  "prompt": "He saw a carrot and had to grab it,\nHis hunger was like a starving",
+  "tokens": [
+   {
+    "index": 0,
+    "text": "<|endoftext|>"
+   },
+   {
+    "index": 1,
+    "text": "He"
+   },
+   {
+    "index": 2,
+    "text": " saw"
+   },
+   {
+    "index": 3,
+    "text": " a"
+   },
+   {
+    "index": 4,
+    "text": " carrot"
+   },
+   {
+    "index": 5,
+    "text": " and"
+   },
+   {
+    "index": 6,
+    "text": " had"
+   },
+   {
+    "index": 7,
+    "text": " to"
+   },
+   {
+    "index": 8,
+    "text": " grab"
+   },
+   {
+    "index": 9,
+    "text": " it"
+   },
+   {
+    "index": 10,
+    "text": ","
+   },
+   {
+    "index": 11,
+    "text": "\n"
+   },
+   {
+    "index": 12,
+    "text": "His"
+   },
+   {
+    "index": 13,
+    "text": " hunger"
+   },
+   {
+    "index": 14,
+    "text": " was"
+   },
+   {
+    "index": 15,
+    "text": " like"
+   },
+   {
+    "index": 16,
+    "text": " a"
+   },
+   {
+    "index": 17,
+    "text": " starving"
+   }
+  ],
+  "grid": [
+   [
+    {
+     "predicted_token": "\n",
+     "probability": 0.3444211483001709,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "zbollah",
+     "probability": 0.733482837677002,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.12155074626207352,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " few",
+     "probability": 0.15554362535476685,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " carrot",
+     "probability": 0.9800577163696289,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.5668337345123291,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " been",
+     "probability": 0.5278515219688416,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " get",
+     "probability": 0.14380031824111938,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " grab",
+     "probability": 0.9700281023979187,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "'s",
+     "probability": 0.13784533739089966,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.14365074038505554,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "\n",
+     "probability": 0.7775281071662903,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " own",
+     "probability": 0.8943017721176147,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " hunger",
+     "probability": 0.9998941421508789,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " not",
+     "probability": 0.31024137139320374,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "lihood",
+     "probability": 0.19843725860118866,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " few",
+     "probability": 0.1481301486492157,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " starving",
+     "probability": 0.8860915899276733,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": "\n",
+     "probability": 0.08009938895702362,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "zbollah",
+     "probability": 0.7445166707038879,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.10183548927307129,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " lot",
+     "probability": 0.1298930048942566,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " carrot",
+     "probability": 0.8950579166412354,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.7315876483917236,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " been",
+     "probability": 0.8410757184028625,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " get",
+     "probability": 0.13458867371082306,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " grab",
+     "probability": 0.8161075711250305,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "'s",
+     "probability": 0.23130962252616882,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.23971149325370789,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "\n",
+     "probability": 0.19666491448879242,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " own",
+     "probability": 0.948306679725647,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " hunger",
+     "probability": 0.9997442364692688,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " not",
+     "probability": 0.39863231778144836,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "lihood",
+     "probability": 0.26863306760787964,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " lot",
+     "probability": 0.13484476506710052,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " starving",
+     "probability": 0.812829315662384,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.026910284534096718,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "zbollah",
+     "probability": 0.8620227575302124,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " eye",
+     "probability": 0.1326368898153305,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " lot",
+     "probability": 0.3970000147819519,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " carrot",
+     "probability": 0.7591583728790283,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.5225276350975037,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " been",
+     "probability": 0.8892385363578796,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " give",
+     "probability": 0.16419631242752075,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " hold",
+     "probability": 0.5216426253318787,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "self",
+     "probability": 0.3905256390571594,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " which",
+     "probability": 0.25432759523391724,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "\n",
+     "probability": 0.19931729137897491,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " own",
+     "probability": 0.9479525089263916,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " hunger",
+     "probability": 0.9953712821006775,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " not",
+     "probability": 0.4720156788825989,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "lihood",
+     "probability": 0.532123327255249,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " lot",
+     "probability": 0.2895967960357666,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " starving",
+     "probability": 0.5955588817596436,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.027061201632022858,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "zbollah",
+     "probability": 0.9884379506111145,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.20821377635002136,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " lot",
+     "probability": 0.6350575685501099,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " carrot",
+     "probability": 0.4503016769886017,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.4812154173851013,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " been",
+     "probability": 0.8918216228485107,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " be",
+     "probability": 0.1861206293106079,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " hold",
+     "probability": 0.7283459305763245,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "alian",
+     "probability": 0.46637168526649475,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " while",
+     "probability": 0.21458369493484497,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "                ",
+     "probability": 0.2772737741470337,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " own",
+     "probability": 0.837313711643219,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " hunger",
+     "probability": 0.9441990256309509,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " not",
+     "probability": 0.48934635519981384,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "liest",
+     "probability": 0.20391079783439636,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " lot",
+     "probability": 0.2828175127506256,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " white",
+     "probability": 0.1610608994960785,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.0268873143941164,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "zbollah",
+     "probability": 0.9761202931404114,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.19980677962303162,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " lot",
+     "probability": 0.775560200214386,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " juice",
+     "probability": 0.47465038299560547,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.8501561284065247,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " been",
+     "probability": 0.925565779209137,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " be",
+     "probability": 0.2116067111492157,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " hold",
+     "probability": 0.7762508392333984,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "alian",
+     "probability": 0.2866247594356537,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " while",
+     "probability": 0.31630632281303406,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "                ",
+     "probability": 0.2921518385410309,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " own",
+     "probability": 0.7853817939758301,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " hunger",
+     "probability": 0.9431107640266418,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " not",
+     "probability": 0.6630678772926331,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "liest",
+     "probability": 0.3137722313404083,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " lot",
+     "probability": 0.28079864382743835,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " starving",
+     "probability": 0.12758873403072357,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.026548348367214203,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "zbollah",
+     "probability": 0.9816262722015381,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " eye",
+     "probability": 0.42372918128967285,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " lot",
+     "probability": 0.7168534994125366,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " juice",
+     "probability": 0.6698165535926819,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.943412721157074,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " been",
+     "probability": 0.7117606401443481,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " stop",
+     "probability": 0.23947761952877045,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " hold",
+     "probability": 0.4600249230861664,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "self",
+     "probability": 0.3495386242866516,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " but",
+     "probability": 0.4183896481990814,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "                ",
+     "probability": 0.6316744685173035,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " own",
+     "probability": 0.8946149945259094,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " hunger",
+     "probability": 0.9024531245231628,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " not",
+     "probability": 0.7785825729370117,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "liest",
+     "probability": 0.8202635645866394,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " lot",
+     "probability": 0.320987731218338,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " soul",
+     "probability": 0.10032940655946732,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.026423990726470947,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "zbollah",
+     "probability": 0.9898053407669067,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.20503944158554077,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " lot",
+     "probability": 0.5587482452392578,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " juice",
+     "probability": 0.2999318242073059,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.9873448014259338,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " been",
+     "probability": 0.47853580117225647,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " wait",
+     "probability": 0.6564546227455139,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " onto",
+     "probability": 0.41089746356010437,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " from",
+     "probability": 0.2238536924123764,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " but",
+     "probability": 0.30328282713890076,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "                ",
+     "probability": 0.6490585803985596,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " own",
+     "probability": 0.9043971300125122,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " hunger",
+     "probability": 0.7042243480682373,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " not",
+     "probability": 0.6352674961090088,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " mine",
+     "probability": 0.42349737882614136,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " lot",
+     "probability": 0.1719055324792862,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " plague",
+     "probability": 0.1823311150074005,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.02643698826432228,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "zbollah",
+     "probability": 0.9764876365661621,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.2620074152946472,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " lot",
+     "probability": 0.2807886600494385,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " cake",
+     "probability": 0.2828165590763092,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.9930312633514404,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " been",
+     "probability": 0.31020116806030273,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " wait",
+     "probability": 0.6832379102706909,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " hold",
+     "probability": 0.3425755798816681,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " gently",
+     "probability": 0.19653555750846863,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " but",
+     "probability": 0.5671988725662231,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "                ",
+     "probability": 0.5589382648468018,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " own",
+     "probability": 0.9323534965515137,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " hunger",
+     "probability": 0.3738914728164673,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " not",
+     "probability": 0.4567779302597046,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " mine",
+     "probability": 0.41831347346305847,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " magnet",
+     "probability": 0.3494807183742523,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " man",
+     "probability": 0.18624377250671387,
+     "matches_final": true
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.02667331136763096,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "zbollah",
+     "probability": 0.8440151810646057,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " his",
+     "probability": 0.26065853238105774,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " bright",
+     "probability": 0.17489412426948547,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " dangling",
+     "probability": 0.23755531013011932,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.8890511393547058,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " been",
+     "probability": 0.22507277131080627,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " wait",
+     "probability": 0.23925849795341492,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " it",
+     "probability": 0.9749712944030762,
+     "matches_final": true
+    },
+    {
+     "predicted_token": ".",
+     "probability": 0.49991270899772644,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " but",
+     "probability": 0.39007532596588135,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "                ",
+     "probability": 0.5535313487052917,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " eyes",
+     "probability": 0.3346424400806427,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " hunger",
+     "probability": 0.4583187997341156,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " contagious",
+     "probability": 0.1877528876066208,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " mine",
+     "probability": 0.8269138932228088,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " magnet",
+     "probability": 0.3831571340560913,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " animal",
+     "probability": 0.2627510130405426,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.02694994956254959,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "zbollah",
+     "probability": 0.6867097616195679,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " his",
+     "probability": 0.3288404047489166,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " lot",
+     "probability": 0.11884765326976776,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " dangling",
+     "probability": 0.5015087723731995,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " then",
+     "probability": 0.4945079982280731,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " a",
+     "probability": 0.3701108396053314,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " admit",
+     "probability": 0.11981590837240219,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " it",
+     "probability": 0.9947192668914795,
+     "matches_final": true
+    },
+    {
+     "predicted_token": ".",
+     "probability": 0.8289826512336731,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " but",
+     "probability": 0.6075876951217651,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "And",
+     "probability": 0.42804375290870667,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " eyes",
+     "probability": 0.6444156169891357,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " was",
+     "probability": 0.2574760913848877,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " unbearable",
+     "probability": 0.18658772110939026,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " mine",
+     "probability": 0.8996194005012512,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " hungry",
+     "probability": 0.14222733676433563,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " animal",
+     "probability": 0.32358497381210327,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.0274453517049551,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "aven",
+     "probability": 0.13772252202033997,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.18078547716140747,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " woman",
+     "probability": 0.14179542660713196,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " dangling",
+     "probability": 0.27262014150619507,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " a",
+     "probability": 0.18114952743053436,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " a",
+     "probability": 0.5477152466773987,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " bite",
+     "probability": 0.12492460012435913,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " it",
+     "probability": 0.9967281818389893,
+     "matches_final": true
+    },
+    {
+     "predicted_token": ".",
+     "probability": 0.6540970206260681,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " but",
+     "probability": 0.5426328778266907,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "\n",
+     "probability": 0.5307323932647705,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " eyes",
+     "probability": 0.6329528093338013,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " was",
+     "probability": 0.42004215717315674,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " unbearable",
+     "probability": 0.25639188289642334,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " a",
+     "probability": 0.39037683606147766,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " hungry",
+     "probability": 0.16848327219486237,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " man",
+     "probability": 0.4850122630596161,
+     "matches_final": true
+    }
+   ],
+   [
+    {
+     "predicted_token": "\n",
+     "probability": 0.0622984804213047,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " was",
+     "probability": 0.10079359263181686,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.17345930635929108,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " man",
+     "probability": 0.052409276366233826,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " in",
+     "probability": 0.11292656511068344,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " a",
+     "probability": 0.18239551782608032,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " a",
+     "probability": 0.27990689873695374,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " bite",
+     "probability": 0.02239697426557541,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " it",
+     "probability": 0.842954158782959,
+     "matches_final": true
+    },
+    {
+     "predicted_token": ".",
+     "probability": 0.38467374444007874,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " but",
+     "probability": 0.15992562472820282,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "\n",
+     "probability": 0.955996572971344,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " eyes",
+     "probability": 0.0895771011710167,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " was",
+     "probability": 0.20648209750652313,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " so",
+     "probability": 0.08894036710262299,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " a",
+     "probability": 0.4363325834274292,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " knife",
+     "probability": 0.022016949951648712,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " man",
+     "probability": 0.11286851018667221,
+     "matches_final": true
+    }
+   ]
+  ],
+  "n_layers": 12,
+  "status": "ok"
+ }
+}

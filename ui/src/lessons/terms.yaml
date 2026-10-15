@@ -1,0 +1,85 @@
+# Terms for the copy lint (plan T1 "Copy lint"). First version written by T1
+# from concept map section 4 (main-path names and the lesson that introduces
+# each) and style guide section 2 (UI labels). T6 owns this file from here.
+#
+# A term used in a lesson earlier on the path than its `introduced_in` is an
+# error, outside a fold, a predict or question option, or a quoted UI label.
+# Matching is whole-word and case-insensitive, plurals included.
+
+terms:
+  - { term: language model, introduced_in: pry.p1-1 }
+  - { term: training, introduced_in: pry.p1-1 }
+  - { term: interpretability, introduced_in: pry.p1-1 }
+  - { term: token, introduced_in: pry.p1-2, family: token-vocabulary }
+  - { term: vocabulary, introduced_in: pry.p1-2, family: token-vocabulary }
+  - { term: start-of-text marker, introduced_in: pry.p1-2 }
+  - { term: embedding, introduced_in: pry.p1-2 }
+  - { term: positional embedding, introduced_in: pry.p1-2 }
+  - { term: layer, introduced_in: pry.p1-3 }
+  - { term: residual stream, introduced_in: pry.p1-3 }
+  - { term: probability, aliases: [probabilities, probability distribution], introduced_in: pry.p1-4 }
+  - { term: logit, introduced_in: pry.p1-4 }
+  - { term: hallucination, introduced_in: pry.p1-4 }
+  - { term: sampling, introduced_in: pry.p1-5 }
+  - { term: temperature, introduced_in: pry.p1-5 }
+  - { term: seed, introduced_in: pry.p1-5 }
+  - { term: weights, aliases: [parameters], introduced_in: pry.p1-6 }
+  - { term: activations, aliases: [activation], introduced_in: pry.p1-6 }
+  - { term: attention, introduced_in: pry.p2-1 }
+  - { term: attention head, aliases: [head], introduced_in: pry.p2-1 }
+  # Map section 6: query / key / value are named in P2.1's optional fold. No
+  # `key` alias: it would match the "Key parts" label and lesson keys.
+  - { term: query and key, introduced_in: pry.p2-1 }
+  - { term: induction head, introduced_in: pry.p2-2 }
+  - { term: previous-token head, introduced_in: pry.p2-2 }
+  - { term: logit lens, introduced_in: pry.p2-3 }
+  - { term: unembedding, introduced_in: pry.p2-3 }
+  - { term: MLP, introduced_in: pry.p2-4 }
+  - { term: direct logit attribution, aliases: [DLA], introduced_in: pry.p2-4 }
+  - { term: logit difference, introduced_in: pry.p2-4 }
+  - { term: sparse autoencoder, aliases: [SAE], introduced_in: pry.p2-5 }
+  - { term: feature, introduced_in: pry.p2-5 }
+  - { term: Neuronpedia, introduced_in: pry.p2-5 }
+  - { term: correlation, introduced_in: pry.p3-1 }
+  - { term: minimal pair, introduced_in: pry.p3-1 }
+  - { term: ablation, introduced_in: pry.p3-2 }
+  - { term: name mover head, introduced_in: pry.p3-2 }
+  - { term: activation patching, introduced_in: pry.p3-3 }
+  - { term: clean run, introduced_in: pry.p3-3, family: clean-corrupted-run }
+  - { term: corrupted run, introduced_in: pry.p3-3, family: clean-corrupted-run }
+  - { term: direction, introduced_in: pry.p3-4 }
+  - { term: steering, introduced_in: pry.p3-5 }
+  - { term: coherence, introduced_in: pry.p3-5 }
+  - { term: circuit, introduced_in: pry.p3-7 }
+  # The Key parts threshold (glossary `threshold`), met with the map in P3.7.
+  - { term: threshold, introduced_in: pry.p3-7 }
+  - { term: direct value path, introduced_in: pry.p3-7 }
+  - { term: base model, introduced_in: pry.p4-1 }
+  - { term: fine-tuning, introduced_in: pry.p4-1 }
+  - { term: system prompt, introduced_in: pry.p4-1 }
+
+# UI labels as shipped (style guide section 2) and tab names. A term inside a
+# quoted label, straight or curly quotes, isn't a use.
+ui_labels:
+  - Words (tokens)
+  - Swap test
+  - Original prompt
+  - Changed prompt
+  - Why (DLA)
+  - Copying heads
+  - Key parts
+  - "Knock out heads:"
+  - Knock out heads
+  - "Knock out features:"
+  - Knock out features
+  - Knockout results
+  - Ablated top-5
+  - Features
+  - Predictions
+  - Logit Lens
+  - Steering strength
+  - Steering
+  - Compare
+  - Watch it write
+  - Attention
+  - Lessons

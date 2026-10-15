@@ -2,7 +2,16 @@
   import Term from './Term.svelte';
   import Readout from './Readout.svelte';
   import type { PatchResponse, PatchComponent } from '$lib/types';
-  import { patchingReadout, quoteToken } from '$lib/readouts';
+  import {
+    defaultPatchPart,
+    PATCH_EVERY_POSITION,
+    PATCH_LEGEND_FORMULA,
+    patchingReadout,
+    patchLogitsLine,
+    patchShareEdge,
+    patchShareLine,
+    quoteToken,
+  } from '$lib/readouts';
   import {
     patchLengthStatus,
     TOKENIZE_DEBOUNCE_MS,
@@ -19,6 +28,7 @@
     signedIntensity,
     signedNumber,
   } from '$lib/signed-color';
+  import { IOI_CHANGED, IOI_CLEAN, isHidden, pryUi } from '$lib/lessons/registry/pry-state.svelte';
 
   interface Props {
     response: PatchResponse | null;
@@ -32,18 +42,15 @@
 
   let { response, loading = false, onRun, tokenize, preset = null }: Props = $props();
 
-  // Default pair: indirect object identification (IOI). Same token length in GPT-2.
-  const IOI_CLEAN = 'When Mary and John went to the store, John gave a drink to';
-  const IOI_CHANGED = 'When Mary and John went to the store, Mary gave a drink to';
-
-  let cleanPrompt = $state(IOI_CLEAN);
-  let corruptedPrompt = $state(IOI_CHANGED);
-  let patchType = $state<'head' | 'mlp' | 'resid'>('head');
+  // The two prompts (default: the IOI pair), the type and the selected cell live
+  // in the Pry scene state, so a lesson can set them while this tab is closed
+  // (plan T2b state lift).
+  const ps = pryUi.patching;
   $effect(() => {
     if (!preset) return;
-    cleanPrompt = preset.clean;
-    corruptedPrompt = preset.corrupted;
-    patchType = preset.patchType;
+    ps.cleanPrompt = preset.clean;
+    ps.corruptedPrompt = preset.corrupted;
+    ps.patchType = preset.patchType;
   });
 
   // Live token counts, debounced. A sequence number drops stale replies.
@@ -51,8 +58,8 @@
   let corruptedCount = $state<number | null>(null);
   let countSeq = 0;
   $effect(() => {
-    const clean = cleanPrompt;
-    const changed = corruptedPrompt;
+    const clean = ps.cleanPrompt;
+    const changed = ps.corruptedPrompt;
     const tk = tokenize;
     if (!tk) return;
     const seq = ++countSeq;
@@ -67,7 +74,7 @@
   const lengthStatus = $derived(patchLengthStatus(cleanCount, corruptedCount));
   const lengthsDiffer = $derived(lengthStatus !== null && !lengthStatus.same);
   // Key the result view on what the server actually ran, not the live toggle.
-  const shownPatchType = $derived(response?.patch_type ?? patchType);
+  const shownPatchType = $derived(response?.patch_type ?? ps.patchType);
 
   const components = $derived(response?.components ?? []);
 
@@ -101,25 +108,32 @@
     shownPatchType === 'resid' && components.some((c) => c.position != null) ? (response?.tokens ?? []) : [],
   );
 
-  let selectedComponent = $state<PatchComponent | null>(null);
 
   function handleRun() {
-    onRun?.(cleanPrompt, corruptedPrompt, patchType);
-    selectedComponent = null;
+    onRun?.(ps.cleanPrompt, ps.corruptedPrompt, ps.patchType);
+    ps.selectedComponent = null;
   }
 
-  // Blue = positive (brings back the original answer), orange = negative.
-  // Colorblind-safe pair from $lib/signed-color; the sign is also in every label.
-  function cellColor(effect: number): string {
-    return signedColor(effect, maxAbsEffect);
+  // Cells are colored by share (MF-3): blue toward the Original value, orange
+  // away from it, full brightness at 100%. Engines without share fall back to
+  // the raw score change. Colorblind-safe pair from $lib/signed-color; the
+  // sign is also in every label.
+  const hasShare = $derived(components.some((c) => c.share !== undefined));
+  function cellColor(comp: PatchComponent | undefined): string {
+    if (!comp) return signedColor(0, 1);
+    if (hasShare) return signedColor(comp.share ?? 0, 1);
+    return signedColor(comp.effect, maxAbsEffect);
   }
+
+  // The three logits above the grid: the clicked square, else the biggest raise.
+  const shownPart = $derived(ps.selectedComponent ?? defaultPatchPart(response));
 
   function effectWords(effect: number): string {
     const s = signOf(effect);
     return s === 'positive'
-      ? 'brings back the original answer'
+      ? 'moves the logit toward the Original value'
       : s === 'negative'
-        ? 'pushes further from the original'
+        ? 'moves the logit away from the Original value'
         : 'no change';
   }
 
@@ -188,8 +202,8 @@
 
   <p class="text-xs text-zinc-400">
     Pry runs the changed prompt, copies one part's work over from the original prompt, and checks how much of the
-    original answer comes back. Researchers call this <Term key="patching">patching</Term>. The numbers here are raw
-    changes in the answer's <Term key="logit">score</Term>, not percentages.
+    original answer comes back. Researchers call this <Term key="patching">patching</Term>. Each square's number is a raw
+    change in the answer's <Term key="logit">score</Term> (its logit); the share works out a percentage from three logits.
   </p>
 
   <!-- Inputs -->
@@ -199,7 +213,7 @@
       <input
         id="patch-clean"
         type="text"
-        bind:value={cleanPrompt}
+        bind:value={ps.cleanPrompt}
         placeholder={IOI_CLEAN}
         class="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-zinc-200 placeholder-zinc-600 focus:border-indigo-500 focus:outline-none"
       />
@@ -212,7 +226,7 @@
       <input
         id="patch-corrupted"
         type="text"
-        bind:value={corruptedPrompt}
+        bind:value={ps.corruptedPrompt}
         placeholder={IOI_CHANGED}
         class="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-zinc-200 placeholder-zinc-600 focus:border-indigo-500 focus:outline-none"
       />
@@ -236,11 +250,11 @@
         {#each ['head', 'mlp', 'resid'] as pt (pt)}
           <button
             type="button"
-            aria-pressed={patchType === pt}
-            onclick={() => { patchType = pt as 'head' | 'mlp' | 'resid'; }}
+            aria-pressed={ps.patchType === pt}
+            onclick={() => { ps.patchType = pt as 'head' | 'mlp' | 'resid'; }}
             class={[
               'rounded px-2 py-0.5 text-[10px] font-medium transition-colors',
-              patchType === pt ? 'bg-indigo-950 text-indigo-300' : 'bg-zinc-800 text-zinc-500',
+              ps.patchType === pt ? 'bg-indigo-950 text-indigo-300' : 'bg-zinc-800 text-zinc-500',
             ].join(' ')}
           >
             {pt === 'head' ? 'Heads' : pt === 'mlp' ? 'MLPs' : 'Residual'}
@@ -250,15 +264,15 @@
       <button
         type="button"
         onclick={handleRun}
-        disabled={loading || lengthsDiffer || !cleanPrompt.trim() || !corruptedPrompt.trim()}
+        disabled={loading || lengthsDiffer || !ps.cleanPrompt.trim() || !ps.corruptedPrompt.trim()}
         class="ml-auto rounded bg-indigo-500 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading ? 'Running...' : 'Run swap test'}
       </button>
     </div>
     <p class="text-[10px] text-zinc-500">
-      Heads swaps one attention head at a time. <Term key="mlp">MLPs</Term> swaps each layer's processing block.
-      <Term key="residual-stream">Residual</Term> swaps the running notes at one word, going into one layer.
+      Heads swaps one attention head at a time. <Term key="mlp">MLPs</Term> swaps one layer's MLP at a time.
+      <Term key="residual-stream">Residual</Term> swaps the residual stream at one word, going into one layer.
     </p>
   </div>
 
@@ -267,7 +281,7 @@
       <p class="text-sm text-zinc-600">Type an original prompt and a changed one, then press Run swap test to see which parts carry the difference.</p>
     </div>
   {:else if response}
-    <Readout text={patchingReadout(response)} />
+    <Readout text={patchingReadout(response)} hidden={isHidden('patching-grid')} />
 
     <!-- Info bar -->
     <div class="flex flex-wrap items-center gap-2 rounded-md border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-xs">
@@ -281,14 +295,31 @@
       <span class="text-zinc-300">{response.patch_type === 'head' ? 'heads' : response.patch_type === 'mlp' ? 'MLPs' : 'residual'}</span>
     </div>
 
+    <!-- MF-3: the target's logit in the three runs, with the share worked out beside it -->
+    {#if shownPart}
+      {@const shareLine = patchShareLine(response, shownPart)}
+      {@const edge = patchShareEdge(shownPart)}
+      <div data-tour="patch-three-logits" class="flex flex-col gap-0.5 rounded-md border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-[11px] text-zinc-300">
+        <p>
+          <span class="font-mono text-zinc-500">{shownPart.name}</span>
+          {patchLogitsLine(response, shownPart)}
+          {#if shareLine}<span class="ml-1 font-mono text-zinc-400">{shareLine}</span>{/if}
+        </p>
+        {#if edge}<p class="text-zinc-400">{edge}</p>{/if}
+        {#if response.patch_type !== 'resid'}<p class="text-zinc-500">{PATCH_EVERY_POSITION}</p>{/if}
+      </div>
+    {/if}
+
     {#if shownPatchType === 'head' && nHeads > 0}
       <!-- Heatmap for head patching -->
       <div class="overflow-x-auto">
         <div id={gridDescId} class="text-[10px] text-zinc-600 mb-1">
-          Rows are layers, columns are heads. Blue squares bring the original answer back, orange push it further away. Brighter means a bigger change. Look for <Term key="name-mover">name mover</Term> heads in the late layers. Click a square for its numbers; arrow keys move between squares.
+          Rows are layers, columns are heads. Blue squares raise the original answer's score, orange push it further away. Brighter means a bigger change. Look for <Term key="name-mover">name mover</Term> heads in the late layers. Click a square for its numbers; arrow keys move between squares.
         </div>
         <div
           bind:this={gridEl}
+          data-tour="patching-grid"
+          data-lesson-hidden={isHidden('patching-grid') || undefined}
           role="grid"
           aria-label="Head patching effects, layer by head"
           aria-describedby="{gridDescId} {legendId}"
@@ -318,11 +349,11 @@
                   data-row={l}
                   data-col={h}
                   tabindex={tabStop?.row === l && tabStop?.col === h ? 0 : -1}
-                  aria-selected={comp !== undefined && selectedComponent?.name === comp.name}
+                  aria-selected={comp !== undefined && ps.selectedComponent?.name === comp.name}
                   onfocus={() => { gridCurrent = { row: l, col: h }; }}
-                  onclick={() => { selectedComponent = comp ?? null; }}
+                  onclick={() => { ps.selectedComponent = comp ?? null; }}
                   class="flex h-5 w-5 items-center justify-center rounded-sm border border-zinc-800 text-[10px] font-bold leading-none transition-colors hover:border-zinc-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                  style="background-color: {cellColor(effect)}; color: {glyphColor(effect)};"
+                  style="background-color: {cellColor(comp)}; color: {glyphColor(effect)};"
                   title="L{l} H{h}: {signedNumber(effect, 2)} score change"
                   aria-label={cellLabel(`Layer ${l}, head ${h}`, effect)}
                 ><span aria-hidden="true">{cellGlyph(effect)}</span></button>
@@ -335,10 +366,12 @@
       <!-- Heatmap for residual patching: one square per (layer, word) -->
       <div class="overflow-x-auto">
         <div id={gridDescId} class="text-[10px] text-zinc-600 mb-1">
-          Rows are layers, columns are words. Each square swaps in the original prompt's information at one word, going into one layer. Blue squares bring the original answer back, orange push it further away. Click a square for its numbers; arrow keys move between squares.
+          Rows are layers, columns are words. Each square swaps in the original prompt's information at one word, going into one layer. Blue squares raise the original answer's score, orange push it further away. Click a square for its numbers; arrow keys move between squares.
         </div>
         <div
           bind:this={gridEl}
+          data-tour="patching-grid"
+          data-lesson-hidden={isHidden('patching-grid') || undefined}
           role="grid"
           aria-label="Residual patching effects, layer by word"
           aria-describedby="{gridDescId} {legendId}"
@@ -365,11 +398,11 @@
                   data-row={l}
                   data-col={p}
                   tabindex={tabStop?.row === l && tabStop?.col === p ? 0 : -1}
-                  aria-selected={comp !== undefined && selectedComponent?.name === comp.name}
+                  aria-selected={comp !== undefined && ps.selectedComponent?.name === comp.name}
                   onfocus={() => { gridCurrent = { row: l, col: p }; }}
-                  onclick={() => { selectedComponent = comp ?? null; }}
+                  onclick={() => { ps.selectedComponent = comp ?? null; }}
                   class="flex h-5 min-w-5 items-center justify-center rounded-sm border border-zinc-800 text-[10px] font-bold leading-none transition-colors hover:border-zinc-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                  style="background-color: {cellColor(effect)}; color: {glyphColor(effect)};"
+                  style="background-color: {cellColor(comp)}; color: {glyphColor(effect)};"
                   title="Layer {l}, {JSON.stringify(tok)}: {signedNumber(effect, 2)} score change"
                   aria-label={cellLabel(`Layer ${l}, word ${p + 1} ${JSON.stringify(tok)}`, effect)}
                 ><span aria-hidden="true">{cellGlyph(effect)}</span></button>
@@ -380,13 +413,17 @@
       </div>
     {:else}
       <!-- Bar chart for MLP patching -->
-      <div class="flex flex-col gap-0.5">
+      <div
+        class="flex flex-col gap-0.5"
+        data-tour="patching-grid"
+        data-lesson-hidden={isHidden('patching-grid') || undefined}
+      >
         {#each components.slice(0, 30) as comp, i (comp.name)}
           {@const isPositive = comp.effect >= 0}
           {@const width = (Math.abs(comp.effect) / maxAbsEffect) * 100}
           <button
             type="button"
-            onclick={() => { selectedComponent = comp; }}
+            onclick={() => { ps.selectedComponent = comp; }}
             class="group flex items-center gap-2 rounded px-2 py-1 text-left hover:bg-zinc-900/60"
           >
             <span class="w-5 shrink-0 text-right font-mono text-[10px] text-zinc-700">{i + 1}</span>
@@ -416,14 +453,14 @@
     {/if}
 
     <!-- Selected component detail -->
-    {#if selectedComponent}
+    {#if ps.selectedComponent}
       <div class="rounded-md border border-zinc-700 bg-zinc-900/80 px-3 py-2 text-xs" role="status">
         <div class="flex items-center gap-3 text-zinc-300">
-          <span class="font-mono font-semibold">{selectedComponent.name}</span>
+          <span class="font-mono font-semibold">{ps.selectedComponent.name}</span>
           <span class="text-zinc-600">|</span>
-          <span>Score change: <span class="font-mono" style="color: {signedHex(selectedComponent.effect)};">{signedNumber(selectedComponent.effect, 2)}</span> <span class="text-zinc-500">({effectWords(selectedComponent.effect)})</span></span>
+          <span>Score change: <span class="font-mono" style="color: {signedHex(ps.selectedComponent.effect)};">{signedNumber(ps.selectedComponent.effect, 2)}</span> <span class="text-zinc-500">({effectWords(ps.selectedComponent.effect)})</span></span>
         </div>
-        <p class="mt-1 text-zinc-400">{detailSentence(selectedComponent, quoteToken(response.clean_predicted_token))}</p>
+        <p class="mt-1 text-zinc-400">{detailSentence(ps.selectedComponent, quoteToken(response.clean_predicted_token))}</p>
       </div>
     {/if}
 
@@ -432,13 +469,14 @@
       <span class="flex items-center gap-1">
         <span class="inline-block h-2 w-4 rounded-sm" style="background-color: {POSITIVE_HEX};" aria-hidden="true"></span>
         <span aria-hidden="true" class="font-mono font-bold">+</span>
-        Positive (blue: brings the original answer back)
+        Positive (blue: moves the logit toward the Original value)
       </span>
       <span class="flex items-center gap-1">
         <span class="inline-block h-2 w-4 rounded-sm" style="background-color: {NEGATIVE_HEX};" aria-hidden="true"></span>
         <span aria-hidden="true" class="font-mono font-bold">−</span>
-        Negative (orange: pushes further from the original)
+        Negative (orange: moves the logit away from the Original value)
       </span>
+      <span>{hasShare ? PATCH_LEGEND_FORMULA : 'Square brightness: score change in logits'}</span>
       {#if response?.timing_ms}
         <span class="ml-auto text-zinc-700">
           {response.timing_ms.total_ms?.toFixed(0) ?? '?'}ms

@@ -1,10 +1,11 @@
 <script lang="ts">
   import Term from './Term.svelte';
   import type { DLAResponse, DLAComponent } from '$lib/types';
-  import { dlaReadout, explainingLabel } from '$lib/readouts';
+  import { dlaGapParts, dlaReadout, dlaTotalLine, explainingLabel } from '$lib/readouts';
   import { realWeightsVerified } from '$lib/sidecar';
   import Readout from './Readout.svelte';
   import { NEGATIVE_HEX, POSITIVE_HEX, signedHex, signedNumber, signOf } from '$lib/signed-color';
+  import { hasPryHost, pryHost } from '$lib/lessons/registry/pry-state.svelte';
 
   interface Props {
     response: DLAResponse | null;
@@ -41,6 +42,32 @@
   function displayToken(t: string): string {
     return t.startsWith(' ') ? '\u00b7' + t.slice(1) : t;
   }
+
+  // MF-2/MF-2b: what the bars explain (answer, optional contrast) and the
+  // total / real / gap line under them.
+  const answer = $derived(response ? (response.answer_token ?? response.predicted_token) : null);
+  const contrast = $derived(response?.contrast_token ?? null);
+  const totalLine = $derived(dlaTotalLine(response));
+  const gapParts = $derived(dlaGapParts(response));
+
+  // Picker choices: the top guess plus the run's top ten when DLA explains the
+  // last token (the only position whose guesses the run carries).
+  const targetChoices = $derived.by((): string[] => {
+    if (!response || !hasPryHost()) return [];
+    const run = pryHost().analysis.state.response;
+    const last = run ? run.tokens.length - 1 : -1;
+    const tops = response.target_token_index === last ? (run?.top_predictions ?? []).map((p) => p.token) : [];
+    return [...new Set([response.predicted_token, ...(answer ? [answer] : []), ...(contrast ? [contrast] : []), ...tops])];
+  });
+
+  function setTarget(nextAnswer: string, nextContrast: string) {
+    if (!hasPryHost() || !response) return;
+    const a = pryHost().analysis;
+    const ans = nextAnswer === response.predicted_token && !nextContrast ? null : nextAnswer;
+    const con = nextContrast || null;
+    a.state.dlaTarget = ans === null && con === null ? null : { answer: ans, contrast: con };
+    void a.dla();
+  }
 </script>
 
 <section
@@ -68,8 +95,42 @@
     <!-- Which word's guess this explains -->
     <div class="flex flex-wrap items-center gap-2 rounded-md border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-xs">
       <span class="text-zinc-500">{explainingLabel({ text: response.target_token, index: response.target_token_index })}:</span>
-      <span class="font-mono text-indigo-300">{displayToken(response.predicted_token)}</span>
+      <span class="font-mono text-indigo-300">{displayToken(answer ?? response.predicted_token)}</span>
+      {#if contrast}
+        <span class="text-zinc-500">minus</span>
+        <span class="font-mono text-zinc-300">{displayToken(contrast)}</span>
+      {/if}
     </div>
+    {#if targetChoices.length > 1}
+      <div class="flex flex-wrap items-center gap-2 text-[11px] text-zinc-500">
+        <label for="dla-answer-{uid}">Answer</label>
+        <select
+          id="dla-answer-{uid}"
+          value={answer}
+          disabled={loading}
+          onchange={(e) => setTarget(e.currentTarget.value, contrast ?? '')}
+          class="rounded border border-zinc-700 bg-zinc-900 px-1.5 py-0.5 font-mono text-xs text-zinc-200"
+        >
+          {#each targetChoices as t (t)}
+            <option value={t}>{displayToken(t)}</option>
+          {/each}
+        </select>
+        <label for="dla-contrast-{uid}">Contrast (optional)</label>
+        <select
+          id="dla-contrast-{uid}"
+          value={contrast ?? ''}
+          disabled={loading}
+          onchange={(e) => setTarget(answer ?? response.predicted_token, e.currentTarget.value)}
+          class="rounded border border-zinc-700 bg-zinc-900 px-1.5 py-0.5 font-mono text-xs text-zinc-200"
+        >
+          <option value="">none</option>
+          {#each targetChoices.filter((t) => t !== answer) as t (t)}
+            <option value={t}>{displayToken(t)}</option>
+          {/each}
+        </select>
+        <span>With a contrast, the bars explain the answer's logit minus the contrast's.</span>
+      </div>
+    {/if}
     {#if !realWeightsVerified(response)}
       <p class="text-[11px] text-amber-400/80">On Gemma these numbers are still being checked against the real model.</p>
     {/if}
@@ -89,7 +150,7 @@
         {#each visibleComponents as comp, i (comp.name)}
           {@const isPositive = comp.contribution >= 0}
           {@const width = barWidth(comp)}
-          <li class="group flex items-center gap-2 rounded px-2 py-1 hover:bg-zinc-900/60">
+          <li class="group flex items-center gap-2 rounded px-2 py-1 hover:bg-zinc-900/60" data-tour="dla-bar" data-part={comp.name}>
             <span class="sr-only">{i + 1}. {rowLabel(comp)}</span>
             <!-- Rank -->
             <span aria-hidden="true" class="w-5 shrink-0 text-right font-mono text-[10px] text-zinc-700">
@@ -155,6 +216,22 @@
         Each number is how much one part directly raised or lowered the guess's <Term key="logit">score</Term>.
       </p>
 
+      {#if totalLine}
+        <div data-tour="dla-total-line" class="rounded-md border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-[11px] text-zinc-300">
+          <p>{totalLine}</p>
+          {#if gapParts.length > 0}
+            <details class="mt-1 text-zinc-400">
+              <summary class="cursor-pointer text-zinc-500">What the gap is made of</summary>
+              <ul class="mt-1 flex flex-col gap-0.5">
+                {#each gapParts as part (part.name)}
+                  <li class="flex gap-2"><span class="flex-1">{part.name}</span><span class="font-mono">{part.value}</span></li>
+                {/each}
+              </ul>
+            </details>
+          {/if}
+        </div>
+      {/if}
+
       <!-- Legend -->
       <div id={legendId} class="flex flex-wrap items-center gap-4 text-[10px] text-zinc-500">
         <span class="flex items-center gap-1">
@@ -167,6 +244,7 @@
           <span aria-hidden="true" class="font-mono font-bold">−</span>
           Negative (orange, bar to the left: pushed against)
         </span>
+        <span>Bar length: push in logits</span>
         <span class="flex items-center gap-1">
           <span class="inline-block h-2 w-2 rounded-sm bg-indigo-900/40"></span>
           Attn: attention head

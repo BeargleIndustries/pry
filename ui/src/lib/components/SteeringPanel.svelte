@@ -1,10 +1,21 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import Term from './Term.svelte';
   import Readout from './Readout.svelte';
   import type { GenerateResponse, SteerResponse, FeatureHit } from '$lib/types';
-  import { steeringReadout } from '$lib/readouts';
+  import {
+    coherenceLine,
+    CONTROL_EXPLAINED,
+    controlHeading,
+    STEERING_LIMIT,
+    steeringPersistLine,
+    steeringReadout,
+    steeringScaleLine,
+    steeringSections,
+  } from '$lib/readouts';
   import { diffTokens } from '$lib/token-diff';
   import { searchConcepts, SidecarError } from '$lib/sidecar';
+  import { isHidden, pryUi } from '$lib/lessons/registry/pry-state.svelte';
   import {
     NEURONPEDIA_NOTICE,
     isNeuronpediaUnavailable,
@@ -57,20 +68,19 @@
     return result;
   });
 
-  let selectedFeatureId = $state<number | null>(null);
-  let alpha = $state(5.0);
+  // Feature pick and strength live in the Pry scene state, so a lesson can set
+  // them while this tab is closed (plan T2b state lift).
+  const steering = pryUi.steering;
 
   // --- Concept search (T24): any feature of the loaded SAE, found by label ---
-  let conceptQuery = $state('');
   let searching = $state(false);
-  let conceptResult = $state<ConceptSearchResult | null>(null);
   let conceptError = $state<string | null>(null);
   /** Neuronpedia unreachable or no labels for this model: search is switched off. */
   let searchOff = $state<string | null>(null);
   /** A searched feature picked for steering; overrides the dropdown while set. */
   let concept = $state<ConceptHit | null>(null);
 
-  const queryIssue = $derived(queryProblem(conceptQuery));
+  const queryIssue = $derived(queryProblem(steering.conceptQuery));
 
   async function runConceptSearch(e?: SubmitEvent) {
     e?.preventDefault();
@@ -78,12 +88,12 @@
     searching = true;
     conceptError = null;
     try {
-      const res = await searchConcepts(conceptQuery, response?.preset_id);
+      const res = await searchConcepts(steering.conceptQuery, response?.preset_id);
       if (res.status === 'no_coverage') {
         searchOff = "This model's features have no Neuronpedia labels, so concept search isn't available for it.";
-        conceptResult = null;
+        steering.conceptResult = null;
       } else {
-        conceptResult = res;
+        steering.conceptResult = res;
       }
     } catch (err) {
       const se = err instanceof SidecarError ? err : null;
@@ -101,38 +111,52 @@
     concept = hit;
   }
 
-  // Clear the selection whenever the parent bumps resetKey.
+  // Clear the selection whenever the parent bumps resetKey (not on mount: the
+  // pick outlives the tab now).
+  let seenResetKey = untrack(() => resetKey);
   $effect(() => {
-    void resetKey;
-    selectedFeatureId = null;
+    if (resetKey === seenResetKey) return;
+    seenResetKey = resetKey;
+    steering.selectedFeatureId = null;
     concept = null;
-    conceptResult = null;
+    steering.conceptResult = null;
   });
 
   // Auto-select first feature when available features change; drop a
   // selection that is no longer in the list (e.g. new prompt or SAE layer).
+  // A feature set while the list stays the same (a lesson's set_steering, which
+  // may name a feature that doesn't fire on this prompt) is kept.
+  // Starts at the list on mount: a selection made while the tab was closed stays.
+  let listKey = untrack(() => availableFeatures.map((f) => f.id).join(','));
   $effect(() => {
-    if (selectedFeatureId !== null && !availableFeatures.some((f) => f.id === selectedFeatureId)) {
-      selectedFeatureId = null;
+    const key = availableFeatures.map((f) => f.id).join(',');
+    const changed = key !== listKey;
+    listKey = key;
+    if (changed && steering.selectedFeatureId !== null && !availableFeatures.some((f) => f.id === steering.selectedFeatureId)) {
+      steering.selectedFeatureId = null;
     }
-    if (availableFeatures.length > 0 && selectedFeatureId === null) {
-      selectedFeatureId = availableFeatures[0].id;
+    if (availableFeatures.length > 0 && steering.selectedFeatureId === null) {
+      steering.selectedFeatureId = availableFeatures[0].id;
     }
   });
+  /** The selected feature when it isn't among the ones that fired here. */
+  const offListFeature = $derived(
+    steering.selectedFeatureId !== null && !availableFeatures.some((f) => f.id === steering.selectedFeatureId) ? steering.selectedFeatureId : null,
+  );
 
   const selectedFeature = $derived(
-    availableFeatures.find((f) => f.id === selectedFeatureId) ?? null,
+    availableFeatures.find((f) => f.id === steering.selectedFeatureId) ?? null,
   );
 
   /** Searched results belong to the layer they were searched on. */
   const conceptUsable = $derived(
-    concept !== null && conceptResult !== null && conceptResult.sae_layer === currentSaeLayer,
+    concept !== null && steering.conceptResult !== null && steering.conceptResult.sae_layer === currentSaeLayer,
   );
-  const steerFeatureId = $derived(conceptUsable ? concept!.feature_id : selectedFeatureId);
+  const steerFeatureId = $derived(conceptUsable ? concept!.feature_id : steering.selectedFeatureId);
 
   function handleRun() {
     if (steerFeatureId === null || currentSaeLayer === undefined) return;
-    onSteer?.(steerFeatureId, currentSaeLayer, alpha);
+    onSteer?.(steerFeatureId, currentSaeLayer, steering.alpha);
   }
 
   // Generations are continuation-only (the server strips the prompt); the
@@ -144,7 +168,11 @@
       : null,
   );
 
-  const highAlphaWarning = $derived(Math.abs(alpha) > 20);
+  const controlDiff = $derived(
+    steerResponse?.control ? diffTokens(steerResponse.original_generation, steerResponse.control.generation) : null,
+  );
+
+  const highAlphaWarning = $derived(Math.abs(steering.alpha) > 20);
 </script>
 
 <div class="flex flex-col gap-4" data-tip="steering-panel">
@@ -175,7 +203,7 @@
         <input
           id="concept-query"
           type="text"
-          bind:value={conceptQuery}
+          bind:value={steering.conceptQuery}
           maxlength="200"
           placeholder="e.g. the ocean, anger, French"
           disabled={searchOff !== null}
@@ -191,17 +219,17 @@
       {#if conceptError}
         <p class="text-xs text-red-400">{conceptError}</p>
       {/if}
-      {#if conceptResult}
-        {#if conceptResult.results.length === 0}
-          <p class="text-xs text-zinc-500">No labelled features matched "{conceptResult.query}".</p>
+      {#if steering.conceptResult}
+        {#if steering.conceptResult.results.length === 0}
+          <p class="text-xs text-zinc-500">No labelled features matched "{steering.conceptResult.query}".</p>
         {:else}
           <p class="text-[11px] text-zinc-500">
-            Closest <Term key="neuronpedia">Neuronpedia</Term> labels for "{conceptResult.query}". The search ranks by how similar the words of a
+            Closest <Term key="neuronpedia">Neuronpedia</Term> labels for "{steering.conceptResult.query}". The search ranks by how similar the words of a
             label are to yours, so there's always a top result, even when nothing really fits. Labels
             were written by another AI and can be wrong.
           </p>
           <ul class="flex max-h-56 flex-col gap-1 overflow-y-auto">
-            {#each conceptResult.results as hit (hit.feature_id)}
+            {#each steering.conceptResult.results as hit (hit.feature_id)}
               <li>
                 <button
                   type="button"
@@ -247,13 +275,17 @@
       {/if}
       <select
         id={featureSelectId}
-        bind:value={selectedFeatureId}
+        data-tour="steering-feature-menu"
+        bind:value={steering.selectedFeatureId}
         onchange={() => { concept = null; }}
         class="rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-sm text-zinc-200 focus:border-indigo-500 focus:outline-none {conceptUsable ? 'opacity-50' : ''}"
       >
+        {#if offListFeature !== null}
+          <option value={offListFeature}>#{offListFeature} (doesn't fire on your prompt)</option>
+        {/if}
         {#each availableFeatures as feat (feat.id)}
           <option value={feat.id}>
-            #{feat.id} {feat.description ? `- ${feat.description}` : '(no label yet)'} (fires at {feat.activation.toFixed(1)} on your prompt)
+            #{feat.id} {isHidden('feature-labels') ? '' : feat.description ? `- ${feat.description}` : '(no label yet)'} (fires at {feat.activation.toFixed(1)} on your prompt)
           </option>
         {/each}
       </select>
@@ -261,7 +293,7 @@
         Labels are written by an AI and can be wrong. The number after each one is its
         <Term key="activation">activation</Term>: how strongly it fired on your prompt.
       </p>
-      {#if !conceptUsable && selectedFeature?.description}
+      {#if !conceptUsable && selectedFeature?.description && !isHidden('feature-labels')}
         <p class="text-xs text-zinc-500">{selectedFeature.description}</p>
       {/if}
     </div>
@@ -270,18 +302,19 @@
     <div class="flex flex-col gap-1.5">
       <div class="flex items-center justify-between">
         <label for={alphaId} class="text-xs font-medium text-zinc-400">Steering strength</label>
-        <span class="text-xs tabular-nums text-zinc-300">{alpha.toFixed(1)}</span>
+        <span class="text-xs tabular-nums text-zinc-300">{steering.alpha.toFixed(1)}</span>
       </div>
       <div class="flex items-center gap-2">
         <span class="text-[10px] text-zinc-600">Suppress</span>
         <input
           id={alphaId}
+          data-tour="steering-strength"
           type="range"
-          aria-valuetext="{alpha.toFixed(1)}, {alpha < 0 ? 'suppress' : alpha > 0 ? 'amplify' : 'no change'}"
+          aria-valuetext="{steering.alpha.toFixed(1)}, {steering.alpha < 0 ? 'suppress' : steering.alpha > 0 ? 'amplify' : 'no change'}"
           min="-30"
           max="30"
           step="0.5"
-          bind:value={alpha}
+          bind:value={steering.alpha}
           class="flex-1 accent-indigo-500"
         />
         <span class="text-[10px] text-zinc-600">Amplify</span>
@@ -307,46 +340,81 @@
       {/if}
     </button>
 
-    <!-- Results: side-by-side comparison -->
+    <!-- Results, in the pinned order (plan T4-ui): what changed, coherence,
+         the control feature, scale. -->
     {#if steerResponse}
       <Readout text={steeringReadout(steerResponse)} />
-      <div class="grid grid-cols-2 gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
-        <!-- Original -->
-        <div class="flex flex-col gap-1.5">
-          <h4 class="text-xs font-semibold text-zinc-400">Original</h4>
-          <div class="whitespace-pre-wrap rounded bg-zinc-950 p-2 text-sm text-zinc-300 leading-relaxed"><span class="text-zinc-600">{steerResponse.prompt}</span>{#if diff}{#each diff.left as tok}<span class={tok.changed ? 'bg-red-900/40 text-red-300' : ''}>{tok.text}</span>{/each}{:else}{steerResponse.original_generation}{/if}</div>
-          <!-- Original top predictions -->
-          <div class="mt-1">
-            <p class="mb-1 text-[10px] font-medium text-zinc-500">Next-word guesses (top 5)</p>
-            {#each steerResponse.original_top_predictions.slice(0, 5) as pred (pred.rank)}
-              <div class="flex items-center gap-2 text-[11px]">
-                <span class="w-5 text-right text-zinc-600">{pred.rank}</span>
-                <span class="flex-1 font-mono text-zinc-300">{showToken(pred.token)}</span>
-                <span class="tabular-nums text-zinc-500">{(pred.probability * 100).toFixed(1)}%</span>
+      {#each steeringSections(steerResponse) as section (section)}
+        {#if section === 'changed'}
+          <div class="grid grid-cols-2 gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
+            <!-- Original -->
+            <div class="flex flex-col gap-1.5">
+              <h4 class="text-xs font-semibold text-zinc-400">Original</h4>
+              <div class="whitespace-pre-wrap rounded bg-zinc-950 p-2 text-sm text-zinc-300 leading-relaxed"><span class="text-zinc-600">{steerResponse.prompt}</span>{#if diff}{#each diff.left as tok}<span class={tok.changed ? 'bg-red-900/40 text-red-300' : ''}>{tok.text}</span>{/each}{:else}{steerResponse.original_generation}{/if}</div>
+              <!-- Original top predictions -->
+              <div class="mt-1">
+                <p class="mb-1 text-[10px] font-medium text-zinc-500">Next-token guesses (top 5)</p>
+                {#each steerResponse.original_top_predictions.slice(0, 5) as pred (pred.rank)}
+                  <div class="flex items-center gap-2 text-[11px]">
+                    <span class="w-5 text-right text-zinc-600">{pred.rank}</span>
+                    <span class="flex-1 font-mono text-zinc-300">{showToken(pred.token)}</span>
+                    <span class="tabular-nums text-zinc-500">{(pred.probability * 100).toFixed(1)}%</span>
+                  </div>
+                {/each}
               </div>
-            {/each}
-          </div>
-        </div>
+            </div>
 
-        <!-- Steered -->
-        <div class="flex flex-col gap-1.5">
-          <h4 class="text-xs font-semibold text-indigo-400">
-            Steered (strength {steerResponse.alpha})
-          </h4>
-          <div class="whitespace-pre-wrap rounded bg-zinc-950 p-2 text-sm text-zinc-300 leading-relaxed"><span class="text-zinc-600">{steerResponse.prompt}</span>{#if diff}{#each diff.right as tok}<span class={tok.changed ? 'bg-indigo-900/40 text-indigo-300' : ''}>{tok.text}</span>{/each}{:else}{steerResponse.steered_generation}{/if}</div>
-          <!-- Steered top predictions -->
-          <div class="mt-1">
-            <p class="mb-1 text-[10px] font-medium text-zinc-500">Next-word guesses (top 5)</p>
-            {#each steerResponse.steered_top_predictions.slice(0, 5) as pred (pred.rank)}
-              <div class="flex items-center gap-2 text-[11px]">
-                <span class="w-5 text-right text-zinc-600">{pred.rank}</span>
-                <span class="flex-1 font-mono text-zinc-300">{showToken(pred.token)}</span>
-                <span class="tabular-nums text-zinc-500">{(pred.probability * 100).toFixed(1)}%</span>
+            <!-- Steered -->
+            <div class="flex flex-col gap-1.5">
+              <h4 class="text-xs font-semibold text-indigo-400">
+                Steered (strength {steerResponse.alpha})
+              </h4>
+              <div class="whitespace-pre-wrap rounded bg-zinc-950 p-2 text-sm text-zinc-300 leading-relaxed"><span class="text-zinc-600">{steerResponse.prompt}</span>{#if diff}{#each diff.right as tok}<span class={tok.changed ? 'bg-indigo-900/40 text-indigo-300' : ''}>{tok.text}</span>{/each}{:else}{steerResponse.steered_generation}{/if}</div>
+              <!-- Steered top predictions -->
+              <div class="mt-1">
+                <p class="mb-1 text-[10px] font-medium text-zinc-500">Next-token guesses (top 5)</p>
+                {#each steerResponse.steered_top_predictions.slice(0, 5) as pred (pred.rank)}
+                  <div class="flex items-center gap-2 text-[11px]">
+                    <span class="w-5 text-right text-zinc-600">{pred.rank}</span>
+                    <span class="flex-1 font-mono text-zinc-300">{showToken(pred.token)}</span>
+                    <span class="tabular-nums text-zinc-500">{(pred.probability * 100).toFixed(1)}%</span>
+                  </div>
+                {/each}
               </div>
-            {/each}
+            </div>
           </div>
-        </div>
-      </div>
+          {#if pryUi.steerAcross.length > 0}
+            <div class="flex flex-col gap-1 rounded-lg border border-zinc-800 bg-zinc-900/30 p-3 text-xs">
+              <p class="text-zinc-300">{steeringPersistLine(pryUi.steerAcross)}</p>
+              {#each pryUi.steerAcross as run, i (i)}
+                <p class="whitespace-pre-wrap text-zinc-400"><span class="text-zinc-600">{run.prompt}</span>{run.response.steered_generation}</p>
+              {/each}
+            </div>
+          {/if}
+        {:else if section === 'coherence'}
+          <div
+            data-tour="steering-coherence"
+            data-lesson-hidden={isHidden('steering-coherence') || undefined}
+            class="flex flex-col gap-1 rounded-lg border border-zinc-800 bg-zinc-900/30 p-3 text-xs"
+          >
+            <p class="text-zinc-300">{coherenceLine(steerResponse.coherence)}</p>
+            <p class="text-[11px] text-zinc-500">{STEERING_LIMIT}</p>
+          </div>
+        {:else if section === 'control' && steerResponse.control}
+          {@const control = steerResponse.control}
+          {@const controlCoherence = coherenceLine(control.coherence, ['Original', 'Control'])}
+          <div class="flex flex-col gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/30 p-3 text-xs">
+            <h4 class="font-semibold text-zinc-400">{controlHeading(control, steerResponse.alpha)}</h4>
+            <p class="text-[11px] text-zinc-500">{CONTROL_EXPLAINED}</p>
+            <div class="whitespace-pre-wrap rounded bg-zinc-950 p-2 text-sm leading-relaxed text-zinc-300"><span class="text-zinc-600">{steerResponse.prompt}</span>{#if controlDiff}{#each controlDiff.right as tok}<span class={tok.changed ? 'bg-zinc-700/60 text-zinc-100' : ''}>{tok.text}</span>{/each}{:else}{control.generation}{/if}</div>
+            {#if controlCoherence}
+              <p class="text-zinc-400">{controlCoherence}</p>
+            {/if}
+          </div>
+        {:else if section === 'scale'}
+          <p class="text-xs text-zinc-400">{steeringScaleLine(steerResponse)}</p>
+        {/if}
+      {/each}
     {/if}
   {/if}
 </div>

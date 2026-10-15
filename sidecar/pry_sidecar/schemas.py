@@ -83,6 +83,11 @@ class LoadProgressEvent(BaseModel):
     # Seconds since this stage started, on heartbeat events of long steps
     # (warmup, load_model) that report no progress of their own.
     elapsed_s: float | None = None
+    # On "ready" / "already_loaded" only (MF-5 provenance): the resolved Hugging
+    # Face snapshot hash the weights came from (recorded, not pinned) and the
+    # SAE in use. Omitted from the JSON when unknown.
+    model_revision: str | None = None
+    sae: "SAERef | None" = None
 
 
 class TokenizeRequest(BaseModel):
@@ -135,6 +140,14 @@ class TopPrediction(BaseModel):
     token: str
     probability: float
     rank: int
+    # The raw score before softmax (MF-1): probability = softmax(logits)[token].
+    logit: float | None = None
+
+
+class SAERef(BaseModel):
+    """Which SAE (feature dictionary) a result came from (MF-5)."""
+    release: str
+    id: str
 
 
 class GenerationStep(BaseModel):
@@ -174,7 +187,42 @@ class GenerateResponse(BaseModel):
     # None for a custom model (T32): it has no feature dictionary (SAE).
     sae_layer_used: int | None = 0
     top_predictions: list[TopPrediction] = Field(default_factory=list)
+    # MF-5 provenance: resolved snapshot hash of the weights (None if unknown)
+    # and the SAE in use (None for a custom model).
+    model_revision: str | None = None
+    sae: SAERef | None = None
     timing_ms: dict[str, float] = Field(default_factory=dict)
+    status: str = "ok"
+
+
+# ---------------------------------------------------------------------------
+# Embedding reader (TN-1)
+# ---------------------------------------------------------------------------
+
+
+class EmbeddingRequest(BaseModel):
+    preset_id: str = "gpt2-small"
+    prompt: str = Field(..., max_length=4000)
+    # Positions in the BOS-prepended token list (position 0 is BOS). Checked
+    # against the prompt at run time: a bad position is a 422.
+    positions: list[int] = Field(..., min_length=1, max_length=64)
+
+
+class EmbeddingPosition(BaseModel):
+    position: int
+    token: str
+    # hook_embed: the token's own vector (the same wherever the token sits).
+    embed: list[float]
+    # hook_pos_embed: the vector for this position. None when the model has no
+    # learned positional embedding (rotary models such as Pythia).
+    pos_embed: list[float] | None = None
+
+
+class EmbeddingResponse(BaseModel):
+    preset_id: str
+    prompt: str
+    tokens: list[str] = Field(default_factory=list)
+    positions: list[EmbeddingPosition] = Field(default_factory=list)
     status: str = "ok"
 
 
@@ -245,6 +293,9 @@ class SAEFeaturesResponse(BaseModel):
 class LogitLensRequest(BaseModel):
     preset_id: str = "gpt2-small"
     prompt: str = Field(..., max_length=4000)
+    # Tokens to follow at every layer (last position only), each a single
+    # token for the model, else a 422. Omitted or empty: no ``tracked``.
+    track_tokens: list[str] = Field(default_factory=list, max_length=16)
 
 
 class LogitLensCell(BaseModel):
@@ -254,11 +305,21 @@ class LogitLensCell(BaseModel):
     matches_final: bool
 
 
+class LogitLensTracked(BaseModel):
+    """A tracked token at one layer, last position: its probability, logit,
+    and rank among the whole vocabulary (1 = the layer's top token)."""
+    prob: float
+    logit: float
+    rank: int
+
+
 class LogitLensResponse(BaseModel):
     preset_id: str
     prompt: str
     tokens: list[TokenInfo] = Field(default_factory=list)
     grid: list[list[LogitLensCell]] = Field(default_factory=list)  # [layer][token_pos]
+    # [layer] -> {token: readout} at the last position; only when track_tokens was sent.
+    tracked: list[dict[str, LogitLensTracked]] | None = None
     n_layers: int = 0
     timing_ms: dict[str, float] = Field(default_factory=dict)
     status: str = "ok"
@@ -273,6 +334,11 @@ class DLARequest(BaseModel):
     preset_id: str = "gpt2-small"
     prompt: str = Field(..., max_length=4000)
     target_token_index: int | None = Field(default=None, ge=0)
+    # MF-2: the token whose logit the bars explain (one token; default = the
+    # top guess) and an optional contrast token (the bars then explain the
+    # difference between the two logits).
+    answer_token: str | None = Field(default=None, max_length=200)
+    contrast_token: str | None = Field(default=None, max_length=200)
 
 
 class DLAComponent(BaseModel):
@@ -291,6 +357,23 @@ class DLAResponse(BaseModel):
     target_token: str = ""
     predicted_token: str = ""
     components: list[DLAComponent] = Field(default_factory=list)
+    # MF-2 / MF-2b. answer_token: the token the bars explain; contrast_token:
+    # the token subtracted (None without a contrast).
+    answer_token: str = ""
+    contrast_token: str | None = None
+    # Sum of every bar, in logits.
+    bars_total: float = 0.0
+    answer_logit: float = 0.0
+    contrast_logit: float | None = None
+    # answer_logit, or answer_logit - contrast_logit with a contrast.
+    actual: float = 0.0
+    # actual - bars_total: the part no bar is drawn for.
+    gap: float = 0.0
+    # embedding_direct: the token + positional embedding's own direct path
+    # through the frozen final LayerNorm. biases: the attention-output biases
+    # (b_O) and the unembedding bias (b_U). On models without an output soft
+    # cap they sum to gap.
+    gap_parts: dict[str, float] = Field(default_factory=dict)
     # False only for post-norm models (Gemma 2) until their numbers have been
     # checked against the real weights (inference.POST_NORM_VERIFIED).
     real_weights_verified: bool = True
@@ -310,6 +393,51 @@ class SteerRequest(BaseModel):
     sae_layer: int = Field(..., ge=0, le=47)
     alpha: float = Field(default=5.0, ge=-30.0, le=30.0)
     max_new_tokens: int = Field(default=50, ge=1, le=256)
+    # MF-4: also steer a norm-matched control feature at the same strength.
+    control: bool = False
+
+
+class SteerCoherence(BaseModel):
+    """Mean log-probability per token (nats) of each continuation given the
+    prompt, prompt tokens excluded, scored by the unsteered model. None when
+    the continuation has fewer than 5 tokens."""
+    original: float | None = None
+    steered: float | None = None
+
+
+class SteerScale(BaseModel):
+    """The steering strength beside the feature's own activation over this
+    prompt's positions (BOS excluded)."""
+    strength: float
+    activation_p50: float
+    activation_p99: float
+    activation_max: float
+
+
+class SteerTopChange(BaseModel):
+    token: str
+    original_prob: float
+    steered_prob: float
+    delta: float
+
+
+class SteerControl(BaseModel):
+    """The same steering with a control feature in place of the chosen one."""
+    feature_id: int
+    # Decoder norms of the control and the steered feature, and the cosine
+    # between their decoder directions.
+    decoder_norm: float
+    steered_decoder_norm: float
+    cosine: float
+    # "norm_matched_lowest_cos", or "nearest_norm" when no sampled feature was
+    # within 20% of the steered feature's decoder norm.
+    method: str
+    generation: str = ""
+    changed_token_indices: list[int] = Field(default_factory=list)
+    coherence: SteerCoherence = Field(default_factory=SteerCoherence)
+    top_predictions: list[TopPrediction] = Field(default_factory=list)
+    # Next-token probabilities that moved most against the original run.
+    top_changed: list[SteerTopChange] = Field(default_factory=list)
 
 
 class SteerResponse(BaseModel):
@@ -317,10 +445,18 @@ class SteerResponse(BaseModel):
     prompt: str
     feature_id: int
     alpha: float
+    # MF-5 echo: the layer steered.
+    sae_layer: int | None = None
     original_generation: str = ""
     steered_generation: str = ""
     original_top_predictions: list[TopPrediction] = Field(default_factory=list)
     steered_top_predictions: list[TopPrediction] = Field(default_factory=list)
+    # Token indices (0 = first new token) of the steered continuation that
+    # differ from the original continuation at the same index.
+    changed_token_indices: list[int] = Field(default_factory=list)
+    coherence: SteerCoherence = Field(default_factory=SteerCoherence)
+    scale: SteerScale | None = None
+    control: SteerControl | None = None
     timing_ms: dict[str, float] = Field(default_factory=dict)
     status: str = "ok"
 
@@ -354,6 +490,9 @@ class AblateResponse(BaseModel):
     original_predictions: list[AblationPrediction] = Field(default_factory=list)
     ablated_predictions: list[AblationPrediction] = Field(default_factory=list)
     prediction_delta: list[dict] = Field(default_factory=list)
+    # MF-5 echo: what was knocked out (one of the two is set).
+    ablations: list["AblationTarget"] | None = None
+    feature_ablations: list["FeatureAblationTarget"] | None = None
     timing_ms: dict[str, float] = Field(default_factory=dict)
     status: str = "ok"
 
@@ -397,6 +536,9 @@ class PatchComponent(BaseModel):
     clean_logit: float
     corrupted_logit: float
     patched_logit: float
+    # (patched - corrupted) / (clean - corrupted); None when the clean and
+    # corrupted logits are within 0.1 of each other.
+    share: float | None = None
 
 
 class PatchResponse(BaseModel):
@@ -407,6 +549,11 @@ class PatchResponse(BaseModel):
     target_token_index: int = 0
     clean_predicted_token: str = ""
     corrupted_predicted_token: str = ""
+    # MF-3: the token whose logit is measured (the clean run's top guess) and
+    # its logit in the clean and corrupted runs.
+    target_token: str = ""
+    clean_logit: float = 0.0
+    corrupted_logit: float = 0.0
     # Clean prompt's tokens, to label the residual layer x position grid.
     tokens: list[str] = Field(default_factory=list)
     components: list[PatchComponent] = Field(default_factory=list)
@@ -502,3 +649,8 @@ class CircuitResponse(BaseModel):
     real_weights_verified: bool = True
     timing_ms: dict[str, float] = Field(default_factory=dict)
     status: str = "ok"
+
+
+# Forward references (LoadProgressEvent -> SAERef, AblateResponse -> targets).
+LoadProgressEvent.model_rebuild()
+AblateResponse.model_rebuild()

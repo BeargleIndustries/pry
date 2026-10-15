@@ -75,4 +75,20 @@ export const OCCUPIED = {
   updateBanner: 'update-banner',
   tourCard: 'tour-card',
   tip: 'first-time-tip',
+  /** The Lessons sidebar (plan T3 "Coexistence"): tips never cover it. */
+  lessonSidebar: 'lesson-sidebar',
 } as const;
+
+/**
+ * Tips held while a lesson points at their target (plan T3 "Coexistence"):
+ * the lesson's scene owns those anchors, so a tip about them waits.
+ */
+export const tipHold = {
+  held: [] as HTMLElement[],
+  set(els: HTMLElement[]): void {
+    this.held = els;
+  },
+  holds(el: Element): boolean {
+    return this.held.some((h) => h === el || h.contains(el) || el.contains(h));
+  },
+};

@@ -53,7 +53,7 @@
   <div class="mb-1 font-mono text-xs uppercase tracking-widest text-indigo-400">step 04</div>
   <h2 class="mb-2 text-2xl font-semibold text-zinc-100">Pick a starter model</h2>
   <p class="mb-6 text-sm text-zinc-400">
-    Each choice is a model plus the feature detector (<Term key="sae">SAE</Term>) that goes with it. You can add more
+    Each choice is a model plus the sparse autoencoder (<Term key="sae">SAE</Term>) that goes with it. You can add more
     later. If you're just looking around, skip this and pick one from inside the app.
   </p>
 

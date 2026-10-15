@@ -1,0 +1,250 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/BeargleIndustries/pry/master/docs/lessons/schema/front-matter.v1.schema.json",
+  "title": "Lesson front matter, format 1",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "number",
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z0-9][a-z0-9-]*(\\.[a-z0-9][a-z0-9-]*)+$"
+    },
+    "title": {
+      "type": "string"
+    },
+    "tool": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "minutes": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "draft": {
+      "type": "boolean"
+    },
+    "presentation": {
+      "type": "string",
+      "enum": [
+        "sidebar",
+        "overlay"
+      ]
+    },
+    "stage": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "targets": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "spine": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "new_terms": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "term_budget_exception": {
+      "type": "string"
+    },
+    "prerequisites": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "cold_entry": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "baseline": {},
+    "permissions": {
+      "type": "object",
+      "properties": {
+        "download": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "network": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "external": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "cost": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "verified_rows": {
+      "type": "array",
+      "items": {
+        "type": [
+          "number",
+          "string"
+        ]
+      }
+    },
+    "tool_min": {
+      "type": [
+        "string",
+        "number"
+      ]
+    },
+    "limits": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "authors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "license": {
+      "type": "string"
+    },
+    "version": {
+      "type": [
+        "string",
+        "number"
+      ]
+    },
+    "slots": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z_][a-z0-9_]*$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "read": {
+            "type": "string"
+          },
+          "args": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "field": {
+            "type": "string"
+          },
+          "from_capture": {
+            "type": "string"
+          },
+          "expect": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "array",
+                "items": {}
+              },
+              {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              }
+            ]
+          },
+          "tolerance": {
+            "type": "number"
+          },
+          "row": {
+            "type": "string"
+          },
+          "from": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "formula": {
+            "type": "string",
+            "enum": [
+              "share",
+              "difference",
+              "sum",
+              "abs",
+              "ratio",
+              "ln"
+            ]
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "probability",
+              "points",
+              "logit",
+              "layer",
+              "count",
+              "position",
+              "string",
+              "number"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "format",
+    "id",
+    "title",
+    "tool",
+    "summary",
+    "minutes"
+  ],
+  "additionalProperties": false
+}

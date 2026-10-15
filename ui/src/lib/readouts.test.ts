@@ -1,16 +1,36 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 import {
   attentionReadout,
   circuitReadout,
+  coherenceLine,
+  COHERENCE_SOURCE,
+  controlHeading,
+  dlaGapParts,
   dlaReadout,
+  dlaTotalLine,
   explainingLabel,
+  FEATURE_KNOCKOUT_NOTE,
   featuresReadout,
+  keyPartsHeader,
   logitLensReadout,
+  PATCH_BELOW_ZERO,
+  PATCH_EVERY_POSITION,
+  PATCH_LEGEND_FORMULA,
+  PATCH_NULL_SHARE,
+  PATCH_OVERSHOOT,
   patchingReadout,
+  patchLogitsLine,
+  patchShareEdge,
+  patchShareLine,
   pct,
   predictionsReadout,
   quoteToken,
+  STEERING_LIMIT,
+  steeringPersistLine,
   steeringReadout,
+  steeringScaleLine,
+  steeringSections,
 } from './readouts';
 import type {
   CircuitResponse,
@@ -29,6 +49,9 @@ const logitLens = logitLensJson as LogitLensResponse;
 const dla = dlaJson as DLAResponse;
 
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v));
+
+/** A file under `ui/src`, for markup checks (no component renderer in this suite). */
+const readSrc = (rel: string) => readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8');
 
 describe('quoteToken / pct', () => {
   it('quotes tokens and shows a leading space as a middle dot, like the panels', () => {
@@ -71,7 +94,7 @@ describe('logitLensReadout', () => {
   it('golden: answer first becomes top guess mid-stack', () => {
     expect(logitLensReadout(logitLens)).toBe(
       'For the last word, "·is": the final answer, "·Paris", first becomes the top guess at layer 2 (layers run 0 to 4). ' +
-        'Its chance grows from 3% there to 47% at the last layer.',
+        'Its chance grows from 3.1% (about 1 in 32) there to 47% (about 1 in 2) at the last layer.',
     );
   });
 
@@ -117,7 +140,7 @@ describe('logitLensReadout', () => {
     const text = logitLensReadout(jordanLens());
     expect(text).toBe(
       'For the only word, "of": the final answer, "·basketball", first becomes the top guess at layer 8 (layers run 0 to 11). ' +
-        'Its chance peaks at 93% at layer 9, then ends at 42% at the last layer.',
+        'Its chance peaks at 93.2% (about 9 in 10) at layer 9, then ends at 42.2% (about 3 in 7) at the last layer.',
     );
     expect(text).not.toMatch(/grows from (\d+%) there to \1/);
   });
@@ -126,7 +149,7 @@ describe('logitLensReadout', () => {
     const r = jordanLens();
     r.grid[9][0].probability = 0.42;
     r.grid[10][0].probability = 0.42;
-    expect(logitLensReadout(r)).toMatch(/Its chance is about 42% there and at the last layer\.$/);
+    expect(logitLensReadout(r)).toMatch(/Its chance is about 42\.2% \(about 3 in 7\) there and at the last layer\.$/);
   });
 
   it('a chance that drops is described as falling', () => {
@@ -134,7 +157,7 @@ describe('logitLensReadout', () => {
     r.grid[8][0].probability = 0.9;
     r.grid[9][0].probability = 0.7;
     r.grid[10][0].probability = 0.5;
-    expect(logitLensReadout(r)).toMatch(/Its chance falls from 90% there to 42% at the last layer\.$/);
+    expect(logitLensReadout(r)).toMatch(/Its chance falls from 90% \(about 9 in 10\) there to 42\.2% \(about 3 in 7\) at the last layer\.$/);
   });
 
   it('returns null without data', () => {
@@ -160,22 +183,52 @@ describe('dlaReadout', () => {
     );
   });
 
-  it('never claims the parts add up to the score', () => {
-    const variants: DLAResponse[] = [dla];
-    const onlyDown = clone(dla);
-    onlyDown.components = onlyDown.components.filter((c) => c.contribution < 0);
-    variants.push(onlyDown);
-    const single = clone(dla);
-    single.components = single.components.slice(0, 1);
-    variants.push(single);
-    for (const v of variants) {
-      for (const n of [1, 2, 3, 5]) {
-        const text = dlaReadout(v, n)!.toLowerCase();
-        expect(text).not.toContain('add up');
-        expect(text).not.toContain('sum');
-        expect(text).not.toContain('total');
-      }
-    }
+  // Replaces the old "never claims the parts add up" assertions (plan T4-ui,
+  // MF-2b): the bars' total, the logit itself and the gap now show side by side.
+  it('DLA total line: bars total, the logit and the gap, labelled', () => {
+    const r = { ...clone(dla), bars_total: 3.5, answer_logit: 4.25, contrast_logit: null, actual: 4.25, gap: 0.75 };
+    expect(dlaTotalLine(r)).toBe(
+      'Bars total 3.50. Logit 4.25. Gap 0.75: the embedding\'s own direct push plus the attention-output and unembedding biases, not drawn as bars.',
+    );
+  });
+
+  it('DLA total line shows both logits and their difference whenever a contrast is set', () => {
+    const r = {
+      ...clone(dla),
+      answer_token: ' Mary',
+      contrast_token: ' John',
+      bars_total: 2.9,
+      answer_logit: 15.1,
+      contrast_logit: 12.0,
+      actual: 3.1,
+      gap: 0.2,
+    };
+    expect(dlaTotalLine(r)).toBe(
+      'Bars total 2.90. Logits 15.10 and 12.00, difference 3.10. Gap 0.20: the embedding\'s own direct push plus the attention-output and unembedding biases, not drawn as bars.',
+    );
+  });
+
+  it('DLA total line uses a real minus sign and is null on an older engine', () => {
+    const r = { ...clone(dla), bars_total: -1.5, answer_logit: -0.25, contrast_logit: null, actual: -0.25, gap: 1.25 };
+    expect(dlaTotalLine(r)).toMatch(/^Bars total −1\.50\. Logit −0\.25\. Gap 1\.25:/);
+    expect(dlaTotalLine(dla)).toBeNull();
+    expect(dlaTotalLine(null)).toBeNull();
+  });
+
+  it('the fold lists the gap parts by name', () => {
+    const r = { ...clone(dla), gap_parts: { embedding_direct: 0.5, biases: -0.25 } };
+    expect(dlaGapParts(r)).toEqual([
+      { name: "The embedding's own direct push", value: '0.50' },
+      { name: 'The attention-output and unembedding biases', value: '−0.25' },
+    ]);
+    expect(dlaGapParts(dla)).toEqual([]);
+  });
+
+  it('DLAPanel marks the total line dla-total-line and keeps the explaining label', () => {
+    const src = readSrc('lib/components/DLAPanel.svelte');
+    expect(src).toMatch(/data-tour="dla-total-line"[\s\S]*\{totalLine\}/);
+    expect(src).toContain('explainingLabel(');
+    expect(src).toContain('Bar length: push in logits');
   });
 
   it('returns null without components', () => {
@@ -489,7 +542,7 @@ describe('patchingReadout', () => {
   it('only negative effects', () => {
     const r = patchFixture();
     r.components = r.components.map((c) => ({ ...c, effect: -Math.abs(c.effect) - 0.1 }));
-    expect(patchingReadout(r)).toMatch(/^No single part brings "·Mary" back\./);
+    expect(patchingReadout(r)).toMatch(/^No single part raises the score for "·Mary"\./);
   });
 
   it('all zero effects', () => {
@@ -563,20 +616,23 @@ describe('steeringReadout', () => {
     timing_ms: {},
   });
 
-  it('steering readout counts changed words', () => {
-    expect(steeringReadout(steer(' store to buy milk', ' beach to buy sand'))).toBe(
-      'Steering feature #123 at strength 5 changed 2 of the 4 words it wrote.',
-    );
+  // MF-4: no changed-word count anywhere; the marked tokens show what changed.
+  it('steering readout says the text changed, with no word count', () => {
+    const text = steeringReadout(steer(' store to buy milk', ' beach to buy sand'))!;
+    expect(text).toBe('Steering feature #123 at strength 5 changed the text it wrote; the changed tokens are marked.');
+    expect(text).not.toMatch(/\d+ (of the )?\d* ?words/);
   });
 
   it('no change suggests a bigger strength', () => {
     expect(steeringReadout(steer(' store', ' store'))).toBe(
-      "Steering feature #123 at strength 5 didn't change the one word it wrote. Try a bigger strength.",
+      "Steering feature #123 at strength 5 didn't change the text it wrote. Try a bigger strength.",
     );
   });
 
-  it('every word changed', () => {
-    expect(steeringReadout(steer(' a b', ' c d'))).toBe('Steering feature #123 at strength 5 changed all 2 words it wrote.');
+  it('reads changed_token_indices when the engine sends them', () => {
+    const r = { ...steer(' a b', ' a b'), changed_token_indices: [1] };
+    expect(steeringReadout(r)).toMatch(/changed the text it wrote/);
+    expect(steeringReadout({ ...steer(' a b', ' c d'), changed_token_indices: [] })).toMatch(/didn't change the text/);
   });
 
   it('nothing written', () => {
@@ -584,5 +640,177 @@ describe('steeringReadout', () => {
       "Steering feature #123 at strength 5 didn't write anything. Press Run Steered again.",
     );
     expect(steeringReadout(null)).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Measurement display rules (plan T4-ui, rules table plan:457-469)
+// ---------------------------------------------------------------------------
+
+describe('Swap test three logits (MF-3)', () => {
+  const withShare = (share: number | null, patched: number): PatchResponse => {
+    const r = patchFixture();
+    r.target_token = ' Mary';
+    r.clean_logit = 4.8;
+    r.corrupted_logit = 2.1;
+    r.components = [{ ...r.components[0], patched_logit: patched, share }];
+    return r;
+  };
+
+  it('one line names the target and its logit in all three runs', () => {
+    const r = withShare(0.5, 3.45);
+    expect(patchLogitsLine(r, r.components[0])).toBe(
+      "' Mary''s logit: Original prompt 4.80, Changed prompt 2.10, after this swap 3.45.",
+    );
+  });
+
+  it('the share formula shows its numbers beside the logits', () => {
+    const r = withShare(0.5, 3.45);
+    expect(patchShareLine(r, r.components[0])).toBe('Share = (3.45 − 2.10) ÷ (4.80 − 2.10) = 50%');
+  });
+
+  it('below 0% says the swap moved the logit away', () => {
+    const r = withShare(-0.2, 1.56);
+    expect(patchShareEdge(r.components[0])).toBe(PATCH_BELOW_ZERO);
+    expect(PATCH_BELOW_ZERO).toBe('The swap moved the logit away from the Original value.');
+  });
+
+  it('above 100% says the swap overshot', () => {
+    const r = withShare(1.3, 5.61);
+    expect(patchShareEdge(r.components[0])).toBe(PATCH_OVERSHOOT);
+    expect(PATCH_OVERSHOOT).toBe('The swap overshot the Original value.');
+    expect(patchShareEdge(withShare(0.5, 3.45).components[0])).toBeNull();
+  });
+
+  it("a null share says a share doesn't mean anything", () => {
+    const r = withShare(null, 2.1);
+    expect(patchShareLine(r, r.components[0])).toBe(PATCH_NULL_SHARE);
+    expect(PATCH_NULL_SHARE).toBe("Original and Changed give nearly the same logit here, so a share doesn't mean anything.");
+    expect(patchShareEdge(r.components[0])).toBeNull();
+  });
+
+  it('notes that heads and MLPs are swapped at every position; the legend states the formula', () => {
+    expect(PATCH_EVERY_POSITION).toBe('Heads and MLPs are swapped at every position.');
+    expect(PATCH_LEGEND_FORMULA).toContain('(after this swap − Changed prompt) ÷ (Original prompt − Changed prompt)');
+    const src = readSrc('lib/components/PatchingPanel.svelte');
+    expect(src).toMatch(/data-tour="patch-three-logits"[\s\S]*patchLogitsLine\(/);
+    expect(src).toContain('PATCH_EVERY_POSITION');
+    expect(src).toContain('PATCH_LEGEND_FORMULA');
+    expect(src).toContain('signedColor(comp.share ?? 0, 1)');
+  });
+});
+
+describe('Steering measures (MF-4, N13)', () => {
+  const full: SteerResponse = {
+    preset_id: 'gpt2-small',
+    prompt: 'I went to the',
+    feature_id: 123,
+    alpha: 5,
+    original_generation: ' store to buy milk and eggs',
+    steered_generation: ' beach to buy sand and shells',
+    original_top_predictions: [],
+    steered_top_predictions: [],
+    changed_token_indices: [0, 3, 5],
+    coherence: { original: -1.407, steered: -2.129 },
+    scale: { strength: 5, activation_p50: 0.5, activation_p99: 3.25, activation_max: 4.1 },
+    control: {
+      feature_id: 9,
+      decoder_norm: 1,
+      steered_decoder_norm: 1.05,
+      cosine: 0.01,
+      method: 'norm_matched_lowest_cos',
+      generation: ' store to buy milk and bread',
+      changed_token_indices: [5],
+      coherence: { original: -1.407, steered: -1.5 },
+      top_predictions: [],
+      top_changed: [],
+    },
+    timing_ms: {},
+  };
+
+  it('steering order: what changed, coherence, the control, scale', () => {
+    expect(steeringSections(full)).toEqual(['changed', 'coherence', 'control', 'scale']);
+    expect(steeringSections({ ...full, control: null })).toEqual(['changed', 'coherence', 'scale']);
+    expect(steeringSections(null)).toEqual([]);
+  });
+
+  it('scale line', () => {
+    expect(steeringScaleLine(full)).toBe(
+      "Steering strength 5; this feature's activation on this prompt runs up to 4.1 (most positions under 3.25).",
+    );
+    expect(steeringScaleLine({ ...full, scale: null })).toBeNull();
+  });
+
+  it('coherence fallback: both numbers with their source, no band label', () => {
+    const line = coherenceLine(full.coherence)!;
+    expect(line).toBe(
+      'Coherence: Original −1.41, Steered −2.13 (average log-probability per token of each continuation, under the unsteered model).',
+    );
+    expect(COHERENCE_SOURCE).toBe('average log-probability per token of each continuation, under the unsteered model');
+    expect(STEERING_LIMIT).toBe(
+      'The push is added at every position, prompt included. Repetitive text scores as very natural, so breaking a loop can look like a drop.',
+    );
+    // Calibration: the bands didn't separate, so no band wording renders anywhere.
+    const bands = ['Reads about as naturally as before.', 'Reads less naturally.', 'Reads much less naturally'];
+    const panel = readSrc('lib/components/SteeringPanel.svelte');
+    const readouts = readSrc('lib/readouts.ts');
+    for (const b of bands) {
+      expect(line).not.toContain(b);
+      expect(panel).not.toContain(b);
+      expect(readouts).not.toContain(b);
+    }
+  });
+
+  it('coherence is hidden under 5 tokens (null)', () => {
+    expect(coherenceLine({ original: null, steered: -2 })).toBeNull();
+    expect(steeringSections({ ...full, coherence: { original: -1, steered: null } })).toEqual(['changed', 'control', 'scale']);
+  });
+
+  it('steering coherence line sits inside the steering-coherence hideable region', () => {
+    const src = readSrc('lib/components/SteeringPanel.svelte');
+    const region = src.match(
+      /<div\s+data-tour="steering-coherence"\s+data-lesson-hidden=\{isHidden\('steering-coherence'\) \|\| undefined\}[\s\S]*?<\/div>/,
+    );
+    expect(region, 'steering-coherence wrapper').not.toBeNull();
+    expect(region![0]).toContain('coherenceLine(steerResponse.coherence)');
+    expect(region![0]).toContain('STEERING_LIMIT');
+    // The line renders nowhere outside the region.
+    expect(src.split('coherenceLine(steerResponse.coherence)').length).toBe(2);
+  });
+
+  it('the control runs at the same strength with the same readouts', () => {
+    expect(controlHeading(full.control!, full.alpha)).toBe('Control: feature #9, same strength 5');
+    expect(coherenceLine(full.control!.coherence, ['Original', 'Control'])).toMatch(/^Coherence: Original −1\.41, Control −1\.50 /);
+  });
+
+  it('persistence summary counts the prompts it shows', () => {
+    const runs = [
+      { prompt: 'a', response: full },
+      { prompt: 'b', response: { ...full, steered_generation: full.original_generation } },
+    ];
+    expect(steeringPersistLine(runs)).toBe('The steering changed the text on 1 of 2 prompts.');
+    expect(steeringPersistLine([])).toBeNull();
+  });
+});
+
+describe('feature knockout description (C21)', () => {
+  it('says the SAE leftover error stays', () => {
+    expect(FEATURE_KNOCKOUT_NOTE).toBe(
+      "Knocking out a feature removes only the part of the residual stream the SAE accounts for. The SAE's leftover error stays, so a small change can mean the feature mattered little or that its share was small.",
+    );
+    expect(readSrc('lib/components/PanelB.svelte')).toContain('{FEATURE_KNOCKOUT_NOTE}');
+  });
+});
+
+describe('Key parts header', () => {
+  it("names the top guess and the selected word", () => {
+    expect(keyPartsHeader(' Mary', { text: ' to', index: 13 })).toBe(
+      "Explains the top guess ' Mary' after the selected word ' to'",
+    );
+    expect(readSrc('lib/components/CircuitPanel.svelte')).toContain('keyPartsHeader(topGuess, targetLabel)');
+  });
+
+  it('falls back to the explaining label when the top guess is unknown', () => {
+    expect(keyPartsHeader(null, { text: ' she', index: 2 })).toBe('Explaining the guess after ·she (word 3)');
   });
 });

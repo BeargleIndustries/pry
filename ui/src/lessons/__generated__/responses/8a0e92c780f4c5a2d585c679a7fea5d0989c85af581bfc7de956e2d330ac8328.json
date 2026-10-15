@@ -1,0 +1,37 @@
+{
+ "key": "8a0e92c780f4c5a2d585c679a7fea5d0989c85af581bfc7de956e2d330ac8328",
+ "variant": "r1",
+ "request": {
+  "endpoint": "/tokenize",
+  "model": "gpt2-small",
+  "body": {
+   "preset_id": "gpt2-small",
+   "text": "I like the river bank"
+  }
+ },
+ "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+ "device": "cuda",
+ "libs": {
+  "python": "3.12.13",
+  "torch": "2.5.1+cu124",
+  "transformer_lens": "2.15.4",
+  "sae_lens": "5.11.0",
+  "transformers": "4.57.6",
+  "numpy": "1.26.4"
+ },
+ "recorded": "2026-10-15",
+ "neuronpedia_fetched": null,
+ "offline": false,
+ "trimmed": [],
+ "response": {
+  "tokens": [
+   "<|endoftext|>",
+   "I",
+   " like",
+   " the",
+   " river",
+   " bank"
+  ],
+  "count": 6
+ }
+}

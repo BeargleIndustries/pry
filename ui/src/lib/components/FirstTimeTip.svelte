@@ -20,13 +20,13 @@
 -->
 <script lang="ts">
   import { onMount, tick } from 'svelte';
-  import { tutorialState } from '$lib/tutorial/tutorial-store.svelte';
+  import { quickTour } from '$lib/lessons/quick-tour.svelte';
   import { tipsRegistry, type TipDef } from '$lib/tips/tips-registry';
   import { markTipSeen, isTipSeen } from '$lib/tips/coordinate';
   import { anchorState, anchorUsable } from '$lib/tutorial/anchors';
   import { arrowShown, placePopup, type Placement, type Point } from '$lib/popup/place';
   import { focusPoint, placementAttrs, rectOf, viewportSize } from '$lib/popup/measure';
-  import { occupied, OCCUPIED } from '$lib/popup/occupied.svelte';
+  import { occupied, OCCUPIED, tipHold } from '$lib/popup/occupied.svelte';
   import { POPUP_AUDIT, popupDevHooks, type ForcedTipReport } from '$lib/popup/dev';
   import Pointer from './Pointer.svelte';
 
@@ -51,17 +51,23 @@
   let mutationObserver: MutationObserver | null = null;
   let pickDebounce: ReturnType<typeof setTimeout> | null = null;
 
+  /** The Lessons sidebar is on screen. */
+  const lessonsOpen = () => !!document.querySelector('[data-lesson-sidebar]');
+
   function pickNextTip(): void {
     if (typeof document === 'undefined') return;
     if (activeTip) return;
-    if (tutorialState.open) return;
+    if (quickTour.open) return;
     if (document.querySelector('.loading-screen')) return; // wait until the model has loaded
     for (const tip of tipsRegistry) {
       if (isTipSeen(tip.id)) continue;
+      if (tip.whileLessonsClosed && lessonsOpen()) continue;
       const el = document.querySelector(tip.target) as HTMLElement | null;
       // A target that's hidden, disabled or covered (a dialog, the experiment
       // guide) waits; the tip shows once it's usable again.
       if (!el || !anchorUsable(el, tipEl)) continue;
+      // A lesson is pointing at this target: its tip waits (T3 coexistence).
+      if (tipHold.holds(el)) continue;
       activateTip(tip, el);
       return;
     }
@@ -238,6 +244,7 @@
     const tip = tipsRegistry.find((t) => t.id === id);
     if (!tip) return { id, shown: false, waiting: false, reason: 'not in registry' };
     if (activeTip) release();
+    if (tip.whileLessonsClosed && lessonsOpen()) return { id, shown: false, waiting: false, heldByLessons: true, reason: 'Lessons is open' };
     await tick();
     const el = document.querySelector(tip.target) as HTMLElement | null;
     if (!el) return { id, shown: false, waiting: false, reason: 'target not in DOM' };
@@ -256,13 +263,13 @@
     return { id, shown: true, waiting: false };
   }
 
-  // Suppress tips whenever the tutorial is open; re-scan when it closes.
+  // Suppress tips whenever the quick tour is open; re-scan when it closes.
   $effect(() => {
-    if (tutorialState.open && activeTip) {
-      // Tutorial took over mid-tip; silently release without marking seen.
+    if (quickTour.open && activeTip) {
+      // The tour took over mid-tip; silently release without marking seen.
       release();
     }
-    if (!tutorialState.open) {
+    if (!quickTour.open) {
       schedulePick();
     }
   });

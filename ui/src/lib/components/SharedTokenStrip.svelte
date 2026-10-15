@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { notifyPick } from '$lib/lessons/registry/pry-state.svelte';
   import type { TokenInfo } from '$lib/types';
 
   interface Props {
@@ -17,7 +18,12 @@
 <div class="flex h-9 items-center gap-1.5 overflow-x-auto whitespace-nowrap py-1">
   {#each tokens as token}
     <button
-      onclick={() => onTokenFocus(token.index)}
+      data-tour="token-chip"
+      data-token-index={token.index}
+      onclick={() => {
+        onTokenFocus(token.index);
+        notifyPick('token', { index: token.index, text: token.text });
+      }}
       class={[
         'flex-shrink-0 rounded px-2 py-1 font-mono text-xs transition-all',
         token.index === focusTokenIndex

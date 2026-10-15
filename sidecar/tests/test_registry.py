@@ -35,6 +35,36 @@ def test_swap_sae_failure_restores_previous_sae(gpt2_client, gpt2_loaded, monkey
     assert g.status_code == 200, g.text
 
 
+@pytest.mark.inference
+def test_model_revision_reported(gpt2_client, gpt2_loaded):
+    """MF-5: the resolved snapshot hash and the SAE ride on load and generate."""
+    import json
+    import re
+
+    from huggingface_hub import try_to_load_from_cache
+
+    rev = gpt2_loaded.model_revision
+    assert isinstance(rev, str) and re.fullmatch(r"[0-9a-f]{40}", rev), rev
+    # It is the snapshot the weights were read from.
+    assert f"snapshots/{rev}/" in try_to_load_from_cache("gpt2", "config.json").replace("\\", "/")
+
+    g = gpt2_client.post("/generate", json={"preset_id": "gpt2-small", "prompt": "Hello world"})
+    assert g.status_code == 200, g.text
+    body = g.json()
+    assert body["model_revision"] == rev
+    assert body["sae"] == {
+        "release": "gpt2-small-res-jb",
+        "id": f"blocks.{gpt2_loaded.sae_layer}.hook_resid_pre",
+    }
+
+    # /load on an already-loaded preset answers at once, with the same provenance.
+    r = gpt2_client.post("/load", json={"preset_id": "gpt2-small"})
+    events = [json.loads(x[len("data: "):]) for x in r.text.splitlines() if x.startswith("data: ")]
+    assert events[-1]["stage"] == "already_loaded"
+    assert events[-1]["model_revision"] == rev
+    assert events[-1]["sae"] == body["sae"]
+
+
 def test_fault_hook_requires_pry_dev(monkeypatch):
     from pry_sidecar.registry import _fault_sae_swap_enabled
 

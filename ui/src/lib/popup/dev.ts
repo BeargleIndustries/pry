@@ -11,6 +11,8 @@ export interface ForcedTipReport {
   shown: boolean;
   /** Not shown because its target is covered (e.g. by the experiment guide). */
   waiting: boolean;
+  /** Not shown because the tip only shows while Lessons is closed (TipDef.whileLessonsClosed). */
+  heldByLessons?: boolean;
   reason?: string;
 }
 

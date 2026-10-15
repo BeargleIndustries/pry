@@ -3,7 +3,8 @@
   import type { GenerateResponse, TokenFeatures, AblateResponse, PresetDisplay } from '$lib/types';
   import FeatureCard from './FeatureCard.svelte';
   import Readout from './Readout.svelte';
-  import { featuresReadout } from '$lib/readouts';
+  import { isHidden } from '$lib/lessons/registry/pry-state.svelte';
+  import { FEATURE_KNOCKOUT_NOTE, featuresReadout } from '$lib/readouts';
   import { signedHex, signedNumber } from '$lib/signed-color';
 
   interface Props {
@@ -117,7 +118,7 @@
   <!-- Panel header -->
   <div class="flex items-baseline gap-2">
     <h2 class="text-sm font-semibold text-zinc-100"><Term key="feature">Features</Term></h2>
-    <span class="text-xs text-zinc-600">Concepts that lit up, from the feature dictionary (<Term key="sae">SAE</Term>)</span>
+    <span class="text-xs text-zinc-600">Features that fired, from the sparse autoencoder (<Term key="sae">SAE</Term>)</span>
     {#if response}
       {#if availableSaeLayers.length > 1}
         <div class="ml-auto flex items-center gap-1.5" data-tip="panel-b-layer-selector" data-tour="panel-b-layer-selector">
@@ -177,11 +178,15 @@
     {/if}
   </div>
 
-  <Readout text={readout} />
+  <Readout text={readout} hidden={isHidden('feature-labels')} />
+
+  {#if ablationMode}
+    <p class="text-[11px] text-zinc-500">{FEATURE_KNOCKOUT_NOTE}</p>
+  {/if}
 
   <!-- Ablation results -->
   {#if ablateResponse && ablationMode}
-    <div class="rounded-lg border border-red-800/50 bg-red-950/20 p-3">
+    <div class="rounded-lg border border-red-800/50 bg-red-950/20 p-3" data-tour="ablation-results">
       <h4 class="mb-2 text-xs font-semibold text-zinc-300">Knockout results</h4>
       <div class="grid grid-cols-2 gap-3">
         <div>
@@ -224,7 +229,7 @@
   {#if !response}
     <!-- Empty: no response yet -->
     <div class="flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 py-12">
-      <p class="text-sm text-zinc-600">Run a prompt to see the concepts inside.</p>
+      <p class="text-sm text-zinc-600">Run a prompt to see which features fire.</p>
     </div>
   {:else if response.sae_features.length === 0}
     <!-- Empty: no SAE features in response -->
@@ -272,7 +277,7 @@
       {:else}
         <div class="flex flex-col gap-3 transition-opacity {layerSwitching ? 'opacity-50 pointer-events-none' : ''}" data-tour="panel-b-features-list">
           {#each sortedHits as hit, i (hit.id)}
-            <div data-tip={i === 0 ? 'panel-b-feature-row' : undefined} class="flex items-start gap-2">
+            <div data-tip={i === 0 ? 'panel-b-feature-row' : undefined} data-tour="feature-row" data-feature-id={hit.id} class="flex items-start gap-2">
               {#if ablationMode}
                 <button
                   onclick={() => onToggleFeatureAblation?.(hit.id, response.sae_layer_used ?? 0)}

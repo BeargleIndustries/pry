@@ -1,0 +1,52 @@
+{
+ "key": "c644bd92bfc6324a44a2a981b90f22a24b2f992d668f66f504e48827b5cbc952",
+ "variant": "r1",
+ "request": {
+  "endpoint": "/feature/21791",
+  "model": "gpt2-small",
+  "body": {}
+ },
+ "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+ "device": "cuda",
+ "libs": {
+  "python": "3.12.13",
+  "torch": "2.5.1+cu124",
+  "transformer_lens": "2.15.4",
+  "sae_lens": "5.11.0",
+  "transformers": "4.57.6",
+  "numpy": "1.26.4"
+ },
+ "recorded": "2026-10-15",
+ "neuronpedia_fetched": "2026-10-15",
+ "offline": false,
+ "trimmed": [],
+ "response": {
+  "feature_id": 21791,
+  "top_activating_snippets": [
+   {
+    "snippet": ". They lack good boots, jackets or rain coats, essential for their job in a",
+    "activation": 0.0
+   },
+   {
+    "snippet": ", during which those in the parade wear rain coats, and characters such as Minni",
+    "activation": 0.0
+   },
+   {
+    "snippet": "During the Albany robbery, he wore a rain poncho. In Salem, he",
+    "activation": 0.0
+   },
+   {
+    "snippet": "companies that allowed harvesters to plunder rain forest resources protected un",
+    "activation": 0.0
+   },
+   {
+    "snippet": ")⏎⏎Weather: 92 degrees and rain⏎⏎Quotes⏎⏎Score 1 2",
+    "activation": 0.0
+   }
+  ],
+  "description": "references to rain or rainy conditions",
+  "label_detail": "detailed",
+  "confidence": "high",
+  "status": "ok"
+ }
+}

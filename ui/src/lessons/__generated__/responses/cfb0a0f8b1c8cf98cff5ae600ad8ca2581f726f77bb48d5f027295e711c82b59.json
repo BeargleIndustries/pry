@@ -1,0 +1,380 @@
+{
+ "key": "cfb0a0f8b1c8cf98cff5ae600ad8ca2581f726f77bb48d5f027295e711c82b59",
+ "variant": "r1",
+ "request": {
+  "endpoint": "/logit-lens",
+  "model": "gpt2-small",
+  "body": {
+   "preset_id": "gpt2-small",
+   "prompt": "The nurse said that"
+  }
+ },
+ "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+ "device": "cuda",
+ "libs": {
+  "python": "3.12.13",
+  "torch": "2.5.1+cu124",
+  "transformer_lens": "2.15.4",
+  "sae_lens": "5.11.0",
+  "transformers": "4.57.6",
+  "numpy": "1.26.4"
+ },
+ "recorded": "2026-10-15",
+ "neuronpedia_fetched": null,
+ "offline": false,
+ "trimmed": [],
+ "response": {
+  "preset_id": "gpt2-small",
+  "prompt": "The nurse said that",
+  "tokens": [
+   {
+    "index": 0,
+    "text": "<|endoftext|>"
+   },
+   {
+    "index": 1,
+    "text": "The"
+   },
+   {
+    "index": 2,
+    "text": " nurse"
+   },
+   {
+    "index": 3,
+    "text": " said"
+   },
+   {
+    "index": 4,
+    "text": " that"
+   }
+  ],
+  "grid": [
+   [
+    {
+     "predicted_token": "\n",
+     "probability": 0.3444209694862366,
+     "matches_final": true
+    },
+    {
+     "predicted_token": "ories",
+     "probability": 0.06339069455862045,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " nurse",
+     "probability": 0.8229126930236816,
+     "matches_final": false
+    },
+    {
+     "predicted_token": ":",
+     "probability": 0.12220433354377747,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " the",
+     "probability": 0.1312541961669922,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": "\n",
+     "probability": 0.08009959757328033,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " latest",
+     "probability": 0.13904954493045807,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " nurse",
+     "probability": 0.493484228849411,
+     "matches_final": false
+    },
+    {
+     "predicted_token": ":",
+     "probability": 0.1953212469816208,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " they",
+     "probability": 0.23660169541835785,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.026910262182354927,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " latest",
+     "probability": 0.2208818793296814,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " nurse",
+     "probability": 0.5530113577842712,
+     "matches_final": false
+    },
+    {
+     "predicted_token": ":",
+     "probability": 0.2598332464694977,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " they",
+     "probability": 0.23123203217983246,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.027061201632022858,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " latest",
+     "probability": 0.17544054985046387,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "maid",
+     "probability": 0.5089241862297058,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " that",
+     "probability": 0.125853031873703,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " they",
+     "probability": 0.22569644451141357,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.0268873143941164,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "resa",
+     "probability": 0.16250821948051453,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "maid",
+     "probability": 0.5026513338088989,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " that",
+     "probability": 0.1950649619102478,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " they",
+     "probability": 0.20839013159275055,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.026548324152827263,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "resa",
+     "probability": 0.46771594882011414,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "maid",
+     "probability": 0.792961061000824,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " that",
+     "probability": 0.12895908951759338,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " although",
+     "probability": 0.49823155999183655,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.026423990726470947,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "resa",
+     "probability": 0.5889382362365723,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "maid",
+     "probability": 0.8456593155860901,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " she",
+     "probability": 0.2509428560733795,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " although",
+     "probability": 0.5824557542800903,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.02643696218729019,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "resa",
+     "probability": 0.5736661553382874,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "maid",
+     "probability": 0.8473812937736511,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " she",
+     "probability": 0.5131546258926392,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " although",
+     "probability": 0.7534831762313843,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.02667328715324402,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "resa",
+     "probability": 0.3950784504413605,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "maid",
+     "probability": 0.636982798576355,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " she",
+     "probability": 0.5947256088256836,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " although",
+     "probability": 0.7205265760421753,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.02694992907345295,
+     "matches_final": false
+    },
+    {
+     "predicted_token": "resa",
+     "probability": 0.3175143897533417,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " who",
+     "probability": 0.4560202956199646,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " she",
+     "probability": 0.9520637392997742,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " although",
+     "probability": 0.2591744065284729,
+     "matches_final": false
+    }
+   ],
+   [
+    {
+     "predicted_token": ",",
+     "probability": 0.02744535356760025,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " following",
+     "probability": 0.017918642610311508,
+     "matches_final": false
+    },
+    {
+     "predicted_token": " who",
+     "probability": 0.8431172966957092,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " she",
+     "probability": 0.9438788294792175,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " she",
+     "probability": 0.4082660675048828,
+     "matches_final": true
+    }
+   ],
+   [
+    {
+     "predicted_token": "\n",
+     "probability": 0.062298163771629333,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " first",
+     "probability": 0.009997406974434853,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " who",
+     "probability": 0.32185637950897217,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " she",
+     "probability": 0.3725438117980957,
+     "matches_final": true
+    },
+    {
+     "predicted_token": " she",
+     "probability": 0.18969570100307465,
+     "matches_final": true
+    }
+   ]
+  ],
+  "n_layers": 12,
+  "status": "ok"
+ }
+}

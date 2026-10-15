@@ -1,0 +1,31 @@
+{
+  "about": "Generated from ui/src/lib/lessons/registry/pry-anchors.ts by ui/scripts/geometry-allowed.ts. Do not edit by hand.",
+  "allowed": [
+    "compare-button",
+    "compare-prompt-b",
+    "dla-bar",
+    "dla-total-line",
+    "everything-else-row",
+    "feature-labels",
+    "feature-row",
+    "head-cell",
+    "left-tab-strip",
+    "lessons-toggle",
+    "panel-a-head-detail",
+    "patch-three-logits",
+    "patching-grid",
+    "prediction-bar",
+    "predictions-panel",
+    "right-tab-strip",
+    "settings-button",
+    "steering-coherence",
+    "steering-feature-menu",
+    "steering-strength",
+    "tab-features",
+    "tab-key-parts",
+    "token-chip",
+    "write-it-seed",
+    "write-it-step",
+    "write-it-temperature"
+  ]
+}
