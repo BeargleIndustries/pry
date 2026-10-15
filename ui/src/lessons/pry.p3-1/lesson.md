@@ -31,6 +31,10 @@ free: true
 
 ## How does ' she' move? {id=s3-2 outline=P3.1.md#3.2}
 
+:::enter
+open_panel: predictions
+:::
+
 :::slots
 she_nurse: { read: prediction, args: { token: " she" }, field: prob, format: probability, expect: 0.1896977424621582, tolerance: 0.02 }
 she_doctor: { read: compare.prediction, args: { side: b, token: " she" }, field: prob, format: probability, expect: 0.04582584276795387, tolerance: 0.02 }
@@ -51,10 +55,11 @@ With ' nurse', ' she' gets {she_nurse}. Swap in ' doctor'. What happens to ' she
 
 ```yaml
 choices:
-  - { text: "rises", feedback: "The model went another way: ' she' fell to {she_doctor}, and ' he' took the top spot." }
-  - { text: "barely moves", feedback: "The model went another way: ' she' fell to {she_doctor}, and ' he' took the top spot." }
-  - { text: "drops to a few percent", feedback: "That's what happened. Why would one word move a pronoun two tokens later?" }
-  - { text: "vanishes from the list", feedback: "The model went another way: ' she' fell to {she_doctor}, and ' he' took the top spot." }
+  - { text: "rises" }
+  - { text: "barely moves" }
+  - { text: "drops to a few percent" }
+  - { text: "vanishes from the list" }
+remember: she-pick
 ```
 :::
 
@@ -76,10 +81,14 @@ Compare runs two prompts and puts their Predictions side by side. Press **Do it*
 - set_compare: { a: "The nurse said that", b: "The doctor said that" }
 - run_compare: {}
 ```
+
+```yaml
+capture: pair
+```
 :::
 
 :::observe{id=she-obs}
-Look at the shape first: neither run gives any token more than about 1 in 5, so both lists are spread out. With ' nurse', ' she' gets {she_nurse}. With ' doctor', it gets {she_doctor}, and ' he' tops the doctor run at {he_doctor}. The delta row says the same thing as one number per token: ' she' moved by {she_delta} and ' he' by {he_delta}. That's the doctor run minus the nurse run.
+Your guess for ' she': :earlier{key="pry.p3-1.she-pick"}[skipped]. Look at the shape first: neither run gives any token more than about 1 in 5, so both lists are spread out. With ' nurse', ' she' gets {she_nurse}. With ' doctor', it gets {she_doctor}, and ' he' tops the doctor run at {he_doctor}. The delta row says the same thing as one number per token: ' she' moved by {she_delta} and ' he' by {he_delta}. That's the doctor run minus the nurse run.
 
 ```yaml
 check:
@@ -136,7 +145,7 @@ check: { read: compare.delta, args: { token: " she" }, op: within, value: 0, tol
 :::
 
 :::question{id=drop-from}
-So where did the drop in `3.3` come from?
+So where did the drop you saw in the nurse and doctor pair come from?
 
 ```yaml
 free: true
@@ -146,8 +155,19 @@ model_answer: "Only from the one changed word and whatever changed along with it
 
 ## What does the drop show? {id=s3-6 outline=P3.1.md#3.6}
 
+:::enter
+compare_mode: true
+compare: { a: "The nurse said that", b: "The doctor said that" }
+analyses: [compare]
+:::
+
+:::slots
+she_nurse: { read: compare.prediction, args: { side: a, token: " she" }, field: prob, format: probability, from_capture: pair, expect: 0.1896977424621582, tolerance: 0.02 }
+she_doctor: { read: compare.prediction, args: { side: b, token: " she" }, field: prob, format: probability, from_capture: pair, expect: 0.04582584276795387, tolerance: 0.02 }
+:::
+
 :::predict{id=drop-shows checks=drop-reveal}
-' she' fell from about 1 in 5 to about 1 in 22. What does that show?
+Back in :look{at=compare-panel}[Compare], ' she' fell from {she_nurse} with ' nurse' to {she_doctor} with ' doctor'. What does that show?
 
 ```yaml
 choices:

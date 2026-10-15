@@ -2733,6 +2733,20 @@
           }
         },
         {
+          "where": "s3-6/drop-shows",
+          "kind": "slot",
+          "name": "she_nurse",
+          "prompt": "The nurse said that",
+          "expect": 0.1896977424621582
+        },
+        {
+          "where": "s3-6/drop-shows",
+          "kind": "slot",
+          "name": "she_doctor",
+          "prompt": "The nurse said that",
+          "expect": 0.04582584276795387
+        },
+        {
           "where": "s5/mary-swap/swap-obs",
           "kind": "slot",
           "name": "mary",
