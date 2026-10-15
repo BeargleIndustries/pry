@@ -247,18 +247,30 @@ window.__t8 = (() => {
       const open = (b) => (b.ask ? !b.ask.locked : false) || (b.act ? b.act.state !== 'done' : false) || (b.observe ? !b.observe.revealed && !b.observe.journal : false) || (b.task ? !b.task.met : false) || (b.chain ? !b.chain.written && !b.chain.skipped : false);
       const first = blocks.find(open);
       const firstEl = first ? sel(first) : null;
+      const lastDo = [...blocks].reverse().find((b) => b.act && b.act.state === 'done');
+      const doEl = lastDo ? sel(lastDo) : null;
+      // The last do step's Done marker (its button row), kept in view as the app's own landing does:
+      // brought in as far as the thing the shot is about (target) stays in view.
+      const doneRow = doEl?.querySelector('[data-do-button]')?.parentElement ?? null;
+      const keepDone = (target) => {
+        const box = target.closest('.overflow-y-auto');
+        if (!doneRow || !box) return;
+        const v = box.getBoundingClientRect(); const m = doneRow.getBoundingClientRect(); const r = target.getBoundingClientRect();
+        if (m.top < v.top + 8) box.scrollTop -= Math.max(0, Math.min(v.top + 8 - m.top, v.bottom - 8 - r.top - Math.min(r.height, 60)));
+        else if (m.bottom > v.bottom - 8) box.scrollTop += Math.max(0, Math.min(m.bottom - v.bottom + 8, r.top - v.top - 8));
+      };
       if (firstEl) {
-        (firstEl.querySelector('[data-step-action]') ?? firstEl).scrollIntoView({ block: 'center' });
+        const btn = firstEl.querySelector('[data-step-action]') ?? firstEl;
+        btn.scrollIntoView({ block: 'center' });
+        keepDone(btn);
         return 'open:' + first.kind;
       }
       const el = side.querySelector('[data-step-kind="explain-result"]') ?? [...side.querySelectorAll('[data-check-result]')].at(-1) ?? null;
-      const lastDo = [...blocks].reverse().find((b) => b.act && b.act.state === 'done');
-      const doEl = lastDo ? sel(lastDo) : null;
       if (doEl && (!el || el.compareDocumentPosition(doEl) & Node.DOCUMENT_POSITION_FOLLOWING)) {
-        (doEl.nextElementSibling ?? doEl).scrollIntoView({ block: 'start' });
+        (doneRow ?? doEl.nextElementSibling ?? doEl).scrollIntoView({ block: 'start' });
         return 'after-do';
       }
-      if (el) el.scrollIntoView({ block: 'center' });
+      if (el) { el.scrollIntoView({ block: 'center' }); keepDone(el); }
       return el ? el.getAttribute('data-step-kind') ?? 'check-result' : null;
     },
     /** Author mode on: the slot value on screen beside its expected value, and the runner's numbers. */
