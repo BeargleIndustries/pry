@@ -30,16 +30,21 @@ free: true
 
 ## An instruction {id=s3-1 outline=P4.1.md#3.1}
 
+:::enter
+open_panel: watch-it-write
+:::
+
 :::predict{id=poem-or-not checks=instruction-obs}
 Type `Write a short poem about the sea.` and let GPT-2 write. What will it do?
 
 ```yaml
 choices:
-  - { text: "it writes a poem", target: M5, feedback: "Lots of people expect that. It's what a chat assistant does. GPT-2 continued the text instead." }
-  - { text: "it says it can't", feedback: "The model went another way. Saying it can't is a chat assistant's habit, and GPT-2 continued the text instead." }
-  - { text: "it carries on as if the line were part of a longer page", feedback: "That's what happened. Where would you find a page like that?" }
+  - { text: "it writes a poem", target: M5, feedback: "Lots of people expect that. It's what a chat assistant does. Run it and see what GPT-2 does." }
+  - { text: "it says it can't", feedback: "Saying it can't is a chat assistant's habit. Run it and see what GPT-2 does." }
+  - { text: "it carries on as if the line were part of a longer page", feedback: "Run it and see. If it does, where would you find a page like that?" }
   - { text: "something else", feedback: "Run it and see what it did." }
 free: true
+remember: poem-pick
 ```
 :::
 
@@ -58,7 +63,7 @@ capture: instruction
 :::
 
 :::observe{id=instruction-obs}
-It didn't write a poem. It started a new line and wrote the instruction again, then again, like it's copying out a list. If you picked the poem, that's a fair guess: it's what ChatGPT would do. The text on screen is what rules it out.
+You said: :earlier{key="pry.p4-1.poem-pick"}[nothing]. In :look{at=watch-it-write}[Watch it write], it didn't write a poem. It started a new line and wrote the instruction again, then again, like it's copying out a list. If you picked the poem, that's a fair guess: it's what ChatGPT would do. The text on screen is what rules it out.
 
 ```yaml
 check: { read: write_it.text, op: starts_with, value: "Write a short poem about the sea.\n\nWrite a short poem about the sea." }
@@ -93,9 +98,10 @@ Now the same request, written as the start of a page: `Here is a short poem abou
 
 ```yaml
 choices:
-  - { text: "another repeat", feedback: "The model went another way: it wrote a poem, a clumsy one. Only the text in the box changed." }
-  - { text: "a poem", feedback: "That's what happened: a clumsy poem. Same model, same numbers. What changed?" }
-  - { text: "something unrelated", feedback: "The model went another way: it wrote a poem, a clumsy one." }
+  - { text: "another repeat" }
+  - { text: "a poem" }
+  - { text: "something unrelated" }
+remember: document-pick
 ```
 :::
 
@@ -125,7 +131,7 @@ same_question: journal
 :::
 
 :::observe{id=document-obs}
-This time it wrote a poem. It isn't a good poem, it repeats itself, but it's poem-shaped, because a poem is what usually follows a line like that on a page.
+You picked :earlier{key="pry.p4-1.document-pick"}[nothing]. This time it wrote a poem, with the same model and the same numbers; only the text in the box changed. It isn't a good poem, it repeats itself, but it's poem-shaped, because a poem is what usually follows a line like that on a page.
 
 ```yaml
 check: { read: write_it.text, from: document, op: starts_with, value: "Here is a short poem about the sea:\n\nThe sea is a sea of water" }
@@ -194,7 +200,8 @@ alt: "Training split into two boxes. First round: guess the next token of real t
 ::::fold{title="Training on people's ratings"}
 
 :::explain
-Training on people's ratings of replies has a name: reinforcement learning from human feedback, or **RLHF**. :::
+Training on people's ratings of replies has a name: reinforcement learning from human feedback, or **RLHF**.
+:::
 
 ::::
 
@@ -247,7 +254,7 @@ model_answer: "Every token in the prompt feeds into the residual streams that th
 :::
 
 :::explain-result
-No poem. GPT-2 went back to repeating the instruction, the way a page of writing prompts would. To the model the first line is just more text placed first. It changes the probabilities the way any earlier text does, and a model follows a line like that only as far as its training made text like that tend to be followed. Instructions a product places before your text, usually hidden from you, are called a **system prompt**. Every chat product has one, and Flinch lets you set your own.
+No poem. GPT-2 went back to repeating the instruction, the way a page of writing prompts would. To the model the first line is just more text placed first. It changes the probabilities the way any earlier text does, and a model follows a line like that only as far as its training made text like that tend to be followed. Instructions a product places before your text, usually hidden from you, are called a **system prompt**. Every chat product has one.
 
 ```yaml
 supports: "A system prompt is text placed first. It changes the probabilities like any other text, and here it didn't get a poem out of a base model."
@@ -263,7 +270,7 @@ tool: write-it
 
 We're done with the actor and the engine.
 
-Pry stops at the model; if you want to run the same kind of controlled experiment on chat assistants, where the prompt is your only lever, that's what Beargle's other app, Flinch, is for.
+Pry stops at the model; if you want to run the same kind of controlled experiment on chat assistants, where the prompt is your only lever, that takes a companion tool.
 
 ```yaml
 image: images/product-around-model.png
