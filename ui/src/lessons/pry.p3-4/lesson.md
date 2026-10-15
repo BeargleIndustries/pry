@@ -83,10 +83,11 @@ Switch off the {n} most active features at ' nurse' (labels shown; Pry removes t
 
 ```yaml
 choices:
-  - { text: "falls to almost nothing", target: N7, feedback: "The model went another way: ' she' fell from {before} to {after}, not to nothing." }
-  - { text: "falls some", feedback: "That's what happened: ' she' fell from {before} to {after}. Is that more than switching off any feature would do?" }
-  - { text: "no visible change", feedback: "The model went another way: ' she' fell from {before} to {after}. It's a small move, so you'll need something to compare it with." }
-  - { text: "rises", feedback: "The model went another way: ' she' fell from {before} to {after}." }
+  - { text: "falls to almost nothing", target: N7, feedback: "Lots of people expect that when the labels sound right. The next section runs the knockout." }
+  - { text: "falls some", feedback: "The next section runs the knockout." }
+  - { text: "no visible change", feedback: "The next section runs the knockout." }
+  - { text: "rises", feedback: "The next section runs the knockout." }
+remember: top-pick
 ```
 :::
 
@@ -111,7 +112,7 @@ capture: target
 :::
 
 :::observe{id=top-obs}
-' she' went from {before} to {after}. It fell, and it's still on top, so the features weren't the whole story. The labels sounded like they'd explain ' she' on their own, and the run says they don't.
+You picked :earlier{key="pry.p3-4.top-pick"}[nothing]. In :look{at=ablation-results}[the knockout results], ' she' went from {before} to {after}. It fell, and it's still on top, so the features weren't the whole story. The labels sounded like they'd explain ' she' on their own, and the run says they don't.
 
 ```yaml
 check: { read: feature_ablation.delta, args: { token: " she" }, op: lt, value: 0, expect: -0.011518552899360657 }
@@ -179,6 +180,12 @@ skeptic: { says: "A skeptic would say any change to the residual stream would mo
 :::
 
 ## One feature at a time {id=s3-7 outline=P3.4.md#3.7}
+
+:::enter
+open_panel: features
+focus_token: { text: " nurse" }
+feature_ablation: { ids: [], on: false }
+:::
 
 :::task{id=find-feature}
 Find one feature at ' nurse' whose knockout alone lowers ' she' by more than the control did. One feature at a time, and before each run write down what you expect from its label. Knocking out several at once mixes their effects, so now you're pulling them apart.
