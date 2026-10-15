@@ -51,6 +51,9 @@
   let mutationObserver: MutationObserver | null = null;
   let pickDebounce: ReturnType<typeof setTimeout> | null = null;
 
+  /** The Lessons sidebar is on screen. */
+  const lessonsOpen = () => !!document.querySelector('[data-lesson-sidebar]');
+
   function pickNextTip(): void {
     if (typeof document === 'undefined') return;
     if (activeTip) return;
@@ -58,6 +61,7 @@
     if (document.querySelector('.loading-screen')) return; // wait until the model has loaded
     for (const tip of tipsRegistry) {
       if (isTipSeen(tip.id)) continue;
+      if (tip.whileLessonsClosed && lessonsOpen()) continue;
       const el = document.querySelector(tip.target) as HTMLElement | null;
       // A target that's hidden, disabled or covered (a dialog, the experiment
       // guide) waits; the tip shows once it's usable again.
@@ -240,6 +244,7 @@
     const tip = tipsRegistry.find((t) => t.id === id);
     if (!tip) return { id, shown: false, waiting: false, reason: 'not in registry' };
     if (activeTip) release();
+    if (tip.whileLessonsClosed && lessonsOpen()) return { id, shown: false, waiting: false, heldByLessons: true, reason: 'Lessons is open' };
     await tick();
     const el = document.querySelector(tip.target) as HTMLElement | null;
     if (!el) return { id, shown: false, waiting: false, reason: 'target not in DOM' };

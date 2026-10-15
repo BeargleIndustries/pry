@@ -64,9 +64,9 @@
   import { bindPryHost, hasPryHost, pryMemo, pryUi, type PatchType } from '$lib/lessons/registry/pry-state.svelte';
   import OverlayPresenter from '$lib/lessons/OverlayPresenter.svelte';
   import { entryFromParams } from '$lib/lessons/entry';
-  import { migrateTourProgress, tourAutoStarts, QUICK_TOUR_ID } from '$lib/lessons/progress';
+  import { migrateTourProgress, tourAutoStarts, LESSONS_TIP_ID, QUICK_TOUR_ID } from '$lib/lessons/progress';
   import { quickTour } from '$lib/lessons/quick-tour.svelte';
-  import { markTipsSeenForStep } from '$lib/tips/coordinate';
+  import { markTipSeen, markTipsSeenForStep } from '$lib/tips/coordinate';
   import { buildProvenance, type ProvenanceExtras } from '$lib/notebook';
   import { isTauri } from '$lib/is-tauri';
   import LessonSidebar from '$lib/lessons/LessonSidebar.svelte';
@@ -332,6 +332,8 @@
   async function openLessons() {
     // Quick tour and Lessons are exclusive.
     lessons?.endTour();
+    // Found the way in: the Lessons-toggle tip has done its job.
+    markTipSeen(LESSONS_TIP_ID);
     lessonsOn = true;
     const app = await ensureLessons(true);
     if (app.state.pending.length) app.state.installOpen = true;

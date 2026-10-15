@@ -52,6 +52,10 @@ describe('tipsRegistry', () => {
     for (const tip of coupled) expect(stepIds.has(tip.tutorialStepId!), tip.id).toBe(true);
   });
 
+  it('only the Lessons-toggle tip waits for Lessons to be closed', () => {
+    expect(tipsRegistry.filter((t) => t.whileLessonsClosed).map((t) => t.id)).toEqual(['lessons-toggle']);
+  });
+
   // code:F. Comments named the removed `drivenSteps` and old step numbers.
   it('comments do not cite the old tour', () => {
     expect(registrySource).not.toMatch(/drivenSteps/);

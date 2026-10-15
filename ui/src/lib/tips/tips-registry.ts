@@ -33,6 +33,8 @@ export interface TipDef {
    * `pry.quick-tour#<stepId>`, a section id in `src/lessons/pry.quick-tour/lesson.md`.
    */
   tutorialStepId?: string;
+  /** The tip is about opening Lessons: it never shows while the Lessons sidebar is open. */
+  whileLessonsClosed?: true;
 }
 
 const CUSTOM_MODEL_VERDICT_TIP: TipDef = {
@@ -290,9 +292,9 @@ export const tipsRegistry: TipDef[] = [
     id: 'lessons-toggle',
     title: 'Lessons',
     target: '[data-tour="lessons-toggle"]',
-    // Beside the button, not under it: below sits the Lessons sidebar when it's
-    // open on the right, and a tip pushed clear of it ends up too far away.
-    placement: 'left',
+    placement: 'bottom',
+    // It points at the way into Lessons, so it has nothing to say once they're open.
+    whileLessonsClosed: true,
     blurb:
       "The old guided tour's teaching lives in Lessons now. The chapters you finished count as visited there.",
     why:

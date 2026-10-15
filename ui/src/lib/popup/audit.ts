@@ -465,6 +465,18 @@ async function measureTip(tipId: string, target: string, deps: AuditDeps, phase:
         res = { id: tipId, shown: false, waiting: state === 'covered', reason: `released: target ${state}` };
       }
     }
+    if (!res.shown && res.heldByLessons) {
+      // A tip about opening Lessons (TipDef.whileLessonsClosed) must stay away
+      // while the sidebar is open: the check is that it did.
+      const declared = tipsRegistry.find((x) => x.id === tipId)?.whileLessonsClosed === true;
+      const open = !!document.querySelector('[data-lesson-sidebar]');
+      const ok = declared && open;
+      return {
+        ...blank(''), skipped: undefined, mode: null, inViewport: true, target: t, pass: ok,
+        failures: ok ? [] : ['held for Lessons without declaring whileLessonsClosed, or with the sidebar closed'],
+        notes: ['not shown while Lessons is open (whileLessonsClosed)'],
+      };
+    }
     if (!res.shown) {
       // Nothing in the app covers a tip's target any more (the experiment
       // guide is gone), so a waiting tip is a failure too.
