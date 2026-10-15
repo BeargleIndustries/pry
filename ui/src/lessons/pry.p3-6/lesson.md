@@ -296,6 +296,7 @@ skeptic: { says: "A skeptic would say the Swap test only shows that ' Jordan' an
 
 :::enter
 open_panel: patching
+patching: { clean: "Michael Jordan played the sport of", corrupted: "Andy Murray played the sport of", type: mlp }
 :::
 
 ::::transfer{id=serena}
@@ -314,7 +315,7 @@ free: true
 :::
 
 :::task{id=find-mlp}
-Find the MLP layer, other than `L0`, whose swap moves ' basketball' furthest back toward the clean value. Set up :look{at=patching-panel}[the Swap test] yourself: keep `Michael Jordan played the sport of` as the Original prompt, type `Andy Murray played the sport of` as the Changed one, keep MLPs picked, and press **Run swap test** in the panel. Both prompts need the same number of tokens; the panel says "same length" when they do. Click bars and read each one's three logits before you trust its colour, then press **Check my result**. You'll know you've got it when the bar you've picked is the biggest one that isn't `L0`.
+Find the MLP layer, other than `L0`, whose swap moves ' basketball' furthest back toward the clean value. The lesson has put `Michael Jordan played the sport of` in :look{at=patching-panel}[the Swap test] as the Original prompt and `Andy Murray played the sport of` as the Changed one, with MLPs picked. Press **Run swap test** in the panel. Both prompts need the same number of tokens; the panel says "same length" when they do. Click bars and read each one's three logits before you trust its colour, then press **Check my result**. You'll know you've got it when the bar you've picked is the biggest one that isn't `L0`.
 
 ```yaml
 target:
@@ -322,7 +323,7 @@ target:
 constraint:
   - { read: patch.token_count, args: { side: corrupted }, op: equals, value: $read.patch.token_count, value_args: { side: clean }, expect: learner }
 learner_actions: [run_patching, focus_patch_cell]
-reset: { patching: { clean: "Michael Jordan played the sport of", corrupted: "Tom Brady played the sport of", type: mlp } }
+reset: { patching: { clean: "Michael Jordan played the sport of", corrupted: "Andy Murray played the sport of", type: mlp } }
 ```
 :::
 
