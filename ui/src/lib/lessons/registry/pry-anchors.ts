@@ -146,7 +146,7 @@ function findWith(name: string, attr: string, value: string): HTMLElement | null
 
 const byName = (name: string) => () => (typeof document === 'undefined' ? null : findAnchor(name));
 
-const occurrence = z.union([z.literal('first'), z.literal('last'), z.number().int().min(1)]);
+export const occurrence = z.union([z.literal('first'), z.literal('last'), z.number().int().min(1)]);
 
 /** Index of the token chip for {text, occurrence} in the current run. */
 function chipIndex(args: { text: string; occurrence?: 'first' | 'last' | number }): number | undefined {

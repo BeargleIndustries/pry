@@ -31,7 +31,7 @@ import {
   type FocusSpec,
   type PatchType,
 } from './pry-state.svelte';
-import { pryAnchors } from './pry-anchors';
+import { occurrence, pryAnchors } from './pry-anchors';
 import { alignedPositions } from '../../compare';
 import { showAll } from '../../watch-it-write';
 
@@ -52,7 +52,6 @@ export const LEFT_PANELS: readonly string[] = ['attention', 'logit-lens', 'dla',
 const layer = z.number().int().min(0);
 const head = z.number().int().min(0);
 const featureId = z.number().int().min(0);
-const occurrence = z.union([z.literal('first'), z.literal('last'), z.number().int().min(1)]);
 const noArgs = z.object({}).strict();
 const embeddingSide = z.object({ prompt: z.string(), token: z.string(), occurrence: occurrence.optional() }).strict();
 
@@ -68,7 +67,7 @@ export function callerOf(ctx: ActionContext): SidecarCaller {
     c({ ...req, modelRevision: pryHost().modelRevision() }, fetcher);
 }
 
-function abortIf(ctx: ActionContext): void {
+export function abortIf(ctx: ActionContext): void {
   if (ctx.signal.aborted) throw ctx.signal.reason ?? new DOMException('Aborted', 'AbortError');
 }
 
