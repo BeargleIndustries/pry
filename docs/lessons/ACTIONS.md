@@ -55,8 +55,8 @@ Effects: `view` and `compute` run freely and replay when a section opens; `downl
 |---|---|---|---|
 | `result` | record |  | The current run's result: the generic readout every tool maps onto. |
 | `tokens` | list |  | The prompt's tokens, in order. |
-| `token_count` | number (count) |  | How many tokens the prompt became. |
-| `word_tokens` | number (count) | `{ word: string }` | How many strip entries one word became. |
+| `token_count` | number (count) |  | How many tokens the prompt became, counting the start marker (`<\|endoftext\|>`) that Pry puts first, so it's one more than the tokens of your own text. |
+| `word_tokens` | number (count) | `{ word: string }` | How many tokens one word became: the tokens in the strip that spell it, leading space included. The start marker never counts here. |
 | `focus.token` | string |  | The selected token. |
 | `focus.position` | number |  | The selected token's position, where the start marker is 0. |
 | `focus.word_number` | number |  | The number Pry's panels show for the selected token, as in "word 6". |
@@ -72,7 +72,7 @@ Effects: `view` and `compute` run freely and replay when a section opens; `downl
 | `compare.delta` | number (probability) | `{ token: string }` | How much one token's probability changed between the two Compare prompts. |
 | `compare.prediction` | record | `{ side: "a" \| "b", token: string }` | One token's probability, logit and rank on one Compare side. |
 | `compare.tokens` | list | `{ side: "a" \| "b" }` | One Compare side's tokens. |
-| `compare.token_count` | number (count) | `{ side: "a" \| "b" }` | How many tokens one Compare side became. |
+| `compare.token_count` | number (count) | `{ side: "a" \| "b" }` | How many tokens one Compare side became, counting the start marker. |
 | `compare.top` | record | `{ side: "a" \| "b" }` | One Compare side's top prediction. |
 | `compare.word_diff_count` | number (count) |  | How many words differ between the two Compare prompts. |
 | `embedding.matches` | number (count) | `{ part: "embed" \| "pos" \| "sum" }` | How many of the 768 numbers match between the two positions. |

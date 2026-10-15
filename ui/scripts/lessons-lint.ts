@@ -8,6 +8,14 @@
 // A lesson set's own terms.yaml / lint-words.yaml / index.yaml / verified-rows.yaml
 // next to its lessons are used when present; otherwise Pry's bundled word lists.
 // Exits 1 when any lesson has an error.
+//
+// A user lesson's `expect` values are held to the responses recorded beside its
+// set, in <set>/__generated__/responses/<key>.json (sidecar/tests/test_lessons.py
+// --record --lesson-dir): the lesson walks through the real registry
+// (lesson-walk.ts, the walk lesson-checks.test.ts and lessons-compile use, keys
+// by registry/request-key.ts) with the fetch answered from those files. No
+// recording: a warning that points at the recording route. A recording that
+// disagrees with an `expect`: a warning, an error under --release.
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
@@ -17,11 +25,12 @@ import bundledWords from '../src/lessons/lint-words.yaml?raw';
 import { pryToolSet } from '../src/lib/lessons/registry/pry-set';
 import type { ToolActionSet } from '../src/lib/lessons/registry/contract';
 import { copyLint, type LintWords, type TermsData } from '../src/lib/lessons/format/copy-lint';
-import { formatIssue, makeIssue, type LessonIssue } from '../src/lib/lessons/format/errors';
+import { formatIssue, hasErrors, makeIssue, type LessonIssue } from '../src/lib/lessons/format/errors';
 import { lintLessonSet } from '../src/lib/lessons/format/lint';
 import { loadLessonSource } from '../src/lib/lessons/format/normalise';
 import { parseIndex } from '../src/lib/lessons/format/parse';
-import type { Lesson } from '../src/lib/lessons/format/schema';
+import type { Lesson, Step } from '../src/lib/lessons/format/schema';
+import { loadRecorded, loadRows, walkLesson, type WalkCheck } from '../src/lib/lessons/lesson-walk';
 
 const TOOLS: Record<string, ToolActionSet<any>> = { pry: pryToolSet };
 
@@ -77,7 +86,64 @@ const USAGE = [
   'Exits 0 when every lesson is clean, 1 when any lesson has an error, 2 when the folder is wrong.',
 ];
 
-export function runLint(argv: string[]): LintRun {
+/** Endpoints whose whole answer is a network lookup no readout reads (test_lessons.py NETWORK_ONLY): never needed for an `expect`. */
+const LOOKUP_ONLY = new Set(['/concept-search']);
+
+/** A walk check that holds the live readout to an authored value. */
+const usesExpect = (c: WalkCheck) =>
+  !c.skipped && (c.kind === 'slot' || (c.kind === 'check' && (c.check?.expect !== undefined || String(c.check?.value ?? '').startsWith('$slot.'))));
+
+/** The step a walk check names (`section/step/child`), for the message's section, step and line. */
+function whereOf(lesson: Lesson, where: string) {
+  const [sectionId, ...path] = where.split('/');
+  const section = lesson.sections.find((s) => s.id === sectionId);
+  let steps: Step[] = section?.steps ?? [];
+  let step: Step | undefined;
+  for (const id of path) {
+    step = steps.find((x) => (x.id ?? x.kind) === id);
+    if (!step) break;
+    steps = step.children;
+  }
+  return { section: section?.index ?? 0, step: step?.id, line: step?.line ?? section?.line ?? 1, file: lesson.file };
+}
+
+/** A user lesson's expects against the responses recorded in its set's __generated__/responses/. */
+async function recordedIssues(lesson: Lesson, release: boolean): Promise<LessonIssue[]> {
+  // The set is the folder that holds this lesson's folder, however far down the linted folder it sits.
+  const setRoot = resolve(lesson.file!, '..', '..');
+  const dir = join(setRoot, '__generated__', 'responses');
+  const folder = relative(process.cwd(), dir) || dir;
+  const r = await walkLesson(lesson, { recorded: loadRecorded(dir), rows: loadRows(join(setRoot, '__generated__', 'rows.json')) });
+  const checks = r.checks.filter(usesExpect);
+  if (!checks.length) return [];
+  const missing = r.missing.filter((m) => !LOOKUP_ONLY.has(m.endpoint));
+  if (missing.length) {
+    const prompt = (missing[0].body as { prompt?: unknown } | null)?.prompt;
+    const request = `\`${missing[0].endpoint}\` request${typeof prompt === 'string' ? ` on "${prompt}"` : ''}${missing.length > 1 ? ` (and ${missing.length - 1} more)` : ''}`;
+    return [makeIssue('expect-unrecorded', { request, folder }, { line: 1, section: 0, file: lesson.file }, 'warning')];
+  }
+  return checks
+    .filter((c) => !c.ok)
+    .map((c) =>
+      makeIssue(
+        'expect-recorded',
+        { what: c.kind === 'slot' ? `The slot \`{${c.name}}\`` : `The check \`${c.name}\``, detail: c.detail, folder },
+        whereOf(lesson, c.where),
+        release ? 'error' : 'warning',
+      ),
+    );
+}
+
+/** Front matter keys whose messages point at line 1: point them at the key's own line. */
+const FRONT_MATTER_KEY: Record<string, string> = { draft: 'draft', 'term-budget-lesson': 'new_terms' };
+function frontMatterLine(text: string, key: string): number | undefined {
+  const lines = text.split(/\r?\n/);
+  const end = lines.indexOf('---', 1);
+  const at = lines.slice(0, end < 0 ? lines.length : end).findIndex((l) => l.startsWith(`${key}:`));
+  return at < 0 ? undefined : at + 1;
+}
+
+export async function runLint(argv: string[]): Promise<LintRun> {
   const flags = new Set(argv.filter((a) => a.startsWith('--')));
   const target = argv.find((a) => !a.startsWith('--'));
   if (!target || flags.has('--help')) return { code: flags.has('--help') ? 0 : 2, lines: USAGE };
@@ -104,11 +170,13 @@ export function runLint(argv: string[]): LintRun {
 
   const lines: string[] = [];
   const issuesByFile = new Map<string, LessonIssue[]>();
+  const textOf = new Map<string, string>();
   const lessons: Lesson[] = [];
   const toolOf = new Map<Lesson, ToolActionSet<any>>();
   for (const file of lessonFiles(root)) {
     const rel = relative(process.cwd(), file) || file;
     const text = readFileSync(file, 'utf8');
+    textOf.set(rel, text);
     const tool = TOOLS[(/^tool:\s*(\S+)/m.exec(text)?.[1] ?? 'pry').replace(/["']/g, '')];
     if (!tool) {
       issuesByFile.set(rel, [makeIssue('bad-field', { where: 'The front matter', detail: 'this linter only knows `tool: pry`' }, { line: 1, file: rel })]);
@@ -124,10 +192,13 @@ export function runLint(argv: string[]): LintRun {
 
   const path = indexText ? parseIndex(indexText) : [...new Set(terms.terms.map((t) => t.introduced_in))];
   const known = new Set([...path, ...terms.terms.map((t) => t.introduced_in)]);
+  const bundled = flags.has('--bundled') || isBundledTarget(root);
+  // Node 18 has no global WebCrypto; request keys need it.
+  if (!bundled && !globalThis.crypto?.subtle) (globalThis as any).crypto = (await import('node:crypto')).webcrypto;
   for (const [tool, group] of groupBy(lessons, (l) => toolOf.get(l)!)) {
     const results = lintLessonSet(group, {
       tool,
-      bundled: flags.has('--bundled') || isBundledTarget(root),
+      bundled,
       skeleton: flags.has('--skeleton'),
       release: flags.has('--release'),
       knownLessons: known,
@@ -143,6 +214,16 @@ export function runLint(argv: string[]): LintRun {
     for (const lesson of group) {
       const copy = copyLint(lesson, { terms, words, path: indexText ? path : naturalOrder(path) }).map((i) => ({ ...i, file: lesson.file }));
       issuesByFile.get(lesson.file!)!.push(...(results.get(lesson.meta.id) ?? []), ...copy);
+      // Bundled lessons are held to their recordings by lesson-checks.test.ts.
+      if (!bundled && tool === pryToolSet && !hasErrors(results.get(lesson.meta.id) ?? []))
+        issuesByFile.get(lesson.file!)!.push(...(await recordedIssues(lesson, flags.has('--release'))));
+    }
+  }
+  for (const [file, issues] of issuesByFile) {
+    for (const i of issues) {
+      const key = i.line === 1 && !i.section ? FRONT_MATTER_KEY[i.code] : undefined;
+      const at = key ? frontMatterLine(textOf.get(file) ?? '', key) : undefined;
+      if (at) i.line = at;
     }
   }
 
@@ -176,7 +257,7 @@ function naturalOrder(ids: string[]): string[] {
 }
 
 if (!process.env.VITEST) {
-  const { code, lines } = runLint(process.argv.slice(2));
+  const { code, lines } = await runLint(process.argv.slice(2));
   for (const l of lines) console.log(l);
   process.exit(code);
 }

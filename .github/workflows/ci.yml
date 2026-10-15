@@ -66,9 +66,15 @@ jobs:
           npm run check
           npm test
 
-      # The community sample lesson stays clean (plan T8 step 1, the outsider gate).
+      # Both outsider-gate example lessons stay clean (plan T8 step 1): no errors and no
+      # warnings, with their expects held to the responses recorded beside each set.
       - name: Lint the example lessons
         working-directory: ui
+        shell: bash
         run: |
           npm run build:cli
-          node build-cli/lessons-lint.mjs ../docs/lessons/examples/community-sample --release
+          for set in community-sample second-look; do
+            out="$(node build-cli/lessons-lint.mjs ../docs/lessons/examples/$set --release)" || { echo "$out"; exit 1; }
+            echo "$out"
+            echo "$out" | grep -q '0 error(s), 0 warning(s)\.' || { echo "$set has lint warnings"; exit 1; }
+          done

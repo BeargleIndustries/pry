@@ -6,18 +6,19 @@
 // `__generated__/responses/<key>.json`; a request with no recording gets the
 // test host's canned answer and is reported as missing.
 //
-// Used by lesson-checks.test.ts (every check evaluates as authored) and by
+// Used by lesson-checks.test.ts (every check evaluates as authored), by
 // lessons-compile.test.ts (expectations.json: every request, check and slot
-// expect). Each caller mocks '@tauri-apps/api/core' before importing it.
+// expect), and by the lesson checker CLI (scripts/lessons-lint.ts), which
+// holds a user lesson's expects to the responses recorded beside its set.
+// No vitest here: the walk swaps the global fetch itself and puts it back.
 
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { vi } from 'vitest';
 import { pryToolSet } from './registry/pry-set';
 import { createDispatcher, resolveBindings } from './registry/dispatcher';
 import { RequestMemo } from './registry/memo';
 import { requestKey } from './registry/request-key';
-import { answer, makeHost } from './registry/pry-test-host';
+import { answer, makeWalkHost } from './registry/pry-walk-host';
 import { evaluateAssert, slotValue, type SlotSource } from './slots';
 import { compareOp } from './runner/checks';
 import type { AssertItem, CheckItem, Lesson, Slot, Step } from './format/schema';
@@ -151,28 +152,26 @@ export async function walkLesson(
   const set = pryToolSet;
   const res: WalkResult = { lessonId: lesson.meta.id, requests: [], missing: [], checks: [], errors: [] };
   const seen = new Map<string, number>();
-  const host = makeHost('');
+  const host = makeWalkHost('');
 
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(async (url: string, init?: RequestInit) => {
-      const endpoint = new URL(url).pathname;
-      const body = init?.body ? JSON.parse(String(init.body)) : null;
-      const model = (isObj(body) && typeof body.preset_id === 'string' ? body.preset_id : undefined) ?? lesson.meta.model ?? 'gpt2-small';
-      const key = await requestKey({ endpoint, model, body });
-      const n = seen.get(key) ?? 0;
-      seen.set(key, n + 1);
-      const req = { endpoint, model, body, key };
-      if (n === 0) res.requests.push(req);
-      const list = opts.recorded.get(key);
-      let out: unknown = untrim(list?.[n] ?? list?.[0]);
-      if (out === undefined) {
-        if (n === 0) res.missing.push(req);
-        out = answer(endpoint, body);
-      }
-      return new Response(JSON.stringify(out), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    }),
-  );
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async (url: string, init?: RequestInit) => {
+    const endpoint = new URL(url).pathname;
+    const body = init?.body ? JSON.parse(String(init.body)) : null;
+    const model = (isObj(body) && typeof body.preset_id === 'string' ? body.preset_id : undefined) ?? lesson.meta.model ?? 'gpt2-small';
+    const key = await requestKey({ endpoint, model, body });
+    const n = seen.get(key) ?? 0;
+    seen.set(key, n + 1);
+    const req = { endpoint, model, body, key };
+    if (n === 0) res.requests.push(req);
+    const list = opts.recorded.get(key);
+    let out: unknown = untrim(list?.[n] ?? list?.[0]);
+    if (out === undefined) {
+      if (n === 0) res.missing.push(req);
+      out = answer(endpoint, body);
+    }
+    return new Response(JSON.stringify(out), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  }) as typeof fetch;
 
   const signal = new AbortController().signal;
   const ctx = { signal, wait: () => {} };
@@ -469,6 +468,6 @@ export async function walkLesson(
     state = set.snapshot();
   }
   for (const fb of pendingFeedback.values()) checkFeedback(fb, 'end/feedback', new Set());
-  vi.unstubAllGlobals();
+  globalThis.fetch = realFetch;
   return res;
 }
