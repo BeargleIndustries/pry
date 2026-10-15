@@ -63,7 +63,7 @@ breaks: "both halves add to the same residual stream, and the split isn't clean.
 :::explain
 ' basketball''s logit comes from what every head and every MLP added to the last token's residual stream. Take each of those additions on its own, measure it straight to that logit, and you get each part's own push toward ' basketball', or against it.
 
-Splitting a logit into each part's own push toward or against a token is called **direct logit attribution**, or **DLA**. Papers use the name, and it's on :look{at=left-tab-strip}[Pry's "Why (DLA)" tab], which is direct logit attribution under a friendlier label. "Direct" means each bar is one part's own push, measured straight to the logit.
+Splitting a logit into each part's own push toward or against a token is called **direct logit attribution**, or **DLA**. Papers use the name, and it's on :look{at=left-tab-strip}[Pry's "Why (DLA)" tab], which is direct logit attribution under a friendlier label. You'll open it in the next section; first, **Do it** below loads the prompt. "Direct" means each bar is one part's own push, measured straight to the logit.
 :::
 
 :::analogy

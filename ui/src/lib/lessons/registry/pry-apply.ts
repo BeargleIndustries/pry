@@ -53,7 +53,8 @@ const sceneKeys = {
   aggregation: z.enum(['max', 'spread', 'looks-back', 'previous', 'mean']),
   focus_mode: z.enum(['from', 'to']),
   lines_head: headRef,
-  open_head: headRef,
+  /** null closes an opened head, so the head grid shows. */
+  open_head: headRef.nullable(),
   head_ablation: z.object({ heads: z.array(headRef), on: z.boolean() }).strict(),
   feature_ablation: z.object({ ids: z.array(z.number().int().min(0)), on: z.boolean() }).strict(),
   steering: z.object({ feature_id: z.number().int().min(0), strength: z.number() }).strict(),
@@ -136,7 +137,7 @@ function overlayOnto(s: PryViewState, o: Record<string, unknown>): PryViewState 
     out.lines_head = { ...v.lines_head };
     out.lines_average = false;
   }
-  if (v.open_head !== undefined) out.open_head = { ...v.open_head };
+  if (v.open_head !== undefined) out.open_head = v.open_head ? { ...v.open_head } : null;
   if (v.head_ablation !== undefined) out.head_ablation = structuredClone(v.head_ablation);
   if (v.feature_ablation !== undefined) out.feature_ablation = structuredClone(v.feature_ablation);
   if (v.steering !== undefined) out.steering = { ...v.steering };

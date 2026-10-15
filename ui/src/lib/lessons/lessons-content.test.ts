@@ -199,6 +199,9 @@ describe('lessons content', () => {
     { lesson: 'pry.p2-5', step: 'bank-compare', args: true, why: 'focus_token gained `side` (the row constants lane) to pick the Compare side' },
     { lesson: 'pry.p1-5', step: 'baker-set', lessonActions: ['set_prompt', 'run'], skeletonActions: ['set_prompt', 'write_it'], why: 'critic r5: the transfer write is learner-run, so the lesson only sets and runs the prompt' },
     { lesson: 'pry.p1-5', step: 'baker-write', added: true, why: 'critic r5: a task with learner_actions: [write_it]' },
+    { lesson: 'pry.p2-1', step: 'who-obs', added: true, why: 'rubric r2: the observe that shows the run after the who-gets prediction' },
+    { lesson: 'pry.p2-1', step: 'who-gets', added: true, why: 'rubric r2: the run showed its result before any prediction; a predict with hides comes first' },
+    { lesson: 'pry.p3-6', step: 'pair-guess', added: true, why: 'rubric r2: the pair showed its probabilities before any prediction; a predict with hides comes first' },
     ...['write-mit', 'write-decl', 'write-baker'].map((step) => ({
       lesson: 'pry.p1-6',
       step,

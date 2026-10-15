@@ -42,8 +42,20 @@ mary: { read: prediction, args: { token: " Mary" }, field: prob, format: probabi
 john: { read: prediction, args: { token: " John" }, field: prob, format: probability, expect: 0.0235 }
 :::
 
+:::predict{id=who-gets checks=who-obs}
+Here's the prompt: "When Mary and John went to the store, John gave a drink to". Who should get the drink, going by the sentence?
+
+```yaml
+choices:
+  - { text: "\" Mary\"", feedback: "That's how most people read it, because John is the one doing the giving." }
+  - { text: "\" John\"", feedback: "John's the one doing the giving, so the sentence points at Mary." }
+hides: [predictions-panel]
+on_skip: "Here's the answer: the sentence points at Mary, and the next step shows what the model makes of it."
+```
+:::
+
 :::do{id=run-ioi}
-Run this prompt and look at :look{at=predictions-panel}[Predictions]: ' Mary' gets {mary} and ' John' gets {john}. You'd say Mary too, because John is the one doing the giving.
+Press **Do it** to run the prompt, then read :look{at=predictions-panel}[Predictions], which stays hidden until you answer above.
 
 This whole stage asks how the model got there. Every token's residual stream is a long list of numbers that nobody can read straight off, so each view you'll meet from here on reads those numbers one particular way, and each one has a limit you'll hear about. None of them hands you a verdict, just a list of suspects.
 
@@ -51,6 +63,18 @@ This whole stage asks how the model got there. Every token's residual stream is 
 - set_prompt: { text: "When Mary and John went to the store, John gave a drink to" }
 - run: {}
 - ensure_run: { prompt: "When Mary and John went to the store, John gave a drink to" }
+```
+:::
+
+:::observe{id=who-obs}
+Here's what the model makes of it.
+
+```yaml
+check: { read: top_guess.token, op: equals, value: " Mary", expect: " Mary" }
+assert:
+  - require: { slot: mary, op: gt, value: 0.5 }
+    say: "In Predictions, ' Mary' gets {mary} and ' John' gets {john}: the model reads the sentence the way you'd expect."
+    else: "In Predictions, ' Mary' gets {mary} and ' John' gets {john}."
 ```
 :::
 
@@ -195,7 +219,7 @@ Attention isn't one mixer per layer. Each layer has 12 separate attention units,
 :::
 
 :::do{id=expert-grid}
-Open :look{at=panel-a-heatmap}[the head grid]: one cell per head, 12 layers by 12 heads. Each cell's colour is one summary score for that head, picked in :look{at=panel-a-agg-selector}[the Score by menu]. Click a cell and the lines show just that head. Pry has opened one for you.
+Press **Do it** and Attention switches to Expert view: the head grid, one cell per head, 12 layers by 12 heads. Each cell's colour is one summary score for that head, picked in :look{at=panel-a-agg-selector}[the Score by menu]. Pry also opens one head from the grid full size, :look{at=panel-a-head-detail}[its whole pattern], which covers the grid. Close it with its × to see all 144 cells; click any cell to open that head, and the lines show just that head.
 
 ```actions
 - set_attention_view: { view: expert }

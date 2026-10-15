@@ -389,7 +389,7 @@
       {:else}
         {@render nodes(b.body)}
       {/if}
-      {#if b.image}<img src={b.image.src} alt={b.image.alt} class="mt-2 max-w-full rounded" data-image-id={b.stepId ?? b.key} />{/if}
+      {#if b.image}<img src={b.image.src} alt={b.image.alt} class="mt-2 max-h-56 max-w-full rounded object-contain" data-image-id={b.stepId ?? b.key} />{/if}
       {#if b.asserts}{#each b.asserts as line, i (i)}<p class="mt-2">{@render nodes(line)}</p>{/each}{/if}
 
       {#if b.ask}

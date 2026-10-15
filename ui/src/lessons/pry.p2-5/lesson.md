@@ -264,7 +264,7 @@ journal: true
 ::::
 
 :::explain-result
-In P1.2 the meaning difference between the two banks had to come from somewhere, since ' bank' started out identical. This is the place it shows up: by layer {preset}, attention has mixed in ' river' or ' money', the residual streams differ, and the features differ with them. When Pry recorded this, the money sentence's ' bank' had features about money and banks that the river sentence's didn't.
+In P1.2 the meaning difference between the two banks had to come from somewhere, since ' bank' started out identical. This is the place it shows up: by layer {preset}, attention has mixed in ' river' or ' money', the residual streams differ, and the features differ with them. Hold that against your pick above, then look at :look{at=compare-panel}[Compare's "Only in B" list]: the money sentence's ' bank' has features there that the river sentence's doesn't, and their labels say what they're about.
 
 ```yaml
 supports: "The meaning difference P1.2 said \"must come from somewhere\" got mixed in by attention from ' river' or ' money', and the features at ' bank' differ between the sentences. Labels are best guesses from Neuronpedia, not certainties."

@@ -256,16 +256,16 @@ breaks: "the teammates adjust as in a real game, but here the benched player sta
 
 :::enter
 attention_view: expert
+open_head: null
 head_ablation: { heads: [], on: false }
 :::
 
 :::slots
-task_threshold: { row: "26.task_threshold", format: probability }
-neg_threshold: { row: "26.task_threshold_negative", format: probability }
+neg_threshold: { row: "26.task_threshold_negative", format: points }
 :::
 
 :::task{id=find-head}
-Find one head whose knockout alone lowers ' Mary' by at least {task_threshold} points. One head at a time, and type your guess before each run. The grid's a good place to start, and so are the layers the name movers sit in, though you may find the biggest drops somewhere you don't expect.
+Find one head whose knockout alone lowers ' Mary' by {neg_threshold} or more, a change in percentage points. Here's how, one head at a time: press :look{at=ablation-head-toggle}[Ablation] above the head grid, click one head's cell to mark it, type your guess below, then press **Run it**. Finding one tells you a part this answer leans on. The layers the name movers sit in are a good place to start, though you may find the biggest drops somewhere you don't expect.
 
 ```yaml
 target:
