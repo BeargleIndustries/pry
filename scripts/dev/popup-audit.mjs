@@ -17,8 +17,16 @@
 // window.__popupAudit. Exit code is non-zero if any size has FAIL > 0 or
 // SKIP > 0, or never finished.
 //
+// The quick tour (plan T7b): every run walks all 12 steps of `pry.quick-tour`
+// (the overlay lesson) after the fixed prompt has run, and checks the run
+// survives the tour.
+//   --skip-tour        leave out the tour pass.
+//   --tour-shots <dir> screenshots of every tour step at 1280x800 and 1024x700
+//                      after a run (quick-tour-<stepId>-<w>.png), plus steps 3-8 at
+//                      1024x700 on a fresh launch before any Run
+//                      (quick-tour-<stepId>-empty-1024.png).
+//
 // Lessons (plan T3):
-//   --skip-tour        leave out the tour passes (T7b owns them).
 //   Every run adds the learning-mode pass: the Lessons sidebar open beside the
 //   app on both sides at 1280x800 and 1024x700, on the right at 960x700 and
 //   740x700. Each checks that no tip covers `lesson-sidebar`, the honesty box
@@ -45,7 +53,6 @@ const SIZES = (args.sizes ?? '1280x800,1024x700,960x700,740x700').split(',').map
 const OUT = resolve(args.out ?? 'popup-audit.json');
 const SHOTS = args.shots ? resolve(args.shots) : null;
 const TIMEOUT_MS = Number(args.timeout ?? 40 * 60 * 1000);
-const GUIDE_TOUR_SIZES = new Set(['1024x700', '740x700']);
 const SKIP_TOUR = args['skip-tour'] === 'true';
 /** Learning-mode pass sides per size (plan T3 acceptance). */
 const LESSON_SIDES = { '1280x800': 'both', '1024x700': 'both', '960x700': 'right', '740x700': 'right' };
@@ -128,6 +135,11 @@ async function main() {
     cdp.close();
     process.exit(code);
   }
+  if (args['tour-shots']) {
+    const code = await tourShots(cdp, base, resolve(args['tour-shots']));
+    cdp.close();
+    process.exit(code);
+  }
 
   const results = [];
   let failed = false;
@@ -136,7 +148,6 @@ async function main() {
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: false });
     const url = new URL(base);
     url.searchParams.set('popupAudit', '1');
-    if (GUIDE_TOUR_SIZES.has(key) && !SKIP_TOUR) url.searchParams.set('guideTour', '1');
     if (SKIP_TOUR) url.searchParams.set('skipTour', '1');
     url.searchParams.set('lessons', LESSON_SIDES[key] ?? 'right');
     console.log(`[${key}] ${url.href}`);
@@ -173,7 +184,7 @@ async function main() {
     if (SHOTS) {
       const showStep = async (id) => evaluate(cdp, `window.__popupAuditShow?.(${JSON.stringify(id)})`, true);
       if (key === '1280x800') {
-        await showStep('basics.run');
+        await showStep('step-2');
         await shot(cdp, 'popup-1280.png');
       }
       const inset = report.records.find((r) => r.kind === 'tour' && r.mode === 'inset' && r.phase === 'main');
@@ -183,7 +194,7 @@ async function main() {
         results.at(-1).insetShot = inset.id;
       }
       if (w < 760) {
-        await showStep('basics.run');
+        await showStep('step-2');
         await shot(cdp, `popup-${w}-sheet.png`);
       }
       await evaluate(cdp, 'window.__popupAuditShow?.(null)', true);
@@ -365,6 +376,61 @@ async function lessonShots(cdp, base, dir) {
   }
   await evaluate(cdp, 'window.__pryLessons.close(); window.__pryLessons.setWindowSize(1280, 800)', true);
   return code;
+}
+
+// ---------------------------------------------------------------------------
+// The quick tour (plan T7b): --tour-shots
+// ---------------------------------------------------------------------------
+
+const IOI = 'When Mary and John went to the store, John gave a drink to';
+
+async function tourShots(cdp, base, dir) {
+  mkdirSync(dir, { recursive: true });
+  const snap = async (file) => {
+    const { data } = await cdp.send('Page.captureScreenshot', { format: 'png' });
+    writeFileSync(join(dir, file), Buffer.from(data, 'base64'));
+    const size = await evaluate(cdp, '`${window.innerWidth}x${window.innerHeight}`');
+    console.log(`  screenshot ${file} ${size}`);
+  };
+  const fresh = async (w, h) => {
+    await cdp.send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: false });
+    // The tour is started by the driver, not by the first-launch auto-start.
+    await evaluate(cdp, `localStorage.setItem('pry:tutorial_seen','true'); true`);
+    await cdp.send('Page.navigate', { url: base.href });
+    await sleep(3000);
+    if (!(await waitForExpr(cdp, 'window.__pryTour?.loaded?.() === true'))) throw new Error('the model never loaded');
+    await sleep(1500);
+  };
+  const show = async (id) => {
+    await evaluate(cdp, `window.__pryTour.start(${JSON.stringify(id)})`, true);
+    const ok = await waitForExpr(cdp, `document.querySelector('[data-testid="overlay-card"]')?.getAttribute('data-step-id') === ${JSON.stringify(id)}`, 10000, 200);
+    await sleep(1500);
+    return ok;
+  };
+  let missing = 0;
+  // Steps 3-8 on a fresh launch, before any Run: each must read correctly empty.
+  await fresh(1024, 700);
+  const ran = await evaluate(cdp, `!!document.querySelector('[data-tour="token-strip"] [data-token-index]')`);
+  console.log(`  fresh launch, before any Run (tokens on screen: ${ran})`);
+  for (let n = 3; n <= 8; n++) {
+    if (!(await show(`step-${n}`))) missing++;
+    await snap(`quick-tour-step-${n}-empty-1024.png`);
+  }
+  await evaluate(cdp, 'window.__pryTour.close(); true');
+  // Every step after a run, at both sizes.
+  for (const [w, h] of [[1280, 800], [1024, 700]]) {
+    await fresh(w, h);
+    await evaluate(cdp, `window.__pryTour.run(${JSON.stringify(IOI)})`, true);
+    await sleep(1500);
+    for (let n = 1; n <= 12; n++) {
+      if (!(await show(`step-${n}`))) missing++;
+      await snap(`quick-tour-step-${n}-${w}.png`);
+    }
+    await evaluate(cdp, 'window.__pryTour.close(); true');
+  }
+  await cdp.send('Emulation.clearDeviceMetricsOverride');
+  console.log(`TOUR SHOTS ${missing === 0 ? 'OK' : `MISSING ${missing}`}`);
+  return missing === 0 ? 0 : 1;
 }
 
 main().catch((e) => {
