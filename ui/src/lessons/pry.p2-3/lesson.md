@@ -42,7 +42,7 @@ open_panel: predictions
 :::
 
 :::explain{id=top-box}
-At the very top of the model there's one fixed step. It takes the last token's residual stream and turns it into a logit for every token in the vocabulary, about fifty thousand of them. Those logits are what've been turning into the probabilities you've been reading in :look{at=predictions-panel}[Predictions], here for the Jordan prompt from P1.1.
+At the very top of the model there's one fixed step. It takes the last token's residual stream and turns it into a logit for every token in the vocabulary, about fifty thousand of them. Those logits are what've been turning into the probabilities you've been reading in :look{at=predictions-panel}[Predictions].
 
 The model's last step, which turns a residual stream into a logit for every token in the vocabulary, is called the **unembedding**. The name mirrors the embedding from P1.2: the embedding turns tokens into numbers at the bottom, and the unembedding turns numbers back into scores for tokens at the top. The next tool's built out of it.
 
