@@ -10,16 +10,16 @@
   }
  },
  "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
- "device": "cpu",
+ "device": "cuda",
  "libs": {
   "python": "3.12.13",
-  "torch": "2.5.1+cpu",
+  "torch": "2.5.1+cu124",
   "transformer_lens": "2.15.4",
   "sae_lens": "5.11.0",
   "transformers": "4.57.6",
   "numpy": "1.26.4"
  },
- "recorded": "2026-10-14",
+ "recorded": "2026-10-15",
  "neuronpedia_fetched": null,
  "offline": false,
  "trimmed": [],
@@ -92,750 +92,750 @@
    [
     {
      "predicted_token": "\n",
-     "probability": 0.34442171454429626,
+     "probability": 0.34442099928855896,
      "matches_final": true
     },
     {
      "predicted_token": "soever",
-     "probability": 0.3650703728199005,
+     "probability": 0.3650693893432617,
      "matches_final": false
     },
     {
      "predicted_token": " Mary",
-     "probability": 0.9172537326812744,
+     "probability": 0.9172402620315552,
      "matches_final": false
     },
     {
      "predicted_token": " then",
-     "probability": 0.5420576930046082,
+     "probability": 0.5420464873313904,
      "matches_final": false
     },
     {
      "predicted_token": " John",
-     "probability": 0.09517840296030045,
+     "probability": 0.09517637640237808,
      "matches_final": false
     },
     {
      "predicted_token": " to",
-     "probability": 0.14136844873428345,
+     "probability": 0.14136745035648346,
      "matches_final": true
     },
     {
      "predicted_token": " get",
-     "probability": 0.15378324687480927,
+     "probability": 0.15378078818321228,
      "matches_final": false
     },
     {
      "predicted_token": " same",
-     "probability": 0.6856558322906494,
+     "probability": 0.6856370568275452,
      "matches_final": false
     },
     {
      "predicted_token": " store",
-     "probability": 0.9796222448348999,
+     "probability": 0.9796154499053955,
      "matches_final": false
     },
     {
      "predicted_token": " which",
-     "probability": 0.21267853677272797,
+     "probability": 0.2126767486333847,
      "matches_final": false
     },
     {
      "predicted_token": " John",
-     "probability": 0.1163560077548027,
+     "probability": 0.11635426431894302,
      "matches_final": false
     },
     {
      "predicted_token": " rise",
-     "probability": 0.1391051560640335,
+     "probability": 0.13910338282585144,
      "matches_final": false
     },
     {
      "predicted_token": " few",
-     "probability": 0.09890207648277283,
+     "probability": 0.09890030324459076,
      "matches_final": false
     },
     {
      "predicted_token": " drink",
-     "probability": 0.927315354347229,
+     "probability": 0.9273093342781067,
      "matches_final": false
     },
     {
      "predicted_token": " get",
-     "probability": 0.15099501609802246,
+     "probability": 0.1509920060634613,
      "matches_final": false
     }
    ],
    [
     {
      "predicted_token": "\n",
-     "probability": 0.08009959012269974,
+     "probability": 0.08009954541921616,
      "matches_final": true
     },
     {
      "predicted_token": " asked",
-     "probability": 0.27689024806022644,
+     "probability": 0.27688637375831604,
      "matches_final": false
     },
     {
      "predicted_token": " Mary",
-     "probability": 0.723542332649231,
+     "probability": 0.7235327363014221,
      "matches_final": false
     },
     {
      "predicted_token": " then",
-     "probability": 0.7544565200805664,
+     "probability": 0.7544374465942383,
      "matches_final": false
     },
     {
      "predicted_token": " Foster",
-     "probability": 0.12492436170578003,
+     "probability": 0.12492232024669647,
      "matches_final": false
     },
     {
      "predicted_token": " ahead",
-     "probability": 0.14625321328639984,
+     "probability": 0.146250382065773,
      "matches_final": false
     },
     {
      "predicted_token": " get",
-     "probability": 0.16673117876052856,
+     "probability": 0.16672798991203308,
      "matches_final": false
     },
     {
      "predicted_token": " same",
-     "probability": 0.7848911285400391,
+     "probability": 0.7848745584487915,
      "matches_final": false
     },
     {
      "predicted_token": " store",
-     "probability": 0.9759374856948853,
+     "probability": 0.9759290814399719,
      "matches_final": false
     },
     {
      "predicted_token": " which",
-     "probability": 0.35076433420181274,
+     "probability": 0.3507590591907501,
      "matches_final": false
     },
     {
      "predicted_token": " James",
-     "probability": 0.0646621584892273,
+     "probability": 0.06466097384691238,
      "matches_final": false
     },
     {
      "predicted_token": " rise",
-     "probability": 0.4335712790489197,
+     "probability": 0.43356403708457947,
      "matches_final": false
     },
     {
      "predicted_token": " lot",
-     "probability": 0.16258604824543,
+     "probability": 0.16258327662944794,
      "matches_final": false
     },
     {
      "predicted_token": " drink",
-     "probability": 0.8677871823310852,
+     "probability": 0.8677812814712524,
      "matches_final": false
     },
     {
      "predicted_token": " get",
-     "probability": 0.13180656731128693,
+     "probability": 0.13180387020111084,
      "matches_final": false
     }
    ],
    [
     {
      "predicted_token": ",",
-     "probability": 0.026910267770290375,
+     "probability": 0.02691025659441948,
      "matches_final": false
     },
     {
      "predicted_token": " asked",
-     "probability": 0.2976563274860382,
+     "probability": 0.297650545835495,
      "matches_final": false
     },
     {
      "predicted_token": " Kay",
-     "probability": 0.31372249126434326,
+     "probability": 0.31371960043907166,
      "matches_final": false
     },
     {
      "predicted_token": " then",
-     "probability": 0.4975596070289612,
+     "probability": 0.49754902720451355,
      "matches_final": false
     },
     {
      "predicted_token": " F",
-     "probability": 0.07386697828769684,
+     "probability": 0.07386583834886551,
      "matches_final": false
     },
     {
      "predicted_token": " to",
-     "probability": 0.15448151528835297,
+     "probability": 0.15447959303855896,
      "matches_final": true
     },
     {
      "predicted_token": " get",
-     "probability": 0.25798019766807556,
+     "probability": 0.25797584652900696,
      "matches_final": false
     },
     {
      "predicted_token": " same",
-     "probability": 0.883791983127594,
+     "probability": 0.8837776780128479,
      "matches_final": false
     },
     {
      "predicted_token": " store",
-     "probability": 0.948919951915741,
+     "probability": 0.9489139318466187,
      "matches_final": false
     },
     {
      "predicted_token": " which",
-     "probability": 0.4555618166923523,
+     "probability": 0.4555530250072479,
      "matches_final": false
     },
     {
      "predicted_token": " Smith",
-     "probability": 0.07040254026651382,
+     "probability": 0.07040183246135712,
      "matches_final": false
     },
     {
      "predicted_token": " rise",
-     "probability": 0.1528806835412979,
+     "probability": 0.15287859737873077,
      "matches_final": false
     },
     {
      "predicted_token": " lot",
-     "probability": 0.348855197429657,
+     "probability": 0.3488507866859436,
      "matches_final": false
     },
     {
      "predicted_token": " drink",
-     "probability": 0.9091833233833313,
+     "probability": 0.9091745615005493,
      "matches_final": false
     },
     {
      "predicted_token": " get",
-     "probability": 0.07946713268756866,
+     "probability": 0.07946540415287018,
      "matches_final": false
     }
    ],
    [
     {
      "predicted_token": ",",
-     "probability": 0.027061179280281067,
+     "probability": 0.027061201632022858,
      "matches_final": false
     },
     {
      "predicted_token": " asked",
-     "probability": 0.39309632778167725,
+     "probability": 0.39308902621269226,
      "matches_final": false
     },
     {
      "predicted_token": " Kay",
-     "probability": 0.46254393458366394,
+     "probability": 0.4625382125377655,
      "matches_final": false
     },
     {
      "predicted_token": " then",
-     "probability": 0.40605828166007996,
+     "probability": 0.40605050325393677,
      "matches_final": false
     },
     {
      "predicted_token": "athan",
-     "probability": 0.07611209899187088,
+     "probability": 0.0761110931634903,
      "matches_final": false
     },
     {
      "predicted_token": " to",
-     "probability": 0.1690535992383957,
+     "probability": 0.16905152797698975,
      "matches_final": true
     },
     {
      "predicted_token": " the",
-     "probability": 0.2153085470199585,
+     "probability": 0.21530470252037048,
      "matches_final": true
     },
     {
      "predicted_token": " same",
-     "probability": 0.8899304270744324,
+     "probability": 0.8899152278900146,
      "matches_final": false
     },
     {
      "predicted_token": " store",
-     "probability": 0.9452157020568848,
+     "probability": 0.9452105164527893,
      "matches_final": false
     },
     {
      "predicted_token": " which",
-     "probability": 0.565244734287262,
+     "probability": 0.5652327537536621,
      "matches_final": false
     },
     {
      "predicted_token": "'s",
-     "probability": 0.15108013153076172,
+     "probability": 0.15107817947864532,
      "matches_final": false
     },
     {
      "predicted_token": " a",
-     "probability": 0.1415865272283554,
+     "probability": 0.14158441126346588,
      "matches_final": false
     },
     {
      "predicted_token": " lot",
-     "probability": 0.6981631517410278,
+     "probability": 0.6981543302536011,
      "matches_final": false
     },
     {
      "predicted_token": " drink",
-     "probability": 0.8364963531494141,
+     "probability": 0.8364867568016052,
      "matches_final": false
     },
     {
      "predicted_token": " fill",
-     "probability": 0.19895748794078827,
+     "probability": 0.19895413517951965,
      "matches_final": false
     }
    ],
    [
     {
      "predicted_token": ",",
-     "probability": 0.026887336745858192,
+     "probability": 0.0268873143941164,
      "matches_final": false
     },
     {
      "predicted_token": " asked",
-     "probability": 0.3421003222465515,
+     "probability": 0.3420925736427307,
      "matches_final": false
     },
     {
      "predicted_token": " Kay",
-     "probability": 0.32229313254356384,
+     "probability": 0.32228919863700867,
      "matches_final": false
     },
     {
      "predicted_token": " other",
-     "probability": 0.2805883288383484,
+     "probability": 0.2805822789669037,
      "matches_final": false
     },
     {
      "predicted_token": "ston",
-     "probability": 0.10628467053174973,
+     "probability": 0.10628418624401093,
      "matches_final": false
     },
     {
      "predicted_token": " together",
-     "probability": 0.34824809432029724,
+     "probability": 0.3482430577278137,
      "matches_final": false
     },
     {
      "predicted_token": " the",
-     "probability": 0.3888230323791504,
+     "probability": 0.3888152539730072,
      "matches_final": true
     },
     {
      "predicted_token": " same",
-     "probability": 0.788665771484375,
+     "probability": 0.7886523604393005,
      "matches_final": false
     },
     {
      "predicted_token": " store",
-     "probability": 0.795403242111206,
+     "probability": 0.795394241809845,
      "matches_final": false
     },
     {
      "predicted_token": " which",
-     "probability": 0.5346299409866333,
+     "probability": 0.5346183180809021,
      "matches_final": false
     },
     {
      "predicted_token": "'s",
-     "probability": 0.3201572000980377,
+     "probability": 0.32015201449394226,
      "matches_final": false
     },
     {
      "predicted_token": " his",
-     "probability": 0.16975989937782288,
+     "probability": 0.16975703835487366,
      "matches_final": false
     },
     {
      "predicted_token": " lot",
-     "probability": 0.8576271533966064,
+     "probability": 0.8576198816299438,
      "matches_final": false
     },
     {
      "predicted_token": " drink",
-     "probability": 0.709927499294281,
+     "probability": 0.7099222540855408,
      "matches_final": false
     },
     {
      "predicted_token": " drink",
-     "probability": 0.17650717496871948,
+     "probability": 0.17650477588176727,
      "matches_final": false
     }
    ],
    [
     {
      "predicted_token": ",",
-     "probability": 0.02654830552637577,
+     "probability": 0.026548324152827263,
      "matches_final": false
     },
     {
      "predicted_token": " asked",
-     "probability": 0.3789546489715576,
+     "probability": 0.37894633412361145,
      "matches_final": false
     },
     {
      "predicted_token": " Mary",
-     "probability": 0.23629775643348694,
+     "probability": 0.2362951636314392,
      "matches_final": false
     },
     {
      "predicted_token": " other",
-     "probability": 0.29174721240997314,
+     "probability": 0.2917426526546478,
      "matches_final": false
     },
     {
      "predicted_token": "athan",
-     "probability": 0.2548828125,
+     "probability": 0.25488027930259705,
      "matches_final": false
     },
     {
      "predicted_token": " together",
-     "probability": 0.40458688139915466,
+     "probability": 0.404579758644104,
      "matches_final": false
     },
     {
      "predicted_token": " the",
-     "probability": 0.31242337822914124,
+     "probability": 0.312417209148407,
      "matches_final": true
     },
     {
      "predicted_token": " same",
-     "probability": 0.5294724106788635,
+     "probability": 0.5294679403305054,
      "matches_final": false
     },
     {
      "predicted_token": " store",
-     "probability": 0.8471903800964355,
+     "probability": 0.8471819758415222,
      "matches_final": false
     },
     {
      "predicted_token": " which",
-     "probability": 0.38523247838020325,
+     "probability": 0.38522619009017944,
      "matches_final": false
     },
     {
      "predicted_token": "'s",
-     "probability": 0.8875894546508789,
+     "probability": 0.8875760436058044,
      "matches_final": false
     },
     {
      "predicted_token": " a",
-     "probability": 0.2328513115644455,
+     "probability": 0.23284737765789032,
      "matches_final": false
     },
     {
      "predicted_token": " lot",
-     "probability": 0.8688892722129822,
+     "probability": 0.8688820600509644,
      "matches_final": false
     },
     {
      "predicted_token": " drink",
-     "probability": 0.6872764825820923,
+     "probability": 0.6872697472572327,
      "matches_final": false
     },
     {
      "predicted_token": " drink",
-     "probability": 0.242548868060112,
+     "probability": 0.24254527688026428,
      "matches_final": false
     }
    ],
    [
     {
      "predicted_token": ",",
-     "probability": 0.0264239814132452,
+     "probability": 0.026423990726470947,
      "matches_final": false
     },
     {
      "predicted_token": " asked",
-     "probability": 0.4745115041732788,
+     "probability": 0.4745013117790222,
      "matches_final": false
     },
     {
      "predicted_token": " Jane",
-     "probability": 0.4093344211578369,
+     "probability": 0.4093298614025116,
      "matches_final": false
     },
     {
      "predicted_token": " husband",
-     "probability": 0.16184671223163605,
+     "probability": 0.16184361279010773,
      "matches_final": false
     },
     {
      "predicted_token": " Doe",
-     "probability": 0.14520670473575592,
+     "probability": 0.14520420134067535,
      "matches_final": false
     },
     {
      "predicted_token": " back",
-     "probability": 0.2822889983654022,
+     "probability": 0.2822851836681366,
      "matches_final": false
     },
     {
      "predicted_token": " bed",
-     "probability": 0.46919727325439453,
+     "probability": 0.469192236661911,
      "matches_final": false
     },
     {
      "predicted_token": " town",
-     "probability": 0.4103430211544037,
+     "probability": 0.4103405773639679,
      "matches_final": false
     },
     {
      "predicted_token": " store",
-     "probability": 0.6871964335441589,
+     "probability": 0.687191367149353,
      "matches_final": false
     },
     {
      "predicted_token": " they",
-     "probability": 0.4339398145675659,
+     "probability": 0.4339327812194824,
      "matches_final": true
     },
     {
      "predicted_token": "'s",
-     "probability": 0.8590452075004578,
+     "probability": 0.8590356111526489,
      "matches_final": false
     },
     {
      "predicted_token": " me",
-     "probability": 0.34994950890541077,
+     "probability": 0.34994271397590637,
      "matches_final": false
     },
     {
      "predicted_token": " lot",
-     "probability": 0.6433352828025818,
+     "probability": 0.6433312892913818,
      "matches_final": false
     },
     {
      "predicted_token": " drink",
-     "probability": 0.41178813576698303,
+     "probability": 0.4117823541164398,
      "matches_final": false
     },
     {
      "predicted_token": " accompany",
-     "probability": 0.3438805341720581,
+     "probability": 0.3438750207424164,
      "matches_final": false
     }
    ],
    [
     {
      "predicted_token": ",",
-     "probability": 0.026436978951096535,
+     "probability": 0.02643696777522564,
      "matches_final": false
     },
     {
      "predicted_token": " asked",
-     "probability": 0.6453114151954651,
+     "probability": 0.645298957824707,
      "matches_final": false
     },
     {
      "predicted_token": " Jane",
-     "probability": 0.5265553593635559,
+     "probability": 0.5265551209449768,
      "matches_final": false
     },
     {
      "predicted_token": " husband",
-     "probability": 0.33061715960502625,
+     "probability": 0.3306117057800293,
      "matches_final": false
     },
     {
      "predicted_token": " were",
-     "probability": 0.35904350876808167,
+     "probability": 0.3590385317802429,
      "matches_final": true
     },
     {
      "predicted_token": " together",
-     "probability": 0.3352992534637451,
+     "probability": 0.3352956175804138,
      "matches_final": false
     },
     {
      "predicted_token": " bed",
-     "probability": 0.3196757435798645,
+     "probability": 0.31967025995254517,
      "matches_final": false
     },
     {
      "predicted_token": " same",
-     "probability": 0.2825021743774414,
+     "probability": 0.2824993431568146,
      "matches_final": false
     },
     {
      "predicted_token": " store",
-     "probability": 0.7271470427513123,
+     "probability": 0.727139413356781,
      "matches_final": false
     },
     {
      "predicted_token": " they",
-     "probability": 0.419078528881073,
+     "probability": 0.41907310485839844,
      "matches_final": true
     },
     {
      "predicted_token": "'s",
-     "probability": 0.7859611511230469,
+     "probability": 0.7859540581703186,
      "matches_final": false
     },
     {
      "predicted_token": " them",
-     "probability": 0.3816675841808319,
+     "probability": 0.38166290521621704,
      "matches_final": false
     },
     {
      "predicted_token": " lot",
-     "probability": 0.34342852234840393,
+     "probability": 0.3434242606163025,
      "matches_final": false
     },
     {
      "predicted_token": " to",
-     "probability": 0.16227157413959503,
+     "probability": 0.16226911544799805,
      "matches_final": true
     },
     {
      "predicted_token": " the",
-     "probability": 0.5293777585029602,
+     "probability": 0.5293720960617065,
      "matches_final": false
     }
    ],
    [
     {
      "predicted_token": ",",
-     "probability": 0.026673292741179466,
+     "probability": 0.02667328715324402,
      "matches_final": false
     },
     {
      "predicted_token": " asked",
-     "probability": 0.6925151944160461,
+     "probability": 0.6925022006034851,
      "matches_final": false
     },
     {
      "predicted_token": " Jane",
-     "probability": 0.830987274646759,
+     "probability": 0.8309840559959412,
      "matches_final": false
     },
     {
      "predicted_token": " Mary",
-     "probability": 0.32342442870140076,
+     "probability": 0.32342153787612915,
      "matches_final": false
     },
     {
      "predicted_token": " were",
-     "probability": 0.3995051980018616,
+     "probability": 0.39949923753738403,
      "matches_final": true
     },
     {
      "predicted_token": " together",
-     "probability": 0.7113866209983826,
+     "probability": 0.7113815546035767,
      "matches_final": false
     },
     {
      "predicted_token": " bed",
-     "probability": 0.4016028344631195,
+     "probability": 0.4015986919403076,
      "matches_final": false
     },
     {
      "predicted_token": " church",
-     "probability": 0.5822160840034485,
+     "probability": 0.5822091698646545,
      "matches_final": true
     },
     {
      "predicted_token": " store",
-     "probability": 0.7434515357017517,
+     "probability": 0.7434437870979309,
      "matches_final": false
     },
     {
      "predicted_token": " they",
-     "probability": 0.9021302461624146,
+     "probability": 0.9021221995353699,
      "matches_final": true
     },
     {
      "predicted_token": "'s",
-     "probability": 0.36537086963653564,
+     "probability": 0.365368127822876,
      "matches_final": false
     },
     {
      "predicted_token": " them",
-     "probability": 0.933920681476593,
+     "probability": 0.9339188933372498,
      "matches_final": false
     },
     {
      "predicted_token": " lot",
-     "probability": 0.19303397834300995,
+     "probability": 0.19303104281425476,
      "matches_final": false
     },
     {
      "predicted_token": " to",
-     "probability": 0.5671913623809814,
+     "probability": 0.5671826601028442,
      "matches_final": true
     },
     {
      "predicted_token": " them",
-     "probability": 0.7284705638885498,
+     "probability": 0.7284667491912842,
      "matches_final": false
     }
    ],
    [
     {
      "predicted_token": ",",
-     "probability": 0.026949947699904442,
+     "probability": 0.02694992907345295,
      "matches_final": false
     },
     {
      "predicted_token": " asked",
-     "probability": 0.5519571900367737,
+     "probability": 0.5519453883171082,
      "matches_final": false
     },
     {
      "predicted_token": " Jane",
-     "probability": 0.8460957407951355,
+     "probability": 0.8460917472839355,
      "matches_final": false
     },
     {
      "predicted_token": " Mary",
-     "probability": 0.7772544026374817,
+     "probability": 0.7772524356842041,
      "matches_final": false
     },
     {
      "predicted_token": " were",
-     "probability": 0.41233575344085693,
+     "probability": 0.4123312830924988,
      "matches_final": true
     },
     {
      "predicted_token": " shopping",
-     "probability": 0.30959179997444153,
+     "probability": 0.3095909357070923,
      "matches_final": false
     },
     {
      "predicted_token": " visit",
-     "probability": 0.3879820704460144,
+     "probability": 0.3879792094230652,
      "matches_final": false
     },
     {
      "predicted_token": " church",
-     "probability": 0.7333441972732544,
+     "probability": 0.7333366870880127,
      "matches_final": true
     },
     {
      "predicted_token": " store",
-     "probability": 0.6924811601638794,
+     "probability": 0.6924706697463989,
      "matches_final": false
     },
     {
      "predicted_token": " they",
-     "probability": 0.9889292120933533,
+     "probability": 0.9889271259307861,
      "matches_final": true
     },
     {
      "predicted_token": " was",
-     "probability": 0.25803688168525696,
+     "probability": 0.2580363154411316,
      "matches_final": false
     },
     {
@@ -845,171 +845,171 @@
     },
     {
      "predicted_token": " brief",
-     "probability": 0.14513921737670898,
+     "probability": 0.14513859152793884,
      "matches_final": false
     },
     {
      "predicted_token": " to",
-     "probability": 0.8622329831123352,
+     "probability": 0.8622252941131592,
      "matches_final": true
     },
     {
      "predicted_token": " Mary",
-     "probability": 0.9983865022659302,
+     "probability": 0.998386025428772,
      "matches_final": true
     }
    ],
    [
     {
      "predicted_token": ",",
-     "probability": 0.027445368468761444,
+     "probability": 0.0274453517049551,
      "matches_final": false
     },
     {
      "predicted_token": " you",
-     "probability": 0.2798228859901428,
+     "probability": 0.2798195779323578,
      "matches_final": false
     },
     {
      "predicted_token": " Jane",
-     "probability": 0.424755722284317,
+     "probability": 0.42474713921546936,
      "matches_final": false
     },
     {
      "predicted_token": " Mary",
-     "probability": 0.6336552500724792,
+     "probability": 0.6336500644683838,
      "matches_final": false
     },
     {
      "predicted_token": " were",
-     "probability": 0.2599583566188812,
+     "probability": 0.2599548101425171,
      "matches_final": true
     },
     {
      "predicted_token": " to",
-     "probability": 0.4826463460922241,
+     "probability": 0.4826401472091675,
      "matches_final": true
     },
     {
      "predicted_token": " visit",
-     "probability": 0.30586928129196167,
+     "probability": 0.3058648705482483,
      "matches_final": false
     },
     {
      "predicted_token": " church",
-     "probability": 0.27488815784454346,
+     "probability": 0.2748847007751465,
      "matches_final": true
     },
     {
      "predicted_token": " to",
-     "probability": 0.3485861122608185,
+     "probability": 0.34857574105262756,
      "matches_final": true
     },
     {
      "predicted_token": " they",
-     "probability": 0.9581617116928101,
+     "probability": 0.9581529498100281,
      "matches_final": true
     },
     {
      "predicted_token": " told",
-     "probability": 0.29530835151672363,
+     "probability": 0.29530593752861023,
      "matches_final": false
     },
     {
      "predicted_token": " them",
-     "probability": 0.6698172688484192,
+     "probability": 0.6698170900344849,
      "matches_final": false
     },
     {
      "predicted_token": " gift",
-     "probability": 0.10642910748720169,
+     "probability": 0.10642802715301514,
      "matches_final": false
     },
     {
      "predicted_token": " to",
-     "probability": 0.8800736665725708,
+     "probability": 0.8800675868988037,
      "matches_final": true
     },
     {
      "predicted_token": " Mary",
-     "probability": 0.968465268611908,
+     "probability": 0.9684635996818542,
      "matches_final": true
     }
    ],
    [
     {
      "predicted_token": "\n",
-     "probability": 0.06229811906814575,
+     "probability": 0.062298163771629333,
      "matches_final": true
     },
     {
      "predicted_token": " I",
-     "probability": 0.09132847934961319,
+     "probability": 0.09132804721593857,
      "matches_final": true
     },
     {
      "predicted_token": " Ann",
-     "probability": 0.04512138292193413,
+     "probability": 0.045121025294065475,
      "matches_final": true
     },
     {
      "predicted_token": " I",
-     "probability": 0.0830426961183548,
+     "probability": 0.08304193615913391,
      "matches_final": true
     },
     {
      "predicted_token": " were",
-     "probability": 0.10436445474624634,
+     "probability": 0.1043635755777359,
      "matches_final": true
     },
     {
      "predicted_token": " to",
-     "probability": 0.587090790271759,
+     "probability": 0.5870782136917114,
      "matches_final": true
     },
     {
      "predicted_token": " the",
-     "probability": 0.1915532499551773,
+     "probability": 0.19155095517635345,
      "matches_final": true
     },
     {
      "predicted_token": " church",
-     "probability": 0.05670444667339325,
+     "probability": 0.05670377239584923,
      "matches_final": true
     },
     {
      "predicted_token": " to",
-     "probability": 0.24026896059513092,
+     "probability": 0.2402641624212265,
      "matches_final": true
     },
     {
      "predicted_token": " they",
-     "probability": 0.47924113273620605,
+     "probability": 0.47923511266708374,
      "matches_final": true
     },
     {
      "predicted_token": " said",
-     "probability": 0.13371561467647552,
+     "probability": 0.13371360301971436,
      "matches_final": true
     },
     {
      "predicted_token": " Mary",
-     "probability": 0.3721790611743927,
+     "probability": 0.3721719980239868,
      "matches_final": true
     },
     {
      "predicted_token": " big",
-     "probability": 0.03103501908481121,
+     "probability": 0.031034689396619797,
      "matches_final": true
     },
     {
      "predicted_token": " to",
-     "probability": 0.4411236643791199,
+     "probability": 0.4411120116710663,
      "matches_final": true
     },
     {
      "predicted_token": " Mary",
-     "probability": 0.6769930720329285,
+     "probability": 0.6769737601280212,
      "matches_final": true
     }
    ]

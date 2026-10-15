@@ -16,16 +16,16 @@
   }
  },
  "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
- "device": "cpu",
+ "device": "cuda",
  "libs": {
   "python": "3.12.13",
-  "torch": "2.5.1+cpu",
+  "torch": "2.5.1+cu124",
   "transformer_lens": "2.15.4",
   "sae_lens": "5.11.0",
   "transformers": "4.57.6",
   "numpy": "1.26.4"
  },
- "recorded": "2026-10-14",
+ "recorded": "2026-10-15",
  "neuronpedia_fetched": null,
  "offline": false,
  "trimmed": [],
@@ -35,179 +35,179 @@
   "original_predictions": [
    {
     "token": "49",
-    "probability": 0.05795148387551308,
+    "probability": 0.05795229226350784,
     "rank": 1
    },
    {
     "token": "50",
-    "probability": 0.050567593425512314,
+    "probability": 0.0505671389400959,
     "rank": 2
    },
    {
     "token": "45",
-    "probability": 0.03358353301882744,
+    "probability": 0.03358348459005356,
     "rank": 3
    },
    {
     "token": "43",
-    "probability": 0.031525228172540665,
+    "probability": 0.03152494505047798,
     "rank": 4
    },
    {
     "token": "35",
-    "probability": 0.03151242434978485,
+    "probability": 0.03151208162307739,
     "rank": 5
    },
    {
     "token": "37",
-    "probability": 0.03084667958319187,
+    "probability": 0.030846284702420235,
     "rank": 6
    },
    {
     "token": "48",
-    "probability": 0.03014303557574749,
+    "probability": 0.030142996460199356,
     "rank": 7
    },
    {
     "token": "67",
-    "probability": 0.02963329292833805,
+    "probability": 0.029633253812789917,
     "rank": 8
    },
    {
     "token": "42",
-    "probability": 0.029260583221912384,
+    "probability": 0.029260320588946342,
     "rank": 9
    },
    {
     "token": "44",
-    "probability": 0.02908919006586075,
+    "probability": 0.02908920869231224,
     "rank": 10
    }
   ],
   "ablated_predictions": [
    {
     "token": "49",
-    "probability": 0.05216209590435028,
+    "probability": 0.052162013947963715,
     "rank": 1
    },
    {
     "token": "50",
-    "probability": 0.03992874547839165,
+    "probability": 0.03992890939116478,
     "rank": 2
    },
    {
     "token": "37",
-    "probability": 0.03377017006278038,
+    "probability": 0.033770181238651276,
     "rank": 3
    },
    {
     "token": "43",
-    "probability": 0.033309705555438995,
+    "probability": 0.03330933675169945,
     "rank": 4
    },
    {
     "token": "33",
-    "probability": 0.03246128186583519,
+    "probability": 0.03246122971177101,
     "rank": 5
    },
    {
     "token": "42",
-    "probability": 0.03167915344238281,
+    "probability": 0.03167916089296341,
     "rank": 6
    },
    {
     "token": "35",
-    "probability": 0.030560407787561417,
+    "probability": 0.03056018427014351,
     "rank": 7
    },
    {
     "token": "34",
-    "probability": 0.03032819554209709,
+    "probability": 0.03032802790403366,
     "rank": 8
    },
    {
     "token": "67",
-    "probability": 0.029556674882769585,
+    "probability": 0.029556510969996452,
     "rank": 9
    },
    {
     "token": "44",
-    "probability": 0.027687497437000275,
+    "probability": 0.027687398716807365,
     "rank": 10
    }
   ],
   "prediction_delta": [
    {
     "token": "45",
-    "original_prob": 0.03358353301882744,
+    "original_prob": 0.03358348459005356,
     "ablated_prob": 0.0,
-    "delta": -0.03358353301882744
+    "delta": -0.03358348459005356
    },
    {
     "token": "33",
     "original_prob": 0.0,
-    "ablated_prob": 0.03246128186583519,
-    "delta": 0.03246128186583519
+    "ablated_prob": 0.03246122971177101,
+    "delta": 0.03246122971177101
    },
    {
     "token": "34",
     "original_prob": 0.0,
-    "ablated_prob": 0.03032819554209709,
-    "delta": 0.03032819554209709
+    "ablated_prob": 0.03032802790403366,
+    "delta": 0.03032802790403366
    },
    {
     "token": "48",
-    "original_prob": 0.03014303557574749,
+    "original_prob": 0.030142996460199356,
     "ablated_prob": 0.0,
-    "delta": -0.03014303557574749
+    "delta": -0.030142996460199356
    },
    {
     "token": "50",
-    "original_prob": 0.050567593425512314,
-    "ablated_prob": 0.03992874547839165,
-    "delta": -0.010638847947120667
+    "original_prob": 0.0505671389400959,
+    "ablated_prob": 0.03992890939116478,
+    "delta": -0.010638229548931122
    },
    {
     "token": "49",
-    "original_prob": 0.05795148387551308,
-    "ablated_prob": 0.05216209590435028,
-    "delta": -0.005789387971162796
+    "original_prob": 0.05795229226350784,
+    "ablated_prob": 0.052162013947963715,
+    "delta": -0.005790278315544128
    },
    {
     "token": "37",
-    "original_prob": 0.03084667958319187,
-    "ablated_prob": 0.03377017006278038,
-    "delta": 0.0029234904795885086
+    "original_prob": 0.030846284702420235,
+    "ablated_prob": 0.033770181238651276,
+    "delta": 0.002923896536231041
    },
    {
     "token": "42",
-    "original_prob": 0.029260583221912384,
-    "ablated_prob": 0.03167915344238281,
-    "delta": 0.0024185702204704285
+    "original_prob": 0.029260320588946342,
+    "ablated_prob": 0.03167916089296341,
+    "delta": 0.002418840304017067
    },
    {
     "token": "43",
-    "original_prob": 0.031525228172540665,
-    "ablated_prob": 0.033309705555438995,
-    "delta": 0.0017844773828983307
+    "original_prob": 0.03152494505047798,
+    "ablated_prob": 0.03330933675169945,
+    "delta": 0.001784391701221466
    },
    {
     "token": "44",
-    "original_prob": 0.02908919006586075,
-    "ablated_prob": 0.027687497437000275,
-    "delta": -0.0014016926288604736
+    "original_prob": 0.02908920869231224,
+    "ablated_prob": 0.027687398716807365,
+    "delta": -0.0014018099755048752
    },
    {
     "token": "35",
-    "original_prob": 0.03151242434978485,
-    "ablated_prob": 0.030560407787561417,
-    "delta": -0.0009520165622234344
+    "original_prob": 0.03151208162307739,
+    "ablated_prob": 0.03056018427014351,
+    "delta": -0.0009518973529338837
    },
    {
     "token": "67",
-    "original_prob": 0.02963329292833805,
-    "ablated_prob": 0.029556674882769585,
-    "delta": -7.661804556846619e-05
+    "original_prob": 0.029633253812789917,
+    "ablated_prob": 0.029556510969996452,
+    "delta": -7.674284279346466e-05
    }
   ],
   "ablations": [

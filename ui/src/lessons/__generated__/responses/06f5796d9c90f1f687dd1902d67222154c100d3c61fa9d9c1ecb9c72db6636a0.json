@@ -16,16 +16,16 @@
   }
  },
  "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
- "device": "cpu",
+ "device": "cuda",
  "libs": {
   "python": "3.12.13",
-  "torch": "2.5.1+cpu",
+  "torch": "2.5.1+cu124",
   "transformer_lens": "2.15.4",
   "sae_lens": "5.11.0",
   "transformers": "4.57.6",
   "numpy": "1.26.4"
  },
- "recorded": "2026-10-14",
+ "recorded": "2026-10-15",
  "neuronpedia_fetched": null,
  "offline": false,
  "trimmed": [],
@@ -35,167 +35,167 @@
   "original_predictions": [
    {
     "token": " he",
-    "probability": 0.14450117945671082,
+    "probability": 0.14449959993362427,
     "rank": 1
    },
    {
     "token": " the",
-    "probability": 0.10485560446977615,
+    "probability": 0.10485425591468811,
     "rank": 2
    },
    {
     "token": " she",
-    "probability": 0.04582584276795387,
+    "probability": 0.04582538828253746,
     "rank": 3
    },
    {
     "token": " his",
-    "probability": 0.04137324541807175,
+    "probability": 0.041372593492269516,
     "rank": 4
    },
    {
     "token": " while",
-    "probability": 0.03458680957555771,
+    "probability": 0.034586332738399506,
     "rank": 5
    },
    {
     "token": " if",
-    "probability": 0.028641387820243835,
+    "probability": 0.028640907257795334,
     "rank": 6
    },
    {
     "token": " when",
-    "probability": 0.025890517979860306,
+    "probability": 0.025890210643410683,
     "rank": 7
    },
    {
     "token": " it",
-    "probability": 0.024029089137911797,
+    "probability": 0.024028779938817024,
     "rank": 8
    },
    {
     "token": " after",
-    "probability": 0.021626684814691544,
+    "probability": 0.021626343950629234,
     "rank": 9
    },
    {
     "token": " a",
-    "probability": 0.016147051006555557,
+    "probability": 0.016146844252943993,
     "rank": 10
    }
   ],
   "ablated_predictions": [
    {
     "token": " he",
-    "probability": 0.15016070008277893,
+    "probability": 0.15015846490859985,
     "rank": 1
    },
    {
     "token": " the",
-    "probability": 0.1028350219130516,
+    "probability": 0.10283388197422028,
     "rank": 2
    },
    {
     "token": " she",
-    "probability": 0.04501672834157944,
+    "probability": 0.04501640424132347,
     "rank": 3
    },
    {
     "token": " his",
-    "probability": 0.04292340204119682,
+    "probability": 0.04292292892932892,
     "rank": 4
    },
    {
     "token": " while",
-    "probability": 0.03398815542459488,
+    "probability": 0.03398774936795235,
     "rank": 5
    },
    {
     "token": " if",
-    "probability": 0.028593532741069794,
+    "probability": 0.02859310619533062,
     "rank": 6
    },
    {
     "token": " when",
-    "probability": 0.026378676295280457,
+    "probability": 0.026378359645605087,
     "rank": 7
    },
    {
     "token": " it",
-    "probability": 0.023693164810538292,
+    "probability": 0.02369287982583046,
     "rank": 8
    },
    {
     "token": " after",
-    "probability": 0.021644525229930878,
+    "probability": 0.021644242107868195,
     "rank": 9
    },
    {
     "token": " a",
-    "probability": 0.016052020713686943,
+    "probability": 0.016051752492785454,
     "rank": 10
    }
   ],
   "prediction_delta": [
    {
     "token": " he",
-    "original_prob": 0.14450117945671082,
-    "ablated_prob": 0.15016070008277893,
-    "delta": 0.005659520626068115
+    "original_prob": 0.14449959993362427,
+    "ablated_prob": 0.15015846490859985,
+    "delta": 0.005658864974975586
    },
    {
     "token": " the",
-    "original_prob": 0.10485560446977615,
-    "ablated_prob": 0.1028350219130516,
-    "delta": -0.0020205825567245483
+    "original_prob": 0.10485425591468811,
+    "ablated_prob": 0.10283388197422028,
+    "delta": -0.0020203739404678345
    },
    {
     "token": " his",
-    "original_prob": 0.04137324541807175,
-    "ablated_prob": 0.04292340204119682,
-    "delta": 0.0015501566231250763
+    "original_prob": 0.041372593492269516,
+    "ablated_prob": 0.04292292892932892,
+    "delta": 0.0015503354370594025
    },
    {
     "token": " she",
-    "original_prob": 0.04582584276795387,
-    "ablated_prob": 0.04501672834157944,
-    "delta": -0.0008091144263744354
+    "original_prob": 0.04582538828253746,
+    "ablated_prob": 0.04501640424132347,
+    "delta": -0.0008089840412139893
    },
    {
     "token": " while",
-    "original_prob": 0.03458680957555771,
-    "ablated_prob": 0.03398815542459488,
-    "delta": -0.0005986541509628296
+    "original_prob": 0.034586332738399506,
+    "ablated_prob": 0.03398774936795235,
+    "delta": -0.0005985833704471588
    },
    {
     "token": " when",
-    "original_prob": 0.025890517979860306,
-    "ablated_prob": 0.026378676295280457,
-    "delta": 0.00048815831542015076
+    "original_prob": 0.025890210643410683,
+    "ablated_prob": 0.026378359645605087,
+    "delta": 0.0004881490021944046
    },
    {
     "token": " it",
-    "original_prob": 0.024029089137911797,
-    "ablated_prob": 0.023693164810538292,
-    "delta": -0.00033592432737350464
+    "original_prob": 0.024028779938817024,
+    "ablated_prob": 0.02369287982583046,
+    "delta": -0.00033590011298656464
    },
    {
     "token": " a",
-    "original_prob": 0.016147051006555557,
-    "ablated_prob": 0.016052020713686943,
-    "delta": -9.50302928686142e-05
+    "original_prob": 0.016146844252943993,
+    "ablated_prob": 0.016051752492785454,
+    "delta": -9.509176015853882e-05
    },
    {
     "token": " if",
-    "original_prob": 0.028641387820243835,
-    "ablated_prob": 0.028593532741069794,
-    "delta": -4.785507917404175e-05
+    "original_prob": 0.028640907257795334,
+    "ablated_prob": 0.02859310619533062,
+    "delta": -4.780106246471405e-05
    },
    {
     "token": " after",
-    "original_prob": 0.021626684814691544,
-    "ablated_prob": 0.021644525229930878,
-    "delta": 1.7840415239334106e-05
+    "original_prob": 0.021626343950629234,
+    "ablated_prob": 0.021644242107868195,
+    "delta": 1.7898157238960266e-05
    }
   ],
   "ablations": null,

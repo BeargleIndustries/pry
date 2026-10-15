@@ -16,16 +16,16 @@
   }
  },
  "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
- "device": "cpu",
+ "device": "cuda",
  "libs": {
   "python": "3.12.13",
-  "torch": "2.5.1+cpu",
+  "torch": "2.5.1+cu124",
   "transformer_lens": "2.15.4",
   "sae_lens": "5.11.0",
   "transformers": "4.57.6",
   "numpy": "1.26.4"
  },
- "recorded": "2026-10-14",
+ "recorded": "2026-10-15",
  "neuronpedia_fetched": null,
  "offline": false,
  "trimmed": [],
@@ -35,173 +35,173 @@
   "original_predictions": [
    {
     "token": " Mary",
-    "probability": 0.6769932508468628,
+    "probability": 0.676973819732666,
     "rank": 1
    },
    {
     "token": " them",
-    "probability": 0.12825962901115417,
+    "probability": 0.1282569169998169,
     "rank": 2
    },
    {
     "token": " the",
-    "probability": 0.04757941886782646,
+    "probability": 0.04757855087518692,
     "rank": 3
    },
    {
     "token": " John",
-    "probability": 0.02347848005592823,
+    "probability": 0.023477984592318535,
     "rank": 4
    },
    {
     "token": " her",
-    "probability": 0.014105485752224922,
+    "probability": 0.014105241745710373,
     "rank": 5
    },
    {
     "token": " their",
-    "probability": 0.011191682890057564,
+    "probability": 0.011191457509994507,
     "rank": 6
    },
    {
     "token": " his",
-    "probability": 0.008982484228909016,
+    "probability": 0.00898230355232954,
     "rank": 7
    },
    {
     "token": " everyone",
-    "probability": 0.006099645048379898,
+    "probability": 0.006099505349993706,
     "rank": 8
    },
    {
     "token": " a",
-    "probability": 0.005901940166950226,
+    "probability": 0.005901826545596123,
     "rank": 9
    },
    {
     "token": " each",
-    "probability": 0.003451433964073658,
+    "probability": 0.0034513610880821943,
     "rank": 10
    }
   ],
   "ablated_predictions": [
    {
     "token": " Mary",
-    "probability": 0.7786799669265747,
+    "probability": 0.7786603569984436,
     "rank": 1
    },
    {
     "token": " them",
-    "probability": 0.09531323611736298,
+    "probability": 0.09531083703041077,
     "rank": 2
    },
    {
     "token": " the",
-    "probability": 0.029775789007544518,
+    "probability": 0.029774868860840797,
     "rank": 3
    },
    {
     "token": " John",
-    "probability": 0.011642199009656906,
+    "probability": 0.011641872115433216,
     "rank": 4
    },
    {
     "token": " her",
-    "probability": 0.010882752016186714,
+    "probability": 0.010882468894124031,
     "rank": 5
    },
    {
     "token": " their",
-    "probability": 0.007113856263458729,
+    "probability": 0.007113650441169739,
     "rank": 6
    },
    {
     "token": " his",
-    "probability": 0.005659093614667654,
+    "probability": 0.00565894041210413,
     "rank": 7
    },
    {
     "token": " a",
-    "probability": 0.0034275101497769356,
+    "probability": 0.003427410963922739,
     "rank": 8
    },
    {
     "token": " Jesus",
-    "probability": 0.0034069595858454704,
+    "probability": 0.0034068836830556393,
     "rank": 9
    },
    {
     "token": " everyone",
-    "probability": 0.0033585503697395325,
+    "probability": 0.0033584500197321177,
     "rank": 10
    }
   ],
   "prediction_delta": [
    {
     "token": " Mary",
-    "original_prob": 0.6769932508468628,
-    "ablated_prob": 0.7786799669265747,
-    "delta": 0.10168671607971191
+    "original_prob": 0.676973819732666,
+    "ablated_prob": 0.7786603569984436,
+    "delta": 0.10168653726577759
    },
    {
     "token": " them",
-    "original_prob": 0.12825962901115417,
-    "ablated_prob": 0.09531323611736298,
-    "delta": -0.0329463928937912
+    "original_prob": 0.1282569169998169,
+    "ablated_prob": 0.09531083703041077,
+    "delta": -0.03294607996940613
    },
    {
     "token": " the",
-    "original_prob": 0.04757941886782646,
-    "ablated_prob": 0.029775789007544518,
-    "delta": -0.017803629860281944
+    "original_prob": 0.04757855087518692,
+    "ablated_prob": 0.029774868860840797,
+    "delta": -0.017803682014346123
    },
    {
     "token": " John",
-    "original_prob": 0.02347848005592823,
-    "ablated_prob": 0.011642199009656906,
-    "delta": -0.011836281046271324
+    "original_prob": 0.023477984592318535,
+    "ablated_prob": 0.011641872115433216,
+    "delta": -0.011836112476885319
    },
    {
     "token": " their",
-    "original_prob": 0.011191682890057564,
-    "ablated_prob": 0.007113856263458729,
-    "delta": -0.004077826626598835
+    "original_prob": 0.011191457509994507,
+    "ablated_prob": 0.007113650441169739,
+    "delta": -0.004077807068824768
    },
    {
     "token": " each",
-    "original_prob": 0.003451433964073658,
+    "original_prob": 0.0034513610880821943,
     "ablated_prob": 0.0,
-    "delta": -0.003451433964073658
+    "delta": -0.0034513610880821943
    },
    {
     "token": " Jesus",
     "original_prob": 0.0,
-    "ablated_prob": 0.0034069595858454704,
-    "delta": 0.0034069595858454704
+    "ablated_prob": 0.0034068836830556393,
+    "delta": 0.0034068836830556393
    },
    {
     "token": " his",
-    "original_prob": 0.008982484228909016,
-    "ablated_prob": 0.005659093614667654,
-    "delta": -0.0033233906142413616
+    "original_prob": 0.00898230355232954,
+    "ablated_prob": 0.00565894041210413,
+    "delta": -0.0033233631402254105
    },
    {
     "token": " her",
-    "original_prob": 0.014105485752224922,
-    "ablated_prob": 0.010882752016186714,
-    "delta": -0.003222733736038208
+    "original_prob": 0.014105241745710373,
+    "ablated_prob": 0.010882468894124031,
+    "delta": -0.003222772851586342
    },
    {
     "token": " everyone",
-    "original_prob": 0.006099645048379898,
-    "ablated_prob": 0.0033585503697395325,
-    "delta": -0.0027410946786403656
+    "original_prob": 0.006099505349993706,
+    "ablated_prob": 0.0033584500197321177,
+    "delta": -0.002741055330261588
    },
    {
     "token": " a",
-    "original_prob": 0.005901940166950226,
-    "ablated_prob": 0.0034275101497769356,
-    "delta": -0.0024744300171732903
+    "original_prob": 0.005901826545596123,
+    "ablated_prob": 0.003427410963922739,
+    "delta": -0.0024744155816733837
    }
   ],
   "ablations": [

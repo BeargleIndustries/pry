@@ -484,6 +484,8 @@ pip install -e ".[dev]"
 
 Install CPU torch first, from the CPU index, so the second step doesn't pull a CUDA build. It stays the CPU build after the second step. The second step can take ten minutes or more, most of it downloads, and it can sit quiet for a while. It hasn't hung.
 
+**On a machine with an NVIDIA graphics card, install the CUDA build instead.** Pry runs the model on the graphics card whenever it can, and a recording should come from the same place Pry runs. Swap the CPU line above for `pip install torch==2.5.1 --index-url https://download.pytorch.org/whl/cu124` (that's the build Pry itself installs). The recorder checks this: if `nvidia-smi` finds a card but torch can only use the CPU, `--record` stops and prints that command. To record on the CPU anyway, add `--device cpu`. Each response file says which device recorded it in its `device` field.
+
 If the venv ended up on 3.13 or 3.14, torch still installs into it, and then `pip install -e ".[dev]"` stops with `requires a different Python: 3.14.2 not in '<3.13,>=3.11'`. Delete the `.venv` folder and make it again with the command above. The recorder checks too: on any Python other than 3.11 or 3.12, `--record` and `--lesson-dir` stop straight away and say which Python you have and the command to fix it.
 
 Then download GPT-2 small and its SAE once (about 600 MB, into the Hugging Face cache). The recorder doesn't download them itself; it stops and prints this same command if GPT-2 small is missing:

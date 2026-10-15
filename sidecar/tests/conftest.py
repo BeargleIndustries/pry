@@ -55,6 +55,14 @@ def pytest_addoption(parser):
         default=False,
         help="drift mode also refetches Neuronpedia labels and snippets and compares them",
     )
+    group.addoption(
+        "--device",
+        action="store",
+        choices=("auto", "cpu", "cuda"),
+        default="auto",
+        help="where GPT-2 small runs: auto (default) picks it the way Pry does, CUDA when torch can use the GPU; "
+        "cpu records on the CPU even on a machine with an NVIDIA GPU; cuda stops if torch can't use the GPU",
+    )
 
 
 # The Pythons pyproject.toml's requires-python allows (">=3.11,<3.13"); test_python_support.py holds them equal.
@@ -76,10 +84,60 @@ def python_problem(version=sys.version_info) -> str | None:
     )
 
 
+def _nvidia_gpu() -> str | None:
+    """The first NVIDIA GPU `nvidia-smi -L` lists, else None."""
+    import shutil
+    import subprocess
+
+    exe = shutil.which("nvidia-smi")
+    if not exe:
+        return None
+    try:
+        out = subprocess.run([exe, "-L"], capture_output=True, text=True, timeout=20)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    lines = [ln.split(" (UUID")[0].strip() for ln in out.stdout.splitlines() if ln.strip().startswith("GPU")]
+    return lines[0] if out.returncode == 0 and lines else None
+
+
+def device_problem(choice: str, cuda_ok: bool, torch_version: str, gpu: str | None) -> str | None:
+    """A plain message when --record would run on another device than Pry uses on this machine, else None.
+
+    Pry loads the model on CUDA whenever torch can use the GPU (registry.py), so a CPU build of torch on a
+    machine with an NVIDIA GPU records numbers the app never shows there (seeded sampling, steered text).
+    """
+    if choice == "cpu":
+        return None
+    if choice == "cuda" and not cuda_ok:
+        return (
+            f"--device cuda, but this venv's torch ({torch_version}) can't use a GPU. Install the CUDA build "
+            "(AUTHORING.md, \"Set up the sidecar for recording\"), or drop --device cuda."
+        )
+    if choice == "auto" and not cuda_ok and gpu:
+        return (
+            f"This machine has an NVIDIA GPU ({gpu}), so Pry runs the model there on CUDA, but this venv's torch "
+            f"({torch_version}) is a CPU build. Recording now would save CPU numbers that Pry doesn't show on this "
+            "machine. Install the CUDA build of torch into the venv: `pip install torch==2.5.1 --index-url "
+            "https://download.pytorch.org/whl/cu124` (AUTHORING.md, \"Set up the sidecar for recording\"). "
+            "To record on the CPU anyway, add --device cpu."
+        )
+    return None
+
+
 def pytest_configure(config):
     # Recording a lesson set on an unsupported Python fails late and unclearly, so refuse it up front.
     if config.getoption("--lesson-dir") or config.getoption("--record"):
         problem = python_problem()
+        if problem:
+            pytest.exit(problem, returncode=4)
+    choice = config.getoption("--device")
+    if choice == "cpu":
+        # Hides the GPU before torch first touches CUDA, so the registry's probe picks the CPU.
+        os.environ["CUDA_VISIBLE_DEVICES"] = ""
+    if config.getoption("--record") or choice == "cuda":
+        import torch
+
+        problem = device_problem(choice, torch.cuda.is_available(), torch.__version__, _nvidia_gpu())
         if problem:
             pytest.exit(problem, returncode=4)
 

@@ -15,16 +15,16 @@
   }
  },
  "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
- "device": "cpu",
+ "device": "cuda",
  "libs": {
   "python": "3.12.13",
-  "torch": "2.5.1+cpu",
+  "torch": "2.5.1+cu124",
   "transformer_lens": "2.15.4",
   "sae_lens": "5.11.0",
   "transformers": "4.57.6",
   "numpy": "1.26.4"
  },
- "recorded": "2026-10-14",
+ "recorded": "2026-10-15",
  "neuronpedia_fetched": null,
  "offline": false,
  "trimmed": [],
@@ -39,61 +39,61 @@
   "original_top_predictions": [
    {
     "token": " to",
-    "probability": 0.3012348413467407,
+    "probability": 0.301230251789093,
     "rank": 1,
     "logit": null
    },
    {
     "token": " go",
-    "probability": 0.03619842603802681,
+    "probability": 0.036198150366544724,
     "rank": 2,
     "logit": null
    },
    {
     "token": " just",
-    "probability": 0.03073805570602417,
+    "probability": 0.030737673863768578,
     "rank": 3,
     "logit": null
    },
    {
     "token": " take",
-    "probability": 0.026570739224553108,
+    "probability": 0.026570407673716545,
     "rank": 4,
     "logit": null
    },
    {
     "token": " play",
-    "probability": 0.02055433578789234,
+    "probability": 0.0205541979521513,
     "rank": 5,
     "logit": null
    },
    {
     "token": " get",
-    "probability": 0.020220814272761345,
+    "probability": 0.020220527425408363,
     "rank": 6,
     "logit": null
    },
    {
     "token": " sit",
-    "probability": 0.01972888596355915,
+    "probability": 0.019728679209947586,
     "rank": 7,
     "logit": null
    },
    {
     "token": " eat",
-    "probability": 0.018582085147500038,
+    "probability": 0.018581729382276535,
     "rank": 8,
     "logit": null
    },
    {
     "token": " watch",
-    "probability": 0.017809530720114708,
+    "probability": 0.01780925877392292,
     "rank": 9,
     "logit": null
    },
    {
     "token": " make",
-    "probability": 0.016346730291843414,
+    "probability": 0.01634649746119976,
     "rank": 10,
     "logit": null
    }
@@ -101,61 +101,61 @@
   "steered_top_predictions": [
    {
     "token": " to",
-    "probability": 0.25884079933166504,
+    "probability": 0.25883832573890686,
     "rank": 1,
     "logit": null
    },
    {
     "token": " go",
-    "probability": 0.033195823431015015,
+    "probability": 0.033195409923791885,
     "rank": 2,
     "logit": null
    },
    {
     "token": " just",
-    "probability": 0.03238160163164139,
+    "probability": 0.03238128870725632,
     "rank": 3,
     "logit": null
    },
    {
     "token": " take",
-    "probability": 0.027599599212408066,
+    "probability": 0.027599412947893143,
     "rank": 4,
     "logit": null
    },
    {
     "token": " make",
-    "probability": 0.023910626769065857,
+    "probability": 0.023910347372293472,
     "rank": 5,
     "logit": null
    },
    {
     "token": " get",
-    "probability": 0.021241072565317154,
+    "probability": 0.02124074473977089,
     "rank": 6,
     "logit": null
    },
    {
     "token": " sit",
-    "probability": 0.016263093799352646,
+    "probability": 0.016262952238321304,
     "rank": 7,
     "logit": null
    },
    {
     "token": " watch",
-    "probability": 0.014388899318873882,
+    "probability": 0.01438874751329422,
     "rank": 8,
     "logit": null
    },
    {
     "token": " eat",
-    "probability": 0.013769767247140408,
+    "probability": 0.013769608922302723,
     "rank": 9,
     "logit": null
    },
    {
     "token": " play",
-    "probability": 0.013744892552495003,
+    "probability": 0.01374466810375452,
     "rank": 10,
     "logit": null
    }
@@ -207,8 +207,8 @@
    49
   ],
   "coherence": {
-   "original": -1.2590718269348145,
-   "steered": -1.5084513425827026
+   "original": -1.259087085723877,
+   "steered": -1.5084658861160278
   },
   "scale": {
    "strength": 20.0,
@@ -219,8 +219,8 @@
   "control": {
    "feature_id": 15662,
    "decoder_norm": 1.000022530555725,
-   "steered_decoder_norm": 1.0000394582748413,
-   "cosine": 8.002545072660724e-05,
+   "steered_decoder_norm": 1.0000393390655518,
+   "cosine": 8.002546026600908e-05,
    "method": "norm_matched_lowest_cos",
    "generation": " to go to the pub and have a pint of beer. I'm not sure if I'm going to be able to get a pint of beer, but I'm sure I'll be able to get a pint of beer.\n\nI'm not",
    "changed_token_indices": [
@@ -263,67 +263,67 @@
     49
    ],
    "coherence": {
-    "original": -1.2590718269348145,
-    "steered": -1.29985773563385
+    "original": -1.259087085723877,
+    "steered": -1.299873948097229
    },
    "top_predictions": [
     {
      "token": " to",
-     "probability": 0.23149438202381134,
+     "probability": 0.23149167001247406,
      "rank": 1,
      "logit": null
     },
     {
      "token": " go",
-     "probability": 0.04050324112176895,
+     "probability": 0.040502846240997314,
      "rank": 2,
      "logit": null
     },
     {
      "token": " just",
-     "probability": 0.028459077700972557,
+     "probability": 0.0284588523209095,
      "rank": 3,
      "logit": null
     },
     {
      "token": " take",
-     "probability": 0.023731103166937828,
+     "probability": 0.023730868473649025,
      "rank": 4,
      "logit": null
     },
     {
      "token": " get",
-     "probability": 0.023296838626265526,
+     "probability": 0.023296453058719635,
      "rank": 5,
      "logit": null
     },
     {
      "token": " watch",
-     "probability": 0.02181207202374935,
+     "probability": 0.02181183733046055,
      "rank": 6,
      "logit": null
     },
     {
      "token": " eat",
-     "probability": 0.01800631545484066,
+     "probability": 0.018006140366196632,
      "rank": 7,
      "logit": null
     },
     {
      "token": " I",
-     "probability": 0.016365302726626396,
+     "probability": 0.01636512763798237,
      "rank": 8,
      "logit": null
     },
     {
      "token": " make",
-     "probability": 0.0160838570445776,
+     "probability": 0.016083654016256332,
      "rank": 9,
      "logit": null
     },
     {
      "token": " sit",
-     "probability": 0.014747671782970428,
+     "probability": 0.01474749855697155,
      "rank": 10,
      "logit": null
     }
@@ -331,33 +331,33 @@
    "top_changed": [
     {
      "token": " to",
-     "original_prob": 0.3012348413467407,
-     "steered_prob": 0.23149438202381134,
-     "delta": -0.06974045932292938
+     "original_prob": 0.301230251789093,
+     "steered_prob": 0.23149167001247406,
+     "delta": -0.06973858177661896
     },
     {
      "token": " play",
-     "original_prob": 0.02055433578789234,
+     "original_prob": 0.0205541979521513,
      "steered_prob": 0.0,
-     "delta": -0.02055433578789234
+     "delta": -0.0205541979521513
     },
     {
      "token": " I",
      "original_prob": 0.0,
-     "steered_prob": 0.016365302726626396,
-     "delta": 0.016365302726626396
+     "steered_prob": 0.01636512763798237,
+     "delta": 0.01636512763798237
     },
     {
      "token": " sit",
-     "original_prob": 0.01972888596355915,
-     "steered_prob": 0.014747671782970428,
-     "delta": -0.004981214180588722
+     "original_prob": 0.019728679209947586,
+     "steered_prob": 0.01474749855697155,
+     "delta": -0.004981180652976036
     },
     {
      "token": " go",
-     "original_prob": 0.03619842603802681,
-     "steered_prob": 0.04050324112176895,
-     "delta": 0.004304815083742142
+     "original_prob": 0.036198150366544724,
+     "steered_prob": 0.040502846240997314,
+     "delta": 0.004304695874452591
     }
    ]
   },
