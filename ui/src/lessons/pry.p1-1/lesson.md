@@ -206,7 +206,7 @@ capture: france
 
 :::observe{id=france-obs}
 ```yaml
-check: { read: top_guess.token, op: equals, value: " now" }
+check: { read: top_guess.token, from: france, op: equals, value: " now" }
 ```
 :::
 
