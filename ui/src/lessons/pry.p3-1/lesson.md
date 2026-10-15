@@ -145,7 +145,7 @@ check: { read: compare.delta, args: { token: " she" }, op: within, value: 0, tol
 :::
 
 :::question{id=drop-from}
-So where did the drop you saw in the nurse and doctor pair come from?
+So where'd the drop you saw in the nurse and doctor pair come from?
 
 ```yaml
 free: true
@@ -167,7 +167,7 @@ she_doctor: { read: compare.prediction, args: { side: b, token: " she" }, field:
 :::
 
 :::predict{id=drop-shows checks=drop-reveal}
-Back in :look{at=compare-panel}[Compare], ' she' fell from {she_nurse} with ' nurse' to {she_doctor} with ' doctor'. What does that show?
+Here's :look{at=compare-panel}[Compare] again: ' she' fell from {she_nurse} with ' nurse' to {she_doctor} with ' doctor'. What does that show?
 
 ```yaml
 choices:

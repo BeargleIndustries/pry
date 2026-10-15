@@ -20,8 +20,8 @@ slots:
   control_label: { row: "25.control_label", format: string }
   s: { row: "25.strength", format: number }
   s_high: { row: "25.strength_high", format: number }
-  coh_at_s: { read: steer.coherence, args: { which: steered }, from_capture: at_s, expect: -1.0579530000686646, tolerance: 0.05 }
-  act_max: { read: steer.scale, field: activation_max, from_capture: at_s, format: number, expect: 0 }
+  coh_at_s: { read: steer.coherence, args: { which: steered }, from_capture: at_s, expect: -1.0579530000686646, tolerance: 0.5 }
+  act_max: { read: steer.scale, field: activation_max, from_capture: at_s, format: number, expect: 0, tolerance: 0.5 }
 ---
 
 ## Direction {id=s3-1 outline=P3.5.md#3.1}
@@ -149,21 +149,25 @@ columns:
 :::
 
 :::observe{id=changed-obs}
-You picked :earlier{key="pry.p3-5.change-pick"}[nothing]. Both texts changed. The steered one fills up with sun, clouds, wind and rain. The control's text changed too, and it went round in circles about the ocean, with no rain in it. So only the target moved toward its label. Counting changed words wouldn't have told you that: the control changed nearly as many. Now the scale: you pushed at steering strength {s}, and on its own the feature's activation on this prompt peaks at {act_max}. Pry shows both next to :look{at=steering-strength}[Steering strength]. The feature doesn't fire here at all on its own, so every bit of that push is added.
+You picked :earlier{key="pry.p3-5.change-pick"}[nothing]. Both texts changed, so counting changed words won't tell you which one moved toward the label: the control changes words too. What matters is which way each text went. Read the steered text for weather words, since the target's label is about rain, and look for rain in the control's text too. When we recorded this lesson, the steered text filled up with sun, clouds, wind and rain, and the control's went round in circles about the ocean with no rain in it, so only the target moved toward its label. Steered text can come out a little differently on another computer, so trust the panes over this paragraph. Now the scale: you pushed at steering strength {s}, and on its own the feature's activation on this prompt peaks at {act_max}. Pry shows both next to :look{at=steering-strength}[Steering strength].
 
 ```yaml
 check:
   - { read: steer.text, args: { which: steered }, op: contains, value: "rain" }
   - { read: steer.text, args: { which: control }, op: contains, value: "rain", not: true }
   - { read: steer.text, args: { which: control }, op: equals, value: $read.steer.text, value_args: { which: original }, not: true }
+assert:
+  - require: { slot: act_max, op: lt, value: 0.05 }
+    say: "The feature doesn't fire here at all on its own, so every bit of that push is added."
+    else: "On its own the feature fires only weakly here, peaking at {act_max} against a steering strength of {s}, so nearly all of that push is added."
 ```
 :::
 
 ## Coherence and the four readouts {id=s3-5 outline=P3.5.md#3.5}
 
 :::slots
-coh_steered: { read: steer.coherence, args: { which: steered }, expect: -1.0579530000686646, tolerance: 0.05 }
-coh_control: { read: steer.coherence, args: { which: control }, expect: -0.7376875877380371, tolerance: 0.05 }
+coh_steered: { read: steer.coherence, args: { which: steered }, expect: -1.0579530000686646, tolerance: 0.5 }
+coh_control: { read: steer.coherence, args: { which: control }, expect: -0.7376875877380371, tolerance: 0.5 }
 :::
 
 :::do{id=reveal-coherence}
@@ -177,20 +181,24 @@ Whether the steered text still reads like sensible text is called its **coherenc
 :::explain-result
 You judge a steer by four things, each with its source in view: what changed (the texts side by side), whether the label's idea shows up, coherence, and the control. Never by how many words changed, since the control changes words too.
 
-Look at the control's coherence. It's closer to zero than the target's, and the control's text is the one that repeats itself. The model finds repetition very predictable, so this measure scores it as coherent. That's why coherence is one readout of four, not the verdict.
+Look at the two coherence numbers next to the texts. The model finds repetition very predictable, so this measure can score a text that goes round in circles as coherent.
 
 ```yaml
-supports: "The target pushed the text toward its label and the control, pushing just as hard, didn't. Coherence says how predictable the model finds each text, so read it next to the texts themselves."
+assert:
+  - require: { slot: coh_control, op: gt, slot2: coh_steered }
+    say: "Here the control's coherence is closer to zero than the target's, and the control's text is the one that repeats itself. That's why coherence is one readout of four, not the verdict."
+    else: "Here the target's coherence is closer to zero than the control's. Read both texts before you lean on either number: coherence is one readout of four, not the verdict."
+supports: "The target is the one to check for its label's idea, against a control pushing just as hard. Coherence says how predictable the model finds each text, so read it next to the texts themselves."
 leaves_open: "This is one prompt at one steering strength. Coherence measures predictability, not sense, so repetitive text can score well, and none of the four readouts shows what the feature does when nobody's steering it."
 tool: steering
-skeptic: { says: "A skeptic would say any feature at this strength would fill the text with weather, since the prompt's already outdoors.", check: "Here's the check: the control, at the same strength on the same prompt, wrote no rain at all." }
+skeptic: { says: "A skeptic would say any feature at this strength would fill the text with weather, since the prompt's already outdoors.", check: "Here's the check: the control, at the same strength on the same prompt. Look for rain in its text." }
 ```
 :::
 
 ## Push harder {id=s3-6 outline=P3.5.md#3.6}
 
 :::slots
-coh_high: { read: steer.coherence, args: { which: steered }, expect: -1.0579530000686646, tolerance: 0.05 }
+coh_high: { read: steer.coherence, args: { which: steered }, expect: -1.0579530000686646, tolerance: 0.5 }
 :::
 
 :::predict{id=push-harder checks=harder-obs}

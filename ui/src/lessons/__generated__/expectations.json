@@ -3153,6 +3153,12 @@
           }
         },
         {
+          "where": "s3-4/changed-obs",
+          "kind": "assert",
+          "name": "act_max lt 0.05",
+          "prompt": "On our trip we walked along the beach and watched the ocean"
+        },
+        {
           "where": "s3-5/reveal-coherence",
           "kind": "slot",
           "name": "coh_steered",
@@ -3165,6 +3171,26 @@
           "name": "coh_control",
           "prompt": "On our trip we walked along the beach and watched the ocean",
           "expect": -0.7376875877380371
+        },
+        {
+          "where": "s3-5/explain-result",
+          "kind": "slot",
+          "name": "coh_control",
+          "prompt": "On our trip we walked along the beach and watched the ocean",
+          "expect": -0.7376875877380371
+        },
+        {
+          "where": "s3-5/explain-result",
+          "kind": "slot",
+          "name": "coh_steered",
+          "prompt": "On our trip we walked along the beach and watched the ocean",
+          "expect": -1.0579530000686646
+        },
+        {
+          "where": "s3-5/explain-result",
+          "kind": "assert",
+          "name": "coh_control gt coh_steered",
+          "prompt": "On our trip we walked along the beach and watched the ocean"
         },
         {
           "where": "s3-6/harder-obs",

@@ -41,7 +41,7 @@ Type `Write a short poem about the sea.` and let GPT-2 write. What will it do?
 choices:
   - { text: "it writes a poem", target: M5, feedback: "Lots of people expect that. It's what a chat assistant does. Run it and see what GPT-2 does." }
   - { text: "it says it can't", feedback: "Saying it can't is a chat assistant's habit. Run it and see what GPT-2 does." }
-  - { text: "it carries on as if the line were part of a longer page", feedback: "Run it and see. If it does, where would you find a page like that?" }
+  - { text: "it carries on as if the line were part of a longer page", feedback: "Run it and see. If it does, where'd you find a page like that?" }
   - { text: "something else", feedback: "Run it and see what it did." }
 free: true
 remember: poem-pick
@@ -63,7 +63,7 @@ capture: instruction
 :::
 
 :::observe{id=instruction-obs}
-You said: :earlier{key="pry.p4-1.poem-pick"}[nothing]. In :look{at=watch-it-write}[Watch it write], it didn't write a poem. It started a new line and wrote the instruction again, then again, like it's copying out a list. If you picked the poem, that's a fair guess: it's what ChatGPT would do. The text on screen is what rules it out.
+Here's what you said: :earlier{key="pry.p4-1.poem-pick"}[nothing]. In :look{at=watch-it-write}[Watch it write], it didn't write a poem. It started a new line and wrote the instruction again, then again, like it's copying out a list. If you picked the poem, that's a fair guess: it's what ChatGPT would do. The text on screen is what rules it out.
 
 ```yaml
 check: { read: write_it.text, op: starts_with, value: "Write a short poem about the sea.\n\nWrite a short poem about the sea." }
@@ -131,7 +131,7 @@ same_question: journal
 :::
 
 :::observe{id=document-obs}
-You picked :earlier{key="pry.p4-1.document-pick"}[nothing]. This time it wrote a poem, with the same model and the same numbers; only the text in the box changed. It isn't a good poem, it repeats itself, but it's poem-shaped, because a poem is what usually follows a line like that on a page.
+Here's your pick: :earlier{key="pry.p4-1.document-pick"}[nothing]. This time it wrote a poem, with the same model and the same numbers; only the text in the box changed. It isn't a good poem, it repeats itself, but it's poem-shaped, because a poem is what usually follows a line like that on a page.
 
 ```yaml
 check: { read: write_it.text, from: document, op: starts_with, value: "Here is a short poem about the sea:\n\nThe sea is a sea of water" }
