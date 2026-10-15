@@ -51,6 +51,7 @@
       "identifier": "fs:allow-read-text-file",
       "allow": [
         { "path": "$APPDATA/notebook.json" },
+        { "path": "$APPDATA/lesson-grants.json" },
         { "path": "$APPDATA/lessons" },
         { "path": "$APPDATA/lessons/**" }
       ]
@@ -60,6 +61,7 @@
       "allow": [
         { "path": "$APPDATA" },
         { "path": "$APPDATA/notebook.json" },
+        { "path": "$APPDATA/lesson-grants.json" },
         { "path": "$APPDATA/lessons" },
         { "path": "$APPDATA/lessons/**" }
       ]

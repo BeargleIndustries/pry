@@ -29,6 +29,12 @@ describe('capabilities', () => {
     expect(caps.permissions).toContain('core:window:default');
   });
 
+  it('› the grants file can be read back and checked for existence', () => {
+    for (const id of ['fs:allow-read-text-file', 'fs:allow-exists']) {
+      expect(scopes(id)).toEqual(expect.arrayContaining(['$APPDATA/lesson-grants.json']));
+    }
+  });
+
   it('› log, grants and lesson writes are granted', () => {
     for (const id of ['fs:allow-write-text-file', 'fs:allow-write-file']) {
       expect(scopes(id)).toEqual(
