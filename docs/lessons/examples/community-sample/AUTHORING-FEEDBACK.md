@@ -57,3 +57,50 @@ Each item: what happened, and where I looked. "Docs vs linter" marks a place whe
 34. **`authors` format.** The table says `authors` is credit. Is it a list of strings, or of `{name, url}`? The schema says a list of strings, and that passed; AUTHORING doesn't say. Minor.
 
 Total: 34 items.
+
+## Dispositions (round 1)
+
+Key: **docs** = fixed in AUTHORING.md (or the generated ACTIONS.md); **lint** = fixed in the checker (`ui/src/lib/lessons/format/lint.ts`, `errors.ts`, `ui/scripts/lessons-lint.ts`), with tests in `lint.test.ts`; **sample** = the lesson changed; **kept** = no change, with the reason.
+
+The lesson moved to `community-sample/community.first-token/lesson.md`: the folder now has to match the id (item 6), and an id needs a dot, so `community-sample` can't be one. This file stays in `community-sample/`, and `lessons-lint.mjs ../docs/lessons/examples/community-sample --release` lints the lesson one level down.
+
+1. **docs.** "The front matter" uses `pry-front-matter.v1.schema.json`, exactly as `_template` has it, and says the other file is for tools other than Pry and leaves `baseline` open.
+2. **docs.** "Checking your lesson": build it from source with `npm ci` and `npm run build:cli` in `ui/`, which writes `ui/build-cli/lessons-lint.mjs`.
+3. **docs + lint.** A flag table covers `--release`, `--skeleton` and `--bundled`, and `--help` prints the same.
+4. **docs + lint.** The `--bundled` row and the `--help` text both say a clean `--bundled` run doesn't mean Pry loads a `pry.` id from you. Also documented: pointing the checker at `ui/src/lessons` turns on bundled mode by itself.
+5. **lint.** `--help` describes each flag and the exit codes (0 clean, 1 errors, 2 bad folder). The docs say warnings never change the exit code.
+6. **lint.** New error `folder-id`, for user lessons too: the folder name must equal the id. `_` folders (the template) are exempt. Test: `lint.test.ts › the folder name must equal the id`.
+7. **docs + lint.** "Drafts and author mode": delete the line or set `draft: false`, both work. The draft warning now says so.
+8. **kept, reported.** Front matter messages still point at line 1. Pointing at the key's own line needs the parser to keep front matter line numbers, which is a parse.ts change outside this pass.
+9. **lint.** Same fix as 7: the warning now says what to do.
+10. **docs.** Author mode changes what Pry shows, never what the checker checks.
+11. **docs.** `ACTIONS.md` has a generated "Services" table (from the registry's `services`, with the actions that use each one). "Permissions" points to it and names `neuronpedia` for `search_concepts`.
+12. **docs.** `cost` is reserved: the schema accepts it for a later Pry, nothing uses it, leave it out.
+13. Good. No change.
+14. **docs + sample.** `search_concepts` opens the Steering tab itself. The sample dropped its `open_panel` step.
+15. **docs.** "Network steps can't be checked": no readout reads a lookup's answer, it doesn't replay, so put it in its own section.
+16. **docs.** "Checks" now shows both ways to check against an expected value: `value: $slot.<name>` and `expect` on the check item. The value table lists `$slot.<name>` and the item's own `expect`.
+17. **lint + docs.** An `expect` on the observe itself was never read by anything. It's now the error `observe-expect`, which names `value: $slot.<name>` as the fix. `$slot.<name>` on a slot that doesn't exist was already an error (`slot-unknown`), and there's now a test for it.
+18. **docs.** `$slot.<name>` means the slot's `expect`, not its live value.
+19. **docs.** "One observe, one comparison": a list must all hold, so mixing `$prediction` with an expected value fails whenever the guess differs. Pick one, and let the choice feedback say the rest.
+20. **docs + lint.** "Getting real expected values" says what `rows.json` and `expectations.json` are, and that a missing `expect` or an unrecorded prompt is a warning on user lessons, never an error. The `expect-missing` message no longer mentions `rows.json`. It points to that section.
+21. **docs + sample.** New section "Getting real expected values": author mode in Pry, or the recorder from a terminal (`npm run lessons:compile -- --expectations --dir <set>`, then `pytest tests/test_lessons.py --record --lesson-dir <set>`). The sample's guesses are replaced with recorded values (below).
+22. **docs.** `tolerance` is absolute, in the readout's own units, either way. The docs give an example.
+23. **docs.** All six formulas (`share`, `difference`, `sum`, `abs`, `ratio`, `ln`) are in a table with their `from` and what they give, plus `format`.
+24. **lint.** Root cause: the check counted any `baseline` as a run. A baseline (or `enter`) that only sets a prompt doesn't run the model (`run` defaults to false in `pry-apply.ts`), so a result slot above the first run is now an error, for user lessons too. A do step's own instruction and a predict's feedback stay allowed. The baseline, `enter` and slot docs say so. Test: `lint.test.ts › a baseline that only sets a prompt produces no readout`.
+25. **lint + docs.** New error `value-type`: a check's value has to suit the readout's type. That covers `$prediction` (judged from the predict's choices), constants, `expect`, `$slot`, `$read`, `$capture` and `in` lists. Test: `lint.test.ts › a check value whose type can never match the readout`.
+26. **docs.** Quoted choice text compares as the text inside the quotes, leading space included, and ` Paris` and `Paris` are different tokens.
+27. **docs.** Anchor arguments are checked for names and types, not values.
+28. **docs.** "The copy rules": a term is a name from Pry's `terms.yaml`. Pry's lessons are checked against its order. User lessons sit outside it, so only `new_terms` counts.
+29. **docs.** `term_budget_exception` is one sentence with your reason. On your own lesson it's your call, and the checker only looks for it being there.
+30. Good. No change.
+31. **kept.** The plan fixes the message format ("Section N, step `id`, line L"). The `file:line:` prefix in front is what editors use to jump to the line.
+32. **docs.** A whole analogy example, under "Step kinds".
+33. **docs.** `tool:` is needed after a `compute` action. The tool list is spelled out, and a `network` action alone doesn't need one.
+34. **docs.** `authors` is a list of names, with an example.
+
+### The sample's numbers, recorded
+
+Recorded through Pry's sidecar (`pytest tests/test_lessons.py --record --lesson-dir docs/lessons/examples/community-sample`, GPT-2 small, CPU, 2026-10-14). The responses are in `ui/src/lessons/__generated__/responses/a03861e6....json` (`/generate`) and `81f62100....json` (`/concept-search`).
+
+On "The Eiffel Tower is in the city of", GPT-2 small puts **" London" first at 8.05%** and **" Paris" second at 6.87%**, with " Amsterdam" at 3.14% after them. The outsider's guesses (`expect: " Paris"`, `0.35`) were wrong on both counts. The sample keeps its prompt, because the real result teaches its point honestly: the top token carries a leading space, and the city a person would name isn't always the one the model ranks first. It now has `top: " London"` (0.0805 ± 0.02), a new slot `paris_p` (0.0687 ± 0.02), and the observe checks `value: $slot.top`. The concept search for "Paris" returned feature 974, "mentions of Paris". It stays unchecked, in an optional section.

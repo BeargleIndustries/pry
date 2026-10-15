@@ -1,5 +1,5 @@
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/BeargleIndustries/pry/master/docs/lessons/schema/front-matter.v1.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/BeargleIndustries/pry/master/docs/lessons/schema/pry-front-matter.v1.schema.json
 format: 1
 id: community.first-token
 title: "The model's first guess has a space in it"
@@ -11,8 +11,9 @@ baseline: { prompt: "The Eiffel Tower is in the city of" }
 permissions:
   network: [neuronpedia]
 slots:
-  top: { read: top_guess.token, expect: " Paris" }
-  top_p: { read: top_guess.prob, expect: 0.35, tolerance: 0.1 }
+  top: { read: top_guess.token, expect: " London" }
+  top_p: { read: top_guess.prob, expect: 0.0805, tolerance: 0.02 }
+  paris_p: { read: prediction, args: { token: " Paris" }, field: prob, expect: 0.0687, tolerance: 0.02 }
 new_terms: [token]
 authors: ["A curious learner"]
 ---
@@ -38,8 +39,8 @@ What do you think the model puts first?
 
 ```yaml
 choices:
-  - { text: "\" Paris\"", feedback: "That's the answer a person gives. Run it and see if the model puts it first." }
-  - { text: "\" London\"", feedback: "Another big city. Run it and see where it lands." }
+  - { text: "\" Paris\"", feedback: "That's the answer a person gives. The model gave it {paris_p}, and put {top} above it." }
+  - { text: "\" London\"", feedback: "That's what the model put first, at {top_p}. Paris came in at {paris_p}." }
 remember: first-guess
 ```
 :::
@@ -57,22 +58,22 @@ Press **Do it** to run the prompt.
 
 :::observe{id=look-top}
 ```yaml
-check: { read: top_guess.token, op: equals, value: $prediction }
-expect: top
+check: { read: top_guess.token, op: equals, value: $slot.top }
 ```
 :::
 
 :::explain{id=what-you-saw}
-The model's top token is {top}, at {top_p}. Look at :look{at=prediction-bar token=" Paris"}[the bar]: the token starts with a space. The space is part of the token.
+The model's top token is {top}, at {top_p}. Paris gets {paris_p}. GPT-2 small is a small model, and the city a person would name isn't always the one it ranks first.
+
+Look at :look{at=prediction-bar token=" London"}[the bar]: the token starts with a space. The space is part of the token, so " London" and "London" are two different tokens to the model.
 :::
 
 ## Look it up {id=lookup depth=optional}
 
 :::do{id=find-paris}
-Want to see if Neuronpedia has a feature for Paris? Press **Do it** to search for it.
+Want to see if Neuronpedia has a feature for Paris? Press **Do it** to search for it. Pry opens the Steering tab and shows what Neuronpedia sends back.
 
 ```actions
-- open_panel: { panel: steering }
 - search_concepts: { text: "Paris" }
 ```
 :::
