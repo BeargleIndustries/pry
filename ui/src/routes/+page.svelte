@@ -478,6 +478,9 @@
     openSettings: () => {
       settingsOpen = true;
     },
+    /** The T8 walk driver (scripts/dev/lesson-walk.mjs): the Lessons app and the tool snapshot. */
+    app: () => lessons,
+    snapshot: () => prySnapshot(),
   };
   if (POPUP_AUDIT && typeof window !== 'undefined') (window as unknown as { __pryLessons: typeof auditLessons }).__pryLessons = auditLessons;
 
