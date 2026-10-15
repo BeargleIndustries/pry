@@ -1196,6 +1196,10 @@ export class LessonRunner<VS = unknown> {
   /** The app moved away from what this section set up (and the learner's steps since). */
   drift(): boolean {
     if (this.entering || this.#expected === null || this.busy) return false;
+    // A task section hands the app to the learner: their own changes there are
+    // the task, not drift ("Start over" is the task's way back).
+    const sec = this.section;
+    if (sec && allSteps(sec.steps).some((s) => s.kind === 'task' && this.whenHolds(s))) return false;
     return this.snapshotKey() !== this.#expected;
   }
 

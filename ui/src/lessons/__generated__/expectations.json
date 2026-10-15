@@ -515,6 +515,20 @@
       ]
     },
     {
+      "endpoint": "/generate",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "My favourite thing to do on a Saturday is",
+        "max_new_tokens": 0,
+        "top_k_features": 5
+      },
+      "key": "524c1aff93cd06b5d3a5568bd4e622319fdf4faa96a00424c7abf207a9f7d096",
+      "lessons": [
+        "pry.p3-5"
+      ]
+    },
+    {
       "endpoint": "/patch",
       "model": "gpt2-small",
       "body": {
@@ -987,13 +1001,13 @@
       "model": "gpt2-small",
       "body": {
         "preset_id": "gpt2-small",
-        "prompt": "On our trip we walked along the beach and watched the ocean",
+        "prompt": "My favourite thing to do on a Saturday is",
         "feature_id": 21791,
         "sae_layer": 8,
         "alpha": 25,
         "max_new_tokens": 50
       },
-      "key": "a9cf3e8ebb3f3c33450e5cb6e4bc506e3ae83eeb084009e33c0a525569e17a4e",
+      "key": "af40320c8f5402d18f7ab64736c31b923890fc635b507b37bce75a41586392ca",
       "lessons": [
         "pry.p3-5"
       ]
@@ -3114,7 +3128,8 @@
     },
     "pry.p3-5": {
       "prompts": [
-        "On our trip we walked along the beach and watched the ocean"
+        "On our trip we walked along the beach and watched the ocean",
+        "My favourite thing to do on a Saturday is"
       ],
       "checks": [
         {
