@@ -14,11 +14,12 @@ cold_entry: "What you need from before: the last token's residual stream, after 
 model: gpt2-small
 baseline: { prompt: "Two plus two equals" }
 verified_rows: [3, 4, 5]
+limits: "These are next-token probabilities for one prompt. They don't say what's true, and they don't show how the model got them."
 slots:
-  one_p: { read: prediction, args: { token: " one" }, field: prob, expect: 0.34206 }
-  two_p: { read: prediction, args: { token: " two" }, field: prob, expect: 0.16224 }
-  four_p: { read: prediction, args: { token: " four" }, field: prob, expect: 0.069509 }
-  three_p: { read: prediction, args: { token: " three" }, field: prob, expect: 0.068916 }
+  one_p: { read: prediction, args: { token: " one" }, field: prob, format: probability, expect: 0.34206 }
+  two_p: { read: prediction, args: { token: " two" }, field: prob, format: probability, expect: 0.16224 }
+  four_p: { read: prediction, args: { token: " four" }, field: prob, format: probability, expect: 0.069509 }
+  three_p: { read: prediction, args: { token: " three" }, field: prob, format: probability, expect: 0.068916 }
   top_four: { from: [one_p, two_p, four_p, three_p], formula: sum, format: probability }
   rest: { read: rest_mass, expect: 0.24460 }
 ---
@@ -26,6 +27,8 @@ slots:
 ## Recall {id=s3-0 depth=optional outline=P1.4.md#3.0}
 
 :::recall{id=recall-pieces}
+Why this matters: common text gets short, familiar tokens, and this lesson asks whether the top guess follows what's common or what's true.
+
 ```yaml
 from: pry.p1-2
 question: "Why is ' unbelievable' one token and ' Leclerc' three?"
@@ -51,10 +54,11 @@ What will GPT-2 put on top?
 
 ```yaml
 choices:
-  - { text: "\" four\"", target: M8, feedback: "The model went another way: ' one' got {one_p}, and your pick ' four' got {four_p}. A probability is about what text tends to follow, not what's true." }
-  - { text: "\" one\"", feedback: "That's what happened: ' one' on top at {one_p}, and ' four' back at {four_p}. Why would that be?" }
+  - { text: "\" four\"", target: M8 }
+  - { text: "\" one\"" }
   - { text: "\" two\"" }
   - { text: "something else" }
+remember: top-pick
 ```
 :::
 
@@ -66,6 +70,7 @@ choices:
   - { text: "under 10%" }
   - { text: "10-50%" }
   - { text: "over 50%", target: T1 }
+remember: share-pick
 ```
 :::
 
@@ -91,7 +96,9 @@ check:
 :::
 
 :::explain
-' one' gets {one_p}. ' two' gets {two_p}, ' four' gets {four_p} and ' three' gets {three_p}. Those four hold {top_four} between them. Everything outside the top ten holds {rest}. So the top token isn't the right answer, and even it doesn't get anywhere near all of the 100%.
+You picked :earlier{key="pry.p1-4.top-pick"}[nothing] for the top, and :earlier{key="pry.p1-4.share-pick"}[nothing] for its share. Here's what the model did: ' one' gets {one_p}. ' two' gets {two_p}, ' four' gets {four_p} and ' three' gets {three_p}. Those four hold {top_four} between them. Everything outside the top ten holds {rest}. So the top token isn't the right answer, and even it doesn't get anywhere near all of the 100%.
+
+If you went with ' four', that's what you'd expect from something that checks the sum. Nothing here checks anything: a probability is about what text tends to follow, not what's true.
 :::
 
 ## What the percentages are {id=s3-3 outline=P1.4.md#3.3}
@@ -164,10 +171,10 @@ check: { read: prediction, args: { token: " one" }, field: logit, op: gt, value:
 ## A near-tie {id=s3-5 outline=P1.4.md#3.5}
 
 :::slots
-paris: { read: prediction, args: { token: " Paris" }, field: prob, expect: 0.097184 }
-marse: { read: prediction, args: { token: " Marse" }, field: prob, expect: 0.089123 }
-saint: { read: prediction, args: { token: " Saint" }, field: prob, expect: 0.030925 }
-st: { read: prediction, args: { token: " St" }, field: prob, expect: 0.027857 }
+paris: { read: prediction, args: { token: " Paris" }, field: prob, format: probability, expect: 0.097184 }
+marse: { read: prediction, args: { token: " Marse" }, field: prob, format: probability, expect: 0.089123 }
+saint: { read: prediction, args: { token: " Saint" }, field: prob, format: probability, expect: 0.030925 }
+st: { read: prediction, args: { token: " St" }, field: prob, format: probability, expect: 0.027857 }
 city_four: { from: [paris, marse, saint, st], formula: sum, format: probability }
 paris_lead: { from: [paris, marse], formula: difference, format: probability }
 :::
@@ -251,10 +258,10 @@ tool: predictions
 ## Transfer {id=s5 outline=P1.4.md#5}
 
 :::slots
-brains: { read: prediction, args: { token: " brains" }, field: prob, expect: 0.12701 }
-energy: { read: prediction, args: { token: " energy" }, field: prob, expect: 0.11460 }
-body: { read: prediction, args: { token: " body" }, field: prob, expect: 0.10270 }
-bodies: { read: prediction, args: { token: " bodies" }, field: prob, expect: 0.072989 }
+brains: { read: prediction, args: { token: " brains" }, field: prob, format: probability, expect: 0.12701 }
+energy: { read: prediction, args: { token: " energy" }, field: prob, format: probability, expect: 0.11460 }
+body: { read: prediction, args: { token: " body" }, field: prob, format: probability, expect: 0.10270 }
+bodies: { read: prediction, args: { token: " bodies" }, field: prob, format: probability, expect: 0.072989 }
 myth_four: { from: [brains, energy, body, bodies], formula: sum, format: probability }
 :::
 

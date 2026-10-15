@@ -14,6 +14,7 @@ cold_entry: "Three things from before. A sparse autoencoder (SAE) splits a token
 model: gpt2-small
 baseline: { prompt: "The nurse said that" }
 verified_rows: [17, 24, 61, 62]
+limits: "A feature knockout shows how much this answer depends on that feature here. Removing any active feature's share changes the residual stream a little, so compare against a control before reading a small change."
 slots:
   n: { row: "24.n_top", format: count }
   target_delta: { read: feature_ablation.delta, args: { token: " she" }, from_capture: target, expect: -0.011518552899360657, tolerance: 0.02 }
@@ -23,6 +24,8 @@ slots:
 ## Recall {id=s3-1 depth=optional outline=P3.4.md#3.1}
 
 :::recall{id=recall-held}
+Why this matters: the same two readings come back when you knock out features, so you'll need them again here.
+
 ```yaml
 from: pry.p3-2
 question: "The name movers came off and ' Mary' held on more than you might expect. What were the two readings of 'it held'?"
@@ -71,8 +74,8 @@ Press **Do it** to run the nurse prompt and open :look{at=panel-b-features-list}
 ## Knock out the top features at ' nurse' {id=s3-3 outline=P3.4.md#3.3}
 
 :::slots
-before: { read: feature_ablation.prediction, args: { side: original, token: " she" }, field: prob, expect: 0.1896977424621582, tolerance: 0.02 }
-after: { read: feature_ablation.prediction, args: { side: ablated, token: " she" }, field: prob, expect: 0.17817918956279755, tolerance: 0.02 }
+before: { read: feature_ablation.prediction, args: { side: original, token: " she" }, field: prob, format: probability, expect: 0.1896977424621582, tolerance: 0.02 }
+after: { read: feature_ablation.prediction, args: { side: ablated, token: " she" }, field: prob, format: probability, expect: 0.17817918956279755, tolerance: 0.02 }
 :::
 
 :::predict{id=top-off checks=top-obs}
@@ -80,18 +83,19 @@ Switch off the {n} most active features at ' nurse' (labels shown; Pry removes t
 
 ```yaml
 choices:
-  - { text: "falls to almost nothing", target: N7, feedback: "The model went another way: ' she' fell from {before} to {after}, not to nothing." }
-  - { text: "falls some", feedback: "That's what happened: ' she' fell from {before} to {after}. Is that more than switching off any feature would do?" }
-  - { text: "no visible change", feedback: "The model went another way: ' she' fell from {before} to {after}. It's a small move, so you'll need something to compare it with." }
-  - { text: "rises", feedback: "The model went another way: ' she' fell from {before} to {after}." }
+  - { text: "falls to almost nothing", target: N7, feedback: "Lots of people expect that when the labels sound right. The next section runs the knockout." }
+  - { text: "falls some", feedback: "The next section runs the knockout." }
+  - { text: "no visible change", feedback: "The next section runs the knockout." }
+  - { text: "rises", feedback: "The next section runs the knockout." }
+remember: top-pick
 ```
 :::
 
 ## Do and observe {id=s3-4 outline=P3.4.md#3.4}
 
 :::slots
-before: { read: feature_ablation.prediction, args: { side: original, token: " she" }, field: prob, expect: 0.1896977424621582, tolerance: 0.02 }
-after: { read: feature_ablation.prediction, args: { side: ablated, token: " she" }, field: prob, expect: 0.17817918956279755, tolerance: 0.02 }
+before: { read: feature_ablation.prediction, args: { side: original, token: " she" }, field: prob, format: probability, expect: 0.1896977424621582, tolerance: 0.02 }
+after: { read: feature_ablation.prediction, args: { side: ablated, token: " she" }, field: prob, format: probability, expect: 0.17817918956279755, tolerance: 0.02 }
 :::
 
 :::do{id=top-knockout}
@@ -108,7 +112,7 @@ capture: target
 :::
 
 :::observe{id=top-obs}
-' she' went from {before} to {after}. It fell, and it's still on top, so the features weren't the whole story. The labels sounded like they'd explain ' she' on their own, and the run says they don't.
+You picked :earlier{key="pry.p3-4.top-pick"}[nothing]. In :look{at=ablation-results}[the knockout results], ' she' went from {before} to {after}. It fell, and it's still on top, so the features weren't the whole story. The labels sounded like they'd explain ' she' on their own, and the run says they don't.
 
 ```yaml
 check: { read: feature_ablation.delta, args: { token: " she" }, op: lt, value: 0, expect: -0.011518552899360657 }
@@ -176,6 +180,12 @@ skeptic: { says: "A skeptic would say any change to the residual stream would mo
 :::
 
 ## One feature at a time {id=s3-7 outline=P3.4.md#3.7}
+
+:::enter
+open_panel: features
+focus_token: { text: " nurse" }
+feature_ablation: { ids: [], on: false }
+:::
 
 :::task{id=find-feature}
 Find one feature at ' nurse' whose knockout alone lowers ' she' by more than the control did. One feature at a time, and before each run write down what you expect from its label. Knocking out several at once mixes their effects, so now you're pulling them apart.

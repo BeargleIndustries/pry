@@ -1400,6 +1400,7 @@
           "prompt": "The capital of France is",
           "check": {
             "read": "top_guess.token",
+            "from": "france",
             "op": "equals",
             "value": " now"
           }
@@ -2036,6 +2037,7 @@
               "side": "a",
               "token": " Sam"
             },
+            "from": "sam",
             "field": "rank",
             "op": "lt",
             "value": 11,
@@ -2053,6 +2055,7 @@
               "side": "b",
               "token": " Sam"
             },
+            "from": "sam",
             "field": "rank",
             "op": "lt",
             "value": 11,
@@ -2212,6 +2215,13 @@
           }
         },
         {
+          "where": "s3-3/explain-result",
+          "kind": "slot",
+          "name": "qu",
+          "prompt": "Pip ordered zebra lamps from Quorn. Pip ordered zebra lamps from",
+          "expect": 0.3195
+        },
+        {
           "where": "s3-5/ringed-layers",
           "kind": "slot",
           "name": "top_induction_heads",
@@ -2297,6 +2307,13 @@
             "op": "equals",
             "value": " Qu"
           }
+        },
+        {
+          "where": "s5/explain-result",
+          "kind": "slot",
+          "name": "qu",
+          "prompt": "Pip ordered zebra lamps from Quorn. Pip ordered yellow lamps from",
+          "expect": 0.1158
         }
       ]
     },
@@ -2455,6 +2472,13 @@
         {
           "where": "s3-5/bars-obs",
           "kind": "slot",
+          "name": "n",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 2
+        },
+        {
+          "where": "s3-5/bars-obs",
+          "kind": "slot",
           "name": "top_parts",
           "prompt": "Michael Jordan played the sport of",
           "expect": [
@@ -2483,13 +2507,6 @@
             "value": 0,
             "expect": 14.799
           }
-        },
-        {
-          "where": "s3-5/bars-obs",
-          "kind": "slot",
-          "name": "n",
-          "prompt": "Michael Jordan played the sport of",
-          "expect": 2
         },
         {
           "where": "s3-6/explain-result",
@@ -2586,6 +2603,20 @@
               "contrast": " John"
             }
           }
+        },
+        {
+          "where": "s3-10/explain-result",
+          "kind": "slot",
+          "name": "bars_total",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": 4.564
+        },
+        {
+          "where": "s3-10/explain-result",
+          "kind": "slot",
+          "name": "actual_logit",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": 3.362
         }
       ]
     },
@@ -2702,6 +2733,20 @@
           }
         },
         {
+          "where": "s3-6/drop-shows",
+          "kind": "slot",
+          "name": "she_nurse",
+          "prompt": "The nurse said that",
+          "expect": 0.1896977424621582
+        },
+        {
+          "where": "s3-6/drop-shows",
+          "kind": "slot",
+          "name": "she_doctor",
+          "prompt": "The nurse said that",
+          "expect": 0.04582584276795387
+        },
+        {
           "where": "s5/mary-swap/swap-obs",
           "kind": "slot",
           "name": "mary",
@@ -2774,20 +2819,6 @@
             "value": -0.01,
             "expect": -0.002849757671356201
           }
-        },
-        {
-          "where": "s3-4/heavy-obs",
-          "kind": "slot",
-          "name": "mary_before",
-          "prompt": "When Mary and John went to the store, John gave a drink to",
-          "expect": 0.6769932508468628
-        },
-        {
-          "where": "s3-4/heavy-obs",
-          "kind": "slot",
-          "name": "mary_after",
-          "prompt": "When Mary and John went to the store, John gave a drink to",
-          "expect": 0.6741434931755066
         },
         {
           "where": "s3-7/three-obs",
@@ -3070,14 +3101,9 @@
         {
           "where": "s3-4/changed-obs",
           "kind": "slot",
-          "name": "scale",
+          "name": "act_max",
           "prompt": "On our trip we walked along the beach and watched the ocean",
-          "expect": {
-            "strength": 25,
-            "activation_p50": 0,
-            "activation_p99": 0,
-            "activation_max": 0
-          }
+          "expect": 0
         },
         {
           "where": "s3-4/changed-obs",
@@ -3127,6 +3153,12 @@
           }
         },
         {
+          "where": "s3-4/changed-obs",
+          "kind": "assert",
+          "name": "act_max lt 0.05",
+          "prompt": "On our trip we walked along the beach and watched the ocean"
+        },
+        {
           "where": "s3-5/reveal-coherence",
           "kind": "slot",
           "name": "coh_steered",
@@ -3139,6 +3171,26 @@
           "name": "coh_control",
           "prompt": "On our trip we walked along the beach and watched the ocean",
           "expect": -0.7376875877380371
+        },
+        {
+          "where": "s3-5/explain-result",
+          "kind": "slot",
+          "name": "coh_control",
+          "prompt": "On our trip we walked along the beach and watched the ocean",
+          "expect": -0.7376875877380371
+        },
+        {
+          "where": "s3-5/explain-result",
+          "kind": "slot",
+          "name": "coh_steered",
+          "prompt": "On our trip we walked along the beach and watched the ocean",
+          "expect": -1.0579530000686646
+        },
+        {
+          "where": "s3-5/explain-result",
+          "kind": "assert",
+          "name": "coh_control gt coh_steered",
+          "prompt": "On our trip we walked along the beach and watched the ocean"
         },
         {
           "where": "s3-6/harder-obs",
@@ -3261,16 +3313,16 @@
         {
           "where": "s3-4/mlp-obs",
           "kind": "slot",
-          "name": "l2_share",
+          "name": "l2_patched",
           "prompt": "Michael Jordan played the sport of",
-          "expect": 0.40324814685155025
+          "expect": 14.2425
         },
         {
           "where": "s3-4/mlp-obs",
           "kind": "slot",
-          "name": "l11_share",
+          "name": "l11_patched",
           "prompt": "Michael Jordan played the sport of",
-          "expect": -0.3850042056096413
+          "expect": 11.9707
         },
         {
           "where": "s3-4/mlp-obs",
@@ -3626,6 +3678,13 @@
             "op": "equals",
             "value": "49"
           }
+        },
+        {
+          "where": "s3-3/flat-obs",
+          "kind": "slot",
+          "name": "top_p",
+          "prompt": "The war lasted from the year 1732 to the year 17",
+          "expect": 0.05795148387551308
         },
         {
           "where": "s3-5/map-obs",
