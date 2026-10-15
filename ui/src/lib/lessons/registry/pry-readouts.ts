@@ -312,7 +312,7 @@ export const pryReadouts: Record<string, ReadoutDef> = {
   },
 
   tokens: { type: 'list', doc: 'The prompt\'s tokens, in order.', read: reader((s) => s.response?.tokens.map((t) => t.text)) },
-  token_count: { type: 'number', unit: 'count', doc: 'How many tokens the prompt became, counting the start marker (`<|endoftext|>`) that Pry puts first. So it is one more than the tokens of your own text.', read: reader((s) => s.response?.tokens.length) },
+  token_count: { type: 'number', unit: 'count', doc: 'How many tokens the prompt became, counting the start marker (`<|endoftext|>`) that Pry puts first, so it\'s one more than the tokens of your own text.', read: reader((s) => s.response?.tokens.length) },
   word_tokens: {
     args: z.object({ word: z.string() }).strict(),
     type: 'number',

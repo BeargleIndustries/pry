@@ -55,7 +55,7 @@ Effects: `view` and `compute` run freely and replay when a section opens; `downl
 |---|---|---|---|
 | `result` | record |  | The current run's result: the generic readout every tool maps onto. |
 | `tokens` | list |  | The prompt's tokens, in order. |
-| `token_count` | number (count) |  | How many tokens the prompt became, counting the start marker (`<\|endoftext\|>`) that Pry puts first. So it is one more than the tokens of your own text. |
+| `token_count` | number (count) |  | How many tokens the prompt became, counting the start marker (`<\|endoftext\|>`) that Pry puts first, so it's one more than the tokens of your own text. |
 | `word_tokens` | number (count) | `{ word: string }` | How many tokens one word became: the tokens in the strip that spell it, leading space included. The start marker never counts here. |
 | `focus.token` | string |  | The selected token. |
 | `focus.position` | number |  | The selected token's position, where the start marker is 0. |

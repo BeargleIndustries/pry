@@ -39,3 +39,33 @@ Each item: what happened, and the doc section I was in.
 
 20. **`authors` with no real name.** "The front matter" table. I used a placeholder; nothing says whether `authors` shows anywhere a learner sees it.
 21. **Where `--skeleton` fits.** "Checking your lesson". I wrote `expect: pending` and used `--skeleton` while recording, which worked. The "Getting real expected values" section never mentions `pending`, so the two sections don't point at each other.
+
+## Dispositions (round 2)
+
+Key: **docs** = fixed in AUTHORING.md (or ACTIONS.md, generated from the registry docs in `ui/src/lib/lessons/registry/pry-readouts.ts`); **tool** = fixed in the checker (`ui/scripts/lessons-lint.ts`), the recorder (`sidecar/tests/test_lessons.py`) or `lessons:compile`, with tests in `lessons-cli.test.ts`; **kept** = no change, with the reason. Round 1's dispositions still hold.
+
+The recorder now writes a set's responses into `<set>/__generated__/responses/`, beside its lessons, instead of Pry's own folder. Both examples' responses moved there.
+
+1. **docs.** "Getting real expected values" states the set rule: a set is a folder of lesson folders, its name is free (not an id, no dot needed), and the checker skips names starting with `_` or `.`. The examples folder is drawn out as the worked case, and step 2 of "From the template" names `my-lessons` as your set.
+2. **docs.** New section "Set up the sidecar for recording": Python 3.11 or 3.12, the venv, CPU torch, then `pip install -e ".[dev]"`, as in `sidecar/README.md`. Author mode is named as the route with no setup.
+3. **docs + tool.** The same section gives the one command that downloads GPT-2 small and its SAE. The recorder doesn't download them: `--lesson-dir` used to skip quietly without them, and now fails with that command in the message.
+4. **docs.** The `token_count` doc string says it counts the start marker, and so does `compare.token_count`. AUTHORING says it under the slot units table and in "Token counts include the start marker".
+5. **docs.** `word_tokens` now reads "How many tokens one word became: the tokens in the strip that spell it, leading space included. The start marker never counts here." "Strip entries" is gone.
+6. **docs.** Step 3: the response file is named after the request's `key` in `expectations.json`, and it sits in `<set>/__generated__/responses/`.
+7. **docs.** Step 3 names the `tokens` list as a source, starting with `<|endoftext|>`.
+8. **docs + tool.** Responses land in the set's own `__generated__/responses/`, and step 5 says to commit the `__generated__` folder with the lessons. The checker reads them from there.
+9. **docs.** "One observe, one comparison" says a `$slot` check replies "The app shows what the lesson expected" whatever the learner picked, so the choice feedback is where the guess gets its answer. That's what you did.
+10. **docs.** "The copy rules": for your lessons only `new_terms` counts, whether a word is in `terms.yaml` doesn't matter, and the checker is silent within the budget. The file's path in Pry's source is given.
+11. **docs.** The `do` row in "Step kinds" says an action that shows its own panel opens it itself, so the answer sits where you'd look first.
+12. **docs.** "The copy rules": a section doesn't need an `explain-result`, and the checker doesn't ask for one.
+13. **docs + tool.** Step 1 says `pending` slots are left out until they have a value, and `lessons:compile` prints the same line after it writes the file.
+14. **docs + tool.** The recorder no longer sends a lookup unless you add `--network`. Without it, it keeps any recorded lookup and lists each one it didn't send. AUTHORING names `www.neuronpedia.org` and the offline route, in "Getting real expected values" and under "Network steps can't be checked".
+15. **tool.** A `--lesson-dir` run now ends with what it did: "recorded N response(s) into ..." with each file, or "replayed N request(s)", plus any lookup it didn't send. Step 2 explains the `75 skipped`.
+16. **tool.** With `--dir`, the bundled "expectations.json is up to date" test is now skipped, not passed, and the script prints the real path with request and lesson counts.
+17. **docs + tool.** The checker walks each user lesson through Pry's real actions against `<set>/__generated__/responses/` (the walk `lesson-checks.test.ts` uses, with the same request keys as `lessons:compile`). A wrong `expect` is a warning, and an error under `--release`. Expects with no recording get a warning that points at the recording route. Tests: `lessons-cli.test.ts › a wrong expect against the recorded response is a warning, and an error under --release`, `› expects with no recorded response in the set warn and point at the recording route`, `› a user lesson whose expects match the responses recorded beside its set lints clean`. An author without Pry's source still records only in author mode, and the checker can't see that; that part stays as it is.
+18. **docs.** "Checking your lesson" shows a whole error line and says how a warning differs.
+19. **tool.** The `draft` and `new_terms` messages now point at their own line in the front matter. Test: `lessons-cli.test.ts › the draft warning points at the draft line, not line 1`. The number still shows twice (`lesson.md:9: warning: line 9:`) on purpose: the first one is for editors (round 1, item 31).
+20. **docs.** `authors` shows on the install sheet as "by ...", so use the name you want learners to see, or leave it out.
+21. **docs.** "Getting real expected values" opens with `expect: pending` and `--skeleton`, and points at "Checking your lesson".
+
+Totals: 21 items. 13 docs only, 3 tool only (15, 16, 19), 5 both (3, 8, 13, 14, 17). None kept without a change.
