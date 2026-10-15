@@ -17,7 +17,8 @@ import {
   type LessonManifest,
   type Permissions,
 } from './grants';
-import { parseIndex, parseLessonForLoader } from './format/parse';
+import { parseIndex } from './format/parse';
+import { parseLessonForLoader } from './format/normalise';
 import type { LessonLog } from './log';
 
 // ---------------------------------------------------------------------------

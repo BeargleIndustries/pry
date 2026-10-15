@@ -7,7 +7,7 @@ import { vi } from 'vitest';
 import { answer, makeWalkHost, type Recorded, type WalkHost } from './pry-walk-host';
 import type { PryHost } from './pry-state.svelte';
 
-export { answer, fakeTokens, type Recorded } from './pry-walk-host';
+export { answer, type Recorded } from './pry-walk-host';
 
 /** Stubs the global fetch with the canned sidecar; returns the call log. */
 export function recordingFetch(): Recorded[] {
