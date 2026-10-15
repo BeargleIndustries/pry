@@ -240,7 +240,7 @@ peak: { read: lens.peak_layer, args: { token: " basketball" }, expect: 9 }
 :::
 
 :::do{id=lens-run}
-There's one more tool. Press **Do it** to run the logit lens and find :look{at=logit-lens-heatmap}[the ' basketball' row].
+There's one more tool. Press **Do it** to run the logit lens and find ' basketball' in :look{at=logit-lens-heatmap}[its last column, ' of'].
 
 ```actions
 - open_panel: { panel: logit-lens }
@@ -249,7 +249,7 @@ There's one more tool. Press **Do it** to run the logit lens and find :look{at=l
 :::
 
 :::observe{id=lens-obs}
-' basketball' first tops the lens at {first_top} and peaks at {peak}, then falls back by the last layer. Before that, the early layers guess plain words like ' the', and they don't favour any sport.
+' basketball' first tops the lens at {first_top} and peaks at {peak}, then falls back by the last layer. The chances in the lens's readout are the cells of :look{at=logit-lens-heatmap}[that last column], one per layer; hover a cell to see its token and chance. Before that, the early layers guess plain words like ' the', and they don't favour any sport.
 
 ```yaml
 check: { read: lens.first_top_layer, args: { token: " basketball" }, op: equals, value: 8, expect: 8 }

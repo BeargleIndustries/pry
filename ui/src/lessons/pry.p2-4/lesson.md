@@ -359,7 +359,7 @@ reset: { prompt: "The nurse said that" }
 :::
 
 :::observe{id=she-he-obs}
-The biggest pushes are {top_parts}. The bars total {bars_total}, the real logit difference is {actual_logit}, and the gap is {gap}. For scale, ' he' gets {he_p} on this prompt.
+The biggest pushes are {top_parts}. The bars total {bars_total}, the real logit difference is {actual_logit}, and the gap is {gap}. For scale, ' he' gets {he_p} on this prompt, in :look{at=predictions-panel}[Predictions].
 
 ```yaml
 journal: true

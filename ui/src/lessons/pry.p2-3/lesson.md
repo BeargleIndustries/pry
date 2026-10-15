@@ -240,7 +240,7 @@ Pry runs the Mary and John prompt from P2.1 through the logit lens and focuses t
 :::
 
 :::observe{id=mary-obs}
-' Mary' first leads at {mary_first} and ends at {mary_final} after the last layer.
+' Mary' first leads at {mary_first} and ends at {mary_final} after the last layer. Both come from :look{at=logit-lens-heatmap}[the ' to' column]; hover a cell to see its token and chance.
 
 ```yaml
 check: { read: lens.first_top_layer, args: { token: " Mary" }, op: equals, value: 9, expect: 9 }

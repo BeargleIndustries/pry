@@ -67,7 +67,7 @@ The lesson writes on from the Jordan sentence in :look{at=watch-it-write}[Watch 
 :::
 
 :::observe{id=write-obs}
-Each step adds one token. Step 1 picked {first_tok}, the top token in Predictions at {first_p}, and every step after it does the same thing again: the model runs on the text so far, one token gets picked, and that token goes on the end. Each step also shows the runner-up, the token that'd have come second.
+Each step adds one token. Step 1 picked {first_tok}, the top token in :look{at=predictions-panel}[Predictions] at {first_p}, and every step after it does the same thing again: the model runs on the text so far, one token gets picked, and that token goes on the end. Each step also shows the runner-up, the token that'd have come second.
 
 ```yaml
 journal: true
