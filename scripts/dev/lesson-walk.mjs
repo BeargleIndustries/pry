@@ -187,7 +187,8 @@ window.__t8 = (() => {
         if (s.kind === 'transfer' && typeof s.fields.prompt === 'string') {
           // A transfer whose own do step or task runs the new case (in Compare, the Swap test,
           // Steering) isn't typed into the prompt box too: a second Run would replace that result.
-          const ownRun = flat(s.children ?? []).some((c) => c.kind === 'do' || c.kind === 'task');
+          const runs = ['set_prompt', 'ensure_run', 'set_compare', 'run_compare', 'run_patching', 'run_steer'];
+          const ownRun = flat(s.children ?? []).some((c) => c.kind === 'task' || (c.kind === 'do' && c.actions.some((a) => runs.includes(a.name))));
           typed = ownRun ? null : { prompt: s.fields.prompt, ran: false };
           continue;
         }
