@@ -277,7 +277,7 @@ reset: { prompt: "The war lasted from the year 1732 to the year 17", focus_token
 :::
 
 :::explain
-Couldn't find one? That's a result too, and it usually means other parts are covering. Stuck after two attempts? Try the Mary and John sentence, with the head you found in P3.2's task: :earlier{key="pry.p3-2.found-head"}[skipped]. If that says skipped, any head on that sentence's map is a fair place to start.
+Couldn't find one? That's a result too, and it usually means other parts are covering. Stuck after two attempts? Try the Mary and John sentence, with the head you found in P3.2's task: :earlier{key="pry.p3-2.found-head"}[skipped]. If there's no head there, any head on that sentence's map is a fair place to start.
 :::
 
 ## Transfer {id=s5 outline=P3.7.md#5}

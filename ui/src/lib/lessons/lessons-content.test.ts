@@ -201,6 +201,7 @@ describe('lessons content', () => {
     { lesson: 'pry.p1-5', step: 'baker-write', added: true, why: 'critic r5: a task with learner_actions: [write_it]' },
     { lesson: 'pry.p2-1', step: 'who-obs', added: true, why: 'rubric r2: the observe that shows the run after the who-gets prediction' },
     { lesson: 'pry.p2-1', step: 'who-gets', added: true, why: 'rubric r2: the run showed its result before any prediction; a predict with hides comes first' },
+    { lesson: 'pry.p3-3', step: 'compare-recap', added: true, why: "rubric final: a recall only shows once its lesson's been visited, so the section's look back at P3.1 can't sit only inside it" },
     { lesson: 'pry.p3-6', step: 'pair-guess', added: true, why: 'rubric r2: the pair showed its probabilities before any prediction; a predict with hides comes first' },
     ...['write-mit', 'write-decl', 'write-baker'].map((step) => ({
       lesson: 'pry.p1-6',

@@ -25,9 +25,9 @@ slots:
 ## What you guessed in P2.1 {id=s3-1 outline=P3.2.md#3.1}
 
 :::explain
-In P2.1 you picked :earlier{key="pry.p2-1.word-pick"}[skipped]. Attention showed where heads drew from. Today you test whether that mattered.
+Your pick in P2.1: :earlier{key="pry.p2-1.word-pick"}[skipped]. Attention showed where heads drew from. Today you test whether that mattered.
 
-You also found a head that drew from ' Mary', :earlier{key="pry.p2-1.head-pick"}[skipped], and you wrote down a guess about the head with the heaviest line: :earlier{key="pry.p2-1.hypothesis"}[skipped]. If you skipped any of those, that's fine. You'll make fresh guesses as you go.
+The head you found that drew from ' Mary': :earlier{key="pry.p2-1.head-pick"}[skipped]. Your guess about the head with the heaviest line: :earlier{key="pry.p2-1.hypothesis"}[skipped]. If you skipped any of those, or haven't done P2.1, that's fine. You'll make fresh guesses as you go.
 :::
 
 ## Ablation {id=s3-2 outline=P3.2.md#3.2}
@@ -135,13 +135,13 @@ Researchers already have suspects for this sentence, found with lots of knockout
 :::
 
 :::explain
-The head you found in P2.1 was :earlier{key="pry.p2-1.head-pick"}[skipped]. Is it one of these?
+The head you found in P2.1: :earlier{key="pry.p2-1.head-pick"}[skipped]. Is it one of these?
 :::
 
 ## Knock out all three {id=s3-6 outline=P3.2.md#3.6}
 
 :::predict{id=three-off checks=three-obs}
-Switch off `layer 9 head 9`, `layer 9 head 6` and `layer 10 head 0` together (plus your P2.1 head, :earlier{key="pry.p2-1.head-pick"}[skipped], if it isn't one of them). What happens?
+Switch off `layer 9 head 9`, `layer 9 head 6` and `layer 10 head 0` together, plus your P2.1 head if it isn't one of them. What happens?
 
 ```yaml
 choices:
