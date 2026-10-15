@@ -2037,6 +2037,7 @@
               "side": "a",
               "token": " Sam"
             },
+            "from": "sam",
             "field": "rank",
             "op": "lt",
             "value": 11,
@@ -2054,6 +2055,7 @@
               "side": "b",
               "token": " Sam"
             },
+            "from": "sam",
             "field": "rank",
             "op": "lt",
             "value": 11,

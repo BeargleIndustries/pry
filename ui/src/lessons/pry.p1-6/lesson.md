@@ -39,9 +39,10 @@ If you tell GPT-2 in Pry your name today, will it still have it tomorrow?
 
 ```yaml
 choices:
-  - { text: "yes, it learns from what you type", target: M3, feedback: "Lots of people expect that, and some chat products do keep notes about you between chats. The model in Pry has nowhere to keep anything: the second prompt shows no trace of Sam, and the Jordan numbers are the ones you saw in lesson 1." }
-  - { text: "only while Pry stays open", feedback: "Lots of people expect that, and some chat products do keep notes about you between chats. The model in Pry has nowhere to keep anything: the second prompt shows no trace of Sam, and the Jordan numbers are the ones you saw in lesson 1." }
+  - { text: "yes, it learns from what you type", target: M3, feedback: "Lots of people expect that, and some chat products do keep notes about you between chats. The next section tests it on the model in Pry." }
+  - { text: "only while Pry stays open", feedback: "Lots of people expect that, and some chat products do keep notes about you between chats. The next section tests it on the model in Pry." }
   - { text: "no" }
+remember: remember-pick
 ```
 :::
 
@@ -49,7 +50,7 @@ choices:
 
 :::slots
 basketball: { read: prediction, args: { token: " basketball" }, field: prob, format: probability, expect: 0.42208 }
-sam_a: { read: compare.prediction, args: { side: a, token: " Sam" }, field: prob, format: probability, expect: 0.19151 }
+sam_a: { read: compare.prediction, args: { side: a, token: " Sam" }, field: prob, format: probability, from_capture: sam, expect: 0.19151 }
 :::
 
 :::do{id=sam-compare}
@@ -60,15 +61,19 @@ The lesson runs two prompts side by side in :look{at=compare-panel}[Compare]. Th
 - set_compare: { a: "My name is Sam. Nice to meet you. My name is", b: "Nice to meet you. My name is" }
 - run_compare: {}
 ```
+
+```yaml
+capture: sam
+```
 :::
 
 :::observe{id=sam-obs}
-' Sam' gets {sam_a} in the first prompt, where the name is right there in the text. In the second prompt, a separate run, ' Sam' isn't in the top ten at all.
+You said :earlier{key="pry.p1-6.remember-pick"}[nothing]. Here's the test, in :look{at=compare-panel}[Compare's table]: ' Sam' gets {sam_a} in the first prompt, where the name is right there in the text. In the second prompt, a separate run, ' Sam' isn't in the top ten at all.
 
 ```yaml
 check:
-  - { read: compare.prediction, args: { side: a, token: " Sam" }, field: rank, op: lt, value: 11, expect: 1 }
-  - { read: compare.prediction, args: { side: b, token: " Sam" }, field: rank, op: lt, value: 11, not: true, expect: absent }
+  - { read: compare.prediction, args: { side: a, token: " Sam" }, from: sam, field: rank, op: lt, value: 11, expect: 1 }
+  - { read: compare.prediction, args: { side: b, token: " Sam" }, from: sam, field: rank, op: lt, value: 11, not: true, expect: absent }
 ```
 :::
 
