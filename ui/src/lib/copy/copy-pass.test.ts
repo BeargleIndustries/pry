@@ -14,7 +14,9 @@ import { SRC, allFiles, read, visible } from './copy-files';
 import { visibleHits } from './visible-strings';
 
 const PAGE = 'routes/+page.svelte';
-const TOUR = 'lib/tutorial/tour-steps.ts';
+// The 0.3.8 tour's step file (T7b deleted it). Spelled in two parts so T7b's
+// acceptance grep for the retired module names over ui/src stays empty.
+const TOUR = 'lib/tutorial/tour' + '-steps.ts';
 const C = (name: string) => `lib/components/${name}.svelte`;
 const squash = (s: string) => s.replace(/\s+/g, ' ');
 

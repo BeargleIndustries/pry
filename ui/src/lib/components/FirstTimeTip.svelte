@@ -20,7 +20,7 @@
 -->
 <script lang="ts">
   import { onMount, tick } from 'svelte';
-  import { tutorialState } from '$lib/tutorial/tutorial-store.svelte';
+  import { quickTour } from '$lib/lessons/quick-tour.svelte';
   import { tipsRegistry, type TipDef } from '$lib/tips/tips-registry';
   import { markTipSeen, isTipSeen } from '$lib/tips/coordinate';
   import { anchorState, anchorUsable } from '$lib/tutorial/anchors';
@@ -54,7 +54,7 @@
   function pickNextTip(): void {
     if (typeof document === 'undefined') return;
     if (activeTip) return;
-    if (tutorialState.open) return;
+    if (quickTour.open) return;
     if (document.querySelector('.loading-screen')) return; // wait until the model has loaded
     for (const tip of tipsRegistry) {
       if (isTipSeen(tip.id)) continue;
@@ -258,13 +258,13 @@
     return { id, shown: true, waiting: false };
   }
 
-  // Suppress tips whenever the tutorial is open; re-scan when it closes.
+  // Suppress tips whenever the quick tour is open; re-scan when it closes.
   $effect(() => {
-    if (tutorialState.open && activeTip) {
-      // Tutorial took over mid-tip; silently release without marking seen.
+    if (quickTour.open && activeTip) {
+      // The tour took over mid-tip; silently release without marking seen.
       release();
     }
-    if (!tutorialState.open) {
+    if (!quickTour.open) {
       schedulePick();
     }
   });

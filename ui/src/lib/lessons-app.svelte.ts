@@ -8,7 +8,10 @@ import { pryToolSet } from './lessons/registry/pry-set';
 import { pryMemo } from './lessons/registry/pry-state.svelte';
 import { LessonRunner } from './lessons/runner/runner.svelte';
 import { SidebarModel } from './lessons/LessonSidebar.svelte';
-import { createProgress } from './lessons/progress';
+import { createProgress, migrateExperiments, QUICK_TOUR_ID } from './lessons/progress';
+import { OverlayModel } from './lessons/OverlayPresenter.svelte';
+import { lessonIdForExperiment } from './notebook';
+import { parse as parseYaml } from 'yaml';
 import { loadLessonSource } from './lessons/format/normalise';
 import {
   AUTHOR_MODE_KEY,
@@ -25,7 +28,7 @@ import {
 } from './lessons/loader';
 import { GRANTS_FILE, grant, grantStatus, loadGrants, revoke, saveGrants, type GrantStore, type GrantsFs, type Permissions } from './lessons/grants';
 import { inTauri, type LessonLog } from './lessons/log';
-import type { Effect } from './lessons/registry/contract';
+import type { Effect, Presenter } from './lessons/registry/contract';
 import { memoryJournal, type RunnerJournal } from './lessons/runner/types';
 import type { PickerItem } from './lessons/LessonPicker.svelte';
 import type { UserLessonRow } from './lessons/LessonsSettings.svelte';
@@ -108,10 +111,42 @@ export function createLessonsApp(deps: LessonsAppDeps) {
     log: (e) => void deps.log?.log({ lessonId: e.lessonId, stepId: e.stepId, message: e.message, effect: e.effect as Effect | undefined, scope: e.scope }),
     openOther: (id, section) => void openLesson(id, section),
   });
-  runner.attach(model);
+  // The quick tour is an overlay lesson on this same runner (plan D4): the
+  // overlay presenter draws it, the sidebar never does. One runner holds one
+  // lesson, so the tour and a sidebar lesson can't both be open.
+  const overlay = new OverlayModel();
+  // Registered before the runner's own handler, so it still sees the step
+  // "Done" was pressed on: the last step's Next records the finish, then closes.
+  overlay.onCommand((c) => {
+    const l = runner.lesson;
+    if (c === 'next' && l?.meta.presentation === 'overlay' && runner.index >= l.sections.length - 1) {
+      queueMicrotask(() => {
+        if (runner.lesson?.meta.presentation === 'overlay') runner.close();
+      });
+    }
+  });
+  // Each presenter draws only its own kind of lesson.
+  const only = (p: Presenter, overlayLesson: boolean): Presenter => ({
+    show: (step, nav) => {
+      if ((runner.lesson?.meta.presentation === 'overlay') === overlayLesson) p.show(step, nav);
+    },
+    point: (t, seq) => {
+      if ((runner.lesson?.meta.presentation === 'overlay') === overlayLesson) p.point(t, seq);
+    },
+    clearPointer: () => p.clearPointer(),
+    onCommand: (cb) => p.onCommand(cb),
+  });
+  runner.attach(only(model, false));
+  runner.attach(only(overlay, true));
 
   async function load(): Promise<void> {
-    void deps.notebook.load();
+    // 0.3.8 experiments the learner ran mark their lessons visited (plan T7b migration).
+    void deps.notebook.load().then(() =>
+      migrateExperiments(
+        deps.notebook.state.entries.map((e) => (e.experiment ? lessonIdForExperiment(e.experiment.id) : null)),
+        progress,
+      ),
+    );
     if (!Object.keys(rowsData).length) {
       const rows = (await import('../lessons/__generated__/rows.json')).default as { rows: { id: number }[] };
       rowsData = Object.fromEntries(rows.rows.map((r) => [String(r.id), r]));
@@ -190,6 +225,7 @@ export function createLessonsApp(deps: LessonsAppDeps) {
   }
 
   async function openLesson(id: string, sectionId: string | null = null): Promise<boolean> {
+    if (id === QUICK_TOUR_ID) return startTour(sectionId ?? undefined);
     const entry = state.entries.find((e) => e.id === id && e.lesson);
     if (!entry) return false;
     const lesson = await fullLesson(entry);
@@ -207,9 +243,42 @@ export function createLessonsApp(deps: LessonsAppDeps) {
     return true;
   }
 
+  /** Closes the sidebar's lesson. The tour, when it's the one open, stays up. */
   function closeLesson(): void {
-    runner.close();
+    if (!tourOpen()) runner.close();
     model.clear();
+  }
+
+  const tourOpen = () => runner.lesson?.meta.presentation === 'overlay';
+
+  /**
+   * Starts the quick tour from `sectionId` (step 1 by default) on the shared
+   * runner. It reads only the bundled tour file, so it works before the
+   * library has loaded and touches no user-lesson folder.
+   */
+  async function startTour(sectionId = 'step-1'): Promise<boolean> {
+    const file = Object.keys(bundledSources().lessons).find((f) => f.includes(`/${QUICK_TOUR_ID}/`));
+    const text = file ? bundledSources().lessons[file] : null;
+    if (!file || !text) return false;
+    const lesson = loadLessonSource(text, { mode: 'lenient', tool: pryToolSet, file }).lesson;
+    if (!lesson) return false;
+    model.clear();
+    await runner.open(lesson, { source: { kind: 'bundled' }, sourceKind: 'bundled', sectionId });
+    return true;
+  }
+
+  function endTour(): void {
+    if (tourOpen()) runner.close();
+  }
+
+  /** The first bundled lesson of a stage (index.yaml), for "open the picker at Stage N". */
+  function stageStart(stage: number): string | null {
+    try {
+      const doc = parseYaml(bundledSources().index ?? '') as { lessons?: { id: string; stage?: number }[] };
+      return doc?.lessons?.find((l) => l.stage === stage)?.id ?? null;
+    } catch {
+      return null;
+    }
   }
 
   function pickerItems(): PickerItem[] {
@@ -333,11 +402,18 @@ export function createLessonsApp(deps: LessonsAppDeps) {
   return {
     state,
     model,
+    overlay,
     runner,
     progress,
     load,
     openLesson,
     closeLesson,
+    startTour,
+    endTour,
+    get tourOpen() {
+      return tourOpen();
+    },
+    stageStart,
     pickerItems,
     userRows,
     answerInstall,

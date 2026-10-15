@@ -1,9 +1,9 @@
 <script lang="ts">
   import Term from '$lib/components/Term.svelte';
   import { goto } from '$app/navigation';
-  import { Sparkles, PlayCircle, ArrowRight, Copy } from 'lucide-svelte';
+  import { Sparkles, PlayCircle, ArrowRight, Copy, GraduationCap } from 'lucide-svelte';
 
-  type Next = 'copying-heads' | 'tour' | 'skip';
+  type Next = 'copying-heads' | 'tour' | 'lessons' | 'skip';
 
   function finish(next: Next) {
     localStorage.setItem('pry:onboarding_done', 'true');
@@ -14,7 +14,7 @@
     }
     // Not taking the tour now: don't auto-start it. It's still under the ? icon.
     localStorage.setItem('pry:tutorial_seen', 'true');
-    goto(next === 'copying-heads' ? '/?demo=induction-heads' : '/');
+    goto(next === 'copying-heads' ? '/?demo=induction-heads' : next === 'lessons' ? '/?lessons=open' : '/');
   }
 </script>
 
@@ -53,7 +53,14 @@
         class="group inline-flex items-center justify-center gap-2 rounded-lg bg-zinc-800 px-6 py-3 font-medium text-zinc-200 transition hover:bg-zinc-700"
       >
         <PlayCircle class="h-4 w-4" />
-        Start the guided tour
+        Take the tour
+      </button>
+      <button
+        onclick={() => finish('lessons')}
+        class="group inline-flex items-center justify-center gap-2 rounded-lg bg-zinc-800 px-6 py-3 font-medium text-zinc-200 transition hover:bg-zinc-700"
+      >
+        <GraduationCap class="h-4 w-4" />
+        Open Lessons
       </button>
       <button
         onclick={() => finish('skip')}
@@ -65,13 +72,14 @@
     </div>
 
     <p class="mt-6 text-xs text-zinc-500">
-      <span class="text-zinc-400">Find the copying heads</span> gives the model you just set up a short
-      test: 25 random <Term key="token">tokens</Term>, then the same ones again. Pry then rings the <Term key="attention-head">attention heads</Term> that,
-      the second time through, look at whatever came next last time. That is one way models copy.
+      <span class="text-zinc-400">Find the copying heads</span> opens a ten-minute lesson on GPT-2 small. You give it
+      a made-up name twice, watch it continue the repeat, and catch the <Term key="attention-head">attention heads</Term>
+      that copy it forward. That's one way models copy.
     </p>
     <p class="mt-2 text-xs text-zinc-500">
-      <span class="text-zinc-400">The guided tour</span> walks you through every part of Pry in nine short
-      chapters, on GPT-2 small. Start it anytime from the ? button.
+      <span class="text-zinc-400">The tour</span> points out where everything sits on Pry's screen in about five
+      minutes, and <span class="text-zinc-400">Lessons</span> explain what you're looking at. Start either one
+      anytime from the ? button.
     </p>
   </div>
 </div>

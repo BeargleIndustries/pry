@@ -48,10 +48,7 @@ export const LESSON_FILES = allFiles().filter((f) => /^lessons\/[^/]+\/lesson\.m
 
 /** The `.ts` / `.json` / lesson `.md` files that hold user-facing copy (plan T4, closure test mechanism). */
 export const COPY_FILES = [
-  'lib/tutorial/tour-steps.ts',
   'lib/tips/tips-registry.ts',
-  'lib/experiments/experiments.json',
-  'lib/experiments/experiments.ts',
   'lib/readouts.ts',
   'lib/glossary.ts',
   'lib/loading-deck.ts',
@@ -66,8 +63,6 @@ export const COPY_FILES = [
 
 /** Files whose copy belongs to a lane (plan: Hotspot ownership). Anything else is checked now. */
 export const FILE_OWNER: Record<string, Lane> = {
-  'lib/tutorial/tour-steps.ts': 'T4a',
-  'lib/experiments/experiments.json': 'T4a',
   'lib/readouts.ts': 'T4c',
   'lib/glossary.ts': 'T4c',
   'lib/errors.ts': 'T4c',

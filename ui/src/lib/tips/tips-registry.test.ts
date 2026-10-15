@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { tipsRegistry } from './tips-registry';
-import { tourChapters } from '../tutorial/tour-steps';
 import registrySource from './tips-registry.ts?raw';
+import quickTourSource from '../../lessons/pry.quick-tour/lesson.md?raw';
 
 // Every .svelte source file under src/, as raw text.
 const svelteSources = Object.values(
@@ -44,11 +44,12 @@ describe('tipsRegistry', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('every tutorialStepId names a real tour step', () => {
-    const stepIds = new Set(tourChapters.flatMap((c) => c.steps.map((s) => s.id)));
-    for (const tip of tipsRegistry) {
-      if (tip.tutorialStepId) expect(stepIds.has(tip.tutorialStepId), tip.id).toBe(true);
-    }
+  it('every tutorialStepId names a real quick-tour step (pry.quick-tour#<stepId>)', () => {
+    const stepIds = new Set([...quickTourSource.matchAll(/^## .*\{id=([\w-]+)/gm)].map((m) => `pry.quick-tour#${m[1]}`));
+    expect(stepIds.size).toBe(12);
+    const coupled = tipsRegistry.filter((t) => t.tutorialStepId);
+    expect(coupled.map((t) => t.id).sort()).toEqual(['panel-b-layer-selector', 'word-strip']);
+    for (const tip of coupled) expect(stepIds.has(tip.tutorialStepId!), tip.id).toBe(true);
   });
 
   // code:F. Comments named the removed `drivenSteps` and old step numbers.

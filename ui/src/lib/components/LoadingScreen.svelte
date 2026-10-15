@@ -7,7 +7,7 @@
     Check,
     ChevronLeft,
     ChevronRight,
-    FlaskConical,
+    GraduationCap,
     Lightbulb,
     Pause,
     Play,
@@ -32,21 +32,20 @@
   } from '$lib/loading-deck';
   import { tipsRegistry } from '$lib/tips/tips-registry';
   import { glossary } from '$lib/glossary';
-  import type { Experiment } from '$lib/experiments/experiments';
+  import { deckLessons } from '$lib/lessons/deck-lessons';
 
   interface Props {
     track: LoadTrack;
     /** Display name of the model being loaded. */
     modelName: string;
-    experiments: Experiment[];
-    /** Display name for any preset id (for "this switches to GPT-2 small"). */
+    /** Display name for any preset id (for "runs on GPT-2 small"). */
     presetName: (id: string) => string;
-    queuedExperimentId: string | null;
-    onQueueExperiment: (id: string | null) => void;
+    /** The lesson that opens once the model is ready (plan T7b: the queue opens a lesson). */
+    queuedLessonId: string | null;
+    onQueueLesson: (id: string | null) => void;
   }
 
-  let { track, modelName, experiments, presetName, queuedExperimentId, onQueueExperiment }: Props =
-    $props();
+  let { track, modelName, presetName, queuedLessonId, onQueueLesson }: Props = $props();
 
   // ---------------------------------------------------------------------------
   // Clock + honest, monotonic progress
@@ -178,7 +177,7 @@
   const deck: DeckCard[] = untrack(() =>
     buildDeck({
       tips: tipsRegistry,
-      experiments,
+      lessons: deckLessons(),
       glossary,
       presetId: track.presetId,
       recent: readRecent(),
@@ -265,7 +264,7 @@
 
   const KIND_LABEL: Record<DeckCard['kind'], string> = {
     tip: 'Tip',
-    experiment: 'Try this when it’s ready',
+    lesson: 'A lesson for when it’s ready',
     term: 'Word of the moment',
   };
 </script>
@@ -450,8 +449,8 @@
                 <div class="mono mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.14em] text-indigo-300/80">
                   {#if card.kind === 'tip'}
                     <Lightbulb class="h-3.5 w-3.5" aria-hidden="true" />
-                  {:else if card.kind === 'experiment'}
-                    <FlaskConical class="h-3.5 w-3.5" aria-hidden="true" />
+                  {:else if card.kind === 'lesson'}
+                    <GraduationCap class="h-3.5 w-3.5" aria-hidden="true" />
                   {:else}
                     <BookOpen class="h-3.5 w-3.5" aria-hidden="true" />
                   {/if}
@@ -465,12 +464,12 @@
                   <h3 class="display text-xl font-semibold text-zinc-100">{card.term}</h3>
                   <p class="mt-1 text-sm leading-relaxed text-zinc-400">{card.definition}</p>
                 {:else}
-                  {@const queued = queuedExperimentId === card.experimentId}
+                  {@const queued = queuedLessonId === card.lessonId}
                   <h3 class="font-medium text-zinc-100">{card.title}</h3>
-                  <p class="mt-1 text-sm leading-relaxed text-zinc-400">{card.hook}</p>
-                  {#if card.switchesModel}
+                  <p class="mt-1 text-sm leading-relaxed text-zinc-400">{card.summary}</p>
+                  {#if card.switchesModel && card.model}
                     <p class="mt-1.5 text-xs text-zinc-500">
-                      Runs on {presetName(card.preset)}, so Pry will switch to it after this load.
+                      It runs on {presetName(card.model)}, so the lesson offers to switch to it when it opens.
                     </p>
                   {/if}
                   <div class="mt-auto flex flex-wrap items-center gap-3 pt-3">
@@ -481,7 +480,7 @@
                       <button
                         type="button"
                         class="ctl rounded-md px-2 py-1 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
-                        onclick={() => onQueueExperiment(null)}
+                        onclick={() => onQueueLesson(null)}
                       >
                         Cancel
                       </button>
@@ -489,7 +488,7 @@
                       <button
                         type="button"
                         class="ctl rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500"
-                        onclick={() => onQueueExperiment(card.experimentId)}
+                        onclick={() => onQueueLesson(card.lessonId)}
                       >
                         Open it when ready
                       </button>

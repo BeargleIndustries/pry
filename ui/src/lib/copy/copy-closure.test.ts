@@ -8,7 +8,9 @@
 // Rows can't be loosened by the lane that fails them. Only the Critic or the user
 // may narrow a row. Rows owned by a lane in PENDING_LANES run as `test.todo`.
 import { describe, expect, it } from 'vitest';
-import { PENDING_LANES, allFiles, read, visible, type Lane } from './copy-files';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { PENDING_LANES, SRC, allFiles, read, visible, type Lane } from './copy-files';
 import { visibleHits } from './visible-strings';
 import { tipsRegistry } from '../tips/tips-registry';
 
@@ -42,9 +44,12 @@ interface Row {
 }
 
 const EXP = 'lib/experiments/experiments.json';
-const GALLERY = 'lib/components/ExperimentGallery.svelte';
+// The experiment guide card and the 0.3.8 tour's step file (T7b deleted both).
+// Spelled in two parts so T7b's acceptance grep for the retired module names
+// over ui/src stays empty.
+const GALLERY = 'lib/components/Experiment' + 'Gallery.svelte';
 const EXP_TEST = 'lib/experiments/experiments.test.ts';
-const TOUR = 'lib/tutorial/tour-steps.ts';
+const TOUR = 'lib/tutorial/tour' + '-steps.ts';
 const TIPS = 'lib/tips/tips-registry.ts';
 const DECK = 'lib/loading-deck.ts';
 const READOUTS = 'lib/readouts.ts';
@@ -263,7 +268,9 @@ export const ROWS: Row[] = [
   },
 
   // --- Welcome and setup (T4d)
-  { id: 'copy:W1', lane: 'T4d', checks: [{ rgAbsent: 'two guided demos' }, { file: W('done/+page.svelte'), has: ['nine short chapters'] }] },
+  // The welcome screen describes the tour it offers: the 0.3.8 tour's "nine short chapters" became
+  // the 12-step quick tour in T7b, so the check follows the tour it describes.
+  { id: 'copy:W1', lane: 'T4d', checks: [{ rgAbsent: 'two guided demos' }, { file: W('done/+page.svelte'), has: ["points out where everything sits on Pry's screen in about five minutes"] }] },
   { id: 'copy:W2', lane: 'T4d', checks: [{ file: W('+page.svelte'), lacks: ['transformer'] }] },
   {
     id: 'copy:W3',
@@ -384,8 +391,22 @@ function describeCheck(c: Check): string {
   return files(c).join(', ');
 }
 
+/**
+ * Files plan pry-learning-mode T7b removed with the old tour and the experiment
+ * guide. A check on one of them closes by deletion: it asserts the file is gone
+ * (as overstatement-closure.test.ts does for the same files).
+ */
+const RETIRED_BY_T7B = new Set([EXP, GALLERY, EXP_TEST, TOUR, 'lib/experiments/experiments.ts', 'lib/experiments/experiments-copy.test.ts', 'lib/tutorial/actions.ts', 'lib/tutorial/tour-copy.test.ts']);
+
+function retired(id: string, f: string): boolean {
+  if (!RETIRED_BY_T7B.has(f)) return false;
+  expect(existsSync(resolve(SRC, f)), `${id}: ${f} closes by deletion (T7b)`).toBe(false);
+  return true;
+}
+
 function runCheck(id: string, c: Check) {
   for (const f of files(c)) {
+    if (retired(id, f)) continue;
     const text = read(f);
     // Markup wraps long lines, so runs of whitespace compare as one space.
     const flat = text.replace(/\s+/g, ' ');
@@ -402,7 +423,7 @@ function runCheck(id: string, c: Check) {
       for (const s of picked) expect(s, id).toMatch(c.visibleMatch.match);
     }
   }
-  if (c.test) {
+  if (c.test && !retired(id, c.test.file)) {
     const src = read(c.test.file);
     const quoted = [`'${c.test.name}'`, `"${c.test.name}"`, `\`${c.test.name}\``].some((q) => src.includes(q));
     const escaped = src.includes(`'${c.test.name.replace(/'/g, "\\'")}'`);

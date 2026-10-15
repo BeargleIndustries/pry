@@ -34,12 +34,10 @@
   import CustomModelDialog from '$lib/components/CustomModelDialog.svelte';
   import HardwareTradingCard from '$lib/components/HardwareTradingCard.svelte';
   import SettingsDrawer from '$lib/components/SettingsDrawer.svelte';
-  import DrivenTutorial from '$lib/components/DrivenTutorial.svelte';
   import FirstTimeTip from '$lib/components/FirstTimeTip.svelte';
   import { occupied, OCCUPIED } from '$lib/popup/occupied.svelte';
   import { POPUP_AUDIT } from '$lib/popup/dev';
   import TourMenu from '$lib/components/TourMenu.svelte';
-  import TourSettings from '$lib/components/TourSettings.svelte';
   import { invoke } from '@tauri-apps/api/core';
   import LoadProgressBanner from '$lib/components/LoadProgressBanner.svelte';
   import LoadingScreen from '$lib/components/LoadingScreen.svelte';
@@ -48,8 +46,6 @@
   import UpdateCard from '$lib/components/UpdateCard.svelte';
   import UpdateSettings from '$lib/components/UpdateSettings.svelte';
   import ModelSwitcher from '$lib/components/ModelSwitcher.svelte';
-  import { tutorialState } from '$lib/tutorial/tutorial-store.svelte';
-  import type { TutorialActions } from '$lib/tutorial/actions';
   import { page } from '$app/stores';
   import EngineStatusChip from '$lib/components/EngineStatusChip.svelte';
   import EngineCrashBanner from '$lib/components/EngineCrashBanner.svelte';
@@ -61,15 +57,16 @@
   import { gatePassedKey, gateStepMissing, type GateStep } from '$lib/hf-gate';
   import LicenseGateSteps from '$lib/components/LicenseGateSteps.svelte';
   import { goto } from '$app/navigation';
-  import ExperimentGallery from '$lib/components/ExperimentGallery.svelte';
-  import { loadExperiments, applyExperiment, resetExperiment } from '$lib/experiments/experiments';
-  import type { Experiment, ExperimentActions, ResetActions, PatchType } from '$lib/experiments/experiments';
-  import { demoFromParams } from '$lib/head-scores';
   import { createCompare } from '$lib/compare.svelte';
   import ComparePanel from '$lib/components/ComparePanel.svelte';
   import NotebookPanel from '$lib/components/NotebookPanel.svelte';
   import { createNotebookStore } from '$lib/notebook.svelte';
-  import { bindPryHost, hasPryHost, pryMemo, pryUi } from '$lib/lessons/registry/pry-state.svelte';
+  import { bindPryHost, hasPryHost, pryMemo, pryUi, type PatchType } from '$lib/lessons/registry/pry-state.svelte';
+  import OverlayPresenter from '$lib/lessons/OverlayPresenter.svelte';
+  import { entryFromParams } from '$lib/lessons/entry';
+  import { migrateTourProgress, tourAutoStarts, QUICK_TOUR_ID } from '$lib/lessons/progress';
+  import { quickTour } from '$lib/lessons/quick-tour.svelte';
+  import { markTipsSeenForStep } from '$lib/tips/coordinate';
   import { buildProvenance, type ProvenanceExtras } from '$lib/notebook';
   import { isTauri } from '$lib/is-tauri';
   import LessonSidebar from '$lib/lessons/LessonSidebar.svelte';
@@ -306,29 +303,35 @@
     }
   }
 
-  async function ensureLessons(watch: boolean): Promise<LessonsApp> {
-    if (!lessons) {
+  let lessonsCreating: Promise<LessonsApp> | null = null;
+  /**
+   * The Lessons app, created on first use. `load` reads the lesson library;
+   * the quick tour skips it (it needs only its own bundled file).
+   */
+  async function ensureLessons(watch: boolean, load = true): Promise<LessonsApp> {
+    lessonsCreating ??= (async () => {
       const [{ createLessonsApp }, log] = await Promise.all([
         import('$lib/lessons-app.svelte'),
         isTauri() ? import('$lib/lessons/log').then((m) => m.openLessonLog()).catch(() => undefined) : Promise.resolve(undefined),
       ]);
-      const app = createLessonsApp({
+      return createLessonsApp({
         notebook,
         provenance: () => buildProvenance({ ...currentRunData(), saeLayer: st.saeLayer ?? null }, { snapshot: prySnapshot() }),
         modelName: (id) => displayName(id, allCompat),
         currentModel: () => activePresetId,
         log,
       });
-      await app.load();
-      lessons = app;
-    }
-    if (watch) await lessons.watch();
-    return lessons;
+    })();
+    const app = await lessonsCreating;
+    if (load && !app.state.loaded) await app.load();
+    lessons = app;
+    if (watch) await app.watch();
+    return app;
   }
 
   async function openLessons() {
     // Quick tour and Lessons are exclusive.
-    if (tutorialState.open) tutorialState.close();
+    lessons?.endTour();
     lessonsOn = true;
     const app = await ensureLessons(true);
     if (app.state.pending.length) app.state.installOpen = true;
@@ -339,8 +342,50 @@
     lessonsOn = false;
   }
 
+  /** The quick tour (plan T7b): an overlay lesson on the Lessons runner. It never resets the prompt, the run or knockouts. */
+  async function startTour(sectionId?: string) {
+    if (lessonsOn) closeLessons();
+    const app = await ensureLessons(false, false);
+    await app.startTour(sectionId);
+  }
+
+  /** The flask button: the experiments became lessons, so it opens the picker at Stage 2. */
+  async function openExperimentLessons() {
+    await openLessons();
+    const app = lessons;
+    if (!app) return;
+    app.closeLesson();
+    const id = app.stageStart(2);
+    if (!id) return;
+    for (let i = 0; i < 60; i++) {
+      const el = document.querySelector<HTMLElement>(`[data-lesson-sidebar] [data-lesson-id="${CSS.escape(id)}"]`);
+      if (el) {
+        el.scrollIntoView({ block: 'start' });
+        el.focus();
+        return;
+      }
+      await new Promise((r) => requestAnimationFrame(r));
+    }
+  }
+
+  // The tour's state for the tips (FirstTimeTip waits while it's up), and the
+  // tips its current step covers count as seen (tips/coordinate.ts).
   $effect(() => {
-    if (tutorialState.open && lessonsOn) closeLessons();
+    const r = lessons?.runner;
+    const l = r?.lesson;
+    const open = !!r && !!l && l.meta.presentation === 'overlay';
+    quickTour.open = open;
+    quickTour.step = open ? (l.sections[r.index]?.id ?? null) : null;
+  });
+  $effect(() => {
+    const step = quickTour.step;
+    if (!step) return;
+    untrack(() =>
+      markTipsSeenForStep(
+        `${QUICK_TOUR_ID}#${step}`,
+        (lessons?.overlay.pointers ?? []).flatMap((t) => ('anchor' in t ? [t.anchor] : [])),
+      ),
+    );
   });
 
   function resizeLessons(w: number) {
@@ -433,6 +478,24 @@
     },
   };
   if (POPUP_AUDIT && typeof window !== 'undefined') (window as unknown as { __pryLessons: typeof auditLessons }).__pryLessons = auditLessons;
+
+  // Dev-only (POPUP_AUDIT): what the audit's tour pass and the screenshot driver drive the quick tour with.
+  const auditTour = {
+    start: (sectionId?: string) => startTour(sectionId),
+    close: () => lessons?.endTour(),
+    next: () => lessons?.overlay.command('next'),
+    open: () => quickTour.open,
+    stepId: () => quickTour.step,
+    stepIds: () => (lessons?.tourOpen ? (lessons.runner.lesson?.sections.map((s) => s.id) ?? []) : []),
+    pointerCount: () => lessons?.overlay.pointers.length ?? 0,
+    loaded: () => loadState === 'loaded',
+    run: async (text: string) => {
+      compareMode = false;
+      prompt = text;
+      await handleGenerate();
+    },
+  };
+  if (POPUP_AUDIT && typeof window !== 'undefined') (window as unknown as { __pryTour: typeof auditTour }).__pryTour = auditTour;
 
   // ---------------------------------------------------------------------------
   // Inline prompt handler
@@ -710,39 +773,24 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Phase 2 — Driven tutorial (replaces TutorialModal)
+  // §P-tour: the quick tour and the ways into it and into Lessons (plan T7b)
   // ---------------------------------------------------------------------------
   let panelAAggregation = $state<import('$lib/attention-agg').Aggregation>('max');
 
-  // ?demo=induction-heads (T20): open the attention panel on the copying-heads
-  // view instead of the tour, and score the heads once the model has loaded.
-  let headScoresDemoPending = $state(false);
-  $effect(() => {
-    if (!headScoresDemoPending) return;
-    if (loadState === 'loaded') {
-      headScoresDemoPending = false;
-      untrack(() => analysis.showHeadScores());
-    } else if (loadState === 'error') {
-      // The panel falls back to its "Score the heads" retry button.
-      headScoresDemoPending = false;
-    }
-  });
-
   onMount(() => {
     if (typeof localStorage === 'undefined') return;
-    const seen = localStorage.getItem('pry:tutorial_seen') === 'true';
-    const params = $page.url.searchParams;
-    const demo = demoFromParams(params);
-    if (demo === 'induction-heads') {
-      st.headScoresMode = true;
-      leftActiveTab = 'attention';
-      activeTab = 'attention';
-      headScoresDemoPending = true;
-      return;
-    }
-    const forced = params.get('tutorial') === '1' || demo === 'tour';
+    // First 0.4.0 launch: 0.3.8 tour chapters become visited lessons. Nothing auto-opens.
+    migrateTourProgress();
     // §P-popups: the popup audit drives the tour itself.
-    if ((!seen || forced) && !popupAuditRequested()) tutorialState.start();
+    if (popupAuditRequested()) return;
+    const entry = entryFromParams($page.url.searchParams);
+    if (entry?.kind === 'lesson') {
+      void openLessons().then(() => lessons?.openLesson(entry.id));
+    } else if (entry?.kind === 'lessons') {
+      void openLessons();
+    } else if (entry?.kind === 'tour' || tourAutoStarts()) {
+      void startTour();
+    }
   });
 
   // ---------------------------------------------------------------------------
@@ -753,27 +801,31 @@
   }
 
   onMount(() => {
-    // The experiment guide registers itself (ExperimentGallery); the update
-    // banner renders in the page flow, so it's tracked from here.
+    // The update banner renders in the page flow, so it's tracked from here.
     const offBanner = occupied.registerSelector(OCCUPIED.updateBanner, '[data-testid="update-banner"]');
     if (popupAuditRequested()) {
       const params = $page.url.searchParams;
       void import('$lib/popup/audit').then(({ runPopupAudit }) =>
         runPopupAudit(
           {
-            actions: tutorialActions,
+            actions: {
+              setPrompt: (t) => { prompt = t; },
+              runGenerate: () => handleGenerate(),
+              response: () => st.response,
+              openLeftTab,
+              openRightTab,
+              setCompareMode: (on) => { compareMode = on; },
+              showCopyingHeads: () => { void analysis.showHeadScores(); },
+              hideCopyingHeads: () => analysis.hideHeadScores(),
+              setHeadAblation: (on) => { st.headAblationMode = on; },
+            },
             loadState: () => loadState,
             ensureModel: () => handleSwitch('gpt2-small'),
-            startExperiment: async (id) => {
-              const exp = experiments.find((e) => e.id === id);
-              if (exp) await pickExperiment(exp);
-            },
-            closeExperiment: () => dismissGuide(),
             setCustomModelDialog: (open) => (customModelDialogOpen = open),
             lessons: auditLessons,
+            tour: auditTour,
           },
           {
-            guideTour: params.get('guideTour') === '1',
             skipTour: params.get('skipTour') === '1',
             lessons: params.get('lessons') === 'both' ? ['right', 'left'] : params.get('lessons') === 'right' ? ['right'] : params.get('lessons') === 'left' ? ['left'] : [],
           },
@@ -804,43 +856,6 @@
     invoke('open_devtools').catch(() => {});
   }
 
-  // The guided tour's moves (see $lib/tutorial/tour-steps.ts).
-  const tutorialActions: TutorialActions = {
-    setPrompt: (t) => { prompt = t; },
-    runGenerate: () => handleGenerate(),
-    response: () => st.response,
-    openLeftTab: (tab) => experimentActions.openLeftTab(tab),
-    openRightTab: (tab) => experimentActions.openRightTab(tab),
-    setFocusTokenIndex: (i) => { st.focusTokenIndex = i; },
-    setPanelAAggregation: (agg) => { panelAAggregation = agg; },
-    findTokenIndex: (pred) => st.response?.tokens.find(pred)?.index,
-    switchSaeLayer: (layer) => handleLayerSwitch(layer),
-    currentSaeLayer: () => st.saeLayer ?? null,
-    showCopyingHeads: () => { void analysis.showHeadScores(); },
-    hideCopyingHeads: () => analysis.hideHeadScores(),
-    setHeadAblation: (on, heads) => {
-      if (heads) st.headAblations = heads.map((h) => ({ ...h }));
-      st.headAblationMode = on;
-    },
-    runHeadAblation: () => handleHeadAblation(),
-    headAblationResult: () => st.headAblateResponse,
-    runPatching: (clean, corrupted, patchType) => {
-      patchingPreset = { clean, corrupted, patchType };
-      return handlePatching(clean, corrupted, patchType);
-    },
-    patchingResult: () => st.patchResponse,
-    setCompareMode: (on) => { compareMode = on; },
-    setComparePrompts: (a, b) => { compare.state.promptA = a; compare.state.promptB = b; },
-    runCompare: () => compare.run(),
-    compareResult: () => compare.state,
-    activePresetId: () => activePresetId,
-    switchModel: (id) => handleSwitch(id),
-    exit: () => {
-      try { localStorage.setItem('pry:tutorial_seen', 'true'); } catch { /* unavailable */ }
-      tutorialState.close();
-    },
-  };
-
   // Escape closes the hardware card (T29). Its backdrop closes on click too;
   // this is the keyboard way out.
   function onWindowKeydown(e: KeyboardEvent) {
@@ -858,41 +873,22 @@
     queueMicrotask(() => node.focus());
   }
 
-  // ---------------------------------------------------------------------------
-  // Experiment cards (T22)
-  // ---------------------------------------------------------------------------
-  const experiments = loadExperiments();
-  let experimentsOpen = $state(false);
-  let activeExperiment = $state<Experiment | null>(null);
-  let experimentBusy = $state(false);
   let patchingPreset = $state<{ clean: string; corrupted: string; patchType: PatchType } | null>(null);
 
-  const experimentActions: ExperimentActions = {
-    activePresetId: () => activePresetId,
-    switchModel: (id) => handleSwitch(id),
-    setPrompt: (t) => { prompt = t; },
-    runGenerate: () => handleGenerate(),
-    openLeftTab: (tab) => {
-      if (!pryUi.workspaceSplit) activeTab = 'attention';
-      onLeftTabChange(tab);
-    },
-    openRightTab: (tab) => {
-      if (!pryUi.workspaceSplit) activeTab = 'features';
-      rightActiveTab = tab;
-    },
-    setAggregation: (agg) => { panelAAggregation = agg; },
-    presetPatching: (p) => { patchingPreset = { ...p }; },
-    presetHeadAblations: (heads) => {
-      st.headAblations = heads.map((h) => ({ ...h }));
-      st.headAblationMode = true;
-    },
-    endTour: () => tutorialState.endForExperiment(),
-  };
+  // Opening a tab: in the tabbed layout, the half that holds it comes forward first.
+  function openLeftTab(tab: string) {
+    if (!pryUi.workspaceSplit) activeTab = 'attention';
+    onLeftTabChange(tab);
+  }
+  function openRightTab(tab: string) {
+    if (!pryUi.workspaceSplit) activeTab = 'features';
+    rightActiveTab = tab;
+  }
 
   // Lessons (plan T2b): the registry reaches the page only through this host.
   // `workspaceSplit` (pry-state) follows §P-layout's workspaceSplit; the two
   // tab-forcing calls above read it. The registry's reset is its own
-  // (registry/pry-actions.ts): it never calls dismissGuide or endTour.
+  // (registry/pry-actions.ts).
   $effect(() => {
     pryUi.workspaceSplit = workspaceSplit;
   });
@@ -903,9 +899,9 @@
       getPrompt: () => prompt,
       setPrompt: (t) => { prompt = t; },
       getLeftTab: () => leftActiveTab,
-      openLeftTab: (tab) => experimentActions.openLeftTab(tab as Parameters<ExperimentActions["openLeftTab"]>[0]),
+      openLeftTab,
       getRightTab: () => rightActiveTab,
-      openRightTab: (tab) => experimentActions.openRightTab(tab as Parameters<ExperimentActions["openRightTab"]>[0]),
+      openRightTab,
       getCompareMode: () => compareMode,
       setCompareMode: (on) => { compareMode = on; },
       getAggregation: () => panelAAggregation,
@@ -925,53 +921,19 @@
     }),
   );
 
-  /** Preset the last experiment couldn't load (the guide shows an error instead of its steps). */
-  let failedPreset = $state<string | null>(null);
-
-  function dismissGuide() {
-    activeExperiment = null;
-    failedPreset = null;
-  }
-
-  // "Back to normal" (see resetExperiment): the prompt is kept.
-  const resetActions: ResetActions = {
-    clearHeadAblations: () => {
-      st.headAblations = [];
-      st.headAblationMode = false;
-    },
-    hideHeadScores: () => analysis.hideHeadScores(),
-    clearPatchingPreset: () => { patchingPreset = null; },
-    dismissGuide,
-  };
-
-  async function pickExperiment(exp: Experiment) {
-    if (experimentBusy) return;
-    experimentsOpen = false;
-    activeExperiment = exp;
-    failedPreset = null;
-    experimentBusy = true;
-    try {
-      const result = await applyExperiment(exp, experimentActions);
-      if (!result.ok && activeExperiment === exp) failedPreset = result.preset;
-    } finally {
-      experimentBusy = false;
-    }
-  }
-
-  // An experiment picked on the loading screen opens once the model is ready.
+  // A lesson picked on the loading screen opens once the model is ready.
   // A failed load drops it: the error needs attention first.
-  let queuedExperimentId = $state<string | null>(null);
+  let queuedLessonId = $state<string | null>(null);
   $effect(() => {
-    const id = queuedExperimentId;
+    const id = queuedLessonId;
     if (!id) return;
     if (bannerPhase === 'error') {
-      queuedExperimentId = null;
+      queuedLessonId = null;
       return;
     }
     if (loadState !== 'loaded' || bannerPhase !== 'idle' || switchInFlight) return;
-    queuedExperimentId = null;
-    const exp = experiments.find((e) => e.id === id);
-    if (exp) untrack(() => void pickExperiment(exp));
+    queuedLessonId = null;
+    untrack(() => void openLessons().then(() => lessons?.openLesson(id)));
   });
 
   // ---------------------------------------------------------------------------
@@ -990,13 +952,11 @@
     const { response, saeLayer, ...rest } = currentRunData();
     if (!response) return null;
     const provenance = await provenanceExtras();
-    const exp = activeExperiment && activeExperiment.prompt === response.prompt ? activeExperiment : null;
     return notebook.add({
       title,
       note,
       modelName: displayName(response.preset_id, allCompat),
       display: presetDisplay,
-      experiment: exp ? { id: exp.id, title: exp.title, citations: exp.found.citations } : null,
       run: { ...rest, response, saeLayer: saeLayer ?? null },
       provenance,
     });
@@ -1153,11 +1113,12 @@
         <BookOpen class="h-4 w-4" />
         Notebook
       </button>
-      <!-- §P-layout: the Experiments button (re-purposed by T7b) gives its label's width to the
-           Lessons toggle, so the header row and the prompt keep their 0.3.8 geometry (Step 0). -->
+      <!-- §P-layout: the Experiments button gives its label's width to the Lessons toggle, so
+           the header row and the prompt keep their 0.3.8 geometry (Step 0). The experiments
+           became lessons: it opens the picker at Stage 2 (T7b). -->
       <button
-        onclick={() => (experimentsOpen = true)}
-        title="Try a guided experiment"
+        onclick={() => void openExperimentLessons()}
+        title="Open the lessons that replaced the experiments"
         aria-label="Experiments"
         data-tip="experiments-button"
         class="flex w-7 items-center justify-center rounded-md py-1 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
@@ -1194,7 +1155,7 @@
         <GitCompareArrows class="h-4 w-4" />
         Compare
       </button>
-      <TourMenu />
+      <TourMenu onTour={() => void startTour()} onLessons={() => void openLessons()} />
       <button onclick={openSettings} aria-label="Open settings" data-tour="settings-button"
         class="relative rounded-md p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100">
         <Settings class="h-4 w-4" />
@@ -1319,10 +1280,9 @@
       <LoadingScreen
         track={loadTrack}
         modelName={displayName(loadTrack.presetId, allCompat)}
-        {experiments}
         presetName={(id) => displayName(id, allCompat)}
-        {queuedExperimentId}
-        onQueueExperiment={(id) => (queuedExperimentId = id)}
+        {queuedLessonId}
+        onQueueLesson={(id) => (queuedLessonId = id)}
       />
     {/if}
     {#if compareMode}
@@ -1353,7 +1313,6 @@
                     headScoresMode={st.headScoresMode}
                     headScoresResponse={st.headScoresResponse}
                     headScoresLoading={st.headScoresLoading}
-                    headScoresWaiting={headScoresDemoPending}
                     onShowHeadScores={() => analysis.showHeadScores()}
                     onHideHeadScores={() => analysis.hideHeadScores()}
                   />
@@ -1486,7 +1445,6 @@
                     headScoresMode={st.headScoresMode}
                     headScoresResponse={st.headScoresResponse}
                     headScoresLoading={st.headScoresLoading}
-                    headScoresWaiting={headScoresDemoPending}
                     onShowHeadScores={() => analysis.showHeadScores()}
                     onHideHeadScores={() => analysis.hideHeadScores()}
                   />
@@ -1585,7 +1543,7 @@
         railed={lessonLayout.railed}
         picker={app.state.loaded ? app.pickerItems() : []}
         pending={app.state.pending.length}
-        onPick={(id) => void app.openLesson(id)}
+        onPick={(id) => void (id === QUICK_TOUR_ID ? startTour() : app.openLesson(id))}
         onReview={() => (app.state.installOpen = true)}
         onAllLessons={() => app.closeLesson()}
         onResize={resizeLessons}
@@ -1760,25 +1718,12 @@
       </div>
 
     </div>
-
-    <TourSettings onTourStarted={() => (settingsOpen = false)} />
   </SettingsDrawer>
 
-  <!-- Driven tutorial -->
-  <DrivenTutorial generating={st.generating} {loadState} {bannerVisible} saeLayerSwitching={st.layerSwitching} error={st.error} actions={tutorialActions} />
-
-  <ExperimentGallery
-    open={experimentsOpen}
-    {experiments}
-    active={activeExperiment}
-    busy={experimentBusy}
-    {failedPreset}
-    presetLabel={(id) => displayName(id, presets)}
-    onPick={pickExperiment}
-    onClose={() => (experimentsOpen = false)}
-    onDismissGuide={dismissGuide}
-    onReset={() => resetExperiment(resetActions)}
-  />
+  <!-- The quick tour: an overlay lesson (pry.quick-tour) on the Lessons runner -->
+  {#if lessons?.tourOpen}
+    <OverlayPresenter model={lessons.overlay} anchors={pryToolSet.anchors} runAction={lessons.runAction} />
+  {/if}
 
   <NotebookPanel
     open={notebookOpen}

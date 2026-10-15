@@ -13,7 +13,7 @@ import {
   type DeckCard,
 } from './loading-deck';
 import { tipsRegistry } from './tips/tips-registry';
-import { loadExperiments } from './experiments/experiments';
+import { deckLessons } from './lessons/deck-lessons';
 import { glossary } from './glossary';
 
 /** Deterministic PRNG (mulberry32). */
@@ -33,14 +33,26 @@ function memStorage() {
   return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v), m };
 }
 
-const experiments = loadExperiments();
-const base = { tips: tipsRegistry, experiments, glossary, presetId: 'gpt2-small' };
+const lessons = deckLessons();
+const base = { tips: tipsRegistry, lessons, glossary, presetId: 'gpt2-small' };
+
+describe('deckLessons', () => {
+  it('reads every bundled lesson but the quick tour, in index order, with its question title and summary', () => {
+    expect(lessons.length).toBe(19);
+    expect(lessons.some((l) => l.id === 'pry.quick-tour')).toBe(false);
+    expect(lessons[0]).toMatchObject({ id: 'pry.p1-1', title: 'Is there a database in there?', model: 'gpt2-small' });
+    for (const l of lessons) {
+      expect(l.title.trim(), l.id).not.toBe('');
+      expect(l.summary.trim(), l.id).not.toBe('');
+    }
+  });
+});
 
 describe('buildDeck', () => {
-  it('uses real tips, experiments and glossary words, with no repeats', () => {
+  it('uses real tips, lessons and glossary words, with no repeats', () => {
     const deck = buildDeck({ ...base, random: seeded(1) });
     const kinds = new Set(deck.map((c) => c.kind));
-    expect(kinds).toEqual(new Set(['tip', 'experiment', 'term']));
+    expect(kinds).toEqual(new Set(['tip', 'lesson', 'term']));
     expect(new Set(deck.map((c) => c.id)).size).toBe(deck.length);
     expect(deck.length).toBe(12);
   });
@@ -80,17 +92,17 @@ describe('buildDeck', () => {
     expect(terms.slice(0, 2).sort()).toEqual(allTerms.slice(-2).sort());
   });
 
-  it('says when an experiment needs a different model', () => {
+  it('says when a lesson runs on a different model', () => {
     const deck = buildDeck({ ...base, presetId: 'gemma-2-2b', random: seeded(4) });
-    const exps = deck.filter((c): c is Extract<DeckCard, { kind: 'experiment' }> => c.kind === 'experiment');
-    expect(exps.length).toBeGreaterThan(0);
-    expect(exps.every((e) => e.switchesModel === (e.preset !== 'gemma-2-2b'))).toBe(true);
-    const same = buildDeck({ ...base, random: seeded(4) }).filter((c) => c.kind === 'experiment');
-    expect(same.every((e) => e.kind === 'experiment' && !e.switchesModel)).toBe(true);
+    const ls = deck.filter((c): c is Extract<DeckCard, { kind: 'lesson' }> => c.kind === 'lesson');
+    expect(ls.length).toBeGreaterThan(0);
+    expect(ls.every((e) => e.switchesModel === (e.model !== null && e.model !== 'gemma-2-2b'))).toBe(true);
+    const same = buildDeck({ ...base, random: seeded(4) }).filter((c) => c.kind === 'lesson');
+    expect(same.every((e) => e.kind === 'lesson' && !e.switchesModel)).toBe(true);
   });
 
   it('copes with empty sources', () => {
-    expect(buildDeck({ tips: [], experiments: [], glossary: {}, presetId: 'x' })).toEqual([]);
+    expect(buildDeck({ tips: [], lessons: [], glossary: {}, presetId: 'x' })).toEqual([]);
   });
 });
 

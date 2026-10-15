@@ -2,13 +2,12 @@
 // Each entry becomes at most one popover, gated on localStorage key
 // `pry:tip_seen:{id}`. See ui/src/lib/components/FirstTimeTip.svelte.
 //
-// Tutorial coordination: `tutorialStepId` (when set) causes the tip to be
-// auto-marked seen as soon as the driven tutorial advances past that step id.
-// The target-string fallback in `coordinate.ts` also flips a tip's flag when
-// the current tutorial step's `target` attribute exactly matches this tip's
-// `data-tip` id, so tutorial targets named after a `data-tip` id (e.g.
-// `panel-a-heatmap`, `panel-a-agg-selector`) will auto-
-// suppress the matching tip without needing an explicit `tutorialStepId`.
+// Quick tour coordination: `tutorialStepId` (when set) names a quick-tour step
+// as `pry.quick-tour#<stepId>`; the tip is auto-marked seen once the Lessons
+// runner shows that step. The anchor fallback in `coordinate.ts` also flips a
+// tip's flag when the current tour step points at an anchor named after its
+// `data-tip` id (e.g. `predictions-panel`, `watch-it-write`), with no
+// explicit `tutorialStepId`.
 
 import { CUSTOM_MODELS_ENABLED } from '../flags';
 
@@ -30,8 +29,8 @@ export interface TipDef {
   /** Point the arrow aims at, as a fraction [fx, fy] of the target rect. Default [0.5, 0.5]. */
   focus?: [number, number];
   /**
-   * If set, tip is auto-marked seen when the tour advances past this step
-   * id. Values here must match a step id in `tutorial/tour-steps.ts`.
+   * If set, the tip is auto-marked seen when the quick tour shows this step:
+   * `pry.quick-tour#<stepId>`, a section id in `src/lessons/pry.quick-tour/lesson.md`.
    */
   tutorialStepId?: string;
 }
@@ -49,8 +48,8 @@ const CUSTOM_MODEL_VERDICT_TIP: TipDef = {
 
 export const tipsRegistry: TipDef[] = [
   {
-    // The word chips strip in +page.svelte. Tour step 'basics.tokens' covers
-    // the same strip, so finishing that step marks this tip seen.
+    // The word chips strip in +page.svelte. Quick-tour step 3 covers the same
+    // strip, so showing that step marks this tip seen.
     id: 'word-strip',
     title: 'Word chips',
     target: '[data-tour="token-strip"]',
@@ -61,11 +60,9 @@ export const tipsRegistry: TipDef[] = [
       "Each chip is a token (a word piece), one chunk of text the model reads. A dot means the piece starts with a space. Click a chip to point every panel at that word.",
     why:
       "Models don't read whole words. They read tokens, pieces from a fixed list (about 50,000 of them for GPT-2 small). Common words get one piece, and rare words get split into a few. The model makes a guess after every piece, so most panels answer questions about one piece at a time, and that's the one you clicked.",
-    tutorialStepId: 'basics.tokens',
+    tutorialStepId: 'pry.quick-tour#step-3',
   },
   {
-    // Tour step 'attention.grid' targets 'panel-a-heatmap'; string-equality
-    // fallback in coordinate.ts marks this tip seen on step advance.
     id: 'panel-a-heatmap',
     title: 'Attention grid',
     target: '[data-tip="panel-a-heatmap"]',
@@ -87,8 +84,6 @@ export const tipsRegistry: TipDef[] = [
       "Each square answers one question: when the model was working on the word in this row, how much did this head look at the word in this column? Rows are the word doing the looking, columns are the word being looked at. The top-right half is empty because a word can't look ahead. Patterns worth spotting: a line just below the diagonal (the head looks at the word right before), a bright stripe down one column (the head keeps going back to one word), or a few lone bright squares (the head has a narrow, rule-like job). A flat, even pattern means the head isn't really choosing.",
   },
   {
-    // Tour step 'attention.agg' targets 'panel-a-agg-selector'; string-equality
-    // fallback marks this tip seen on step advance.
     id: 'panel-a-agg-selector',
     title: 'Score by menu',
     target: '[data-tip="panel-a-agg-selector"]',
@@ -137,7 +132,8 @@ export const tipsRegistry: TipDef[] = [
       "Pick how deep into the model to look. Deeper layers tend to hold more abstract ideas. Switching layers runs the SAE for that depth.",
     why:
       "The model has a stack of layers (12 in GPT-2 small), each one building a richer picture. Early layers tend to catch surface stuff, like word shape, grammar and part of speech. Later layers catch meaning, relationships, and who's who in a sentence, like whether 'she' means the nurse. Switching layers here loads the SAE for the new depth and runs the model on your prompt again. That's a few seconds of waiting. Try jumping between an early layer and a late one on the same word to see the difference.",
-    tutorialStepId: 'concepts.layer',
+    // Quick-tour step 8 points at the Features panel, where this menu sits.
+    tutorialStepId: 'pry.quick-tour#step-8',
   },
   {
     id: 'predictions-panel',
@@ -284,9 +280,21 @@ export const tipsRegistry: TipDef[] = [
     target: '[data-tip="experiments-button"]',
     placement: 'bottom',
     blurb:
-      "Short guided experiments that researchers have studied. Pick one and Pry sets up the prompt and opens the right panel.",
+      "The guided experiments are lessons now. The flask button opens Lessons at Stage 2, where the first of them start.",
     why:
-      "Each one asks a question researchers already have an answer for, so you'll know what to look for. It's a quick way to learn what each panel is good for.",
+      "Each experiment asked a question researchers already have an answer for, and the lessons kept those questions. They walk you through the panels a step at a time, so you know what to look for and why it matters.",
+  },
+  {
+    // Shown once, only to people with 0.3.8 tour progress (lessons/progress.ts
+    // migrateTourProgress marks it seen for everyone else).
+    id: 'lessons-toggle',
+    title: 'Lessons',
+    target: '[data-tour="lessons-toggle"]',
+    placement: 'bottom',
+    blurb:
+      "The old guided tour's teaching lives in Lessons now. The chapters you finished count as visited there.",
+    why:
+      "The tour got split in two. The quick tour under the ? button just points out where things are, and Lessons do the explaining, one question per lesson, on the same panels you've been using.",
   },
   {
     id: 'compare-panel',

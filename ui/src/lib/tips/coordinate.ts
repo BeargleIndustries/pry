@@ -1,25 +1,22 @@
-// Tutorial <-> tips coordination.
+// Quick tour <-> tips coordination.
 //
-// The driven tutorial owns a subset of screen real estate that would otherwise
-// show first-mount tips. When the tutorial advances (or closes), we flip the
-// `pry:tip_seen:*` flag for any tip whose `tutorialStepId` matches the
-// advancing step id, OR whose `data-tip` selector string-equals the advancing
-// step's `target` attribute. Coupling is one-way: tutorial -> tips. Tips never
-// mutate tutorial state.
+// The quick tour (the overlay lesson `pry.quick-tour`, on the Lessons runner)
+// points at places a first-time tip would otherwise explain. When the runner
+// shows a tour step, we flip the `pry:tip_seen:*` flag for any tip whose
+// `tutorialStepId` names that step (`pry.quick-tour#<stepId>`), OR whose
+// `data-tip` selector names an anchor the step points at. Coupling is one-way:
+// tour -> tips. Tips never change the tour.
 
 import { tipsRegistry } from './tips-registry';
 
 const STORAGE_PREFIX = 'pry:tip_seen:';
 
-export function markTipsSeenForStep(
-  stepId: string,
-  stepTarget: string | null,
-): void {
+/** `stepRef` is the runner's current step as `<lesson id>#<step id>`; `anchors` are the anchors it points at. */
+export function markTipsSeenForStep(stepRef: string, anchors: readonly string[] = []): void {
   if (typeof localStorage === 'undefined') return;
   for (const tip of tipsRegistry) {
-    const matchesStep = tip.tutorialStepId === stepId;
-    const matchesTarget =
-      stepTarget !== null && tip.target === `[data-tip="${stepTarget}"]`;
+    const matchesStep = tip.tutorialStepId === stepRef;
+    const matchesTarget = anchors.some((a) => tip.target === `[data-tip="${a}"]`);
     if (matchesStep || matchesTarget) {
       localStorage.setItem(`${STORAGE_PREFIX}${tip.id}`, 'true');
     }
