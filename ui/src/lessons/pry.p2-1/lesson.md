@@ -33,6 +33,10 @@ choices:
 
 ## Looking inside gives suspects {id=s3-2 outline=P2.1.md#3.2}
 
+:::enter
+open_panel: predictions
+:::
+
 :::slots
 mary: { read: prediction, args: { token: " Mary" }, field: prob, format: probability, expect: 0.677 }
 john: { read: prediction, args: { token: " John" }, field: prob, format: probability, expect: 0.0235 }
@@ -168,7 +172,7 @@ Researchers call a token that soaks up spare attention like this an **attention 
 ::::
 
 :::explain-result
-Averaged over the whole model, {marker_share} of the mix at ' to' comes from the start-of-text marker, and the line to it is the thickest one on screen.
+Averaged over the whole model, {marker_share} of the mix at ' to' comes from the start-of-text marker, and :look{at=panel-a-lines}[the line to it] is the thickest one on screen.
 
 If you picked the word with the thickest line, the line to the marker shows why thickness alone can mislead.
 
@@ -244,6 +248,11 @@ model_answer: "No: attention only reaches back."
 :::
 
 ## What attention can and can't show {id=s3-9 outline=P2.1.md#3.9}
+
+:::enter
+attention_view: lines
+focus_token: { text: " to", occurrence: last }
+:::
 
 :::explain-result
 You've found a head that draws heavily from ' Mary' at ' to'. Look back at :look{at=panel-a-lines}[the lines] and keep in mind what they measure: how much of each earlier token went into the mix. They don't say what information came across, and they don't say ' Mary' won because of it.
