@@ -22,7 +22,7 @@ slots:
   heavy_delta: { read: ablation.delta, args: { token: " Mary" }, from_capture: heavy, expect: -0.002849757671356201, tolerance: 0.02 }
 ---
 
-## Recall via TN-4 {id=s3-1 outline=P3.2.md#3.1}
+## What you guessed in P2.1 {id=s3-1 outline=P3.2.md#3.1}
 
 :::explain
 In P2.1 you picked :earlier{key="pry.p2-1.word-pick"}[skipped]. Attention showed where heads drew from. Today you test whether that mattered.
@@ -76,10 +76,11 @@ This head draws heavily from {row23_token}. Switch it off. What happens to ' Mar
 
 ```yaml
 choices:
-  - { text: "falls a lot (its line was heavy)", target: T2, feedback: "Here's what you wrote in P2.1: :earlier{key=\"pry.p2-1.hypothesis\"}[skipped]. Here's the test: ' Mary' went from {mary_before} to {mary_after}. Lots of people expect a big drop, because a thick line looks like importance." }
-  - { text: "falls a little", feedback: "Here's the test: ' Mary' went from {mary_before} to {mary_after}. The heavy line didn't buy that head much say in the answer." }
-  - { text: "no visible change", target: T4, feedback: "Here's the test: ' Mary' went from {mary_before} to {mary_after}. Hold on to that result, though. You'll see in a minute why no change doesn't mean the head does nothing." }
-  - { text: "rises", feedback: "The model went another way: ' Mary' went from {mary_before} to {mary_after}. Some heads do push against the answer, and you'll meet one in the task." }
+  - { text: "falls a lot (its line was heavy)", target: T2, feedback: "Lots of people expect a big drop, because a thick line looks like importance. The next section runs the test." }
+  - { text: "falls a little", feedback: "The next section runs the test." }
+  - { text: "no visible change", target: T4, feedback: "The next section runs the test. Whatever it shows, hold on to the result: no change and no use aren't the same thing, as you'll see." }
+  - { text: "rises", feedback: "Some heads do push against the answer, and you'll meet one in the task. The next section runs the test." }
+remember: heavy-pick
 ```
 :::
 
@@ -104,7 +105,7 @@ capture: heavy
 :::
 
 :::observe{id=heavy-obs}
-' Mary' went from {before} to {after}. The head drew heavily from {row23_token}, and switching it off left the answer where it was. A thick line shows where a head drew from. It doesn't show that what it drew mattered for this answer. That's the open question from P2.1, answered for this head.
+You picked :earlier{key="pry.p3-2.heavy-pick"}[nothing]. In :look{at=ablation-results}[the knockout results], ' Mary' went from {before} to {after}. The head drew heavily from {row23_token}, and switching it off left the answer where it was. A thick line shows where a head drew from. It doesn't show that what it drew mattered for this answer. That's the open question from P2.1, answered for this head.
 
 ```yaml
 check: { read: ablation.delta, args: { token: " Mary" }, op: gt, value: -0.01, expect: -0.002849757671356201 }
@@ -121,8 +122,12 @@ withdraws: [mixing desk]
 
 ## The name mover heads {id=s3-5 outline=P3.2.md#3.5}
 
+:::enter
+head_ablation: { heads: [], on: false }
+:::
+
 :::do{id=open-l9h9}
-Researchers already have suspects for this sentence, found with lots of knockouts and patches. Heads that copy a name from earlier in the sentence into the answer are called **name mover heads**. Wang and colleagues named them in 2022 for exactly this kind of sentence, and Pry's glossary uses the name. Three of them are cells :look{at=head-cell layer=9 head=9}[`L9H9`], :look{at=head-cell layer=9 head=6}[`L9H6`] and :look{at=head-cell layer=10 head=0}[`L10H0`] in :look{at=panel-a-heatmap}[the grid]. Press **Do it** to open `L9H9` and watch its lines from ' to' land on ' Mary'.
+Researchers already have suspects for this sentence, found with lots of knockouts and patches. Heads that copy a name from earlier in the sentence into the answer are called **name mover heads**. Wang and colleagues named them in 2022 for exactly this kind of sentence, and Pry's glossary uses the name. Three of them are `L9H9` (:look{at=head-cell layer=9 head=9}[this cell]), `L9H6` (:look{at=head-cell layer=9 head=6}[this one]) and `L10H0` (:look{at=head-cell layer=10 head=0}[this one]) in :look{at=panel-a-heatmap}[the grid]. Press **Do it** to open `L9H9` and watch its lines from ' to' land on ' Mary'.
 
 ```actions
 - open_head: { layer: 9, head: 9 }
@@ -248,6 +253,11 @@ breaks: "the teammates adjust as in a real game, but here the benched player sta
 :::
 
 ## Find a head that matters {id=s3-9 outline=P3.2.md#3.9}
+
+:::enter
+attention_view: expert
+head_ablation: { heads: [], on: false }
+:::
 
 :::slots
 task_threshold: { row: "26.task_threshold", format: probability }

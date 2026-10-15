@@ -2821,20 +2821,6 @@
           }
         },
         {
-          "where": "s3-4/heavy-obs",
-          "kind": "slot",
-          "name": "mary_before",
-          "prompt": "When Mary and John went to the store, John gave a drink to",
-          "expect": 0.6769932508468628
-        },
-        {
-          "where": "s3-4/heavy-obs",
-          "kind": "slot",
-          "name": "mary_after",
-          "prompt": "When Mary and John went to the store, John gave a drink to",
-          "expect": 0.6741434931755066
-        },
-        {
           "where": "s3-7/three-obs",
           "kind": "slot",
           "name": "movers_delta",
