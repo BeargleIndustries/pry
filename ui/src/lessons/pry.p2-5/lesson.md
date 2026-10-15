@@ -14,6 +14,7 @@ cold_entry: "Each token's residual stream is a list of 768 numbers that every la
 model: gpt2-small
 baseline: { prompt: "Michael Jordan played the sport of" }
 verified_rows: [1, 7, 53, 54, 55]
+limits: "Features are patterns an SAE found in one layer's residual stream. Each label is an AI's guess from the top examples, so test it against them."
 slots:
   fid: { row: "53.fid", format: count }
   preset: { row: "53.sae_layer", format: count }

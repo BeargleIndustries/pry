@@ -14,6 +14,7 @@ cold_entry: "Each token gets its own list of 768 numbers, its residual stream, a
 model: gpt2-small
 baseline: { prompt: "When Mary and John went to the store, John gave a drink to" }
 verified_rows: [14, 23, 45, 46, 47]
+limits: "Attention shows which earlier tokens a head drew from. A big weight doesn't mean that token mattered for the answer."
 ---
 
 ## Recall {id=s3-1 depth=optional outline=P2.1.md#3.1}

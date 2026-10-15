@@ -14,6 +14,7 @@ cold_entry: "What you need from before: GPT-2 is a fixed file of numbers that tu
 model: gpt2-small
 baseline: { prompt: "Michael Jordan played the sport of" }
 verified_rows: [1, 8, 9, 10, 28, 29]
+limits: "A word-for-word match shows GPT-2 reproduces a text. It doesn't show how often that text appeared in training, which Pry can't see."
 ---
 
 ## Recall {id=s3-0 depth=optional outline=P1.6.md#3.0}

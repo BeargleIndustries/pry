@@ -14,6 +14,7 @@ cold_entry: "What you need from before: for any prompt, GPT-2 gives every token 
 model: gpt2-small
 baseline: { prompt: "Michael Jordan played the sport of" }
 verified_rows: [1, 8, 28, 41, 43, 44]
+limits: "Watch it write shows the picked token and the runner-up at each step. It doesn't show the paths other runs would take."
 ---
 
 ## Recall {id=s3-0 depth=optional outline=P1.5.md#3.0}

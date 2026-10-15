@@ -14,6 +14,7 @@ cold_entry: "Three tools from before. Each layer has an MLP, the other half of t
 model: gpt2-small
 baseline: { prompt: "Michael Jordan played the sport of" }
 verified_rows: [1, 18, 20, 34, 35, 66, 67]
+limits: "Each tool narrows the suspects for where ' basketball' comes from. None of them finds a place where the fact is stored, so treat 'the fact is in layer N' as a claim none of these can make."
 ---
 
 ## Recall {id=s3-1 depth=optional outline=P3.6.md#3.1}

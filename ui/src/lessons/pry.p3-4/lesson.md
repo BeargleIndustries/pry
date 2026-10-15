@@ -14,6 +14,7 @@ cold_entry: "Three things from before. A sparse autoencoder (SAE) splits a token
 model: gpt2-small
 baseline: { prompt: "The nurse said that" }
 verified_rows: [17, 24, 61, 62]
+limits: "A feature knockout shows how much this answer depends on that feature here. Removing any active feature's share changes the residual stream a little, so compare against a control before reading a small change."
 slots:
   n: { row: "24.n_top", format: count }
   target_delta: { read: feature_ablation.delta, args: { token: " she" }, from_capture: target, expect: -0.011518552899360657, tolerance: 0.02 }

@@ -14,6 +14,7 @@ cold_entry: "Attention is the half of each layer that mixes information into a t
 model: gpt2-small
 baseline: { prompt: "Pip ordered zebra lamps from Quorn. Pip ordered zebra lamps from" }
 verified_rows: [15, 16, 48, 49]
+limits: "The copying score shows a head draws from 'what came next last time' on random repeated tokens. It's one test, and it doesn't show everything the head does."
 slots:
   qu: { read: prediction, args: { token: " Qu" }, field: prob, format: probability, expect: 0.3195 }
   the_p: { read: prediction, args: { token: " the" }, field: prob, format: probability, expect: 0.0172 }

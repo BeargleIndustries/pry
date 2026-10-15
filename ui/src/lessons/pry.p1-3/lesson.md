@@ -14,6 +14,7 @@ cold_entry: "What you need from before: GPT-2 cuts text into tokens; each token 
 model: gpt2-small
 baseline: { prompt: "Michael Jordan played the sport of" }
 verified_rows: [1, 18, 30]
+limits: "Compare shows two sets of chances side by side. It doesn't show where inside the model the difference came in."
 ---
 
 ## Recall {id=s3-0 depth=optional outline=P1.3.md#3.0}

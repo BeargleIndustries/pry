@@ -14,6 +14,7 @@ cold_entry: "Three things from before. A feature is one of the patterns a sparse
 model: gpt2-small
 baseline: { prompt: "On our trip we walked along the beach and watched the ocean" }
 verified_rows: [25, 33, 63, 64, 65]
+limits: "Steering pushes at every token, prompt included, at one layer. A match with the label shows the label fits at least that much, so check coherence and the control before reading more into it."
 slots:
   target_label: { row: "25.target_label", format: string }
   control_label: { row: "25.control_label", format: string }

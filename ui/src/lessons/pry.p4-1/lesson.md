@@ -13,6 +13,7 @@ prerequisites: [pry.p1-5, pry.p1-6]
 model: gpt2-small
 baseline: { prompt: "Write a short poem about the sea." }
 verified_rows: [11, 12, 21, 28, 37, 38, 39]
+limits: "These lessons use GPT-2 small, a base model. Fine-tuning, system prompts in trained assistants, search tools and filters are described here, not shown."
 ---
 
 ## Recall {id=s3-0 depth=optional outline=P4.1.md#3.0}

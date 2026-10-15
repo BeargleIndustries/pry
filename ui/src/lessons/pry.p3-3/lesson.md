@@ -14,6 +14,7 @@ cold_entry: "Four things from before. Each token has its own residual stream, a 
 model: gpt2-small
 baseline: { prompt: "When Mary and John went to the store, John gave a drink to" }
 verified_rows: [14, 27, 32, 59, 60]
+limits: "A bright cell shows that copying that slice moves ' Mary''s logit back toward the clean run, on this pair. It doesn't show that the slice is the mechanism, so treat it as a strong suspect."
 slots:
   clean: { read: patch.cell, args: { layer: $row.27.peak_layer, position: $row.27.peak_position }, field: clean, format: logit, expect: 18.466388702392578, tolerance: 0.05 }
   corrupted: { read: patch.cell, args: { layer: $row.27.peak_layer, position: $row.27.peak_position }, field: corrupted, format: logit, expect: 14.966815948486328, tolerance: 0.05 }

@@ -14,6 +14,7 @@ cold_entry: "Every layer adds to each token's residual stream, and at the top th
 model: gpt2-small
 baseline: { prompt: "Michael Jordan played the sport of" }
 verified_rows: [1, 14, 17, 22, 51, 52]
+limits: "Each bar is one part's direct push on the logit. Only direct pushes count, so treat the tall bars as suspects."
 slots:
   top_parts: { read: dla.top_parts, args: { n: 3 }, expect: [{ part: "MLP.9", contribution: 1.8497 }, { part: "MLP.10", contribution: 1.778 }, { part: "L11.H3", contribution: 1.7494 }] }
   bars_total: { read: dla.bars_total, expect: 14.799 }

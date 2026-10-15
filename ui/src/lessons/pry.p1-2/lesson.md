@@ -14,6 +14,7 @@ prerequisites: [pry.p1-1]
 model: gpt2-small
 baseline: { prompt: "It was unbelievable, said Leclerc" }
 verified_rows: [6, 7, 42]
+limits: "The token strip shows how your text got cut. It doesn't show what the model does with the tokens afterwards."
 ---
 
 ## How many pieces? {id=s3-1 outline=P1.2.md#3.1}

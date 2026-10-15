@@ -14,6 +14,7 @@ cold_entry: "Each token's residual stream is a list of 768 numbers that every la
 model: gpt2-small
 baseline: { prompt: "Michael Jordan played the sport of" }
 verified_rows: [1, 14, 17, 20, 21, 50]
+limits: "The logit lens reads each layer with the model's last step. The middle layers weren't built to be read this way, so early rows are a rough hint."
 slots:
   first_top_layer: { read: lens.first_top_layer, args: { token: " basketball" }, from_capture: jordan_lens, expect: 8 }
   peak_layer: { read: lens.peak_layer, args: { token: " basketball" }, from_capture: jordan_lens, expect: 9 }

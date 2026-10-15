@@ -14,6 +14,7 @@ cold_entry: "Three things from before. An attention head is one of the parts in 
 model: gpt2-small
 baseline: { prompt: "When Mary and John went to the store, John gave a drink to" }
 verified_rows: [14, 23, 26, 57, 58]
+limits: "A knockout shows what happens to this answer without that head. If the answer holds, the head either didn't matter here or other heads covered for it, so 'no change' isn't 'not used'."
 slots:
   row23_token: { row: "23.token", format: string }
   movers_delta: { read: ablation.delta, args: { token: " Mary" }, from_capture: movers, expect: -0.19180729985237122, tolerance: 0.02 }

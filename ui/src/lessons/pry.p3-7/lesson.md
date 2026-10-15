@@ -14,6 +14,7 @@ cold_entry: "Three tools from before. DLA splits a logit into each part's direct
 model: gpt2-small
 baseline: { prompt: "The war lasted from the year 1732 to the year 17" }
 verified_rows: [14, 19, 36, 68, 69, 70, 71]
+limits: "Key parts shows the parts with the biggest direct pushes on the guess after the selected word: a starting point, not an established circuit. A knockout with a control tests one link on one prompt."
 slots:
   map_head: { row: "19.map_head", format: string }
   control_head: { row: "19.control_head", format: string }

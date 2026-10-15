@@ -14,6 +14,7 @@ cold_entry: "Two things from before. A probability is the share of the next-toke
 model: gpt2-small
 baseline: { prompt: "The nurse said that" }
 verified_rows: [14, 17, 27, 31, 56]
+limits: "Compare shows what moved when one word changed. It doesn't show which part inside moved it, so treat the delta as a lead."
 ---
 
 ## Recall {id=s3-1 depth=optional outline=P3.1.md#3.1}

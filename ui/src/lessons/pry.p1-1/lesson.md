@@ -13,6 +13,7 @@ prerequisites: []
 model: gpt2-small
 baseline: { prompt: "Michael Jordan played the sport of" }
 verified_rows: [1, 2, 3, 40, 41]
+limits: "These are next-word chances for one prompt. They don't show how the numbers produced them, or whether the top word is true."
 slots:
   basketball: { read: prediction, args: { token: " basketball" }, field: prob, format: probability, expect: 0.42208 }
   football: { read: prediction, args: { token: " football" }, field: prob, format: probability, expect: 0.047189 }
