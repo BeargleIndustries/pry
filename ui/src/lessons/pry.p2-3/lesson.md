@@ -36,6 +36,10 @@ free: true
 
 ## The model's last step {id=s3-2 outline=P2.3.md#3.2}
 
+:::enter
+open_panel: predictions
+:::
+
 :::explain{id=top-box}
 At the very top of the model there's one fixed step. It takes the last token's residual stream and turns it into a logit for every token in the vocabulary, about fifty thousand of them. Those logits are what've been turning into the probabilities you've been reading in Predictions.
 
@@ -58,7 +62,7 @@ Right before the unembedding there's a normalising step called LayerNorm, which 
 ## Read any layer with it {id=s3-3 outline=P2.3.md#3.3}
 
 :::explain
-The unembedding only runs once, at the top. There's nothing stopping you from running it on the residual stream partway up, though, after `L0`, after `L1`, all the way to `L11`, as if the model had to answer right there. Reading any layer's residual stream with the unembedding like this is called the **logit lens**. The same name sits on Pry's Logit Lens tab.
+The unembedding only runs once, at the top. There's nothing stopping you from running it on the residual stream partway up, though, after `L0`, after `L1`, all the way to `L11`, as if the model had to answer right there. Reading any layer's residual stream with the unembedding like this is called the **logit lens**. The same name sits on :look{at=left-tab-strip}[Pry's Logit Lens tab], which you'll open once you've made a guess.
 :::
 
 :::analogy
@@ -133,7 +137,7 @@ Why does {peak_p} drop to {final_p}? The layers after {peak_layer} added things 
 
 Read each row as what that layer would guess, read through the logit lens.
 
-:refutes[being on top at `L9` didn't settle anything; `L10`-`L11` changed the probabilities.]
+:refutes[Being on top partway up didn't settle anything: the last two layers still changed the probabilities.]
 
 ```yaml
 supports: "The logit lens shows ' basketball' leading from the middle-to-late layers and losing probability at the end. It's an approximation, since the middle layers weren't built to be read this way. It's a hint, not proof."
@@ -180,7 +184,7 @@ model_answer: "Late, then the last layer lowers it."
 
 ## Does the residual stream run ahead? {id=s3-8 depth=optional outline=P2.3.md#3.8}
 
-::::fold{title="Does the residual stream run ahead of the text?"}
+::::fold{title="Optional: does the residual stream run ahead of the text? Open this for a rhyme test in the logit lens."}
 
 :::explain
 The model writes one token at a time, as you saw in P1.5. Its residual stream can still carry information about tokens further ahead. Researchers at Anthropic showed this in a larger model (Lindsey et al., 2025): asked for a rhyming couplet, the model already had the rhyme word active before it wrote the line that ends in it. That was in a larger model, not shown here.
