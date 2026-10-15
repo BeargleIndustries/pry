@@ -18,6 +18,8 @@ verified_rows: [11, 12, 21, 28, 37, 38, 39]
 ## Recall {id=s3-0 depth=optional outline=P4.1.md#3.0}
 
 :::recall{id=recall-learn}
+Why this matters: chat assistants seem to follow instructions, and this lesson shows where that comes from.
+
 ```yaml
 from: pry.p1-6
 question: "If you type an instruction into Pry, does GPT-2 learn to follow it?"

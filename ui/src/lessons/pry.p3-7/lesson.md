@@ -24,6 +24,8 @@ slots:
 ## Recall {id=s3-1 depth=optional outline=P3.7.md#3.1}
 
 :::recall{id=recall-control}
+Why this matters: this lesson's poke at one link comes with a control for exactly that reason.
+
 ```yaml
 from: pry.p3-5
 question: "In P3.5 the control feature changed the text too. What did that tell you about 'the text changed'?"

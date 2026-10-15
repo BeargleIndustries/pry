@@ -26,6 +26,8 @@ slots:
 ## Recall {id=s3-1 depth=optional outline=P3.3.md#3.1}
 
 :::recall{id=recall-compare}
+Why this matters: this lesson's tool narrows a change in the answer down to one layer at one token.
+
 ```yaml
 from: pry.p3-1
 question: "Compare showed ' Mary' fall when the second name changed. What couldn't it tell you?"

@@ -19,6 +19,8 @@ verified_rows: [1, 18, 20, 34, 35, 66, 67]
 ## Recall {id=s3-1 depth=optional outline=P3.6.md#3.1}
 
 :::recall{id=recall-knockout}
+Why this matters: this lesson points three tools at one sentence, and each one leaves something open like that.
+
 ```yaml
 from: pry.p3-4
 question: "A feature knockout changed nothing. What couldn't that rule out?"

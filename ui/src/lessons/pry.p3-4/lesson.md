@@ -23,6 +23,8 @@ slots:
 ## Recall {id=s3-1 depth=optional outline=P3.4.md#3.1}
 
 :::recall{id=recall-held}
+Why this matters: the same two readings come back when you knock out features, so you'll need them again here.
+
 ```yaml
 from: pry.p3-2
 question: "The name movers came off and ' Mary' held on more than you might expect. What were the two readings of 'it held'?"

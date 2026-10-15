@@ -26,6 +26,8 @@ slots:
 ## Direction {id=s3-1 outline=P3.5.md#3.1}
 
 :::recall{id=recall-direction}
+Why this matters: this lesson adds a feature instead of removing it, and what it adds is the thing that knockout took away.
+
 ```yaml
 from: pry.p3-4
 question: "In P3.4 you knocked features out. What did that remove from the residual stream?"

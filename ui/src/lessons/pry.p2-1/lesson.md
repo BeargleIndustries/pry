@@ -19,6 +19,8 @@ verified_rows: [14, 23, 45, 46, 47]
 ## Recall {id=s3-1 depth=optional outline=P2.1.md#3.1}
 
 :::recall{id=recall-same-lines}
+Why this matters: this lesson reads the model's insides for the first time, and what you see is only worth reading if it comes out the same on every Run.
+
 ```yaml
 from: pry.p1-5
 question: "At temperature 0 the same prompt gives the same text. Will the lines you're about to see look the same on a second Run?"

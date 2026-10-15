@@ -22,6 +22,8 @@ slots:
 ## Recall {id=s3-1 depth=optional outline=P2.2.md#3.1}
 
 :::recall{id=recall-made-up}
+Why this matters: the answer is a part of the model you can watch at work in this lesson.
+
 ```yaml
 from: pry.p1-6
 question: "Pry's model can't learn from your prompt. So how could it continue a made-up name it has only just seen?"

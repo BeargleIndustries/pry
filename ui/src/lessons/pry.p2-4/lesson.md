@@ -27,6 +27,8 @@ slots:
 ## Recall {id=s3-1 depth=optional outline=P2.4.md#3.1}
 
 :::recall{id=recall-qu}
+Why this matters: this lesson's tool splits a logit into each part's own push, which is that measurement.
+
 ```yaml
 from: pry.p2-2
 question: "An induction head copied ' Qu' forward. How could you measure how much one head raised ' Qu''s logit?"

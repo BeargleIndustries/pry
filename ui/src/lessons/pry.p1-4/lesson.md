@@ -26,6 +26,8 @@ slots:
 ## Recall {id=s3-0 depth=optional outline=P1.4.md#3.0}
 
 :::recall{id=recall-pieces}
+Why this matters: common text gets short, familiar tokens, and this lesson asks whether the top guess follows what's common or what's true.
+
 ```yaml
 from: pry.p1-2
 question: "Why is ' unbelievable' one token and ' Leclerc' three?"

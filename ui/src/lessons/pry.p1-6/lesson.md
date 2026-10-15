@@ -19,6 +19,8 @@ verified_rows: [1, 8, 9, 10, 28, 29]
 ## Recall {id=s3-0 depth=optional outline=P1.6.md#3.0}
 
 :::recall{id=recall-one}
+Why this matters: if nothing checks the sum, the next question is where those numbers came from in the first place.
+
 ```yaml
 from: pry.p1-4
 question: "Why did ' one' beat ' four' for 'Two plus two equals'?"

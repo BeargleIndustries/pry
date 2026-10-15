@@ -19,6 +19,8 @@ verified_rows: [1, 8, 28, 41, 43, 44]
 ## Recall {id=s3-0 depth=optional outline=P1.5.md#3.0}
 
 :::recall{id=recall-last}
+Why this matters: that last token's chances are what the model picks from when it writes, one token at a time.
+
 ```yaml
 from: pry.p1-3
 question: "Which token's residual stream gets turned into the probabilities for the next token?"

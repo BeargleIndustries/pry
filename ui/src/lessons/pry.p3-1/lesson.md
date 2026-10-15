@@ -19,6 +19,8 @@ verified_rows: [14, 17, 27, 31, 56]
 ## Recall {id=s3-1 depth=optional outline=P3.1.md#3.1}
 
 :::recall{id=recall-dla}
+Why this matters: from here on you test suspects by changing something and watching the answer, and this lesson's change is one word.
+
 ```yaml
 from: pry.p2-4
 question: "DLA showed which parts pushed ' Mary' over ' John' directly. Did that show those parts caused ' Mary' to win?"

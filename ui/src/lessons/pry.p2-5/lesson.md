@@ -22,6 +22,8 @@ slots:
 ## Recall {id=s3-1 depth=optional outline=P2.5.md#3.1}
 
 :::recall{id=recall-lens}
+Why this matters: the residual stream can hold more than one read shows, and this lesson uses a read built to find it.
+
 ```yaml
 from: pry.p2-3
 question: "The logit lens reads the residual stream with the unembedding. Could the residual stream hold things that read can't show?"

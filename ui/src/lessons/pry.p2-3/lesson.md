@@ -24,6 +24,8 @@ slots:
 ## Recall {id=s3-1 depth=optional outline=P2.3.md#3.1}
 
 :::recall{id=recall-attention}
+Why this matters: this lesson's tool reads the residual stream partway up, so you can see what each layer would guess.
+
 ```yaml
 from: pry.p2-1
 question: "In P2.1, could attention lines show whether a token's information mattered? What would you want from a tool that reads the residual stream partway up?"
