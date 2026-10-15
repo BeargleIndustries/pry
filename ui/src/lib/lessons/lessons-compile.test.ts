@@ -91,11 +91,10 @@ async function expectationsJson(root = LESSONS, about = 'the bundled lessons'): 
 }
 
 describe('lessons compile', () => {
-  it('› expectations.json is up to date', async () => {
+  // `--dir` writes the other folder's file only (the describe below), so this one shows as skipped.
+  it.skipIf(!!process.env.PRY_LESSON_DIR)('› expectations.json is up to date', async () => {
     const text = await expectationsJson();
     if (process.env.PRY_WRITE_EXPECTATIONS === '1') {
-      // `--dir` writes the other folder's file only (the describe below).
-      if (process.env.PRY_LESSON_DIR) return;
       writeFileSync(OUT, text);
       return;
     }

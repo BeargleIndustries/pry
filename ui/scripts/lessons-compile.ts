@@ -510,7 +510,12 @@ if (!process.env.VITEST) {
       shell: process.platform === 'win32',
       env: { ...process.env, PRY_WRITE_EXPECTATIONS: '1', ...lessonEnv },
     });
-    if (r.status === 0) console.log(dir ? `wrote ${lessonEnv.PRY_EXPECTATIONS_OUT ?? 'its __generated__/expectations.json'}` : 'wrote src/lessons/__generated__/expectations.json');
+    if (r.status === 0 && dir) {
+      const setRoot = existsSync(join(lessonEnv.PRY_LESSON_DIR, 'lesson.md')) ? dirname(lessonEnv.PRY_LESSON_DIR) : lessonEnv.PRY_LESSON_DIR;
+      const file = lessonEnv.PRY_EXPECTATIONS_OUT ?? join(setRoot, '__generated__', 'expectations.json');
+      const doc = JSON.parse(readFileSync(file, 'utf8')) as { requests: unknown[]; lessons: Record<string, unknown> };
+      console.log(`wrote ${file}: ${doc.requests.length} request(s) from ${Object.keys(doc.lessons).length} lesson(s). Slots marked \`expect: pending\` are left out until they have a value.`);
+    } else if (r.status === 0) console.log('wrote src/lessons/__generated__/expectations.json');
     process.exit(r.status ?? 1);
   }
   if (argv.includes('--rows')) {

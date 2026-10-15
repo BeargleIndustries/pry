@@ -8,8 +8,8 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn(), isTauri: () => false }));
 vi.mock('@tauri-apps/api/event', () => ({ listen: vi.fn(async () => () => {}) }));
 
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadLessonSource } from './format/normalise';
 import { pryToolSet } from './registry/pry-set';
@@ -25,12 +25,17 @@ function bundledLessonFiles(): string[] {
     .map((d) => join(LESSONS, d, 'lesson.md'));
 }
 
-/** docs/lessons/examples/<set>/<id>/lesson.md: example lessons recorded with test_lessons.py --record --lesson-dir. */
+/**
+ * docs/lessons/examples/<set>/<id>/lesson.md: example lessons recorded with
+ * test_lessons.py --record --lesson-dir, which writes their responses into
+ * <set>/__generated__/responses/ beside them.
+ */
 const EXAMPLES = fileURLToPath(new URL('../../../../docs/lessons/examples', import.meta.url));
 function exampleLessonFiles(): string[] {
   if (!existsSync(EXAMPLES)) return [];
   return readdirSync(EXAMPLES)
-    .flatMap((set) => (existsSync(join(EXAMPLES, set)) && !set.startsWith('.') ? readdirSync(join(EXAMPLES, set)).map((d) => join(EXAMPLES, set, d, 'lesson.md')) : []))
+    .filter((set) => !set.startsWith('.') && statSync(join(EXAMPLES, set)).isDirectory())
+    .flatMap((set) => readdirSync(join(EXAMPLES, set)).map((d) => join(EXAMPLES, set, d, 'lesson.md')))
     .filter((f) => existsSync(f))
     .sort();
 }
@@ -76,7 +81,7 @@ describe('lesson checks', () => {
     async (_id, file) => {
       const { lesson, issues } = loadLessonSource(readFileSync(file, 'utf8'), { mode: 'strict', tool: pryToolSet, file });
       expect(issues.filter((i) => i.severity === 'error').map((i) => i.message)).toEqual([]);
-      const r = await walkLesson(lesson!, { recorded, rows });
+      const r = await walkLesson(lesson!, { recorded: loadRecorded(join(dirname(dirname(file)), '__generated__', 'responses')), rows });
       expect(r.errors, 'actions that failed').toEqual([]);
       expect(
         r.missing.map((m) => `${m.endpoint} ${JSON.stringify(m.body)}`),

@@ -112,6 +112,10 @@ export const MESSAGES: Record<string, (d: D) => string> = {
   'link-scheme': (d) => `Links must start with http:// or https://. This one uses \`${d.scheme}\`.`,
   'id-prefix': (d) => `Ids starting with \`${d.prefix}\` belong to the app's own lessons. Pick another first part.`,
   'unrecorded-prompt': (d) => `The prompt "${d.prompt}" has no recorded response in rows.json or expectations.json.`,
+  'expect-unrecorded': (d) =>
+    `This lesson has \`expect\` values, and there's no recorded response for its ${d.request} in ${d.folder}, so the checker can't test them (it can't run the model). Record them in Pry's author mode, or with the recorder: AUTHORING.md, "Getting real expected values".`,
+  'expect-recorded': (d) =>
+    `${d.what} doesn't match the recorded response: ${d.detail}. Set the \`expect\` from the response in ${d.folder}, or record again (AUTHORING.md, "Getting real expected values").`,
   'slot-unknown': (d) => `There's no slot called \`{${d.name}}\`. Declare it under \`slots:\`.`,
   'slot-before-readout': (d) => `\`{${d.name}}\` shows before the step that produces its value, so it would read "(appears after you run it)".`,
   'spine-unknown': (d) => `\`${d.name}\` isn't a box on the spine strip.`,

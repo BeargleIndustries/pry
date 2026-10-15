@@ -130,7 +130,7 @@ const record = (p: TopPrediction | undefined) =>
 
 const focusTok = (src: PrySource) => src.response?.tokens.find((t) => t.index === src.focusTokenIndex);
 
-/** How many strip entries `word` became: the shortest run of tokens that spells it (leading space optional). */
+/** How many tokens `word` became: the shortest run of tokens that spells it (leading space optional). */
 export function wordTokenCount(tokens: string[], word: string): number | undefined {
   const want = [word, ` ${word.trimStart()}`, word.trimStart()];
   for (let i = 0; i < tokens.length; i++) {
@@ -312,12 +312,12 @@ export const pryReadouts: Record<string, ReadoutDef> = {
   },
 
   tokens: { type: 'list', doc: 'The prompt\'s tokens, in order.', read: reader((s) => s.response?.tokens.map((t) => t.text)) },
-  token_count: { type: 'number', unit: 'count', doc: 'How many tokens the prompt became.', read: reader((s) => s.response?.tokens.length) },
+  token_count: { type: 'number', unit: 'count', doc: 'How many tokens the prompt became, counting the start marker (`<|endoftext|>`) that Pry puts first. So it is one more than the tokens of your own text.', read: reader((s) => s.response?.tokens.length) },
   word_tokens: {
     args: z.object({ word: z.string() }).strict(),
     type: 'number',
     unit: 'count',
-    doc: 'How many strip entries one word became.',
+    doc: 'How many tokens one word became: the tokens in the strip that spell it, leading space included. The start marker never counts here.',
     read: reader((s, a) => (s.response ? wordTokenCount(s.response.tokens.map((t) => t.text), a.word) : undefined)),
   },
 
@@ -384,7 +384,7 @@ export const pryReadouts: Record<string, ReadoutDef> = {
     read: reader((s, a) => record(preds(sideResp(s, a.side)).find((p) => p.token === a.token))),
   },
   'compare.tokens': { args: compareSide, type: 'list', doc: 'One Compare side\'s tokens.', read: reader((s, a) => sideResp(s, a.side)?.tokens.map((t) => t.text)) },
-  'compare.token_count': { args: compareSide, type: 'number', unit: 'count', doc: 'How many tokens one Compare side became.', read: reader((s, a) => sideResp(s, a.side)?.tokens.length) },
+  'compare.token_count': { args: compareSide, type: 'number', unit: 'count', doc: 'How many tokens one Compare side became, counting the start marker.', read: reader((s, a) => sideResp(s, a.side)?.tokens.length) },
   'compare.top': {
     fields: { token: 'string', prob: 'number', logit: 'number' },
     args: compareSide,

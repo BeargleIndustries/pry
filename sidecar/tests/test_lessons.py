@@ -6,7 +6,9 @@
     pytest tests/test_lessons.py --network           # drift mode, Neuronpedia strings too
     pytest tests/test_lessons.py --record --from-lessons   # also lesson requests (T6)
     pytest tests/test_lessons.py --record --lesson-dir ../docs/lessons/examples/community-sample
-                     # only a lesson set outside the app (its __generated__/expectations.json)
+                     # only a lesson set outside the app (its __generated__/expectations.json);
+                     # responses go to <set>/__generated__/responses/, and a Neuronpedia
+                     # lookup (/concept-search) is sent only with --network as well
 
 Requests come from ui/src/lessons/__generated__/row-requests.json, written by
 `npm run lessons:compile -- --rows` from verified-rows.yaml through the app's
@@ -177,10 +179,10 @@ def _device_class(device: str | None) -> str:
     return (device or "cpu").split(":")[0]
 
 
-def _file(key: str, variant: str) -> Path:
+def _file(key: str, variant: str, folder: Path = RESPONSES) -> Path:
     if variant == "r1":
-        return RESPONSES / f"{key}.json"
-    return RESPONSES / f"{key}.{variant}.json"
+        return folder / f"{key}.json"
+    return folder / f"{key}.{variant}.json"
 
 
 class Session:
@@ -200,6 +202,10 @@ class Session:
         self.today = _dt.date.today().isoformat()
         self.libs = _libs()
         self.lesson_dir: str | None = None
+        # --lesson-dir: the set's own <set>/__generated__/responses/, committed beside its lessons.
+        self.responses_dir: Path = RESPONSES
+        self.recorded: list[str] = []
+        self.not_sent: list[str] = []
 
     def call(self, req: dict, variant: str) -> None:
         key, endpoint, body = req["key"], req["endpoint"], req["body"]
@@ -215,7 +221,7 @@ class Session:
             assert not blocked, f"offline run tried the network: {blocked}"
         assert r.status_code == 200, f"{req['name']} {endpoint}: {r.status_code} {r.text[:300]}"
         resp, trimmed = _trim(endpoint, _strip(r.json()))
-        path = _file(key, variant)
+        path = _file(key, variant, self.responses_dir)
         if self.record:
             if self.diff and path.exists():
                 old = json.loads(path.read_text(encoding="utf-8"))
@@ -235,8 +241,9 @@ class Session:
                 "trimmed": trimmed,
                 "response": resp,
             }
-            RESPONSES.mkdir(parents=True, exist_ok=True)
+            self.responses_dir.mkdir(parents=True, exist_ok=True)
             path.write_text(json.dumps(doc, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+            self.recorded.append(f"{endpoint} -> {path}")
             self.responses[(key, variant)] = resp
             return
         if not path.exists():
@@ -335,7 +342,9 @@ def lessons(request):
         if lesson_dir:
             s.lesson_dir = lesson_dir
             # A lesson set outside the app: its own requests only; rows and rows.json untouched.
-            _lesson_requests(s, set(), _lesson_dir_expectations(lesson_dir))
+            expectations = _lesson_dir_expectations(lesson_dir)
+            s.responses_dir = expectations.parent / "responses"
+            _lesson_requests(s, set(), expectations)
             return s
         seen: dict[tuple[str, str], dict] = {}
         for row in ROWDOC["rows"]:
@@ -380,9 +389,18 @@ def _lesson_requests(s: Session, covered: set[str], path: Path = EXPECTATIONS) -
             continue
         covered.add(key)
         req = {"name": f"lesson:{key[:8]}", "key": key, "endpoint": item["endpoint"], "body": item["body"], "network": False}
+        # A lesson set outside the app records and replays offline unless --network: a Neuronpedia
+        # lookup sends its text to www.neuronpedia.org, so it's left as it is.
+        if item["endpoint"] in NETWORK_ONLY and s.lesson_dir and not s.network:
+            path = _file(key, "r1", s.responses_dir)
+            s.not_sent.append(f"{item['endpoint']} {json.dumps(item['body'])} ({'kept ' + path.name if path.exists() else 'not recorded'})")
+            if path.exists():
+                s.responses[(key, "r1")] = json.loads(path.read_text(encoding="utf-8"))["response"]
+            s.calls[key] = s.calls.get(key, 0)
+            continue
         if item["endpoint"] in NETWORK_ONLY and not (s.record or s.network):
             # The whole answer comes from Neuronpedia: drift mode keeps the record unless --network.
-            path = _file(key, "r1")
+            path = _file(key, "r1", s.responses_dir)
             if path.exists():
                 s.responses[(key, "r1")] = json.loads(path.read_text(encoding="utf-8"))["response"]
                 s.calls[key] = s.calls.get(key, 0)
@@ -1237,9 +1255,31 @@ def test_lesson_requests_from_expectations(request, lessons):
     assert not bad, f"lesson requests drifted: {bad}"
 
 
-def test_lesson_dir_requests(request, lessons):
+def test_lesson_dir_requests(request):
     """--lesson-dir: every request of the lesson set was recorded, or replays without drift."""
     if not request.config.getoption("--lesson-dir"):
         pytest.skip("--lesson-dir not given")
+    from tests.conftest import _hf_cached
+
+    if not _hf_cached("gpt2"):
+        # Asked for by name, so say why instead of skipping quietly.
+        pytest.fail(
+            "GPT-2 small isn't downloaded yet. Run this once in sidecar/ (it fetches GPT-2 small and its SAE into the "
+            "Hugging Face cache): python -c \"from pry_sidecar.presets import PRESETS; from pry_sidecar.registry import REGISTRY; "
+            "REGISTRY.load('gpt2-small', PRESETS['gpt2-small'])\""
+        )
+    lessons = request.getfixturevalue("lessons")
     assert lessons.calls, "the lesson set's expectations.json lists no requests"
+    # Say what happened, not just "1 passed" (no -s needed to see it).
+    tr = request.config.pluginmanager.get_plugin("terminalreporter")
+    if tr is not None:
+        tr.write_line("")
+        if lessons.record:
+            tr.write_line(f"recorded {len(lessons.recorded)} response(s) into {lessons.responses_dir}:")
+            for line in lessons.recorded:
+                tr.write_line(f"  {line}")
+        else:
+            tr.write_line(f"replayed {sum(1 for n in lessons.calls.values() if n)} request(s) against {lessons.responses_dir}")
+        for line in lessons.not_sent:
+            tr.write_line(f"  not sent (a Neuronpedia lookup; add --network to send it to www.neuronpedia.org): {line}")
     assert not lessons.problems, f"lesson requests drifted or aren't recorded: {lessons.problems}"

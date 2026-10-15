@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,10 +12,10 @@ const fixtures = join(uiDir, 'src/lib/lessons/format/fixtures/cli');
 // The shipped template (lane T1-app) once merged; the fixture copy of it until then.
 const templates = [join(fixtures, 'my.first-lesson'), join(uiDir, 'src/lessons/_template')].filter((d) => existsSync(join(d, 'lesson.md')));
 
-function lintCli(folder: string) {
+function lintCli(folder: string, ...flags: string[]) {
   const env = { ...process.env };
   delete env.VITEST;
-  const r = spawnSync(process.execPath, [cli, folder], { cwd: uiDir, env, encoding: 'utf8' });
+  const r = spawnSync(process.execPath, [cli, folder, ...flags], { cwd: uiDir, env, encoding: 'utf8' });
   return { code: r.status, out: `${r.stdout}${r.stderr}` };
 }
 
@@ -55,5 +55,49 @@ describe('lessons-cli', () => {
     const elsewhere = lintCli(dir);
     expect(elsewhere.code).toBe(1);
     expect(elsewhere.out).toMatch(/belong to the app's own lessons/);
+  });
+
+  /** A copy of the second-look example set (lesson plus its recorded responses), with the lesson edited. */
+  function secondLookCopy(edit: (text: string) => string = (t) => t): { set: string; lesson: string } {
+    const set = join(mkdtempSync(join(tmpdir(), 'pry-lint-')), 'second-look');
+    cpSync(join(uiDir, '../docs/lessons/examples/second-look'), set, { recursive: true });
+    const lesson = join(set, 'community.second-look', 'lesson.md');
+    writeFileSync(lesson, edit(readFileSync(lesson, 'utf8')));
+    return { set, lesson };
+  }
+
+  it('› a user lesson whose expects match the responses recorded beside its set lints clean', () => {
+    const { set } = secondLookCopy();
+    const { code, out } = lintCli(set, '--release');
+    expect(code, out).toBe(0);
+    expect(out).toMatch(/1 lesson\(s\): 0 error\(s\), 0 warning\(s\)\./);
+  });
+
+  it('› a wrong expect against the recorded response is a warning, and an error under --release', () => {
+    const { set } = secondLookCopy((t) => t.replace('read: token_count, expect: 15', 'read: token_count, expect: 14'));
+    const plain = lintCli(set);
+    expect(plain.code, plain.out).toBe(0);
+    expect(plain.out).toMatch(/warning: .*The slot `\{chips\}` doesn't match the recorded response: live 15, expect 14\./);
+    const release = lintCli(set, '--release');
+    expect(release.code, release.out).toBe(1);
+    expect(release.out).toMatch(/The slot `\{chips\}` doesn't match the recorded response: live 15, expect 14\./);
+    expect(release.out).not.toMatch(/warning: .*\{chips\}/);
+  });
+
+  it('› expects with no recorded response in the set warn and point at the recording route', () => {
+    const { set } = secondLookCopy();
+    rmSync(join(set, '__generated__', 'responses'), { recursive: true });
+    const { code, out } = lintCli(set, '--release');
+    expect(code, out).toBe(0);
+    expect(out).toMatch(/warning: .*This lesson has `expect` values, and there's no recorded response for its `\/generate` request on "The longest word I know is antidisestablishmentarianism, which means"/);
+    expect(out).toMatch(/AUTHORING\.md, "Getting real expected values"/);
+  });
+
+  it('› the draft warning points at the draft line, not line 1', () => {
+    const { set, lesson } = secondLookCopy((t) => t.replace(/^(id: .*)$/m, '$1\ndraft: true'));
+    const line = readFileSync(lesson, 'utf8').split(/\r?\n/).indexOf('draft: true') + 1;
+    expect(line).toBeGreaterThan(1);
+    const { out } = lintCli(set);
+    expect(out).toContain(`lesson.md:${line}: warning: line ${line}: This lesson is marked \`draft: true\``);
   });
 });
