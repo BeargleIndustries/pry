@@ -145,7 +145,10 @@
 
   $effect(() => {
     const targets = model.pointers;
-    const revealed = new Set<string>();
+    // When each anchor was last revealed. The step's own setup can run after the
+    // first reveal (a tabbed window opening the left half last), so an anchor
+    // still hidden a second later is revealed again.
+    const revealed = new Map<string, number>();
     let els: (HTMLElement | null)[] = [];
     const locate = (t: PointerTarget): HTMLElement | null => {
       if (!('anchor' in t)) return null;
@@ -153,9 +156,9 @@
       if (!def) return null;
       const el = def.locate(t.args);
       if (visible(el)) return el;
-      // Hidden (a narrow window's other tab): reveal once, the next pass finds it.
-      if (def.reveal && runAction && !revealed.has(t.anchor)) {
-        revealed.add(t.anchor);
+      // Hidden (a narrow window's other tab): reveal it, the next pass finds it.
+      if (def.reveal && runAction && Date.now() - (revealed.get(t.anchor) ?? 0) > 1000) {
+        revealed.set(t.anchor, Date.now());
         runAction(def.reveal.action, def.reveal.args).catch((e) => console.warn('overlay reveal error', e));
       }
       return null;
@@ -175,8 +178,15 @@
     };
   });
 
-  /** The pointer the card follows: the latest of a sequence. */
-  const activeIndex = $derived(model.pointers.length - 1);
+  /**
+   * The pointer the card follows: the latest of a sequence that's on screen.
+   * Before any Run some anchors don't exist yet (the feature list), so the
+   * card sits by the one that does.
+   */
+  const activeIndex = $derived.by(() => {
+    for (let i = model.pointers.length - 1; i >= 0; i--) if (found[i]) return i;
+    return model.pointers.length - 1;
+  });
   const activeEl = $derived(found[activeIndex] ?? null);
   const activeDef = $derived.by(() => {
     const t = model.pointers[activeIndex];
