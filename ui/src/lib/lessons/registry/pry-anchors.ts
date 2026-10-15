@@ -103,6 +103,7 @@ const PANEL_OF: Record<string, string> = {
   'panel-a-lines': 'attention',
   'panel-a-heatmap': 'attention',
   'head-cell': 'attention',
+  'panel-a-head-detail': 'attention',
   'panel-a-agg-selector': 'attention',
   'panel-a-from-selector': 'attention',
   'copying-heads-view': 'attention',
@@ -226,6 +227,7 @@ const added: Record<string, Omit<AnchorDef, 'locate'> & { locate?: AnchorDef['lo
   },
   'embedding-values': { doc: 'The numbers in the embedding reader.', label: 'the numbers in the embedding reader' },
   'steering-coherence': { doc: 'The coherence line in Steering.', label: 'the coherence line, in Steering' },
+  'panel-a-head-detail': { doc: "One opened head's whole attention pattern, which covers the head grid until it's closed.", label: "the open head's whole pattern, left side" },
 };
 
 function build(): Record<string, AnchorDef> {

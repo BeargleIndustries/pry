@@ -87,7 +87,7 @@ check: { read: top_guess.token, op: equals, value: "49" }
 ## Circuit {id=s3-4 outline=P3.7.md#3.4}
 
 :::do{id=key-parts-tab}
-Researchers have traced this exact kind of prompt. Hanna and colleagues found, in 2023, a small group of parts doing the job: heads that move the start year to the end, and MLPs in roughly the last few layers that push up the years above it. A small set of parts that work together on one job, established by lots of tests, is called a **circuit**. It's what interpretability papers keep trying to find, and Pry's glossary and :look{at=tab-key-parts}[the Key parts tab] use the word.
+Researchers have traced this exact kind of prompt. Hanna and colleagues found, in 2023, a small group of parts doing the job: heads that move the start year to the end, and MLPs in roughly the last few layers that push up the years above it. A small set of parts that work together on one job, established by lots of tests, is called a **circuit**. It's what interpretability papers keep trying to find, and Pry's glossary and :look{at=tab-key-parts}[the Key parts tab] use the word. Leave the tab for now: in the next section, its **Do it** opens it and draws the map.
 
 ```actions
 - highlight: { anchor: tab-key-parts }

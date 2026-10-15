@@ -39,8 +39,19 @@ brady_fb: { read: compare.prediction, args: { side: b, token: " football" }, fie
 brady_bb: { read: compare.prediction, args: { side: b, token: " basketball" }, field: prob, format: probability, expect: 0.022681239992380142, tolerance: 0.02 }
 :::
 
+:::predict{id=pair-guess checks=pair-obs}
+Start with a fact GPT-2 small gets right, so you're not chasing a mistake. Swap Michael Jordan for Tom Brady in "Michael Jordan played the sport of". What happens to ' basketball'?
+
+```yaml
+choices:
+  - { text: "it stays on top" }
+  - { text: "' football' takes over" }
+  - { text: "both drop to almost nothing" }
+```
+:::
+
 :::do{id=pair-compare}
-Start with a fact GPT-2 small gets right, so you're not chasing a mistake. Press **Do it** to run Michael Jordan beside Tom Brady, then read :look{at=compare-panel}[the two Predictions columns].
+Press **Do it** to run Michael Jordan beside Tom Brady, then read the A and B columns of :look{at=compare-panel}[Compare's Next-token guesses table].
 
 ```actions
 - set_compare_mode: { on: true }
@@ -229,7 +240,7 @@ peak: { read: lens.peak_layer, args: { token: " basketball" }, expect: 9 }
 :::
 
 :::do{id=lens-run}
-There's one more tool. Press **Do it** to run the logit lens and find :look{at=logit-lens-heatmap}[the ' basketball' row].
+There's one more tool. Press **Do it** to run the logit lens and find ' basketball' in :look{at=logit-lens-heatmap}[its last column, ' of'].
 
 ```actions
 - open_panel: { panel: logit-lens }
@@ -238,7 +249,7 @@ There's one more tool. Press **Do it** to run the logit lens and find :look{at=l
 :::
 
 :::observe{id=lens-obs}
-' basketball' first tops the lens at {first_top} and peaks at {peak}, then falls back by the last layer. Before that, the early layers guess plain words like ' the', and they don't favour any sport.
+' basketball' first tops the lens at {first_top} and peaks at {peak}, then falls back by the last layer. The chances in the lens's readout are the cells of :look{at=logit-lens-heatmap}[that last column], one per layer; hover a cell to see its token and chance. Before that, the early layers guess plain words like ' the', and they don't favour any sport.
 
 ```yaml
 check: { read: lens.first_top_layer, args: { token: " basketball" }, op: equals, value: 8, expect: 8 }
@@ -303,7 +314,7 @@ free: true
 :::
 
 :::task{id=find-mlp}
-Find the MLP layer, other than `L0`, whose swap moves ' basketball' furthest back toward the clean value. Set up the Swap test yourself: keep `Michael Jordan played the sport of` as the Original prompt and type `Andy Murray played the sport of` as the Changed one. Both need the same number of tokens, and the token strip shows it. Read each bar's three logits before you trust its colour. You'll know you've got it when the bar you've picked is the biggest one that isn't `L0`.
+Find the MLP layer, other than `L0`, whose swap moves ' basketball' furthest back toward the clean value. Set up :look{at=patching-panel}[the Swap test] yourself: keep `Michael Jordan played the sport of` as the Original prompt, type `Andy Murray played the sport of` as the Changed one, keep MLPs picked, and press **Run swap test** in the panel. Both prompts need the same number of tokens; the panel says "same length" when they do. Click bars and read each one's three logits before you trust its colour, then press **Check my result**. You'll know you've got it when the bar you've picked is the biggest one that isn't `L0`.
 
 ```yaml
 target:

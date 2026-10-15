@@ -227,6 +227,7 @@
       "key": "25e44d6e3ef82c34d09ad852e14b0e2c115af20d4b7fea65ef91919e9c691608",
       "lessons": [
         "pry.p2-3",
+        "pry.p2-4",
         "pry.p3-1",
         "pry.p3-4"
       ]
@@ -1191,6 +1192,20 @@
       ]
     },
     {
+      "endpoint": "/dla",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The nurse said that",
+        "target_token_index": 4,
+        "answer_token": " she"
+      },
+      "key": "da7259cea5b1be03109e23eee80a44b3d8ce8d20d6386b0ecb7ee0adebe3a024",
+      "lessons": [
+        "pry.p2-4"
+      ]
+    },
+    {
       "endpoint": "/sae-features",
       "model": "gpt2-small",
       "body": {
@@ -2006,6 +2021,12 @@
             "op": "contains",
             "value": "a baker who was a great friend of mine"
           }
+        },
+        {
+          "where": "s5/baker/baker-obs",
+          "kind": "assert",
+          "name": "baker_text contains \"great friend of mine. He was a great friend of mine\"",
+          "prompt": "Our quiet street was named for a baker who"
         }
       ]
     },
@@ -2114,18 +2135,36 @@
       ],
       "checks": [
         {
-          "where": "s3-2/run-ioi",
+          "where": "s3-2/who-obs",
+          "kind": "check",
+          "name": "top_guess.token equals \" Mary\"",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "check": {
+            "read": "top_guess.token",
+            "op": "equals",
+            "value": " Mary",
+            "expect": " Mary"
+          }
+        },
+        {
+          "where": "s3-2/who-obs",
           "kind": "slot",
           "name": "mary",
           "prompt": "When Mary and John went to the store, John gave a drink to",
           "expect": 0.677
         },
         {
-          "where": "s3-2/run-ioi",
+          "where": "s3-2/who-obs",
           "kind": "slot",
           "name": "john",
           "prompt": "When Mary and John went to the store, John gave a drink to",
           "expect": 0.0235
+        },
+        {
+          "where": "s3-2/who-obs",
+          "kind": "assert",
+          "name": "mary gt 0.5",
+          "prompt": "When Mary and John went to the store, John gave a drink to"
         },
         {
           "where": "s3-5/thickest",
@@ -2466,7 +2505,8 @@
     "pry.p2-4": {
       "prompts": [
         "Michael Jordan played the sport of",
-        "When Mary and John went to the store, John gave a drink to"
+        "When Mary and John went to the store, John gave a drink to",
+        "The nurse said that"
       ],
       "checks": [
         {

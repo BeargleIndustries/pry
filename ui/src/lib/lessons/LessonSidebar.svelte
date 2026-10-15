@@ -258,16 +258,42 @@
   const hiddenPlans = $derived(plans.filter((p): p is Extract<PointerPlan, { kind: 'hidden' }> => p?.kind === 'hidden'));
   const activeIndex = $derived(plans.length - 1);
 
-  // ---- The step's action stays in reach: a sticky "Do it" when the next do step's button is scrolled out of view ----
+  // ---- The step's action stays in reach ----
+  // On entering a section, and each time a step is finished, the sidebar scrolls
+  // just enough to bring the first unfinished step's own button (Commit, Do it,
+  // Run it, Show what the app reports) into view. A sticky copy of a Do it / Run it /
+  // Show button is the fallback when the learner scrolls it away.
   let scroller: HTMLElement | null = $state(null);
   const flatBlocks = (bs: RenderedBlock[]): RenderedBlock[] => bs.flatMap((b) => [b, ...flatBlocks(b.children)]);
-  const pendingDo = $derived.by(() => {
-    if (!step) return null;
-    const first = flatBlocks(step.blocks).find(
-      (b) => (b.ask ? !b.ask.locked : false) || (b.act ? b.act.state !== 'done' : false) || (b.observe ? !b.observe.revealed && !b.observe.journal : false) || (b.task ? !b.task.met : false),
-    );
-    return first?.act ? first : null;
+  const unfinished = (b: RenderedBlock) =>
+    (b.ask ? !b.ask.locked : false) ||
+    (b.act ? b.act.state !== 'done' : false) ||
+    (b.observe ? !b.observe.revealed && !b.observe.journal : false) ||
+    (b.task ? !b.task.met : false) ||
+    (b.chain ? !b.chain.written && !b.chain.skipped : false);
+  const firstOpen = $derived.by(() => (step && !step.entering ? (flatBlocks(step.blocks).find(unfinished) ?? null) : null));
+  const blockSel = (b: RenderedBlock) => `[data-step-id="${CSS.escape(b.stepId ?? b.key)}"]`;
+  const pendingDo = $derived(firstOpen && (firstOpen.act || firstOpen.task || (firstOpen.observe && !firstOpen.observe.waiting)) ? firstOpen : null);
+
+  let landed: string | null = null;
+  $effect(() => {
+    const b = firstOpen;
+    const box = scroller;
+    const sig = `${step?.lesson.id}:${nav.index}:${b ? (b.stepId ?? b.key) : ''}`;
+    if (!box || !step || step.entering || sig === landed) return;
+    landed = sig;
+    if (!b) return;
+    requestAnimationFrame(() => {
+      const el = box.querySelector<HTMLElement>(blockSel(b));
+      if (!el) return;
+      const btn = el.querySelector<HTMLElement>('[data-step-action]') ?? el;
+      const v = box.getBoundingClientRect();
+      const r = btn.getBoundingClientRect();
+      if (r.bottom > v.bottom - 8) box.scrollTop += r.bottom - v.bottom + 16;
+      else if (r.top < v.top) box.scrollTop -= v.top - r.top + 16;
+    });
   });
+
   let doOutOfView = $state(false);
   $effect(() => {
     const b = pendingDo;
@@ -277,7 +303,7 @@
       return;
     }
     const measure = () => {
-      const btn = box.querySelector<HTMLElement>(`[data-step-id="${CSS.escape(b.stepId ?? b.key)}"] [data-do-button]`);
+      const btn = box.querySelector<HTMLElement>(`${blockSel(b)} [data-step-action]`);
       if (!btn) return void (doOutOfView = false);
       const r = btn.getBoundingClientRect();
       const v = box.getBoundingClientRect();
@@ -291,6 +317,9 @@
       clearInterval(timer);
     };
   });
+
+  /** Where Next goes: the next section's title (none on the last section). */
+  const nextTitle = $derived(step && step.index + 1 < step.total ? (step.sections[step.index + 1]?.title ?? null) : null);
 
   function viewComponent(name: string): Component<any> | null {
     return (views[name]?.component as Component<any>) ?? null;
@@ -360,7 +389,7 @@
       {:else}
         {@render nodes(b.body)}
       {/if}
-      {#if b.image}<img src={b.image.src} alt={b.image.alt} class="mt-2 max-w-full rounded" data-image-id={b.stepId ?? b.key} />{/if}
+      {#if b.image}<img src={b.image.src} alt={b.image.alt} class="mt-2 max-h-56 max-w-full rounded object-contain" data-image-id={b.stepId ?? b.key} />{/if}
       {#if b.asserts}{#each b.asserts as line, i (i)}<p class="mt-2">{@render nodes(line)}</p>{/each}{/if}
 
       {#if b.ask}
@@ -394,7 +423,7 @@
         {/if}
         {#if !a.locked}
           <div class="mt-2 flex flex-wrap items-center gap-2">
-            <button type="button" onclick={() => commit(b)} class="rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500">{c.commit}</button>
+            <button type="button" data-step-action onclick={() => commit(b)} class="rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500">{c.commit}</button>
             {#if a.canSkip}<button type="button" onclick={() => send({ type: 'skip', step: b.key })} class="text-xs text-zinc-400 hover:text-zinc-200">{c.justShowMe}</button>{/if}
           </div>
         {/if}
@@ -410,6 +439,7 @@
           <button
             type="button"
             data-do-button
+            data-step-action
             onclick={() => send({ type: 'do', step: b.key })}
             disabled={b.act.state === 'running'}
             class="rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
@@ -430,7 +460,7 @@
             <button type="button" onclick={() => send({ type: 'note', step: b.key, text: texts[b.key] ?? '' })} class="mt-1 rounded-md border border-zinc-700 px-2.5 py-1 text-xs text-zinc-200 hover:bg-zinc-800">{c.saveNote}</button>
           {/if}
         {:else if !o.revealed}
-          <button type="button" disabled={o.waiting} onclick={() => send({ type: 'show', step: b.key })} class="mt-2 rounded-md border border-zinc-700 px-2.5 py-1 text-xs text-zinc-200 hover:bg-zinc-800 disabled:opacity-40">{c.showApp}</button>
+          <button type="button" data-step-action disabled={o.waiting} onclick={() => send({ type: 'show', step: b.key })} class="mt-2 rounded-md border border-zinc-700 px-2.5 py-1 text-xs text-zinc-200 hover:bg-zinc-800 disabled:opacity-40">{c.showApp}</button>
         {/if}
         <div aria-live="polite" data-check-result>
           {#if o.result}
@@ -501,11 +531,16 @@
             </label>
           {/if}
           <div class="mt-2 flex flex-wrap items-center gap-2">
-            <button type="button" disabled={!t.canRun} onclick={() => send({ type: 'task-run', step: b.key })} class="rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-40">{c.runIt}</button>
-            <button type="button" onclick={() => send({ type: 'task-check', step: b.key })} class="rounded-md border border-zinc-700 px-2.5 py-1 text-xs text-zinc-200 hover:bg-zinc-800">{c.checkIt}</button>
+            {#if t.runnable}
+              <button type="button" data-step-action disabled={!t.canRun} onclick={() => send({ type: 'task-run', step: b.key })} class="rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-40">{c.runIt}</button>
+              <button type="button" onclick={() => send({ type: 'task-check', step: b.key })} class="rounded-md border border-zinc-700 px-2.5 py-1 text-xs text-zinc-200 hover:bg-zinc-800">{c.checkIt}</button>
+            {:else}
+              <button type="button" data-step-action onclick={() => send({ type: 'task-check', step: b.key })} class="rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500">{c.checkIt}</button>
+            {/if}
             {#if t.canReset}<button type="button" onclick={() => send({ type: 'task-reset', step: b.key })} class="text-xs text-zinc-400 hover:text-zinc-200">{c.startOver}</button>{/if}
             {#if t.maxRuns !== null}<span class="text-[11px] text-zinc-400">{c.runsLeft(Math.max(0, t.maxRuns - t.runs))}</span>{/if}
           </div>
+          {#if !t.runnable && !t.message}<p class="mt-2 text-xs text-zinc-400">{c.taskInApp}</p>{/if}
           <div aria-live="polite" data-check-result>
             {#if t.message}<p class="mt-2 text-sm {t.met ? 'text-emerald-300' : 'text-zinc-300'}">{t.message}</p>{/if}
           </div>
@@ -518,7 +553,7 @@
         {#if !ch.written && !ch.skipped}
           <textarea bind:value={texts[b.key]} rows="4" aria-label={c.writeHere} placeholder={c.writeHere} class="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-sm text-zinc-100 placeholder-zinc-600 focus:border-indigo-500 focus:outline-none"></textarea>
           <div class="mt-1 flex items-center gap-2">
-            <button type="button" onclick={() => send({ type: 'chain', step: b.key, text: texts[b.key] ?? '' })} class="rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500">{c.commit}</button>
+            <button type="button" data-step-action onclick={() => send({ type: 'chain', step: b.key, text: texts[b.key] ?? '' })} class="rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500">{c.commit}</button>
             {#if ch.nudging}
               <span class="text-xs text-amber-200" role="status">{c.chainNudge}</span>
               <button type="button" onclick={() => send({ type: 'chain-skip', step: b.key })} class="text-xs text-zinc-400 hover:text-zinc-200">{c.skipAnyway}</button>
@@ -604,12 +639,6 @@
             <button type="button" onclick={() => send({ type: 'switch-model' })} class="rounded-md border border-amber-700 px-2 py-0.5 hover:bg-amber-900/40">{c.switchTo(step.banner.model)}</button>
           </div>
         {/if}
-        {#if step.drift}
-          <div class="flex flex-shrink-0 items-center gap-2 border-b border-zinc-800 px-3 py-1.5 text-[11px] text-zinc-400" role="status" data-testid="lesson-drift">
-            <span class="flex-1">{c.drift}</span>
-            <button type="button" onclick={() => send({ type: 'fix-drift' })} class="rounded-md border border-zinc-700 px-2 py-0.5 text-zinc-200 hover:bg-zinc-800">{c.driftFix}</button>
-          </div>
-        {/if}
         {#if step.busy}
           <p class="flex-shrink-0 border-b border-zinc-800 px-3 py-1.5 text-[11px] text-zinc-400" role="status">{step.busy}</p>
         {/if}
@@ -640,18 +669,34 @@
         </div>
 
         <footer class="flex-shrink-0 border-t border-zinc-800">
-          {#if pendingDo?.act && doOutOfView}
+          {#if pendingDo && doOutOfView}
             {@const pd = pendingDo}
             <div class="flex items-center gap-2 border-b border-zinc-800 px-3 py-2" data-testid="lesson-sticky-do">
-              <button
-                type="button"
-                onclick={() => send({ type: 'do', step: pd.key })}
-                disabled={pd.act!.state === 'running'}
-                class="rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
-              >
-                {#if pd.act!.state === 'running'}<span class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent align-[-2px]" aria-hidden="true"></span>{/if}
-                {c.doIt}
-              </button>
+              {#if pd.act}
+                <button
+                  type="button"
+                  onclick={() => send({ type: 'do', step: pd.key })}
+                  disabled={pd.act.state === 'running'}
+                  class="rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
+                >
+                  {#if pd.act.state === 'running'}<span class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent align-[-2px]" aria-hidden="true"></span>{/if}
+                  {c.doIt}
+                </button>
+              {:else if pd.task}
+                {#if pd.task.runnable}
+                  <button type="button" disabled={!pd.task.canRun} onclick={() => send({ type: 'task-run', step: pd.key })} class="rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-40">{c.runIt}</button>
+                {:else}
+                  <button type="button" onclick={() => send({ type: 'task-check', step: pd.key })} class="rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500">{c.checkIt}</button>
+                {/if}
+              {:else if pd.observe}
+                <button type="button" onclick={() => send({ type: 'show', step: pd.key })} class="rounded-md border border-zinc-700 px-2.5 py-1 text-xs text-zinc-200 hover:bg-zinc-800">{c.showApp}</button>
+              {/if}
+            </div>
+          {/if}
+          {#if step.drift}
+            <div class="flex items-center gap-2 px-3 pt-1.5 text-[11px] text-zinc-500" role="status" data-testid="lesson-drift">
+              <span class="flex-1">{c.drift}</span>
+              <button type="button" onclick={() => send({ type: 'fix-drift' })} class="text-zinc-400 underline decoration-dotted underline-offset-2 hover:text-zinc-200">{c.driftFix}</button>
             </div>
           {/if}
           {#if step.honesty}
@@ -665,6 +710,7 @@
               <button type="button" onclick={() => (honestyOpen = !honestyOpen)} aria-expanded={honestyOpen} class="mt-0.5 text-[11px] text-indigo-300 hover:text-indigo-200">{honestyOpen ? c.showLess : c.showMore}</button>
             </div>
           {/if}
+          {#if nextTitle}<p class="truncate px-3 pt-1.5 text-right text-[11px] text-zinc-500" data-testid="lesson-next-up">{c.nextUp(nextTitle)}</p>{/if}
           <div class="flex items-center justify-between gap-2 px-3 py-2">
             <button type="button" onclick={() => model.command('back')} disabled={!nav.canBack} class="flex items-center gap-1 rounded-md border border-zinc-700 px-2.5 py-1 text-xs text-zinc-300 hover:bg-zinc-800 disabled:opacity-40"><ChevronLeft class="h-3.5 w-3.5" />{c.back}</button>
             <span class="text-[11px] text-zinc-400">{nav.index + 1} / {nav.total}</span>

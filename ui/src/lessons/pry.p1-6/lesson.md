@@ -86,7 +86,7 @@ tool: compare
 :::
 
 :::do{id=jordan-again}
-Now the Jordan sentence from lesson 1, on its own. Read :look{at=predictions-panel}[Predictions].
+Now the Jordan sentence from lesson 1, on its own. **Do it** closes Compare, so the ' Sam' numbers above stay with its table, and runs Jordan in :look{at=predictions-panel}[Predictions].
 
 ```actions
 - set_compare_mode: { on: false }
@@ -97,7 +97,7 @@ Now the Jordan sentence from lesson 1, on its own. Read :look{at=predictions-pan
 :::
 
 :::explain
-' basketball' gets {basketball}, the same number lesson P1.1 showed, however long ago that was. Try it yourself if you like: close Pry, open it again and run the Jordan prompt. Still {basketball}.
+In Predictions, ' basketball' gets {basketball}, the same number lesson P1.1 showed, however long ago that was. Try it yourself if you like: close Pry, open it again and run the Jordan prompt. Still {basketball}.
 :::
 
 ## The fixed numbers {id=s3-3 outline=P1.6.md#3.3}

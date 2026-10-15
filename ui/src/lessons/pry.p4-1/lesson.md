@@ -343,7 +343,7 @@ Now the same question written as a page of questions and answers, ending on "A:"
 :::
 
 :::task{id=own-opening}
-Your turn: take the bare question, or an instruction of your own, and rewrite it as the opening of a page where an answer comes next. Write after it and see whether the text changes.
+Your turn: take the bare question, or an instruction of your own, and rewrite it as the opening of a page where an answer comes next. Type it in :look{at=prompt-input}[the Prompt box], press **Run**, then **Write it** in Watch it write, and see whether the text changes. Then press **Check my result**.
 
 ```yaml
 target:

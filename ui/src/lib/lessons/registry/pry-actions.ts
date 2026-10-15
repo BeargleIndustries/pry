@@ -32,6 +32,7 @@ import {
 } from './pry-state.svelte';
 import { pryAnchors } from './pry-anchors';
 import { alignedPositions } from '../../compare';
+import { showAll } from '../../watch-it-write';
 
 export const PANELS = [
   'attention',
@@ -349,6 +350,8 @@ export const pryActions: Record<string, ActionDef> = {
         { temperature: a.temperature, seed: a.seed ?? null, maxTokens: a.max_tokens },
         callerOf(ctx),
       );
+      // Replayed by the section fold: the learner watched it already, so it comes back written out.
+      if ((ctx as RunnerActionContext).replay) w.replay = showAll(w.replay);
       showPanel('predictions');
     },
   },

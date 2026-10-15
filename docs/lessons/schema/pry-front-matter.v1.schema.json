@@ -259,24 +259,31 @@
           "additionalProperties": false
         },
         "open_head": {
-          "type": "object",
-          "properties": {
-            "layer": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9007199254740991
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "layer": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "head": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "layer",
+                "head"
+              ],
+              "additionalProperties": false
             },
-            "head": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9007199254740991
+            {
+              "type": "null"
             }
-          },
-          "required": [
-            "layer",
-            "head"
-          ],
-          "additionalProperties": false
+          ]
         },
         "head_ablation": {
           "type": "object",

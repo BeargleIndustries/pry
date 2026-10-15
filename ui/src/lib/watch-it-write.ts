@@ -10,7 +10,7 @@
 // - When sampling picks a less likely word, say so; never imply the model
 //   "preferred" a word it was less sure of.
 import type { GenerationStep } from './types';
-import { pct, quoteToken } from './readouts';
+import { probabilityWithFrequency, quoteToken } from './readouts';
 
 export interface ReplayState {
   /** Number of steps in the continuation. */
@@ -76,16 +76,16 @@ export function clampTemperature(t: number): number {
   return Math.min(MAX_TEMPERATURE, Math.max(0, t));
 }
 
-/** One sentence for the current step: what it picked, and over what. */
+/** One sentence for the current step: what it picked, and over what, each chance with its natural frequency. */
 export function stepSentence(step: GenerationStep): string {
   if (step.text === '') {
-    return `It picked part of a character (${pct(step.probability)}). Some characters, like emoji, take several tokens; the next steps finish it.`;
+    return `It picked part of a character, at ${probabilityWithFrequency(step.probability)}. Some characters, like emoji, take several tokens; the next steps finish it.`;
   }
-  const chosen = `${quoteToken(stepText(step))} (${pct(step.probability)})`;
+  const chosen = `${quoteToken(stepText(step))} at ${probabilityWithFrequency(step.probability)}`;
   if (step.runner_up === null || step.runner_up_probability === null) {
     return `It picked ${chosen}.`;
   }
-  const other = `${quoteToken(step.runner_up)} (${pct(step.runner_up_probability)})`;
+  const other = `${quoteToken(step.runner_up)} at ${probabilityWithFrequency(step.runner_up_probability)}`;
   if (step.runner_up_probability > step.probability) {
     return `It picked ${chosen} over the more likely ${other}. With some randomness turned on, a less likely word sometimes wins the draw.`;
   }

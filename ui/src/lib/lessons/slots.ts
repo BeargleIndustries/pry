@@ -37,7 +37,7 @@ const roundN = (n: number) => (n >= 100 ? Number(n.toPrecision(2)) : n).toLocale
 
 /** "about 1 in N" (or "about k in n" above one half), the natural frequency beside a percentage. Only for 0 < p <= 1. */
 export function naturalFrequency(p: number): string {
-  if (p <= 0 || p > 1) return '';
+  if (p <= 0 || p >= 1) return '';
   if (p <= 0.5) {
     const n = Math.round(1 / p);
     const rel = Math.abs(1 / n - p) / p;

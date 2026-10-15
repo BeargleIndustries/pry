@@ -186,6 +186,7 @@ Effects: `view` and `compute` run freely and replay when a section opens; `downl
 | `feature-labels` |  | yes | Every place a feature label shows: the Features list, feature cards, the steering menu and the histogram tooltip. |
 | `embedding-values` |  | yes | The numbers in the embedding reader. |
 | `steering-coherence` |  | yes | The coherence line in Steering. |
+| `panel-a-head-detail` |  |  | One opened head's whole attention pattern, which covers the head grid until it's closed. |
 
 ## Views
 

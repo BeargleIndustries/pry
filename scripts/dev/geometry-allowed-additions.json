@@ -11,6 +11,7 @@
     "head-cell",
     "left-tab-strip",
     "lessons-toggle",
+    "panel-a-head-detail",
     "patch-three-logits",
     "patching-grid",
     "prediction-bar",

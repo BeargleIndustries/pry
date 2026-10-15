@@ -158,7 +158,7 @@ Before the model does any work on your sentence, each token gets a starting list
 :::
 
 :::do{id=bank-reader}
-The lesson opens :look{at=embedding-view}[the reader] with ' bank' from both sentences side by side. Its numbers stay hidden until you answer.
+Press **Do it** to load ' bank' from both sentences into a reader for each token's starting list. The reader opens under the question below, with its numbers hidden until you answer.
 
 ```actions
 - show_embedding: { a: { prompt: "I like the river bank", token: " bank" }, b: { prompt: "I like the money bank", token: " bank" } }
@@ -166,7 +166,7 @@ The lesson opens :look{at=embedding-view}[the reader] with ' bank' from both sen
 :::
 
 :::predict{id=same-start checks=identical-obs}
-Will ' bank' start with the same numbers in both sentences?
+Will ' bank' start with the same numbers in both sentences? :look{at=embedding-view}[The reader] shows them once you commit: each list one number at a time, a count of how many match, and a cosine similarity, one score for how closely the two lists line up, highest when they're the same.
 
 ```yaml
 choices:

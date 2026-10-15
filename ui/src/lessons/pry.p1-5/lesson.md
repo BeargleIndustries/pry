@@ -67,7 +67,7 @@ The lesson writes on from the Jordan sentence in :look{at=watch-it-write}[Watch 
 :::
 
 :::observe{id=write-obs}
-Each step adds one token. Step 1 picked {first_tok}, the top token in Predictions at {first_p}, and every step after it does the same thing again: the model runs on the text so far, one token gets picked, and that token goes on the end. Each step also shows the runner-up, the token that'd have come second.
+Each step adds one token. Step 1 picked {first_tok}, the top token in :look{at=predictions-panel}[Predictions] at {first_p}, and every step after it does the same thing again: the model runs on the text so far, one token gets picked, and that token goes on the end. Each step also shows the runner-up, the token that'd have come second.
 
 ```yaml
 journal: true
@@ -267,6 +267,10 @@ tool: write-it
 
 ## Transfer {id=s5 outline=P1.5.md#5}
 
+:::slots
+baker_text: { read: write_it.text, format: string, expect: learner }
+:::
+
 ::::transfer{id=baker}
 ```yaml
 prompt: "Our quiet street was named for a baker who"
@@ -295,7 +299,7 @@ The lesson puts the baker sentence in and runs it. The writing's up to you.
 :::
 
 :::task{id=baker-write}
-In :look{at=watch-it-write}[Watch it write], set Temperature to 0 and press Write.
+This one's yours, in the app: in Watch it write, drag :look{at=write-it-temperature}[Temperature] to 0 and press **Write it**. Then come back and press **Check my result**.
 
 ```yaml
 target:
@@ -305,10 +309,14 @@ learner_actions: [write_it]
 :::
 
 :::observe{id=baker-obs}
-It goes " was a great friend of mine. He was a great friend of mine," and on from there. It's repeating itself.
+Read what it wrote in :look{at=watch-it-write}[Watch it write] and hold it against your guess above.
 
 ```yaml
 check: { read: write_it.text, op: contains, value: "a baker who was a great friend of mine" }
+assert:
+  - require: { slot: baker_text, op: contains, value: "great friend of mine. He was a great friend of mine" }
+    say: "It goes \" was a great friend of mine. He was a great friend of mine,\" and on from there. It's repeating itself."
+    else: "It didn't loop this time. Check Temperature reads 0, then write again."
 ```
 :::
 

@@ -188,7 +188,7 @@ feature_ablation: { ids: [], on: false }
 :::
 
 :::task{id=find-feature}
-Find one feature at ' nurse' whose knockout alone lowers ' she' by more than the control did. One feature at a time, and before each run write down what you expect from its label. Knocking out several at once mixes their effects, so now you're pulling them apart.
+Find one feature at ' nurse' whose knockout alone lowers ' she' by more than the control did. Here's how, one feature at a time: press :look{at=ablation-feature-toggle}[Ablation] at the top of the Features tab, click one feature's card to mark it, write what you expect from its label below, then press **Run it**. Knocking out several at once mixes their effects, so now you're pulling them apart.
 
 ```yaml
 target:

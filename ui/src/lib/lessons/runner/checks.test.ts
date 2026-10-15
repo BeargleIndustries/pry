@@ -136,3 +136,14 @@ describe('checks', () => {
     expect(o.text).toBe('Written for GPT-2 small; your model may differ. The app shows " Paris".');
   });
 });
+
+describe('expect: absent (rubric r2, P1.6 s3)', () => {
+  it('› a token outside the list counts as the authored result, as lesson-checks reads it', () => {
+    const o = evaluateCheck({ read: 'missing', op: 'lt', value: 11, not: true, expect: 'absent' } as CheckItem, env());
+    expect(o.agrees).toBe(true);
+  });
+  it('› without expect: absent a missing readout still waits', () => {
+    expect(evaluateCheck({ read: 'missing', op: 'lt', value: 11, not: true } as CheckItem, env()).agrees).toBeNull();
+  });
+});
+

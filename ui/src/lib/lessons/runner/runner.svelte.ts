@@ -489,6 +489,9 @@ export class LessonRunner<VS = unknown> {
         if (!st.locked && !st.skipped) this.hide.hide(list(step.fields.hides));
       }
       this.#expected = this.snapshotKey();
+      // `$before` is what this section set up: a change the learner makes with the
+      // app's own controls (a menu, a cell) counts from here, not from their first Run it.
+      if (r.status === 'done') this.markBefore();
     } finally {
       clearTimeout(timer);
       if (this.#nav.current(ticket)) {
@@ -963,9 +966,15 @@ export class LessonRunner<VS = unknown> {
         return;
       }
     }
+    const actions = runActions(task, this.set, ts.pendingArgs);
+    if (!actions.length) {
+      ts.message = lessonsCopy.taskInApp;
+      this.refresh();
+      return;
+    }
     this.markBefore();
     try {
-      for (const a of runActions(task, this.set, ts.pendingArgs)) {
+      for (const a of actions) {
         const r = await this.track(this.#dispatcher.dispatch(a.name, a.args, { signal: ticket.signal, bindings: this.bindings() }));
         if (r.status === 'blocked') {
           ts.message = lessonsCopy.blocked;
@@ -1319,6 +1328,7 @@ export class LessonRunner<VS = unknown> {
           message: ts.message,
           met: ts.met,
           canRun: !(task.max_runs !== undefined && ts.runs >= task.max_runs),
+          runnable: !!task.one_change || runActions(task, this.set, ts.pendingArgs).length > 0,
           hasRun: st.taskRan,
           canReset: task.reset !== undefined,
           changeArgs: task.one_change && ts.pendingArgs ? Object.entries(ts.pendingArgs).map(([name, v]) => ({ name, value: String(v ?? '') })) : null,
@@ -1358,7 +1368,8 @@ export class LessonRunner<VS = unknown> {
     const flat = (bs: RenderedBlock[]): RenderedBlock[] => bs.flatMap((b) => [b, ...flat(b.children)]);
     const blocks = flat(step.blocks);
     const first = blocks.find(unfinished);
-    const pool = first ? blocks.slice(0, blocks.indexOf(first) + 1).reverse() : blocks;
+    // With every step finished, the latest step's pointer: what the screen shows now.
+    const pool = (first ? blocks.slice(0, blocks.indexOf(first) + 1) : blocks.slice()).reverse();
     for (const b of pool) {
       const looks = looksIn(b.body);
       if (looks.length) return this.resolveLooks(looks[0] as PointerTarget[]);
@@ -1454,6 +1465,15 @@ export class LessonRunner<VS = unknown> {
     };
     const here = of(index);
     if (here) return here;
+    // A predict whose observe sits in a later section builds toward that result: its limits.
+    for (const st of allSteps(lesson.sections[index].steps)) {
+      const target = st.kind === 'predict' && typeof st.fields.checks === 'string' ? this.findStep(st.fields.checks) : null;
+      const at = target ? lesson.sections.indexOf(target.section) : -1;
+      for (let i = at; i > index && i < lesson.sections.length; i++) {
+        const r = of(i);
+        if (r) return r;
+      }
+    }
     for (let i = index - 1; i >= 0; i--) {
       const r = of(i);
       if (r) return r;

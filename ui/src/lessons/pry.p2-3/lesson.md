@@ -211,9 +211,6 @@ Here's the same kind of couplet for GPT-2 small. Pry runs it through the logit l
 :::slots
 mary_first: { read: lens.first_top_layer, args: { token: " Mary" }, expect: 9 }
 mary_final: { read: lens.final_prob, args: { token: " Mary" }, expect: 0.677 }
-bb_rank_l5: { row: "50.rank_L5", format: count }
-bb_rank_l6: { row: "50.rank_L6", format: count }
-bb_rank_l7: { row: "50.rank_L7", format: count }
 :::
 
 ::::transfer{id=mary-lens}
@@ -243,7 +240,7 @@ Pry runs the Mary and John prompt from P2.1 through the logit lens and focuses t
 :::
 
 :::observe{id=mary-obs}
-' Mary' first leads at {mary_first} and ends at {mary_final} after the last layer.
+' Mary' first leads at {mary_first} and ends at {mary_final} after the last layer. Both come from :look{at=logit-lens-heatmap}[the ' to' column]; hover a cell to see its token and chance.
 
 ```yaml
 check: { read: lens.first_top_layer, args: { token: " Mary" }, op: equals, value: 9, expect: 9 }
@@ -253,15 +250,13 @@ check: { read: lens.first_top_layer, args: { token: " Mary" }, op: equals, value
 ::::
 
 :::explain-result
-Same shape a third time: the answer shows up late, and the last layer lowers it. Even close to certain partway up isn't the answer you'd get out the other end. So read the early rows as a rough hint.
-
-Pry also ranked ' basketball' among all the tokens in the earlier rows of the Jordan prompt: rank {bb_rank_l5} at `L5`, {bb_rank_l6} at `L6` and {bb_rank_l7} at `L7`, before it reaches the top at `L8`. It was climbing, not missing.
+Hold that against your guess above. Same shape a third time: the answer shows up late in :look{at=logit-lens-heatmap}[the ' to' column], and the last layer lowers it. Even close to certain partway up isn't the answer you'd get out the other end. So read the early rows as a rough hint.
 
 ```yaml
 supports: "The middle layers weren't built to be read this way, so early rows are a rough hint. It's a hint, not proof."
 leaves_open: "It shows what the unembedding would make of each layer's residual stream. It doesn't show which part added the answer, or what else the residual stream holds that this read can't see."
 tool: logit-lens
-skeptic: { says: "A skeptic would say ' basketball' wasn't there at all before `L8`, it was just invisible to this read.", check: "Check: look at ' basketball''s rank in the `L5`-`L7` rows, not just the top token." }
+skeptic: { says: "A skeptic would say ' Mary' wasn't there at all before the row where it first leads.", check: "This chart can't settle that: it shows only each row's top token, so a word climbing just below the top stays out of sight. Read the first row where a word leads as the latest it could have started, not the earliest." }
 ```
 :::
 
