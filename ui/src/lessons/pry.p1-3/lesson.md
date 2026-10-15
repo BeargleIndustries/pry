@@ -14,11 +14,14 @@ cold_entry: "What you need from before: GPT-2 cuts text into tokens; each token 
 model: gpt2-small
 baseline: { prompt: "Michael Jordan played the sport of" }
 verified_rows: [1, 18, 30]
+limits: "Compare shows two sets of chances side by side. It doesn't show where inside the model the difference came in."
 ---
 
 ## Recall {id=s3-0 depth=optional outline=P1.3.md#3.0}
 
 :::recall{id=recall-basketball}
+Why this matters: this lesson opens up that file of numbers and follows your prompt through it.
+
 ```yaml
 from: pry.p1-1
 question: "Where did ' basketball' come from in lesson 1?"
@@ -176,10 +179,10 @@ corrected_in: [pry.p2-1]
 ## Same last token, different guess {id=s3-5 outline=P1.3.md#3.5}
 
 :::slots
-jordan_bb: { read: compare.prediction, args: { side: a, token: " basketball" }, field: prob, expect: 0.42208 }
-jordan_fb: { read: compare.prediction, args: { side: a, token: " football" }, field: prob, expect: 0.047189 }
-brady_fb: { read: compare.prediction, args: { side: b, token: " football" }, field: prob, expect: 0.48629 }
-brady_bb: { read: compare.prediction, args: { side: b, token: " basketball" }, field: prob, expect: 0.022681 }
+jordan_bb: { read: compare.prediction, args: { side: a, token: " basketball" }, field: prob, format: probability, expect: 0.42208 }
+jordan_fb: { read: compare.prediction, args: { side: a, token: " football" }, field: prob, format: probability, expect: 0.047189 }
+brady_fb: { read: compare.prediction, args: { side: b, token: " football" }, field: prob, format: probability, expect: 0.48629 }
+brady_bb: { read: compare.prediction, args: { side: b, token: " basketball" }, field: prob, format: probability, expect: 0.022681 }
 :::
 
 :::predict{id=same-chances checks=differ-obs}
@@ -203,7 +206,7 @@ The lesson turns on :look{at=compare-panel}[Compare] and runs both sentences sid
 :::
 
 :::observe{id=differ-obs}
-After Jordan, ' basketball' gets {jordan_bb} and ' football' gets {jordan_fb}. After Brady, ' football' gets {brady_fb} and ' basketball' gets {brady_bb}. Same last token, same start, different chances at the top.
+In :look{at=compare-panel}[Compare's next-token table], the A column is Jordan and the B column is Brady. After Jordan, ' basketball' gets {jordan_bb} and ' football' gets {jordan_fb}. After Brady, ' football' gets {brady_fb} and ' basketball' gets {brady_bb}. Same last token, same start, different chances at the top.
 
 ```yaml
 check: { read: compare.top, args: { side: a }, op: equals, value: $read.compare.top, value_args: { side: b }, not: true }
@@ -230,7 +233,7 @@ tool: compare
 ## Transfer {id=s5 outline=P1.3.md#5}
 
 :::slots
-tiger_golf: { read: prediction, args: { token: " golf" }, field: prob, expect: 0.55911 }
+tiger_golf: { read: prediction, args: { token: " golf" }, field: prob, format: probability, expect: 0.55911 }
 :::
 
 ::::transfer{id=tiger}

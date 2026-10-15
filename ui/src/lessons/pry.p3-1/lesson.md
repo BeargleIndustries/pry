@@ -14,11 +14,14 @@ cold_entry: "Two things from before. A probability is the share of the next-toke
 model: gpt2-small
 baseline: { prompt: "The nurse said that" }
 verified_rows: [14, 17, 27, 31, 56]
+limits: "Compare shows what moved when one word changed. It doesn't show which part inside moved it, so treat the delta as a lead."
 ---
 
 ## Recall {id=s3-1 depth=optional outline=P3.1.md#3.1}
 
 :::recall{id=recall-dla}
+Why this matters: from here on you test suspects by changing something and watching the answer, and this lesson's change is one word.
+
 ```yaml
 from: pry.p2-4
 question: "DLA showed which parts pushed ' Mary' over ' John' directly. Did that show those parts caused ' Mary' to win?"
@@ -28,9 +31,13 @@ free: true
 
 ## How does ' she' move? {id=s3-2 outline=P3.1.md#3.2}
 
+:::enter
+open_panel: predictions
+:::
+
 :::slots
-she_nurse: { read: prediction, args: { token: " she" }, field: prob, expect: 0.1896977424621582, tolerance: 0.02 }
-she_doctor: { read: compare.prediction, args: { side: b, token: " she" }, field: prob, expect: 0.04582584276795387, tolerance: 0.02 }
+she_nurse: { read: prediction, args: { token: " she" }, field: prob, format: probability, expect: 0.1896977424621582, tolerance: 0.02 }
+she_doctor: { read: compare.prediction, args: { side: b, token: " she" }, field: prob, format: probability, expect: 0.04582584276795387, tolerance: 0.02 }
 :::
 
 :::do{id=nurse-ensure}
@@ -48,19 +55,20 @@ With ' nurse', ' she' gets {she_nurse}. Swap in ' doctor'. What happens to ' she
 
 ```yaml
 choices:
-  - { text: "rises", feedback: "The model went another way: ' she' fell to {she_doctor}, and ' he' took the top spot." }
-  - { text: "barely moves", feedback: "The model went another way: ' she' fell to {she_doctor}, and ' he' took the top spot." }
-  - { text: "drops to a few percent", feedback: "That's what happened. Why would one word move a pronoun two tokens later?" }
-  - { text: "vanishes from the list", feedback: "The model went another way: ' she' fell to {she_doctor}, and ' he' took the top spot." }
+  - { text: "rises" }
+  - { text: "barely moves" }
+  - { text: "drops to a few percent" }
+  - { text: "vanishes from the list" }
+remember: she-pick
 ```
 :::
 
 ## Compare {id=s3-3 outline=P3.1.md#3.3}
 
 :::slots
-she_nurse: { read: compare.prediction, args: { side: a, token: " she" }, field: prob, expect: 0.1896977424621582, tolerance: 0.02 }
-she_doctor: { read: compare.prediction, args: { side: b, token: " she" }, field: prob, expect: 0.04582584276795387, tolerance: 0.02 }
-he_doctor: { read: compare.prediction, args: { side: b, token: " he" }, field: prob, expect: 0.14450117945671082, tolerance: 0.02 }
+she_nurse: { read: compare.prediction, args: { side: a, token: " she" }, field: prob, format: probability, expect: 0.1896977424621582, tolerance: 0.02 }
+she_doctor: { read: compare.prediction, args: { side: b, token: " she" }, field: prob, format: probability, expect: 0.04582584276795387, tolerance: 0.02 }
+he_doctor: { read: compare.prediction, args: { side: b, token: " he" }, field: prob, format: probability, expect: 0.14450117945671082, tolerance: 0.02 }
 she_delta: { read: compare.delta, args: { token: " she" }, expect: -0.14387189704179764, tolerance: 0.02 }
 he_delta: { read: compare.delta, args: { token: " he" }, expect: 0.12173311971127987, tolerance: 0.02 }
 :::
@@ -73,10 +81,14 @@ Compare runs two prompts and puts their Predictions side by side. Press **Do it*
 - set_compare: { a: "The nurse said that", b: "The doctor said that" }
 - run_compare: {}
 ```
+
+```yaml
+capture: pair
+```
 :::
 
 :::observe{id=she-obs}
-Look at the shape first: neither run gives any token more than about 1 in 5, so both lists are spread out. With ' nurse', ' she' gets {she_nurse}. With ' doctor', it gets {she_doctor}, and ' he' tops the doctor run at {he_doctor}. The delta row says the same thing as one number per token: ' she' moved by {she_delta} and ' he' by {he_delta}. That's the doctor run minus the nurse run.
+Your guess for ' she': :earlier{key="pry.p3-1.she-pick"}[skipped]. Look at the shape first: neither run gives any token more than about 1 in 5, so both lists are spread out. With ' nurse', ' she' gets {she_nurse}. With ' doctor', it gets {she_doctor}, and ' he' tops the doctor run at {he_doctor}. The delta row says the same thing as one number per token: ' she' moved by {she_delta} and ' he' by {he_delta}. That's the doctor run minus the nurse run.
 
 ```yaml
 check:
@@ -133,7 +145,7 @@ check: { read: compare.delta, args: { token: " she" }, op: within, value: 0, tol
 :::
 
 :::question{id=drop-from}
-So where did the drop in `3.3` come from?
+So where'd the drop you saw in the nurse and doctor pair come from?
 
 ```yaml
 free: true
@@ -143,8 +155,19 @@ model_answer: "Only from the one changed word and whatever changed along with it
 
 ## What does the drop show? {id=s3-6 outline=P3.1.md#3.6}
 
+:::enter
+compare_mode: true
+compare: { a: "The nurse said that", b: "The doctor said that" }
+analyses: [compare]
+:::
+
+:::slots
+she_nurse: { read: compare.prediction, args: { side: a, token: " she" }, field: prob, format: probability, from_capture: pair, expect: 0.1896977424621582, tolerance: 0.02 }
+she_doctor: { read: compare.prediction, args: { side: b, token: " she" }, field: prob, format: probability, from_capture: pair, expect: 0.04582584276795387, tolerance: 0.02 }
+:::
+
 :::predict{id=drop-shows checks=drop-reveal}
-' she' fell from about 1 in 5 to about 1 in 22. What does that show?
+Here's :look{at=compare-panel}[Compare] again: ' she' fell from {she_nurse} with ' nurse' to {she_doctor} with ' doctor'. What does that show?
 
 ```yaml
 choices:
@@ -186,9 +209,9 @@ breaks: "only a test shows which one is driving and which is riding."
 ## Transfer {id=s5 outline=P3.1.md#5}
 
 :::slots
-mary: { read: compare.prediction, args: { side: a, token: " Mary" }, field: prob, expect: 0.6769932508468628, tolerance: 0.02 }
-them: { read: compare.prediction, args: { side: a, token: " them" }, field: prob, expect: 0.12825962901115417, tolerance: 0.02 }
-john: { read: compare.prediction, args: { side: a, token: " John" }, field: prob, expect: 0.02347848005592823, tolerance: 0.02 }
+mary: { read: compare.prediction, args: { side: a, token: " Mary" }, field: prob, format: probability, expect: 0.6769932508468628, tolerance: 0.02 }
+them: { read: compare.prediction, args: { side: a, token: " them" }, field: prob, format: probability, expect: 0.12825962901115417, tolerance: 0.02 }
+john: { read: compare.prediction, args: { side: a, token: " John" }, field: prob, format: probability, expect: 0.02347848005592823, tolerance: 0.02 }
 tokens_a: { read: compare.token_count, args: { side: a }, expect: 15 }
 tokens_b: { read: compare.token_count, args: { side: b }, expect: learner }
 :::

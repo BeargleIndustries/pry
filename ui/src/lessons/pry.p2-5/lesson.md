@@ -14,6 +14,7 @@ cold_entry: "Each token's residual stream is a list of 768 numbers that every la
 model: gpt2-small
 baseline: { prompt: "Michael Jordan played the sport of" }
 verified_rows: [1, 7, 53, 54, 55]
+limits: "Features are patterns an SAE found in one layer's residual stream. Each label is an AI's guess from the top examples, so test it against them."
 slots:
   fid: { row: "53.fid", format: count }
   preset: { row: "53.sae_layer", format: count }
@@ -22,6 +23,8 @@ slots:
 ## Recall {id=s3-1 depth=optional outline=P2.5.md#3.1}
 
 :::recall{id=recall-lens}
+Why this matters: the residual stream can hold more than one read shows, and this lesson uses a read built to find it.
+
 ```yaml
 from: pry.p2-3
 question: "The logit lens reads the residual stream with the unembedding. Could the residual stream hold things that read can't show?"
@@ -132,9 +135,9 @@ What do these examples have in common?
 ```yaml
 free: true
 choices:
-  - { text: "names of basketball players" }
-  - { text: "proper nouns, specifically the name \"Jordan.\"" }
-  - { text: "famous names or personalities" }
+  - { text: "basketball players" }
+  - { text: "the name Jordan, whoever has it" }
+  - { text: "famous people in general" }
 hides: [feature-labels]
 ```
 :::
@@ -146,7 +149,7 @@ label: { row: "53.label", format: string }
 :::
 
 :::observe{id=label-obs}
-The label's back: {label}. It comes from a public website that catalogues SAE features, with labels written by an AI from each feature's top examples, and that site's called **Neuronpedia**. Pry shows its labels and examples, and its name's on screen next to them.
+The label's back on :look{at=feature-row id=$row.53.fid}[the feature's card]: {label}. It comes from a public website that catalogues SAE features, with labels written by an AI from each feature's top examples, and that site's called **Neuronpedia**. Pry shows its labels and examples, and its name's on screen next to them.
 
 Here's the label Neuronpedia gives it. How does your guess compare? Both of you worked from the same examples.
 

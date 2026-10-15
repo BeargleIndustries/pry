@@ -14,10 +14,11 @@ cold_entry: "Four things from before. Each token has its own residual stream, a 
 model: gpt2-small
 baseline: { prompt: "When Mary and John went to the store, John gave a drink to" }
 verified_rows: [14, 27, 32, 59, 60]
+limits: "A bright cell shows that copying that slice moves ' Mary''s logit back toward the clean run, on this pair. It doesn't show that the slice is the mechanism, so treat it as a strong suspect."
 slots:
-  clean: { read: patch.cell, args: { layer: $row.27.peak_layer, position: $row.27.peak_position }, field: clean, expect: 18.466388702392578, tolerance: 0.05 }
-  corrupted: { read: patch.cell, args: { layer: $row.27.peak_layer, position: $row.27.peak_position }, field: corrupted, expect: 14.966815948486328, tolerance: 0.05 }
-  patched: { read: patch.cell, args: { layer: $row.27.peak_layer, position: $row.27.peak_position }, field: patched, expect: 18.474945068359375, tolerance: 0.05 }
+  clean: { read: patch.cell, args: { layer: $row.27.peak_layer, position: $row.27.peak_position }, field: clean, format: logit, expect: 18.466388702392578, tolerance: 0.05 }
+  corrupted: { read: patch.cell, args: { layer: $row.27.peak_layer, position: $row.27.peak_position }, field: corrupted, format: logit, expect: 14.966815948486328, tolerance: 0.05 }
+  patched: { read: patch.cell, args: { layer: $row.27.peak_layer, position: $row.27.peak_position }, field: patched, format: logit, expect: 18.474945068359375, tolerance: 0.05 }
   share: { from: [clean, corrupted, patched], formula: share, format: probability }
   peak_layer: { row: "27.peak_layer", format: layer }
   word: { row: "27.peak_word", format: string }
@@ -26,6 +27,8 @@ slots:
 ## Recall {id=s3-1 depth=optional outline=P3.3.md#3.1}
 
 :::recall{id=recall-compare}
+Why this matters: this lesson's tool narrows a change in the answer down to one layer at one token.
+
 ```yaml
 from: pry.p3-1
 question: "Compare showed ' Mary' fall when the second name changed. What couldn't it tell you?"
@@ -53,8 +56,12 @@ breaks: "the parts aren't separate modules, and a head or MLP swap in Pry covers
 
 ## Clean run and corrupted run {id=s3-3 outline=P3.3.md#3.3}
 
+:::enter
+hidden: { patching-grid: true }
+:::
+
 :::do{id=patch-resid}
-Researchers call the run on the first prompt the **clean run** and the run on the second the **corrupted run**. Nothing's broken: "corrupted" just means changed. Papers say clean and corrupted, and Pry's boxes say "Original prompt" and "Changed prompt". The Original prompt here is P3.1's Mary and John sentence, and the Changed prompt swaps the second ' John' for ' Mary'. Press **Do it** to run the Swap test, then find :look{at=patch-three-logits}[the three logits].
+Researchers call the run on the first prompt the **clean run** and the run on the second the **corrupted run**. Nothing's broken: "corrupted" just means changed. Papers say clean and corrupted, and Pry's boxes say "Original prompt" and "Changed prompt". The Original prompt here is P3.1's Mary and John sentence, and the Changed prompt swaps the second ' John' for ' Mary'. Press **Do it** to run the Swap test, then find :look{at=patch-three-logits}[the three logits]. The grid of results stays covered until you've made a guess in the next section.
 
 ```actions
 - run_patching: { clean: "When Mary and John went to the store, John gave a drink to", corrupted: "When Mary and John went to the store, Mary gave a drink to", type: resid }
@@ -82,6 +89,10 @@ hides: [patching-grid]
 
 ## Three logits first, colours second {id=s3-5 outline=P3.3.md#3.5}
 
+:::enter
+hidden: { patching-grid: false }
+:::
+
 :::do{id=peak-cell}
 Each cell in :look{at=patching-grid}[the grid] is one layer at one word. Press **Do it** to select the brightest one, then read :look{at=patch-three-logits}[the three logits] before you look at its colour.
 
@@ -91,7 +102,7 @@ Each cell in :look{at=patching-grid}[the grid] is one layer at one word. Press *
 :::
 
 :::observe{id=peak-obs}
-All three are the logit for ' Mary' at the last token. Clean: {clean}. Corrupted: {corrupted}. Copy layer {peak_layer}'s residual stream at ' {word}' into the corrupted run, and it becomes {patched}, {share} of the way from {corrupted} back to {clean}.
+All three are the logit for ' Mary' at the last token. Clean: {clean}. Corrupted: {corrupted}. Copy the residual stream at {peak_layer}, at the token {word}, into the corrupted run, and it becomes {patched}, {share} of the way from {corrupted} back to {clean}.
 
 Formula on screen: ({patched} - {corrupted}) / ({clean} - {corrupted}).
 
@@ -157,11 +168,11 @@ skeptic: { says: "A skeptic would say these cells light up because of this one p
 ## Heads, one at a time {id=s3-8 outline=P3.3.md#3.8}
 
 :::slots
-top_head_layer: { read: patch.peak, args: { type: head }, field: layer, expect: 8 }
-top_head: { read: patch.peak, args: { type: head }, field: position, expect: 10 }
-head_clean: { read: patch.peak, args: { type: head }, field: clean, expect: 18.466388702392578, tolerance: 0.05 }
-head_corrupted: { read: patch.peak, args: { type: head }, field: corrupted, expect: 14.966815948486328, tolerance: 0.05 }
-head_patched: { read: patch.peak, args: { type: head }, field: patched, expect: 16.252490997314453, tolerance: 0.05 }
+top_head_layer: { read: patch.peak, args: { type: head }, field: layer, format: layer, expect: 8 }
+top_head: { read: patch.peak, args: { type: head }, field: position, format: count, expect: 10 }
+head_clean: { read: patch.peak, args: { type: head }, field: clean, format: logit, expect: 18.466388702392578, tolerance: 0.05 }
+head_corrupted: { read: patch.peak, args: { type: head }, field: corrupted, format: logit, expect: 14.966815948486328, tolerance: 0.05 }
+head_patched: { read: patch.peak, args: { type: head }, field: patched, format: logit, expect: 16.252490997314453, tolerance: 0.05 }
 :::
 
 :::do{id=patch-heads}
@@ -191,7 +202,7 @@ Is it one of the name movers from P3.2?
 choices:
   - { text: "yes" }
   - { text: "no" }
-model_answer: "No. The top head is layer {top_head_layer}, head {top_head}: clean {head_clean}, corrupted {head_corrupted}, patched {head_patched}. It sits in layers `L8` to `L9`, right where the name movers are, and `L9H9`, one of P3.2's name movers, comes second. So the difference runs through more heads than the three you knocked out."
+model_answer: "No. The top head is head {top_head} in {top_head_layer}: clean {head_clean}, corrupted {head_corrupted}, patched {head_patched}. It sits in layers `L8` to `L9`, right where the name movers are, and `L9H9`, one of P3.2's name movers, comes second. So the difference runs through more heads than the three you knocked out."
 ```
 :::
 
