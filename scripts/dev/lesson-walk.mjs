@@ -9,7 +9,7 @@
 // WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=9333.
 //
 //   node scripts/dev/lesson-walk.mjs --out <evidence dir> [--port 9333]
-//        [--lessons pry.p1-1,pry.p1-2] [--skip-walk] [--skip-user] [--appdata <dir>]
+//        [--lessons pry.p1-1,pry.p1-2] [--skip-walk --pid <pry.exe pid>] [--skip-user] [--appdata <dir>]
 //
 // Walk (every bundled sidebar lesson, from index order):
 //   back-<id>.json                 section 1 on entry, then Next, then Back: the tool
@@ -27,9 +27,8 @@
 // User lessons (--appdata = the app's data folder, %APPDATA%\com.beargle.pry). The
 // harness build never reads that folder, so run this part (--skip-walk) on a plain
 // debug build (`npm run build`, no VITE_POPUP_AUDIT); it drives the UI by its buttons:
-//   lesson-install-permissions.png "Add a lesson..." with the community sample (the
-//                                  folder dialog answered by the driver, from a copy
-//                                  staged in the app data folder).
+//   lesson-install-permissions.png "Add a lesson..." with the community sample (Windows'
+//                                  folder dialog answered by pick-folder.ps1; needs --pid).
 //   hot-reload.png                 an image added to the installed lesson on disk.
 //   lesson-error.png, lesson-check.png  a broken lesson in the picker, then
 //                                  Settings > Lessons > Check this lesson.
@@ -39,7 +38,8 @@
 // walk-manifest.json: every screenshot with innerWidth x innerHeight, slot results,
 // errors seen. Exit 1 on a Back mismatch, a slot mismatch or a missing screenshot.
 
-import { writeFileSync, mkdirSync, readFileSync, existsSync, cpSync, rmSync, copyFileSync } from 'node:fs';
+import { writeFileSync, mkdirSync, readFileSync, existsSync, copyFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -113,7 +113,7 @@ async function waitFor(expression, timeout = 15 * 60 * 1000, every = 500) {
   return false;
 }
 
-const manifest = { started: new Date().toISOString(), shots: [], slots: [], slotMismatches: [], back: [], errors: [], notes: [] };
+const manifest = { started: new Date().toISOString(), shots: [], slots: [], slotMismatches: [], checks: [], checkMismatches: [], back: [], errors: [], notes: [] };
 const expected = [];
 
 async function snap(file) {
@@ -165,6 +165,8 @@ window.__t8 = (() => {
       return { snap: L().snapshot(), blocks: JSON.parse(JSON.stringify(r.render().blocks)), slots: slotsOnScreen().map((s) => [s.name, s.text]) };
     },
     error() { return R().error ?? null; },
+    /** The check results on screen (observe checks against the lesson's recorded value, the learner's prediction, a run). */
+    checks() { return [...document.querySelectorAll('[data-lesson-sidebar] [data-check-result]')].map((el) => ({ step: el.closest('[data-step-id]')?.getAttribute('data-step-id') ?? null, text: el.textContent.trim().replace(/\s+/g, ' ') })); },
     /** Drives the current section: predicts, questions, do steps, observes, tasks. */
     async drive() {
       const r = R();
@@ -322,6 +324,10 @@ async function walk() {
       const err = await ev('window.__t8.error()');
       if (err) manifest.errors.push({ where: `${id}/${secs[i].id}`, error: err });
       if (log.some((x) => x.includes(':err'))) manifest.errors.push({ where: `${id}/${secs[i].id}`, drive: log });
+      for (const c of await ev('window.__t8.checks()')) {
+        manifest.checks.push({ lesson: id, section: secs[i].id, ...c });
+        if (/^The app shows something different from what the lesson expected/.test(c.text)) manifest.checkMismatches.push({ lesson: id, section: secs[i].id, ...c });
+      }
       const slots = await ev('window.__t8.slotCheck()');
       for (const s of slots) {
         manifest.slots.push({ lesson: id, section: secs[i].id, ...s });
@@ -436,23 +442,20 @@ async function plainPage(w, h) {
 }
 
 async function userLessons() {
-  const staging = join(APPDATA, 't8-staging', 'community.first-token');
   const installed = join(APPDATA, 'lessons', 'community.first-token');
-  const toFwd = (p) => p.replace(/\\/g, '/');
-  rmSync(join(APPDATA, 't8-staging'), { recursive: true, force: true });
-  mkdirSync(staging, { recursive: true });
-  cpSync(SAMPLE, staging, { recursive: true });
-  manifest.notes.push(`user lessons: app data ${APPDATA}; sample staged at ${staging} (the folder dialog is answered with this path)`);
+  if (!args.pid) throw new Error('--pid <pry.exe process id> is needed to answer the folder dialog');
+  manifest.notes.push(`user lessons: app data ${APPDATA}; "Add a lesson..." with the real folder dialog, answered by scripts/dev/pick-folder.ps1 with ${SAMPLE}`);
 
   await plainPage(1280, 800);
   await ev('window.__t8u.lessonsOpen()');
   await sleep(1500);
-  // "Add a lesson...": the native folder dialog answered with the staged copy.
-  await ev(`(() => { const T = window.__TAURI_INTERNALS__; const real = T.invoke.bind(T); window.__t8realInvoke = real;
-    T.invoke = (cmd, a, o) => cmd === 'plugin:dialog|open' ? Promise.resolve(${JSON.stringify(toFwd(staging))}) : real(cmd, a, o); return true; })()`);
+  // "Add a lesson...": the click opens Windows' folder dialog (modal, so the click isn't awaited);
+  // pick-folder.ps1 types the sample folder into it and presses Select Folder.
   await ev('window.__t8u.settings()');
-  const clicked = await ev(`window.__t8u.clickIn('[data-testid="settings-lessons"]', /^Add a lesson/)`);
+  const clicked = await ev(`(() => { const b = [...document.querySelectorAll('[data-testid="settings-lessons"] button')].find((x) => /^Add a lesson/.test(x.textContent.trim())); if (!b) return false; setTimeout(() => b.click(), 50); return true; })()`);
   if (!clicked) manifest.errors.push({ where: 'install', error: 'no "Add a lesson..." button' });
+  const picked0 = execFileSync('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', join(HERE, 'pick-folder.ps1'), '-procId', String(args.pid), '-folder', SAMPLE], { encoding: 'utf8' });
+  manifest.notes.push(`folder dialog: ${picked0.trim().replace(/\s+/g, ' ')}`);
   const sheet = await waitFor(`!!document.querySelector('[data-testid="lesson-install"]')`, 20000, 250);
   await sleep(1000);
   if (!sheet) manifest.errors.push({ where: 'install', error: 'install sheet never opened', settings: await ev(`window.__t8u.text('[data-testid="settings-lessons"]')`) });
@@ -461,7 +464,6 @@ async function userLessons() {
   const approved = await ev(`window.__t8u.clickIn('[data-testid="lesson-install"]', /^Allow all$/)`);
   manifest.notes.push(`install approved (Allow all): ${approved}`);
   await sleep(2000);
-  await ev(`(() => { if (window.__t8realInvoke) window.__TAURI_INTERNALS__.invoke = window.__t8realInvoke; return true; })()`);
   await ev('window.__t8u.closeSettings()');
   await sleep(800);
 
@@ -480,9 +482,19 @@ async function userLessons() {
     );
     if (withImage === md) manifest.errors.push({ where: 'hot-reload', error: 'could not add the image block' });
     writeFileSync(join(installed, 'lesson.md'), withImage);
-    const shown = await waitFor(`!!document.querySelector('[data-lesson-sidebar] img[alt^="Pry"]')`, 20000, 300);
-    if (!shown) manifest.errors.push({ where: 'hot-reload', error: 'image never appeared in the sidebar' });
-    await ev(`document.querySelector('[data-lesson-sidebar] img[alt^="Pry"]')?.scrollIntoView({ block: 'center' }); true`);
+    // In place first (the open section re-renders), then by reopening it from the picker.
+    const inPlace = await waitFor(`!!document.querySelector('[data-lesson-sidebar] img[alt^="Pry"]')`, 8000, 300);
+    manifest.notes.push(`hot reload: image shown in the open lesson without reopening it: ${inPlace}`);
+    if (!inPlace) {
+      manifest.errors.push({ where: 'hot-reload', error: 'the open lesson did not re-render after its file changed (the picker did pick up the change)' });
+      await ev(`window.__t8u.pick('community.first-token')`);
+      await waitFor(`!!document.querySelector('[data-lesson-sidebar] img[alt^="Pry"]')`, 10000, 300);
+    }
+    await sleep(800);
+    const img = await ev(`(() => { const i = document.querySelector('[data-lesson-sidebar] img[alt^="Pry"]'); if (!i) return null; i.scrollIntoView({ block: 'center' }); return { naturalWidth: i.naturalWidth, complete: i.complete, src: i.src.slice(0, 40) }; })()`);
+    manifest.notes.push(`hot reload image: ${JSON.stringify(img)}`);
+    if (!img) manifest.errors.push({ where: 'hot-reload', error: 'image not in the sidebar after reopening' });
+    else if (!img.naturalWidth) manifest.errors.push({ where: 'hot-reload', error: `image element present but not drawn (naturalWidth 0, ${img.src})` });
     await sleep(800);
     await snap('hot-reload.png');
   }
@@ -529,7 +541,6 @@ async function userLessons() {
   manifest.notes.push(`blocked message: ${JSON.stringify(blockedText)}`);
   await sleep(600);
   await snap('lesson-blocked.png');
-  rmSync(join(APPDATA, 't8-staging'), { recursive: true, force: true });
 }
 
 // ---------------------------------------------------------------------------
@@ -669,12 +680,15 @@ async function main() {
     const slotIds = new Set(manifest.slots.map((s) => s.lesson));
     manifest.slots = [...prior.slots.filter((s) => !slotIds.has(s.lesson)), ...manifest.slots];
     manifest.slotMismatches = [...prior.slotMismatches.filter((s) => !slotIds.has(s.lesson)), ...manifest.slotMismatches];
+    manifest.checks = [...(prior.checks ?? []).filter((s) => !slotIds.has(s.lesson)), ...manifest.checks];
+    manifest.checkMismatches = [...(prior.checkMismatches ?? []).filter((s) => !slotIds.has(s.lesson)), ...manifest.checkMismatches];
+    if (prior.analysis) manifest.analysis = prior.analysis;
     manifest.errors = [...prior.errors, ...manifest.errors];
     manifest.notes = [...prior.notes, ...manifest.notes];
   }
   writeFileSync(manifestFile, JSON.stringify(manifest, null, 2));
   const checked = manifest.slots.filter((s) => s.ok !== null).length;
-  console.log(`WALK SHOTS ${manifest.shots.length} (missing ${missing.length}) / BACK EQUAL ${manifest.back.length - backBad.length}/${manifest.back.length} / SLOTS OK ${checked - manifest.slotMismatches.length}/${checked} (mismatch ${manifest.slotMismatches.length}) / ERRORS ${manifest.errors.length}`);
+  console.log(`WALK SHOTS ${manifest.shots.length} (missing ${missing.length}) / BACK EQUAL ${manifest.back.length - backBad.length}/${manifest.back.length} / SLOTS OK ${checked - manifest.slotMismatches.length}/${checked} (mismatch ${manifest.slotMismatches.length}) / CHECKS vs lesson DIFFER ${manifest.checkMismatches.length}/${manifest.checks.length} / ERRORS ${manifest.errors.length}`);
   cdp.close();
   process.exit(missing.length || backBad.length || manifest.slotMismatches.length ? 1 : 0);
 }
