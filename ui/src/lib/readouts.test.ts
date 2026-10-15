@@ -94,7 +94,7 @@ describe('logitLensReadout', () => {
   it('golden: answer first becomes top guess mid-stack', () => {
     expect(logitLensReadout(logitLens)).toBe(
       'For the last word, "·is": the final answer, "·Paris", first becomes the top guess at layer 2 (layers run 0 to 4). ' +
-        'Its chance grows from 3% there to 47% at the last layer.',
+        'Its chance grows from 3.1% (about 1 in 32) there to 47% (about 1 in 2) at the last layer.',
     );
   });
 
@@ -140,7 +140,7 @@ describe('logitLensReadout', () => {
     const text = logitLensReadout(jordanLens());
     expect(text).toBe(
       'For the only word, "of": the final answer, "·basketball", first becomes the top guess at layer 8 (layers run 0 to 11). ' +
-        'Its chance peaks at 93% at layer 9, then ends at 42% at the last layer.',
+        'Its chance peaks at 93.2% (about 9 in 10) at layer 9, then ends at 42.2% (about 3 in 7) at the last layer.',
     );
     expect(text).not.toMatch(/grows from (\d+%) there to \1/);
   });
@@ -149,7 +149,7 @@ describe('logitLensReadout', () => {
     const r = jordanLens();
     r.grid[9][0].probability = 0.42;
     r.grid[10][0].probability = 0.42;
-    expect(logitLensReadout(r)).toMatch(/Its chance is about 42% there and at the last layer\.$/);
+    expect(logitLensReadout(r)).toMatch(/Its chance is about 42\.2% \(about 3 in 7\) there and at the last layer\.$/);
   });
 
   it('a chance that drops is described as falling', () => {
@@ -157,7 +157,7 @@ describe('logitLensReadout', () => {
     r.grid[8][0].probability = 0.9;
     r.grid[9][0].probability = 0.7;
     r.grid[10][0].probability = 0.5;
-    expect(logitLensReadout(r)).toMatch(/Its chance falls from 90% there to 42% at the last layer\.$/);
+    expect(logitLensReadout(r)).toMatch(/Its chance falls from 90% \(about 9 in 10\) there to 42\.2% \(about 3 in 7\) at the last layer\.$/);
   });
 
   it('returns null without data', () => {

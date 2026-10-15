@@ -33,6 +33,8 @@ export type MemoCaller = <T>(
 export interface RunnerActionContext extends ActionContext {
   /** Present on runner-issued calls: send sidecar requests through the memo. */
   call?: MemoCaller;
+  /** The section fold replaying an earlier section's step (the learner has already seen it). */
+  replay?: boolean;
 }
 
 export type LessonSource =
@@ -133,6 +135,7 @@ export function createDispatcher(set: ToolActionSet<any>, memo: RequestMemo, sou
         signal: opts.signal,
         wait: opts.wait ?? (() => {}),
         call: (req, fetcher) => memo.call({ ...req, memoContext: set.memoContext(), fresh: opts.fresh }, fetcher),
+        ...(opts.replay ? { replay: true } : {}),
       };
       await action.run(a, ctx);
       return { status: 'done' };

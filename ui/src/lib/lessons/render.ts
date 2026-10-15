@@ -280,6 +280,8 @@ export interface TaskView {
   message: string | null;
   met: boolean;
   canRun: boolean;
+  /** "Run it" has something to send; false when the task is done with the app's own controls. */
+  runnable: boolean;
   hasRun: boolean;
   canReset: boolean;
   /** one_change: the action's arguments the learner edits between runs. */

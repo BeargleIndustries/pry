@@ -108,6 +108,15 @@
     return t.startsWith(' ') ? '\u00b7' + t.slice(1) : t;
   }
 
+  // The readout above describes the last word's column: a new result opens
+  // scrolled to it, so a long prompt doesn't hide the column the text is about.
+  let scrollEl: HTMLElement | undefined = $state();
+  $effect(() => {
+    const r = response;
+    const el = scrollEl;
+    if (r && el) el.scrollLeft = el.scrollWidth;
+  });
+
   // Cell sizing
   const CELL_W = 56;
   const CELL_H = 24;
@@ -142,7 +151,7 @@
       <p class="text-sm text-zinc-600">Run a prompt and this tab fills in on its own.</p>
     </div>
   {:else if response && nLayers > 0 && tokens.length > 0}
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto" bind:this={scrollEl}>
       <div
         bind:this={gridEl}
         role="grid"

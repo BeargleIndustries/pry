@@ -132,8 +132,9 @@ export function judgeTask(
 /**
  * The actions "Run it" dispatches: the one_change action with the learner's
  * arguments, then the task's compute `learner_actions` in order. With none
- * listed, the one_change action's run partner (`set_x` -> `run_x`) or the
- * generic `run`.
+ * listed, the one_change action's run partner (`set_x` -> `run_x`) or, for a
+ * task that names no learner_actions at all, the generic `run`. Empty when
+ * the task is done with the app's own controls.
  */
 export function runActions(
   task: TaskFields,
@@ -142,9 +143,14 @@ export function runActions(
 ): { name: string; args: Record<string, unknown> }[] {
   const out: { name: string; args: Record<string, unknown> }[] = [];
   if (task.one_change && pendingArgs) out.push({ name: task.one_change, args: pendingArgs });
-  const compute = (task.learner_actions ?? []).filter((n) => set.actions[n] && set.actions[n].effect !== 'view');
+  // An action that needs arguments only the app's own controls give (write_it's
+  // temperature, run_patching's two prompts) can't be sent from "Run it"; nor can
+  // a view action (clicking a cell). Such a task is done in the app.
+  const sendable = (n: string) => !set.actions[n].args || set.actions[n].args.safeParse({}).success;
+  const listed = (task.learner_actions ?? []).filter((n) => set.actions[n] && set.actions[n].effect !== 'view');
+  const compute = listed.filter(sendable);
   if (compute.length) for (const n of compute) out.push({ name: n, args: {} });
   else if (task.one_change && set.actions[task.one_change.replace(/^set_/, 'run_')]) out.push({ name: task.one_change.replace(/^set_/, 'run_'), args: {} });
-  else if (set.actions.run) out.push({ name: 'run', args: {} });
+  else if (!task.learner_actions?.length && set.actions.run) out.push({ name: 'run', args: {} });
   return out;
 }

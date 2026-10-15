@@ -262,6 +262,13 @@ export function evaluateCheck(item: CheckItem, env: CheckEnv): CheckOutcome {
   const actual = pickField(env.read(item.read, args, item.from), item.field);
   const v = resolveValue(item, env);
   const o0 = { item, actual, expected: v.value, binding: v.binding, bindingName: v.name };
+  // `expect: absent` = the readout having no value is the authored result (a token
+  // outside the top ten): the operator reads the missing value, as lesson-checks does.
+  if (actual === undefined && item.expect === 'absent' && !v.missing) {
+    const held = compareOp(item.op, actual, v.value, tolerance(item, env, def));
+    const o = { ...o0, agrees: item.not ? !held : held };
+    return { ...o, text: message(o, def, env) };
+  }
   if (actual === undefined || v.missing) {
     const o = { ...o0, agrees: null };
     return { ...o, text: message(o, def, env) };

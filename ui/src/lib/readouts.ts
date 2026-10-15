@@ -176,15 +176,17 @@ function chanceTrend(column: LogitLensResponse['grid'][number], first: number, l
     if (column[l].probability > column[peakLayer].probability) peakLayer = l;
   }
   const peak = column[peakLayer].probability;
+  // Each chance with its natural frequency, as Predictions shows them.
+  const f = probabilityWithFrequency;
   if (peakLayer !== first && rounded(peak) > Math.max(rounded(start), rounded(end))) {
-    return `Its chance peaks at ${pct(peak)} at layer ${peakLayer}, then ends at ${pct(end)} at the last layer.`;
+    return `Its chance peaks at ${f(peak)} at layer ${peakLayer}, then ends at ${f(end)} at the last layer.`;
   }
   if (rounded(start) === rounded(end)) {
-    return `Its chance is about ${pct(end)} there and at the last layer.`;
+    return `Its chance is about ${f(end)} there and at the last layer.`;
   }
   return end > start
-    ? `Its chance grows from ${pct(start)} there to ${pct(end)} at the last layer.`
-    : `Its chance falls from ${pct(start)} there to ${pct(end)} at the last layer.`;
+    ? `Its chance grows from ${f(start)} there to ${f(end)} at the last layer.`
+    : `Its chance falls from ${f(start)} there to ${f(end)} at the last layer.`;
 }
 
 // ---------------------------------------------------------------------------
