@@ -11,7 +11,8 @@ import { fileURLToPath } from 'node:url';
 
 const LESSONS = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const LIB = resolve(LESSONS, '..');
-const ALLOWED = ['components/Pointer.svelte', 'popup/place.ts', 'popup/occupied.svelte.ts'].map((p) => resolve(LIB, p));
+// popup/measure.ts is placement's DOM side (placement attributes, the bottom sheet's scroll); it imports only place.ts.
+const ALLOWED = ['components/Pointer.svelte', 'popup/place.ts', 'popup/measure.ts', 'popup/occupied.svelte.ts'].map((p) => resolve(LIB, p));
 
 function files(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {

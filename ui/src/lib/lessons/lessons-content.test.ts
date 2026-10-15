@@ -125,10 +125,20 @@ describe('lessons content', () => {
 
   it('› every tour step and experiment id is in MAPPING.md', () => {
     const mapping = readFileSync(join(LESSONS, 'MAPPING.md'), 'utf8');
-    const tour = readFileSync(join(UI, 'src/lib/tutorial/tour-steps.ts'), 'utf8');
-    const stepIds = [...tour.matchAll(/\bid:\s*['"]([a-z-]+\.[a-z-]+)['"]/g)].map((m) => m[1]);
+    // The 0.3.8 tour's step ids and experiment ids, as they were when T7b removed both files.
+    const stepIds = [
+      'basics.welcome', 'basics.prompt', 'basics.run', 'basics.tokens', 'basics.predictions', 'basics.lines', 'basics.focus', 'basics.glossary',
+      'attention.grid', 'attention.agg', 'attention.from-to', 'attention.copying',
+      'guesses.run', 'guesses.predictions', 'guesses.write', 'guesses.lens',
+      'responsible.run', 'responsible.dla', 'responsible.parts',
+      'poke.knockout', 'poke.knockout-result', 'poke.swap', 'poke.swap-result',
+      'concepts.run', 'concepts.features', 'concepts.history', 'concepts.layer', 'concepts.knockout', 'concepts.steer', 'concepts.find',
+      'compare.run', 'compare.read',
+      'lab.experiments', 'lab.notebook', 'lab.export',
+      'models.switcher', 'models.engine', 'models.done',
+    ];
     expect(stepIds).toHaveLength(38);
-    const exps = (JSON.parse(readFileSync(join(UI, 'src/lib/experiments/experiments.json'), 'utf8')) as { experiments: { id: string }[] }).experiments.map((e) => e.id);
+    const exps = ['induction', 'logit-lens', 'he-or-she', 'ioi-knockout', 'ioi-swap', 'features-steering', 'fact-recall', 'greater-than'];
     expect(exps).toHaveLength(8);
     const known = new Set(TABLE.map((t) => t.id));
     for (const id of [...stepIds, ...exps]) {

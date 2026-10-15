@@ -1300,7 +1300,8 @@ export class LessonRunner<VS = unknown> {
     const limits = list(lesson.meta.limits).map((s) => this.nodes(s, sec));
     const prereqs = lesson.meta.prerequisites ?? [];
     const cold =
-      lesson.meta.cold_entry && prereqs.length && this.index === 0 && !prereqs.every((p) => this.deps.progress?.visited(p))
+      // `opened`, not `visited`: a lesson marked from 0.3.8 tour progress still shows its cold entry.
+      lesson.meta.cold_entry && prereqs.length && this.index === 0 && !prereqs.every((p) => this.deps.progress?.opened(p))
         ? renderProse(lesson.meta.cold_entry, this.renderCtx(sec))
         : null;
     // A recall shows only when its lesson has been visited.

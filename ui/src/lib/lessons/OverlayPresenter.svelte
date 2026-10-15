@@ -1,7 +1,7 @@
 <!--
   OverlayPresenter: draws an overlay lesson (the quick tour) as one card per
   H2 section over the app, implementing the runner's `Presenter` interface
-  (contract.ts). Card shell and placement are DrivenTutorial's, Pry-free: the
+  (contract.ts). Card shell and placement are the 0.3.8 tour card's, Pry-free: the
   tool's anchors and a way to run an action (for an anchor's `reveal`) come in
   as props, so nothing here imports Pry code.
 
@@ -43,9 +43,11 @@
     #handlers: ((c: PresenterCommand) => void)[] = [];
 
     show(step: RenderedStep, nav: Nav): void {
+      // The runner re-shows a step on every refresh and re-points only when
+      // its looks change, so pointers clear only when the step itself changes.
+      if (step.section.id !== this.section?.id) this.pointers = [];
       this.section = step.section;
       this.nav = nav;
-      this.pointers = [];
     }
 
     point(target: PointerTarget, seq?: number): void {
@@ -78,7 +80,8 @@
 
 <script lang="ts">
   import Pointer from '../components/Pointer.svelte';
-  import { arrowShown, DEFAULT_SHEET_BELOW, placePopup, type Placement, type RectLike } from '../popup/place';
+  import { arrowShown, DEFAULT_SHEET_BELOW, placePopup, type Placement, type Point, type RectLike } from '../popup/place';
+  import { clearSheetPadding, placementAttrs, placementChanged, scrollAboveSheet, type SheetFit } from '../popup/measure';
   import { occupied, OCCUPIED } from '../popup/occupied.svelte';
 
   interface Props {
@@ -142,7 +145,10 @@
 
   $effect(() => {
     const targets = model.pointers;
-    const revealed = new Set<string>();
+    // When each anchor was last revealed. The step's own setup can run after the
+    // first reveal (a tabbed window opening the left half last), so an anchor
+    // still hidden a second later is revealed again.
+    const revealed = new Map<string, number>();
     let els: (HTMLElement | null)[] = [];
     const locate = (t: PointerTarget): HTMLElement | null => {
       if (!('anchor' in t)) return null;
@@ -150,9 +156,9 @@
       if (!def) return null;
       const el = def.locate(t.args);
       if (visible(el)) return el;
-      // Hidden (a narrow window's other tab): reveal once, the next pass finds it.
-      if (def.reveal && runAction && !revealed.has(t.anchor)) {
-        revealed.add(t.anchor);
+      // Hidden (a narrow window's other tab): reveal it, the next pass finds it.
+      if (def.reveal && runAction && Date.now() - (revealed.get(t.anchor) ?? 0) > 1000) {
+        revealed.set(t.anchor, Date.now());
         runAction(def.reveal.action, def.reveal.args).catch((e) => console.warn('overlay reveal error', e));
       }
       return null;
@@ -172,8 +178,15 @@
     };
   });
 
-  /** The pointer the card follows: the latest of a sequence. */
-  const activeIndex = $derived(model.pointers.length - 1);
+  /**
+   * The pointer the card follows: the latest of a sequence that's on screen.
+   * Before any Run some anchors don't exist yet (the feature list), so the
+   * card sits by the one that does.
+   */
+  const activeIndex = $derived.by(() => {
+    for (let i = model.pointers.length - 1; i >= 0; i--) if (found[i]) return i;
+    return model.pointers.length - 1;
+  });
   const activeEl = $derived(found[activeIndex] ?? null);
   const activeDef = $derived.by(() => {
     const t = model.pointers[activeIndex];
@@ -183,13 +196,19 @@
   $effect(() => {
     const el = activeEl;
     if (!el) return;
+    // The popup audit finds the pointed element by this marker.
+    el.setAttribute('data-tour-active', 'true');
     const instant = window.matchMedia('(prefers-reduced-motion: reduce)').matches || window.innerWidth < DEFAULT_SHEET_BELOW;
     el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: instant ? 'auto' : 'smooth' });
+    return () => el.removeAttribute('data-tour-active');
   });
 
-  // ---- Card placement (placePopup), as DrivenTutorial ----
+  // ---- Card placement (placePopup), as the 0.3.8 tour card ----
   let cardEl: HTMLDivElement | null = $state(null);
   let placed = $state<Placement | null>(null);
+  let placedFocus = $state<Point | null>(null);
+  /** Bottom sheet: whether the whole target or only its focus point is kept above it. */
+  let sheetFit = $state<SheetFit | null>(null);
 
   function rectOf(el: HTMLElement | null): RectLike | null {
     if (!visible(el)) return null;
@@ -205,14 +224,18 @@
     }
     let prev: Placement | null = null; // hysteresis is per step
     let raf = 0;
+    // Bottom sheet: scroll the target above it once per target, size and sheet height.
+    let sheetScrollKey = '';
+    let sheetScrollEl: Element | null = null;
     const loop = () => {
       raf = requestAnimationFrame(loop);
       if (!cardEl) return;
       const t = rectOf(activeEl);
       const [fx, fy] = activeDef?.focus ?? [0.5, 0.5];
+      const focus = t ? { x: t.left + t.width * fx, y: t.top + t.height * fy } : null;
       const next = placePopup({
         target: t,
-        focus: t ? { x: t.left + t.width * fx, y: t.top + t.height * fy } : undefined,
+        focus: focus ?? undefined,
         size: { w: cardEl.offsetWidth, h: cardEl.offsetHeight },
         viewport: { w: window.innerWidth, h: window.innerHeight },
         preferred: 'bottom',
@@ -223,20 +246,31 @@
         large: activeDef?.large === true,
       });
       prev = next;
-      if (
-        !placed ||
-        placed.mode !== next.mode ||
-        Math.round(placed.top) !== Math.round(next.top) ||
-        Math.round(placed.left) !== Math.round(next.left) ||
-        Math.round(placed.width) !== Math.round(next.width) ||
-        placed.caretEdge !== next.caretEdge ||
-        Math.round(placed.caret) !== Math.round(next.caret)
-      ) {
+      const el = activeEl;
+      if (next.mode === 'sheet' && el && t && focus) {
+        const key = `${Math.round(t.height)}|${Math.round(next.top)}`;
+        if (el !== sheetScrollEl || key !== sheetScrollKey) {
+          sheetScrollEl = el;
+          sheetScrollKey = key;
+          sheetFit = scrollAboveSheet(el, focus.y, next.top);
+          return; // measure again next frame
+        }
+      } else if (sheetScrollEl && next.mode !== 'sheet') {
+        clearSheetPadding();
+        sheetScrollEl = null;
+        sheetScrollKey = '';
+        sheetFit = null;
+      }
+      if (placementChanged(placed, next)) {
         placed = next;
+        placedFocus = focus;
       }
     };
     raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearSheetPadding();
+    };
   });
 
   $effect(() => {
@@ -290,6 +324,9 @@
     data-step-id={section.id}
     data-placement={centred ? 'centred' : (placed?.mode ?? 'pending')}
     data-pointer-count={model.pointers.length}
+    {...centred ? { 'data-popup-mode': 'fallback' } : placementAttrs(placed, placedFocus)}
+    data-popup-arrow-shown={String(!centred && showArrow)}
+    data-popup-sheet-fit={!centred && placed?.mode === 'sheet' ? (sheetFit ?? '') : null}
   >
     {#if !centred && placed?.caretEdge}
       <span class="pry-card-caret pry-card-caret-{placed.caretEdge}" style:--caret="{placed.caret}px" aria-hidden="true"></span>

@@ -34,7 +34,6 @@
     isFocusArc,
     linesHeight,
   } from '$lib/attention-lines';
-  import { tutorialState } from '$lib/tutorial/tutorial-store.svelte';
   import { tick, untrack } from 'svelte';
   import { placePopup, type Placement, type RectLike } from '$lib/popup/place';
   import { placementAttrs, viewportSize } from '$lib/popup/measure';
@@ -471,12 +470,6 @@
   // Lines view (T28): the default. The layer x head grid is the "Expert view".
   // ---------------------------------------------------------------------------
 
-  // The guided tour picks the view for the step it's on (Lines first, then the
-  // grid when it explains heads). The user can still switch afterwards.
-  $effect(() => {
-    const req = tutorialState.open ? tutorialState.attentionRequest : null;
-    if (req) att.view = req.view;
-  });
   // Ablation picks heads on the grid, so it shows the Expert view while on.
   const forcedExpert = $derived(ablationMode);
   const showExpert = $derived(att.view === 'expert' || forcedExpert);

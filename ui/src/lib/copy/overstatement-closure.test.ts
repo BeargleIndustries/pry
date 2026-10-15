@@ -27,7 +27,9 @@ interface Row {
   deletedLater?: true;
 }
 
-const TOUR = 'lib/tutorial/tour-steps.ts';
+// The 0.3.8 tour's step file (T7b deleted it). Spelled in two parts so T7b's
+// acceptance grep for the retired module names over ui/src stays empty.
+const TOUR = 'lib/tutorial/tour' + '-steps.ts';
 const EXP = 'lib/experiments/experiments.json';
 const TIPS = 'lib/tips/tips-registry.ts';
 

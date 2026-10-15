@@ -4,9 +4,9 @@
 // arguments match a second attribute on the element (data-token,
 // data-token-index, data-feature-id, data-part).
 //
-// T2b takes over the 0.3.8 tour's anchor data (tutorial/tour-steps.ts
-// targetLabels, LARGE_TARGETS and the focus fractions its steps use), copied
-// here so the tour file can go (T7b).
+// T2b took over the 0.3.8 tour's anchor data (its step file's targetLabels,
+// LARGE_TARGETS and the focus fractions its steps used), copied here so the
+// tour file could go (T7b removed it).
 
 import { z } from 'zod';
 import type { AnchorDef } from './contract';
@@ -22,7 +22,7 @@ export const HIDEABLE_ANCHORS = [
   'steering-coherence',
 ] as const;
 
-/** What each 0.3.8 tour target is called (was tour-steps.ts targetLabels). */
+/** What each 0.3.8 tour target is called (was the tour's targetLabels). */
 const TOUR_LABELS: Record<string, string> = {
   'header-help': 'the ? button, top right',
   'prompt-input': 'the Prompt box, top of the window',

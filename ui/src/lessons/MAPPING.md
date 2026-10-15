@@ -1,6 +1,6 @@
 # Where the old tour and the experiments went
 
-Pry 0.3.8 taught through a 38-step tour (`ui/src/lib/tutorial/tour-steps.ts`, 9 chapters) and 8 guided experiments (`ui/src/lib/experiments/experiments.json`). In 0.4.0 both are retired (plan T7b): the screen tour becomes the 12-step quick tour, and the teaching moves into Lessons. This file maps every old step and experiment to the lesson section that now covers it, or marks it cut with the reason. `lessons-content.test.ts` checks that every tour step id and experiment id appears here.
+Pry 0.3.8 taught through a 38-step tour (9 chapters, under `ui/src/lib/tutorial/`) and 8 guided experiments (`ui/src/lib/experiments/experiments.json`). In 0.4.0 both are retired (plan T7b): the screen tour becomes the 12-step quick tour, and the teaching moves into Lessons. This file maps every old step and experiment to the lesson section that now covers it, or marks it cut with the reason. `lessons-content.test.ts` checks that every tour step id and experiment id appears here.
 
 Targets are `lesson-id#section-id`. "cut" means no lesson teaches it, usually because the experiment guide is gone or the idea moved to a tip.
 

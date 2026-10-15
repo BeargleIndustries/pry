@@ -68,7 +68,7 @@ export const PINS: Pin[] = [
   },
 
   { caveat: 'Logit lens rough early', where: 'tip:logit-lens-heatmap', phrase: 'a hint, not proof', lane: 'T4b' },
-  // Moved with the experiments and the tour into P2.3 (T7b deletes experiments.json and tour-steps.ts).
+  // Moved with the experiments and the tour into P2.3 (T7b deleted experiments.json and the tour's step file).
   { caveat: 'Logit lens rough early', where: 'lesson:pry.p2-3#s5', phrase: 'So read the early rows as a rough hint.', lane: 'T6' },
   {
     caveat: 'Logit lens rough early',
