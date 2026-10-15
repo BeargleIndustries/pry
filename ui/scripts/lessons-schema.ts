@@ -154,6 +154,28 @@ export function buildActionsDoc(): string {
   for (const [name, v] of Object.entries(t.views)) out.push(`| \`${name}\` | ${cell(argsOf(v.args))} | ${cell(v.doc)} |`);
   out.push('', '## Pickers', '', '| Picker | What the learner does |', '|---|---|');
   for (const [name, p] of Object.entries(t.pickers)) out.push(`| \`${name}\` | ${cell(p.doc)} |`);
+  out.push(
+    '',
+    '## Services',
+    '',
+    'The names a lesson lists under `permissions.network`. A `network` action needs the service it uses listed there.',
+    '',
+    '| Service | Host | Actions that use it | What it is |',
+    '|---|---|---|---|',
+  );
+  for (const [name, sv] of Object.entries(t.services)) {
+    const users = Object.entries(t.actions)
+      .filter(([n, a]) => {
+        if (a.effect !== 'network' || aliasOf(t.actions, n)) return false;
+        try {
+          return (a.scope ? a.scope({}) : n) === name;
+        } catch {
+          return false;
+        }
+      })
+      .map(([n]) => `\`${n}\``);
+    out.push(`| \`${name}\` | ${sv.host} | ${users.join(', ')} | ${cell(sv.doc)} |`);
+  }
   out.push('', '## Models', '', t.models.map((m) => `\`${m}\``).join(', '), '');
   return out.join('\n');
 }
