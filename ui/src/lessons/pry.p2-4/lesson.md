@@ -319,6 +319,7 @@ skeptic: { says: "A skeptic would say the tallest head bar pushes ' Mary' only b
 prompt: "The nurse said that"
 run: true
 open_panel: dla
+dla_target: { answer: " she" }
 :::
 
 :::slots
@@ -345,7 +346,7 @@ free: true
 :::
 
 :::task{id=pick-pair}
-The nurse prompt is in and :look{at=dla-waterfall}[Why (DLA)] is open. Pick the two tokens to compare in its Answer and Contrast menus, above the bars; the bars redraw on their own. Each has to be a single token; ' she' against ' he' is the pair to try first. Then press **Check my result**. Start over puts the nurse prompt back.
+The nurse prompt is in and :look{at=dla-waterfall}[Why (DLA)] is open, explaining ' she' on its own. Pick the two tokens to compare in its Answer and Contrast menus, above the bars; the bars redraw on their own. Each has to be a single token; ' she' against ' he' is the pair to try first. Then press **Check my result**. Start over puts the nurse prompt back.
 
 ```yaml
 target:

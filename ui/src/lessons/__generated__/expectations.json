@@ -779,21 +779,6 @@
       ]
     },
     {
-      "endpoint": "/dla",
-      "model": "gpt2-small",
-      "body": {
-        "preset_id": "gpt2-small",
-        "prompt": "The nurse said that",
-        "target_token_index": 4,
-        "answer_token": " Mary",
-        "contrast_token": " John"
-      },
-      "key": "8a05f38cc288bf2380bb6fb166ca9d186dc2a54dbd455387c8ea608aef7f8a51",
-      "lessons": [
-        "pry.p2-4"
-      ]
-    },
-    {
       "endpoint": "/tokenize",
       "model": "gpt2-small",
       "body": {
@@ -1204,6 +1189,20 @@
       "key": "cfb0a0f8b1c8cf98cff5ae600ad8ca2581f726f77bb48d5f027295e711c82b59",
       "lessons": [
         "pry.p2-3"
+      ]
+    },
+    {
+      "endpoint": "/dla",
+      "model": "gpt2-small",
+      "body": {
+        "preset_id": "gpt2-small",
+        "prompt": "The nurse said that",
+        "target_token_index": 4,
+        "answer_token": " she"
+      },
+      "key": "da7259cea5b1be03109e23eee80a44b3d8ce8d20d6386b0ecb7ee0adebe3a024",
+      "lessons": [
+        "pry.p2-4"
       ]
     },
     {
