@@ -275,22 +275,43 @@
   const blockSel = (b: RenderedBlock) => `[data-step-id="${CSS.escape(b.stepId ?? b.key)}"]`;
   const pendingDo = $derived(firstOpen && (firstOpen.act || firstOpen.task || (firstOpen.observe && !firstOpen.observe.waiting)) ? firstOpen : null);
 
+  // The do step finished last: its Done marker stays in view beside the next action.
+  const lastDone = $derived.by(() => {
+    if (!step || step.entering) return null;
+    const done = flatBlocks(step.blocks).filter((x) => x.act?.state === 'done');
+    return done.length ? done[done.length - 1] : null;
+  });
+
   let landed: string | null = null;
   $effect(() => {
     const b = firstOpen;
+    const d = lastDone;
     const box = scroller;
-    const sig = `${step?.lesson.id}:${nav.index}:${b ? (b.stepId ?? b.key) : ''}`;
+    const sig = `${step?.lesson.id}:${nav.index}:${b ? (b.stepId ?? b.key) : ''}:${d ? (d.stepId ?? d.key) : ''}`;
     if (!box || !step || step.entering || sig === landed) return;
     landed = sig;
-    if (!b) return;
+    if (!b && !d) return;
     requestAnimationFrame(() => {
-      const el = box.querySelector<HTMLElement>(blockSel(b));
-      if (!el) return;
-      const btn = el.querySelector<HTMLElement>('[data-step-action]') ?? el;
       const v = box.getBoundingClientRect();
-      const r = btn.getBoundingClientRect();
-      if (r.bottom > v.bottom - 8) box.scrollTop += r.bottom - v.bottom + 16;
-      else if (r.top < v.top) box.scrollTop -= v.top - r.top + 16;
+      const doneEl = d ? box.querySelector<HTMLElement>(`${blockSel(d)} [data-do-button]`)?.parentElement ?? null : null;
+      const el = b ? box.querySelector<HTMLElement>(blockSel(b)) : null;
+      const btn = el ? (el.querySelector<HTMLElement>('[data-step-action]') ?? el) : null;
+      if (btn) {
+        const r = btn.getBoundingClientRect();
+        if (r.bottom > v.bottom - 8) box.scrollTop += r.bottom - v.bottom + 16;
+        else if (r.top < v.top) box.scrollTop -= v.top - r.top + 16;
+      }
+      if (!doneEl) return;
+      // Then bring the Done marker in as far as the next action allows.
+      const m = doneEl.getBoundingClientRect();
+      const r = btn?.getBoundingClientRect() ?? null;
+      if (m.top < v.top + 8) {
+        const room = r ? v.bottom - 8 - r.bottom : Infinity;
+        box.scrollTop -= Math.max(0, Math.min(v.top + 8 - m.top, room));
+      } else if (m.bottom > v.bottom - 8) {
+        const room = r ? r.top - v.top - 8 : Infinity;
+        box.scrollTop += Math.max(0, Math.min(m.bottom - v.bottom + 8, room));
+      }
     });
   });
 
