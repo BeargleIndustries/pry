@@ -3,7 +3,7 @@ format: 1
 id: pry.quick-tour
 title: "What's on Pry's screen?"
 tool: pry
-summary: "Five minutes on where everything sits on Pry's screen. The tour doesn't run anything, and Lessons explain what you see."
+summary: "Five minutes on where everything sits on Pry's screen. Lessons explain each part."
 minutes: 5
 presentation: overlay
 prerequisites: []
@@ -13,19 +13,19 @@ verified_rows: [72]
 ## Welcome {id=step-1 outline=quick-tour.md#3.1}
 
 :::explain
-Pry runs GPT-2 small, a small AI model that continues text, right here on your computer, and it lets you peek inside. This tour points out where things are, and Lessons explain them.
+Pry runs GPT-2 small, a small AI model that continues text, right here on your computer, and lets you peek inside while it works. This tour's a walk round the screen, and Lessons explain each part.
 :::
 
 ## The prompt box and Run {id=step-2 outline=quick-tour.md#3.2}
 
 :::explain
-Type any text in :look{at=[prompt-input, run-button]}[the box]. There's an example in it already, and you can keep it or replace it. Press Run to send it through the model. Your text doesn't leave your computer.
+Type any text in :look{at=[prompt-input, run-button]}[the box]. There's an example in it already, and you can keep it or replace it. Press Run to send it through the model. Your text stays on your computer.
 :::
 
 ## The token strip {id=step-3 outline=quick-tour.md#3.3}
 
 :::explain
-After a run, your text shows up in :look{at=token-strip}[the strip] labelled "Words (tokens)", cut into the pieces the model reads. Click one to pick it, and the other panels follow the piece you picked. After you press Run, this fills in.
+After a run, your text shows up in :look{at=token-strip}[the strip] labelled "Words (tokens)", cut into the pieces the model reads. Click one to pick it, and the other panels follow the piece you picked. It's empty until you've pressed Run, and so are the panels coming up.
 :::
 
 ## Predictions {id=step-4 outline=quick-tour.md#3.4}
@@ -35,13 +35,13 @@ open_panel: predictions
 :::
 
 :::explain
-:look{at=[right-tab-strip, predictions-panel]}["Predictions"] lists the model's top guesses for the next piece, each one with a bar. After you press Run, this fills in.
+:look{at=[right-tab-strip, predictions-panel]}["Predictions"] lists the model's top guesses for the next piece, each one with a bar.
 :::
 
 ## Watch it write {id=step-5 outline=quick-tour.md#3.5}
 
 :::explain
-:look{at=watch-it-write}["Watch it write"] keeps going where the prompt stops. It adds one piece at a time, so you can watch the text appear. After you press Run, this fills in.
+:look{at=watch-it-write}["Watch it write"] keeps going where the prompt stops. It adds one piece at a time, so you can watch the text appear.
 :::
 
 ## Attention {id=step-6 outline=quick-tour.md#3.6}
@@ -51,13 +51,13 @@ open_panel: attention
 :::
 
 :::explain
-:look{at=[left-tab-strip, panel-a-lines]}["Attention"] draws lines between the pieces of your text. Hover over a line or a piece and you'll get the detail. After you press Run, this fills in.
+:look{at=[left-tab-strip, panel-a-lines]}["Attention"] draws lines between the pieces of your text. Hover over a line or a piece and you'll get the detail.
 :::
 
 ## The other left tabs {id=step-7 outline=quick-tour.md#3.7}
 
 :::explain
-The other tabs :look{at=left-tab-strip}[up here], "Logit Lens", "Why (DLA)", "Swap test" and "Key parts", are more views of the same run. Each one's got its own lesson. After you press Run, this fills in.
+The other tabs :look{at=left-tab-strip}[up here], "Logit Lens", "Why (DLA)", "Swap test" and "Key parts", are more views of the same run, and each one's got its own lesson.
 :::
 
 ## Features {id=step-8 outline=quick-tour.md#3.8}
@@ -67,7 +67,7 @@ open_panel: features
 :::
 
 :::explain
-:look{at=[tab-features, panel-b-features-list]}["Features"] lists patterns a separate tool found for the piece you picked, each with a label. "Steering", right next to it, lets you change one and run again, and there's a lesson that'll walk you through it. After you press Run, this fills in.
+:look{at=[tab-features, panel-b-features-list]}["Features"] lists patterns a separate tool found for the piece you picked, each with a label. "Steering", right next to it, lets you change one and run again, and there's a lesson that'll walk you through it.
 :::
 
 ## Compare, Notebook and export {id=step-9 outline=quick-tour.md#3.9}

@@ -14,7 +14,7 @@ cold_entry: "Attention is the half of each layer that mixes information into a t
 model: gpt2-small
 baseline: { prompt: "Pip ordered zebra lamps from Quorn. Pip ordered zebra lamps from" }
 verified_rows: [15, 16, 48, 49]
-limits: "The copying score shows a head draws from 'what came next last time' on random repeated tokens. It's one test, and it doesn't show everything the head does."
+limits: "The copying score shows a head draws from 'what came next last time' on random repeated tokens. It's one test, on one kind of input."
 slots:
   qu: { read: prediction, args: { token: " Qu" }, field: prob, format: probability, expect: 0.3195 }
   the_p: { read: prediction, args: { token: " the" }, field: prob, format: probability, expect: 0.0172 }
@@ -23,7 +23,7 @@ slots:
 ## Recall {id=s3-1 depth=optional outline=P2.2.md#3.1}
 
 :::recall{id=recall-made-up}
-Why this matters: the answer is a part of the model you can watch at work in this lesson.
+Why this matters: the answer's a part of the model you can watch at work in this lesson.
 
 ```yaml
 from: pry.p1-6
@@ -60,7 +60,7 @@ open_panel: predictions
 :::
 
 :::do{id=pip-run}
-Run it and check :look{at=predictions-panel}[Predictions], then :look{at=token-strip}[the token strip]. Quorn isn't one token: it's ' Qu' followed by 'orn', so ' Qu' is the piece that'd have to come first.
+Run it and check :look{at=predictions-panel}[Predictions], then :look{at=token-strip}[the token strip]. Quorn got cut into ' Qu' and 'orn', so ' Qu' is the piece that'd have to come first.
 
 ```actions
 - run: {}
@@ -110,7 +110,7 @@ top_induction_heads: { read: head_scores.top, args: { n: 3 }, expect: [{ layer: 
 :::
 
 :::do{id=copying-view}
-Open :look{at=copying-heads-view}[the copying-heads view]. Pry feeds the model a run of random tokens, repeats it, and scores every head on how much it draws from "what came next last time". The best scorers get a ring. You're not looking at your prompt here; it's Pry's own test.
+Open :look{at=copying-heads-view}[the copying-heads view]. Pry feeds the model a run of random tokens, repeats it, and scores every head on how much it draws from "what came next last time". The best scorers get a ring. This one's Pry's own test, run on its own random text.
 
 ```actions
 - open_panel: { panel: attention }
@@ -121,7 +121,7 @@ Open :look{at=copying-heads-view}[the copying-heads view]. Pry feeds the model a
 :::observe{id=ringed-layers}
 Which layers hold the ringed heads? The top three scorers are {top_induction_heads}, all in the middle of the model. Pry names a head by its layer and then its number within that layer, both counted from 0, so in `L5H5` the first 5 is the layer and the second is the head.
 
-The scores come from Pry's random repeated sequence, not from your prompt.
+The scores come from Pry's random repeated sequence; your prompt's up next.
 
 ```yaml
 check: { read: head_scores.top, args: { n: 3 }, op: contains, value: $row.15.top_induction_head_ref }
@@ -131,7 +131,7 @@ check: { read: head_scores.top, args: { n: 3 }, op: contains, value: $row.15.top
 ## The partner head {id=s3-6 outline=P2.2.md#3.6}
 
 :::do{id=second-ring}
-The recipe has a hidden step. To copy "what came after ' from' last time", the token after the first ' from' needs a note in its residual stream saying ' from' came just before it. Another head writes that note. A head that mostly draws from the token just before is called a **previous-token head**. It's the induction head's usual partner, and :look{at=copying-heads-view}[the second ring style] marks these.
+The recipe's got a hidden step. To copy "what came after ' from' last time", the token after the first ' from' needs a note in its residual stream saying ' from' came just before it. Another head writes that note. A head that mostly draws from the token just before is called a **previous-token head**. It's the induction head's usual partner, and :look{at=copying-heads-view}[the second ring style] marks these.
 
 ```actions
 - highlight: { anchor: copying-heads-view }
@@ -154,7 +154,7 @@ from_weight: { read: attention.weight, args: { layer: $row.15.top_induction_laye
 :::
 
 :::do{id=lines-on-pip}
-Random tokens are one thing, and your sentence isn't random. Now check the top-scoring head on the Pip sentence: Pry's showing its lines from the last ' from'.
+Random tokens are one thing, and the Pip sentence is another. Now check the top-scoring head on it: Pry's showing its lines from the last ' from'.
 
 ```actions
 - show_copying_heads: { on: false }
@@ -191,10 +191,10 @@ analyses: [copying_heads]
 :::explain-result
 You caught a head doing a job: on a repeat, it draws from what came next last time. Look back at :look{at=copying-heads-view}[the copying-heads view] and keep in mind it ran one test, on one kind of input.
 
-:refutes{target=T5}[It's one test, and it doesn't show everything the head does.]
+:refutes{target=T5}[One test on one kind of input tells you the head can do this. What else it does on other text is still open.]
 
 ```yaml
-supports: "The copying score shows a head draws from 'what came next last time' on random repeated tokens. It's one test, and it doesn't show everything the head does."
+supports: "The copying score shows a head draws from 'what came next last time' on random repeated tokens. It's one test, on one kind of input."
 leaves_open: "A high score says the head does this on a repeat. It doesn't say the head does only this, and it doesn't say ' Qu' depended on it here."
 tool: attention
 skeptic: { says: "A skeptic would say other heads could supply ' Qu' without these.", check: "Check now: change one word in the repeat and see if ' Qu' survives; check properly later, when you switch heads off." }

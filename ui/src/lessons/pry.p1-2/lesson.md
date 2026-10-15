@@ -24,7 +24,7 @@ prompt: "It was unbelievable, said Leclerc"
 :::
 
 :::explain
-Lesson 1 said 'the next word'. That was a simplification; this lesson shows what the model really gets.
+Lesson 1 said 'the next word'. That was a simplification, and this lesson's where it gets fixed.
 
 :look{at=prompt-input}[The prompt box] has a new sentence in it. It hasn't run yet, so you've got time to guess how Pry is going to cut it up.
 :::
@@ -94,7 +94,7 @@ check:
 ## Tokens and the vocabulary {id=s3-3 outline=P1.2.md#3.3}
 
 :::explain
-GPT-2 doesn't read letters or words. It cuts your text into pieces from a fixed list of about 50,000. A common word with its space is one piece, and a rare name gets built from scraps. These pieces are called **tokens**. AI companies' price lists and limits all count in tokens, so it's a word worth owning. That fixed list is the model's **vocabulary**: it's the list the model scores every time it picks what comes next. :look{at=token-strip}[The strip] shows your sentence as tokens.
+GPT-2 cuts your text into pieces from a fixed list of about 50,000, so a common word with its space is one piece and a rare name gets built from scraps. These pieces are called **tokens**. AI companies' price lists and limits all count in tokens, so it's a word worth owning. That fixed list is the model's **vocabulary**: it's the list the model scores every time it picks what comes next. :look{at=token-strip}[The strip] shows your sentence as tokens.
 
 When lesson 1 said 'the next word', it meant the next token.
 :::
@@ -110,7 +110,7 @@ breaks: "tokens are uneven, and the split follows how often letters show up toge
 ::::fold{title="What does the cutting?"}
 
 :::explain
-The tool that cuts text into tokens is called a tokenizer. GPT-2's was built once, before training, from how often letter groups showed up in a big pile of text. It never changes after that.
+The tool that cuts text into tokens's called a tokenizer. GPT-2's was built once, before training, from how often letter groups showed up in a big pile of text, and it's been fixed ever since.
 :::
 
 ::::
@@ -126,7 +126,7 @@ tool: tokens
 ## Your turn {id=s3-4 outline=P1.2.md#3.4}
 
 :::do{id=own-prompt}
-Try your own name, or a long word you like. :look{at=[prompt-input, run-button, token-strip]}[Type it in, press Run, then read the strip.]
+Try your own name, or a long word you like... it's a good way to get a feel for the cuts. :look{at=[prompt-input, run-button, token-strip]}[Type it in, press Run, then read the strip.]
 :::
 
 :::analogy
@@ -138,7 +138,7 @@ breaks: "a phrasebook's entries mean something on their own; a token is just a p
 :::
 
 :::question{id=split-more}
-Which got split more: the common words or the rare ones?
+Which got split more: the common words or the rare ones? Here's a hint: it's the same rule every time.
 
 ```yaml
 choices:
@@ -236,7 +236,7 @@ capture: river
 :::
 
 :::explain
-The first entry isn't from your text. Pry puts a special token in front of everything you type, and positions count from it as 0. It's called the **start-of-text marker**. You'll see it at the front of every token strip, and later tools treat it specially. Pry's panels number words from 1, so ' bank' shows as word {bank_word}.
+That first entry's one Pry put there: a special token in front of everything you type, and positions count from it as 0. It's called the **start-of-text marker**. You'll see it at the front of every token strip, and later tools treat it specially. Pry's panels number words from 1, so ' bank' shows as word {bank_word}.
 :::
 
 :::predict{id=the-bank-pos checks=the-bank-obs}
@@ -262,7 +262,7 @@ capture: thebank
 :::
 
 :::observe{id=the-bank-obs}
-' bank' is at position {the_bank_pos}: the marker is 0, 'The' is 1, and ' bank' comes next.
+' bank''s at position {the_bank_pos}: the marker's 0, 'The' is 1, and ' bank' comes next.
 
 ```yaml
 check: { read: focus.position, op: equals, value: 2, expect: 2 }
@@ -280,7 +280,7 @@ check: { read: focus.position, op: equals, value: 2, expect: 2 }
 :::
 
 :::explain
-The first row is the embedding you've already met. The second is a second set of 768 numbers, one set for each position, added to the token's embedding. It's called the **positional embedding**, and it's the only part of what a token starts with that says where it sits. From here on, what a token starts with is its embedding plus positional embedding.
+The first row's the embedding you've already met. The second's another set of 768 numbers, one set for each position, added to the token's embedding. It's called the **positional embedding**, and it's the only part of what a token starts with that says where it sits. From here on, what a token starts with is its embedding plus positional embedding.
 :::
 
 :::analogy
@@ -370,7 +370,7 @@ model_answer: "neither"
 :::
 
 :::explain
-So where does the difference between river bank and money bank come from? From the work the model does after the start. That's lesson P1.3.
+So where does the difference between river bank and money bank come from? From the work the model does after the start, and that's lesson P1.3.
 :::
 
 ## Explain the chain {id=s6 outline=P1.2.md#6}

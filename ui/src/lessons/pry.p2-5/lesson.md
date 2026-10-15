@@ -48,7 +48,7 @@ Pry loads the Jordan prompt one more time.
 :::explain{id=shared-numbers}
 Each token's residual stream has 768 numbers. It carries far more ideas than that: that this is a name, that it's a sports name, that a sport's coming up, what kind of sentence you're in. With more ideas than numbers, ideas have to share. Each idea is spread over many numbers, and each number moves for many ideas.
 
-So there isn't a "basketball number" you can point at. That's a big part of why nobody can read the residual stream straight off.
+So no single number's the "basketball number", and that's a big part of why nobody can read the residual stream straight off.
 
 ```yaml
 image: images/ideas-share-numbers.svg
@@ -59,7 +59,7 @@ alt: "A row of numbers standing for one token's residual stream. Three coloured 
 ::::fold{title="The name researchers use"}
 
 :::explain
-Packing more ideas than numbers, so ideas share numbers, is called **superposition**. You won't need the word again on the main path.
+Packing more ideas than numbers, so ideas share numbers, is called **superposition**. It's here so you'll know it when a paper uses it.
 :::
 
 ::::
@@ -76,7 +76,7 @@ model_answer: "It also moves for other ideas."
 ## A second network that splits the residual stream {id=s3-3 outline=P2.5.md#3.3}
 
 :::explain
-Researchers trained a second, separate network to take one layer's residual stream at one token and split it into thousands of patterns, with only a few active at once. It isn't part of GPT-2. It reads GPT-2's numbers from the side.
+Researchers trained a second, separate network to take one layer's residual stream at one token and split it into thousands of patterns, with only a few active at once. It sits beside GPT-2 and reads its numbers from the side.
 
 This network is called a **sparse autoencoder**, or **SAE**: "sparse" because few patterns are active at a time, "autoencoder" because it's trained to rebuild its input from those patterns. It's the tool behind Pry's "Features" tab, and you'll see it all over current research.
 :::
@@ -114,7 +114,7 @@ Pry opens one feature from the ' Jordan' list with its label hidden. Look at :lo
 :::
 
 :::explain
-These are snippets of real text where this feature fired hardest, its top examples. Read the first five before you guess.
+These are snippets of text where this feature fired hardest, its top examples. Read the first five before you guess.
 
 ```yaml
 when: { read: features.has_snippets, args: { id: $row.53.fid }, op: equals, value: true }
@@ -162,7 +162,7 @@ journal: true
 You and the labelling AI read the same snippets and came up with a name. That's all a label is: a good guess from the top examples.
 
 ```yaml
-supports: "Each label is written by an AI from the top examples. Labels are best guesses from Neuronpedia, not certainties. Treat a label as a summary of the examples, which means they're a best guess, not a guarantee."
+supports: "Each label's written by an AI from the top examples, so read it as a summary of those examples."
 leaves_open: "A label sums up the top examples. It doesn't tell you what the feature does on text unlike those examples."
 tool: features
 skeptic: { says: "A skeptic would say the label is close enough, so you can trust it from here on.", check: "Next section: go through the examples one by one and look for one the label doesn't fit." }

@@ -67,7 +67,7 @@ The lesson writes on from the Jordan sentence in :look{at=watch-it-write}[Watch 
 :::
 
 :::observe{id=write-obs}
-Each step adds one token. Step 1 picked {first_tok}, the top token in :look{at=predictions-panel}[Predictions] at {first_p}, and every step after it does the same thing again: the model runs on the text so far, one token gets picked, and that token goes on the end. Each step also shows the runner-up, the token that'd have come second.
+Each step adds one token. Step 1 picked {first_tok}, the top token in :look{at=predictions-panel}[Predictions] at {first_p}, and every step after it does the same thing again: the model runs on the text so far, one token gets picked, and that token goes on the end. Each step's also got the runner-up, the token that'd have come second.
 
 ```yaml
 journal: true
@@ -101,7 +101,7 @@ tool: write-it
 ## The rule that picks {id=s3-2 outline=P1.5.md#3.2}
 
 :::explain
-For a given prompt, the probabilities don't change from run to run. Something separate has to pick one token from them, and that rule is called **sampling**. Since the probabilities don't change, sampling's the only place any randomness can come in. Step back to step 1 in Watch it write and look at :look{at=write-it-step}[step 1's token and its probability].
+For a given prompt, the probabilities don't change from run to run. Something separate has to pick one token from them, and that rule's called **sampling**. Since the probabilities don't change, sampling's the only place any randomness can come in. Step back to step 1 in Watch it write and look at :look{at=write-it-step}[step 1's token and its probability].
 :::
 
 :::question{id=always-top}
@@ -117,7 +117,7 @@ choices:
 ## How random {id=s3-3 outline=P1.5.md#3.3}
 
 :::explain
-It depends on a setting. At 0, sampling won't take anything but the top token. Higher numbers make the probabilities less lopsided, so lower-ranked tokens get picked more often, and the text won't come out the same twice. That setting is called **temperature**, and it's the name Pry and plenty of other AI tools use for it. It's :look{at=write-it-temperature}[the Temperature control] in :look{at=watch-it-write}[Watch it write], and the line under it says what each value does.
+It depends on a setting. At 0, sampling takes the top token every time. Higher numbers make the probabilities less lopsided, so lower-ranked tokens get picked more often, and the text won't come out the same twice. That setting's called **temperature**, and it's the name Pry and plenty of other AI tools use for it. It's :look{at=write-it-temperature}[the Temperature control] in :look{at=watch-it-write}[Watch it write], and the line under it says what each value does.
 :::
 
 :::analogy
@@ -131,7 +131,7 @@ breaks: "at temperature 0 there's no roll at all, and the dice get re-weighted a
 ## Repeating a random run {id=s3-4 outline=P1.5.md#3.4}
 
 :::do{id=seeded-run}
-Randomness in a computer starts from a number. Keep that number, and you'll get the same "random" draws again. The number is called the **seed**: with the same prompt, temperature and seed, you get the same text back. The lesson writes at temperature 1 with seed 1. Find :look{at=write-it-seed}[the seed label and the "keep seed" box] in :look{at=watch-it-write}[Watch it write].
+Randomness in a computer starts from a number. Keep that number, and you'll get the same "random" draws again. That number's called the **seed**: with the same prompt, temperature and seed, you get the same text back. The lesson's writing at temperature 1 with seed 1. Find :look{at=write-it-seed}[the seed label and the "keep seed" box] in :look{at=watch-it-write}[Watch it write].
 
 ```actions
 - write_it: { temperature: 1, seed: 1 }
@@ -147,7 +147,7 @@ text_d: { read: write_it.text, from_capture: d, format: string, expect: "Michael
 :::
 
 :::predict{id=which-match checks=match-obs}
-Four runs of the same prompt. Which will match? A: temperature 0. B: temperature 0 again. C: temperature 1, seed 1. D: temperature 1, seed 2.
+Here's four runs of the same prompt. Which will match? A: temperature 0. B: temperature 0 again. C: temperature 1, seed 1. D: temperature 1, seed 2.
 
 ```yaml
 choices:
@@ -290,7 +290,7 @@ choices:
 :::
 
 :::do{id=baker-set}
-The lesson puts the baker sentence in and runs it. The writing's up to you.
+The lesson puts the baker sentence in and runs it, and the writing's up to you.
 
 ```actions
 - set_prompt: { text: "Our quiet street was named for a baker who" }
@@ -323,7 +323,7 @@ assert:
 ::::
 
 :::explain
-Always taking the top token tends to give dull, repetitive text, and that's one reason sampling usually runs above temperature 0. Researchers who studied this found the same thing at scale (Holtzman and colleagues, 2020).
+Always taking the top token tends to give dull, repetitive text, and that's one reason sampling usually runs above temperature 0. The researchers who studied this found the same thing at scale (Holtzman and colleagues, 2020), so it's a known thing and you're seeing it live.
 :::
 
 :::question{id=own-temperature}

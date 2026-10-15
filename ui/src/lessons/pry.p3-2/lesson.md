@@ -33,7 +33,7 @@ The head you found that drew from ' Mary': :earlier{key="pry.p2-1.head-pick"}[sk
 ## Ablation {id=s3-2 outline=P3.2.md#3.2}
 
 :::explain
-So far you've changed the prompt and watched the answer. Now you'll change the inside. Pick one part, set its output to zero for one run so it adds nothing to the residual stream, and see whether the answer changes. Switching a part off like that is called **ablation**. Papers call every switch-off experiment by that name, so it's worth owning. In Pry it's the "Knock out heads:" control, and the "Knockout results" and "Ablated top-5" readouts show what happened.
+So far you've changed the prompt and watched the answer. Now you'll change the inside. Pick one part, set its output to zero for one run so it adds nothing to the residual stream, and see whether the answer changes. Switching a part off like that is called **ablation**. Papers call every switch-off experiment by that name, so it's one to keep. In Pry it's the "Knock out heads:" control, and the "Knockout results" and "Ablated top-5" readouts show what happened.
 :::
 
 :::analogy
@@ -218,7 +218,7 @@ model_answer: "So you can tell 'these heads matter' from 'removing any three hea
 ## When the answer holds {id=s3-8 outline=P3.2.md#3.8}
 
 :::explain-result
-If the answer falls apart, the part mattered. If it holds, there are two ways to read it: the part didn't matter for this sentence, or other parts covered for it. Wang and colleagues saw exactly that second thing. When they removed the name movers, other heads partly took over the job. ' Mary' staying on top here fits either reading, and the knockout alone can't tell them apart. A better knockout won't fix that. You'd need a different test, and P3.3 has one.
+If the answer falls apart, the part mattered. If it holds, there are two ways to read it: the part didn't matter for this sentence, or other parts covered for it. Wang and colleagues saw exactly that second thing. When they removed the name movers, other heads partly took over the job. ' Mary' staying on top here fits either reading, and the knockout alone can't tell them apart. You'd need a different test, and P3.3 has one.
 
 ```yaml
 supports: "A knockout shows what happens to this answer without that head. If the answer holds, the head either didn't matter here or other heads covered for it, so 'no change' isn't 'not used'."
@@ -231,7 +231,7 @@ skeptic: { says: "A skeptic would say zero is harsher than anything the head eve
 ::::fold{title="Heads that take over"}
 
 :::explain
-The heads that partly took over when the name movers went missing have a real name: **backup heads**. On a normal run they don't do much for this sentence. Knock out the name movers and they start pushing ' Mary' themselves.
+The heads that partly took over when the name movers went missing have a name: **backup heads**. On a normal run they don't do much for this sentence. Knock out the name movers and they start pushing ' Mary' themselves.
 :::
 
 :::analogy

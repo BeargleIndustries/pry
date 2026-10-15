@@ -68,7 +68,7 @@ journal: true
 :::
 
 :::explain{id=twelve-image}
-Here's the gap filled in. Every token gets its own column, and the same 12 steps run over all of them, bottom to top. You'll meet these step numbers again in :look{at=panel-b-layer-selector}[the layer menu] later.
+Here's the gap filled in. Every token's got its own column, and the same 12 steps run over all of them, bottom to top. You'll meet these step numbers again in :look{at=panel-b-layer-selector}[the layer menu] later.
 
 ```yaml
 image: images/spine-twelve-steps.svg
@@ -79,7 +79,7 @@ alt: "The spine drawn as 12 stacked steps labelled by layer number, bottom to to
 :::explain-result
 :refutes[Lots of people picture one program that decides; chatbots talk like one. What actually runs is the same fixed arithmetic, every time, in 12 steps. Nothing in there chooses.]
 
-Each of those 12 steps runs in order, reads every token's numbers and adds its own work. One step is called a **layer**. Pry's tools are organised by layer, so you'll see the word everywhere. Pry numbers them `L0` to `L11`.
+Each of those 12 steps runs in order, reads every token's numbers and adds its own work. One step's called a **layer**. Pry's tools are organised by layer, so you'll see the word everywhere, and Pry numbers them `L0` to `L11`.
 
 From here on it's just tokens.
 
@@ -101,7 +101,7 @@ corrected_in: [pry.p2-1, pry.p2-4]
 ## The residual stream {id=s3-3 outline=P1.3.md#3.3}
 
 :::explain{id=column-image}
-Each token gets its own list of 768 numbers, and that list travels up through all 12 layers. Every layer reads it and adds its own work into the same numbers. Nothing gets replaced, and a later addition can cancel an earlier one. That list is called the **residual stream**. Many of the tools you'll use later in Pry read it, split it up or change it, so you'll see the name again and again. :look{at=lesson:image:column-image}[The highlighted column] is ' Jordan''s residual stream.
+Each token's got its own list of 768 numbers, and that list travels up through all 12 layers. Every layer reads it and adds its own work into the same numbers, so a later addition can cancel an earlier one and the list never gets swapped out. That list's called the **residual stream**. Many of the tools you'll use later in Pry read it, split it up or change it, so you'll see the name again and again. :look{at=lesson:image:column-image}[The highlighted column] is ' Jordan''s residual stream.
 
 ```yaml
 image: images/residual-column.svg
@@ -153,7 +153,7 @@ choices:
 :::
 
 :::observe{id=which-stream-reveal}
-It's the last one. Only the top of ' of''s residual stream turns into the chances. So anything about ' Jordan' that affects the guess has to get into ' of''s numbers somewhere on the way up.
+It's the last one. Only the top of ' of''s residual stream turns into the chances, so anything about ' Jordan' that affects the guess has to get into ' of''s numbers somewhere on the way up.
 
 ```yaml
 journal: true
@@ -252,7 +252,7 @@ free: true
 :::
 
 :::do{id=tiger-run}
-Compare's off again, so the token strip is back. Type "Tiger Woods played the sport of" in the prompt box and press :look{at=run-button}[Run], then read :look{at=predictions-panel}[Predictions].
+Compare's off again, so the token strip's back. Type "Tiger Woods played the sport of" in the prompt box and press :look{at=run-button}[Run], then read :look{at=predictions-panel}[Predictions].
 
 ```actions
 - set_compare_mode: { on: false }
@@ -260,7 +260,7 @@ Compare's off again, so the token strip is back. Type "Tiger Woods played the sp
 :::
 
 :::observe{id=tiger-obs}
-' golf' comes out on top at {tiger_golf}. Look at the strip, though: "Tiger" got split into two tokens, 'T' and 'iger'. So ' of' moved one position, so its positional embedding changed too.
+' golf' comes out on top at {tiger_golf}. Look at the strip, though: "Tiger" got split into two tokens, 'T' and 'iger', so ' of' moved one position and its positional embedding changed too.
 
 ```yaml
 check: { read: top_guess.token, op: equals, value: " golf" }

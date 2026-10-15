@@ -112,7 +112,7 @@ describe('0.4.0 copy pass', () => {
   it('TIPS:183 uses the DLA gap wording', () => {
     const why = tipWhy('dla-waterfall');
     expect(why).not.toMatch(/won't\sadd\sup/);
-    expect(why).toContain("the bars' total, the real logit and the gap");
+    expect(why).toContain("the bars' total, the logit itself and the gap");
     expect(why).toContain(DLA_GAP_EXPLAINED.replace(/\.$/, ''));
   });
   it('TIPS:224 gets the feature-knockout description', () => {

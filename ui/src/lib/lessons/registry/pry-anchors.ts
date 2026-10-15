@@ -180,7 +180,7 @@ const added: Record<string, Omit<AnchorDef, 'locate'> & { locate?: AnchorDef['lo
   'steering-strength': { doc: 'The Steering strength control.', label: 'Steering strength, in Steering' },
   'embedding-view': { doc: 'The mounted embedding-compare view, inside the sidebar.', label: 'the embedding reader, in the lesson', view: 'embedding-compare' },
   'patch-three-logits': { doc: 'The clean, corrupted and patched logits with the share formula.', label: 'the three logits, in the Swap test panel' },
-  'dla-total-line': { doc: 'The DLA line with the bars\' total, the real logit and the gap.', label: 'the total line, in Why (DLA)' },
+  'dla-total-line': { doc: 'The DLA line with the bars\' total, the logit itself and the gap.', label: 'the total line, in Why (DLA)' },
   'write-it-step': { doc: 'The control that writes one more token in Watch it write.', label: 'the step control, in Watch it write' },
   'write-it-temperature': { doc: 'The temperature setting in Watch it write.', label: 'the temperature setting, in Watch it write' },
   'write-it-seed': { doc: 'The seed setting in Watch it write.', label: 'the seed setting, in Watch it write' },

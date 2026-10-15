@@ -40,7 +40,7 @@ brady_bb: { read: compare.prediction, args: { side: b, token: " basketball" }, f
 :::
 
 :::predict{id=pair-guess checks=pair-obs}
-Start with a fact GPT-2 small gets right, so you're not chasing a mistake. Swap Michael Jordan for Tom Brady in "Michael Jordan played the sport of". What happens to ' basketball'?
+Start with a fact GPT-2 small gets right, so the trail's a clean one. Swap Michael Jordan for Tom Brady in "Michael Jordan played the sport of". What happens to ' basketball'?
 
 ```yaml
 choices:
@@ -86,7 +86,7 @@ patching: { clean: "Michael Jordan played the sport of", corrupted: "Tom Brady p
 :::
 
 :::predict{id=which-mlp checks=mlp-obs}
-Swap one layer's MLP at a time from the Jordan run into the Brady run, measuring ' basketball''s logit. Which layer's bar will be biggest? (Pry labels layers `L0` to `L11`.)
+Swap one layer's MLP at a time from the Jordan run into the Brady run, measuring ' basketball''s logit. Which layer's bar'll be biggest? (Pry labels layers `L0` to `L11`.)
 
 ```yaml
 choices:
@@ -138,9 +138,9 @@ assert:
 ## Why L0 {id=s3-5 outline=P3.6.md#3.5}
 
 :::explain-result
-Lots of people pick a middle layer, and it's a fair guess: Meng and colleagues found middle MLPs mattered for facts like this, in bigger models. Here's what rules it out on this run. Pry's MLP swap covers every token at once, and the `L0` MLP acts more or less like part of the embedding. Swapping it puts "Michael Jordan" back into the sentence. That doesn't mean the fact lives in `L0`. Meng's group restored one spot at a time, at the last token of the name, and that's a different experiment.
+Lots of people pick a middle layer, and it's a fair guess: Meng and colleagues found middle MLPs mattered for facts like this, in bigger models. Here's what rules it out on this run. Pry's MLP swap covers every token at once, and the `L0` MLP acts more or less like part of the embedding. Swapping it puts "Michael Jordan" back into the sentence, which is a long way from the fact living in `L0`. Meng's group restored one spot at a time, at the last token of the name, and that's a different experiment.
 
-A pale middle bar doesn't settle anything either. It doesn't show that MLP is unused: several layers can share a job, and swapping one alone moves little, the way it did with heads in P3.3.
+A pale middle bar leaves the question open too: several layers can share a job, and swapping one alone moves little, the way it did with heads in P3.3.
 
 ```yaml
 supports: "The MLP swap shows which layer's MLP, copied at every token, moves ' basketball''s logit back toward the Jordan run. A big `L0` bar fits the name coming back, not a stored fact."
@@ -212,9 +212,9 @@ Now a different question: which parts push ' basketball' over ' football' direct
 :::
 
 :::observe{id=dla-obs}
-On :look{at=dla-total-line}[the total line], the bars for ' basketball' minus ' football' total {bars}. The real logit difference is {actual}. The {gap} left over is the embedding's own direct push plus a few fixed numbers the model adds on every run.
+On :look{at=dla-total-line}[the total line], the bars for ' basketball' minus ' football' total {bars}. The logit difference itself is {actual}. The {gap} left over is the embedding's own direct push plus a few fixed numbers the model adds on every run.
 
-Here the gap's below zero: the bars add up to more than the real difference, so that leftover pushes the other way. Among the biggest bars you'll find heads and an MLP.
+Here the gap's below zero: the bars add up to more than the difference itself, so that leftover pushes the other way. Among the biggest bars you'll find heads and an MLP.
 
 ```yaml
 check: { read: dla.target, op: equals, value: { answer: " basketball", contrast: " football" } }
@@ -222,7 +222,7 @@ check: { read: dla.target, op: equals, value: { answer: " basketball", contrast:
 :::
 
 :::explain-result
-DLA splits the logit difference at the last token into each part's own push. MLPs show up among the biggest pushes here, next to a couple of late heads. It's a different question from the Swap test's, so don't expect the same answer.
+DLA splits the logit difference at the last token into each part's own push. MLPs show up among the biggest pushes here, next to a couple of late heads. It's a different question from the Swap test's, so it gets a different answer.
 
 ```yaml
 supports: "DLA shows which parts push ' basketball' over ' football' at the last token, each bar its own push. Only direct pushes count."
@@ -240,7 +240,7 @@ peak: { read: lens.peak_layer, args: { token: " basketball" }, expect: 9 }
 :::
 
 :::do{id=lens-run}
-There's one more tool. Press **Do it** to run the logit lens and find ' basketball' in :look{at=logit-lens-heatmap}[its last column, ' of'].
+There's one more tool, and it's a quick one. Press **Do it** to run the logit lens and find ' basketball' in :look{at=logit-lens-heatmap}[its last column, ' of'].
 
 ```actions
 - open_panel: { panel: logit-lens }
@@ -257,7 +257,7 @@ check: { read: lens.first_top_layer, args: { token: " basketball" }, op: equals,
 :::
 
 :::explain-result
-The logit lens says when a rough read of the residual stream first favours ' basketball'. That's late, long after the name's information showed up at ' Jordan' in the Swap test. They're not contradicting each other: one's asking where, the other's asking when.
+The logit lens says when a rough read of the residual stream first favours ' basketball'. That's late, long after the name's information showed up at ' Jordan' in the Swap test. The two fit together fine: one's asking where, the other's asking when.
 
 ```yaml
 supports: "The logit lens shows ' basketball' coming out on top only in the later layers. So read the early rows as a rough hint."
@@ -282,7 +282,7 @@ columns:
 :::
 
 :::explain-result
-Put together, they don't point at one place. They point at a story spread over layers and tokens. The name's information sits at ' Jordan' early, reaches ' of' late, and a handful of parts push the answer out at the end. None of them points at one storage spot, and there's no reason to think one exists.
+Put together, they point at a story spread over layers and tokens. The name's information sits at ' Jordan' early, reaches ' of' late, and a handful of parts push the answer out at the end. A single storage spot's something none of the three found; what they draw instead is a crowd.
 
 ```yaml
 supports: "Each tool narrows the suspects for where ' basketball' comes from. None of them finds a place where the fact is stored, so treat 'the fact is in layer N' as a claim none of these can make."
@@ -307,7 +307,7 @@ limits: "One more athlete. Whichever MLP comes second here, it's one more pair, 
 ```
 
 :::predict{id=apart-from-l0 checks=serena-obs}
-Apart from `L0`, which MLP will move ' basketball''s logit most?
+Apart from `L0`, which MLP'll move ' basketball''s logit most?
 
 ```yaml
 free: true
@@ -315,7 +315,7 @@ free: true
 :::
 
 :::task{id=find-mlp}
-Find the MLP layer, other than `L0`, whose swap moves ' basketball' furthest back toward the clean value. The lesson has put `Michael Jordan played the sport of` in :look{at=patching-panel}[the Swap test] as the Original prompt and `Andy Murray played the sport of` as the Changed one, with MLPs picked. Press **Run swap test** in the panel. Both prompts need the same number of tokens; the panel says "same length" when they do. Click bars and read each one's three logits before you trust its colour, then press **Check my result**. You'll know you've got it when the bar you've picked is the biggest one that isn't `L0`.
+Find the MLP layer, other than `L0`, whose swap moves ' basketball' furthest back toward the clean value. The lesson's put `Michael Jordan played the sport of` in :look{at=patching-panel}[the Swap test] as the Original prompt and `Andy Murray played the sport of` as the Changed one, with MLPs picked. Press **Run swap test** in the panel. Both prompts need the same number of tokens; the panel says "same length" when they do. Click bars and read each one's three logits before you trust its colour, then press **Check my result**. You'll know you've got it when the bar you've picked is the biggest one that isn't `L0`.
 
 ```yaml
 target:

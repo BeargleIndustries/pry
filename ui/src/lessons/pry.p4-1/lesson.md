@@ -82,7 +82,7 @@ model_answer: "Accept any page where instructions are listed, not answered (a li
 ## What GPT-2 is {id=s3-2 outline=P4.1.md#3.2}
 
 :::explain-result
-GPT-2 only ever learned to continue text, so an instruction is just more text to continue. A model trained only to continue text, with no extra training to act as an assistant, is called a **base model**. It's the word labs and papers use for a model before it's turned into an assistant, and every assistant starts as one. GPT-2 small is a base model, small and well studied, which is why Pry can look inside it. Look at :look{at=watch-it-write}[the generated text] again: it's continuing a page.
+GPT-2 only ever learned to continue text, so an instruction's just more text to continue. A model trained only to continue text, with no extra training to act as an assistant, is called a **base model**. It's the word labs and papers use for a model before it's turned into an assistant, and every assistant starts as one. GPT-2 small's a base model, small and well studied, which is why Pry can look inside it. Look at :look{at=watch-it-write}[the generated text] again: it's continuing a page.
 
 ```yaml
 supports: "GPT-2 is a base model, so it continued the instruction the way a page of instructions would go on, with more of them."
@@ -131,7 +131,7 @@ same_question: journal
 :::
 
 :::observe{id=document-obs}
-Here's your pick: :earlier{key="pry.p4-1.document-pick"}[nothing]. This time it wrote a poem, with the same model and the same numbers; only the text in the box changed. It isn't a good poem, it repeats itself, but it's poem-shaped, because a poem is what usually follows a line like that on a page.
+Here's your pick: :earlier{key="pry.p4-1.document-pick"}[nothing]. This time it wrote a poem, with the same model and the same numbers; only the text in the box changed. It's a bad poem that repeats itself, and it's poem-shaped, because a poem is what usually follows a line like that on a page.
 
 ```yaml
 check: { read: write_it.text, from: document, op: starts_with, value: "Here is a short poem about the sea:\n\nThe sea is a sea of water" }
@@ -189,7 +189,7 @@ corrected_in: [pry.p4-1]
 :::explain{id=two-rounds}
 The second round's more training on example conversations and on people's ratings of replies. It changes the same weights, so a request now tends to be followed by an answer. More training on a smaller, chosen set of examples, after the first round, is called **fine-tuning**. It's how every chat assistant you've used was made from a base model, and you'll see the word in nearly every AI announcement. See :look{at=lesson:image:two-rounds}[the picture].
 
-Fine-tuning changes which continuations get high probabilities. It doesn't add a fact-checker, so a fluent wrong answer still comes from the same process as a right one.
+Fine-tuning changes which continuations get high probabilities, and that's all it changes, so a fluent wrong answer still comes from the same process as a right one.
 
 ```yaml
 image: images/two-rounds.png
@@ -237,7 +237,7 @@ Press **Do it** to add :look{at=prompt-input}[the first line] and write again in
 :::
 
 :::observe{id=hidden-obs}
-Read what it wrote, and compare it with the first run. Did the line about being a poet get a poem? Don't peek ahead till you've decided.
+Read what it wrote, and compare it with the first run. Did the line about being a poet get a poem? Decide before you read on.
 
 ```yaml
 journal: true
@@ -254,7 +254,7 @@ model_answer: "Every token in the prompt feeds into the residual streams that th
 :::
 
 :::explain-result
-No poem. GPT-2 went back to repeating the instruction, the way a page of writing prompts would. To the model the first line is just more text placed first. It changes the probabilities the way any earlier text does, and a model follows a line like that only as far as its training made text like that tend to be followed. Instructions a product places before your text, usually hidden from you, are called a **system prompt**. Every chat product has one.
+No poem. GPT-2 went back to repeating the instruction, the way a page of writing prompts would. To the model the first line's just more text placed first. It changes the probabilities the way any earlier text does, and a model follows a line like that only as far as its training made text like that tend to be followed. Instructions a product places before your text, usually hidden from you, are called a **system prompt**. Every chat product's got one.
 
 ```yaml
 supports: "A system prompt is text placed first. It changes the probabilities like any other text, and here it didn't get a poem out of a base model."

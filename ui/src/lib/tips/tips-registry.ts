@@ -178,7 +178,7 @@ export const tipsRegistry: TipDef[] = [
     blurb:
       "Each bar is one part of the model. Blue pushed directly toward the predicted word, orange pushed against it. Only direct pushes count, so a part that helps by nudging other parts can look small here.",
     why:
-      "When the model guesses 'mat' after 'The cat sat on the', every attention head and every MLP pushes on that word's score. Some push toward 'mat' (blue), some push against it (orange). You're seeing the 30 biggest direct pushes. DLA (direct logit attribution) only counts what each part writes straight into the final guess, so a head that helps by changing what later heads do won't get credit here. Researchers use it as a first pass at finding which heads matter. Under the chart, Pry lists the bars' total, the real logit and the gap between them. The gap is the embedding's own direct push plus the attention-output and unembedding biases, not drawn as bars.",
+      "When the model guesses 'mat' after 'The cat sat on the', every attention head and every MLP pushes on that word's score. Some push toward 'mat' (blue), some push against it (orange). You're seeing the 30 biggest direct pushes. DLA (direct logit attribution) only counts what each part writes straight into the final guess, so a head that helps by changing what later heads do won't get credit here. Researchers use it as a first pass at finding which heads matter. Under the chart, Pry lists the bars' total, the logit itself and the gap between them. The gap is the embedding's own direct push plus the attention-output and unembedding biases, not drawn as bars.",
   },
   {
     id: 'export-button',

@@ -522,10 +522,10 @@ export const pryReadouts: Record<string, ReadoutDef> = {
   },
 
   'dla.bars_total': { type: 'number', unit: 'logit', doc: 'The sum of the DLA bars.', read: reader((s) => s.dla?.bars_total) },
-  'dla.answer_logit': { type: 'number', unit: 'logit', doc: 'The answer token\'s real logit.', read: reader((s) => s.dla?.answer_logit) },
-  'dla.contrast_logit': { type: 'number', unit: 'logit', doc: 'The contrast token\'s real logit.', read: reader((s) => s.dla?.contrast_logit ?? undefined) },
-  'dla.actual': { type: 'number', unit: 'logit', doc: 'The real logit, or with a contrast, the difference between the two logits.', read: reader((s) => s.dla?.actual) },
-  'dla.gap': { type: 'number', unit: 'logit', doc: 'The gap between the bars\' total and the real logit.', read: reader((s) => s.dla?.gap) },
+  'dla.answer_logit': { type: 'number', unit: 'logit', doc: 'The answer token\'s logit, as the model gave it.', read: reader((s) => s.dla?.answer_logit) },
+  'dla.contrast_logit': { type: 'number', unit: 'logit', doc: 'The contrast token\'s logit, as the model gave it.', read: reader((s) => s.dla?.contrast_logit ?? undefined) },
+  'dla.actual': { type: 'number', unit: 'logit', doc: 'The answer token\'s logit, or with a contrast, the difference between the two logits.', read: reader((s) => s.dla?.actual) },
+  'dla.gap': { type: 'number', unit: 'logit', doc: 'The gap between the bars\' total and the logit itself.', read: reader((s) => s.dla?.gap) },
   'dla.top_parts': {
     args: n,
     type: 'list',

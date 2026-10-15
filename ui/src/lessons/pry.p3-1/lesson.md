@@ -74,7 +74,7 @@ he_delta: { read: compare.delta, args: { token: " he" }, expect: 0.1217331197112
 :::
 
 :::do{id=nurse-doctor}
-Compare runs two prompts and puts their Predictions side by side. Press **Do it** to run the nurse prompt and the doctor prompt, then read ' she' and ' he' in :look{at=compare-panel}[Compare's two columns].
+Compare runs two prompts and puts their Predictions side by side, and that's the whole trick. Press **Do it** to run the nurse prompt and the doctor prompt, then read ' she' and ' he' in :look{at=compare-panel}[Compare's two columns].
 
 ```actions
 - set_compare_mode: { on: true }
@@ -100,7 +100,7 @@ check:
 ## The minimal pair {id=s3-4 outline=P3.1.md#3.4}
 
 :::do{id=changed-word}
-The two prompts match except for :look{at=compare-prompt-b}[the changed word]. Two prompts that are the same except for one word are called a **minimal pair**. Linguists use the name, interpretability papers use it too, and every tool from here to the end of Stage 3 runs on one. Compare will run any two prompts you like. The lessons fill it with a minimal pair.
+The two prompts match except for :look{at=compare-prompt-b}[the changed word]. Two prompts that are the same except for one word are called a **minimal pair**. Linguists use the name, interpretability papers use it too, and every tool from here to the end of Stage 3 runs on one. Compare'll run any two prompts you like. The lessons fill it with a minimal pair.
 
 ```actions
 - highlight: { anchor: compare-prompt-b }
@@ -108,7 +108,7 @@ The two prompts match except for :look{at=compare-prompt-b}[the changed word]. T
 :::
 
 :::explain
-It's a controlled experiment. You keep everything the same except one thing, so anything that moves moved with that one change. Here the change is ' nurse' to ' doctor', and ' she' fell while ' he' climbed. Hang on to the words "moved with", though. They're going to matter in a minute, and they don't say quite what you'd like them to.
+It's a controlled experiment. You keep everything the same except one thing, so anything that moves moved with that one change. Here the change's ' nurse' to ' doctor', and ' she' fell while ' he' climbed. Hang on to the words "moved with", though. They're going to matter in a minute, and they don't say quite what you'd like them to.
 :::
 
 ## The control {id=s3-5 outline=P3.1.md#3.5}
@@ -137,7 +137,7 @@ Before you trust a difference, check what no change looks like. Press **Do it** 
 :::
 
 :::observe{id=control-obs}
-The delta for ' she' is {control_delta}. Not a little: none at all. You've seen why in P1.6. The logits and probabilities don't involve any randomness, so the same prompt gives the same numbers every time. Randomness only comes in when Pry samples text, and Compare doesn't sample. That's what makes the control useful: if it's zero here, a delta that isn't zero can't be noise.
+The delta for ' she' is {control_delta}. Not a little: none at all. You've seen why in P1.6. The logits and probabilities come out the same for the same prompt every time, and the only randomness in Pry lives in sampling, which Compare never does. That's what makes the control useful: if it's zero here, any delta you do see came from the change.
 
 ```yaml
 check: { read: compare.delta, args: { token: " she" }, op: within, value: 0, tolerance: 0.000001, expect: 0 }
@@ -191,7 +191,7 @@ Lots of people pick the first answer, and it's a fair guess: one word changed, o
 It works the other way too. A pair where ' she' doesn't move doesn't show the word's unused. Other words in the prompt can set the pronoun, and they'd cover for it.
 
 ```yaml
-supports: "Compare shows what moved when one word changed. It doesn't show which part inside moved it, so treat the delta as a lead. This view only shows what changed, not why. On their own they don't show what causes the model's answer."
+supports: "Compare shows what moved when one word changed. It doesn't show which part inside moved it, so treat the delta as a lead. On their own they don’t show what causes the model’s answer."
 leaves_open: "Compare sees only the two outputs. It can't show which parts inside produced the difference, or whether the changed word mattered through one route or many."
 tool: compare
 skeptic: { says: "A skeptic would say a feature that's active on ' nurse' and not on ' doctor' must be what pushes ' she'. Those two also just moved together.", check: "Here's the check: switch those features off and see whether ' she' drops (P3.4)." }
@@ -217,7 +217,7 @@ tokens_b: { read: compare.token_count, args: { side: b }, expect: learner }
 :::
 
 :::task{id=make-pair}
-Make a minimal pair from the Mary and John sentence where the top guess changes. Change one word in prompt B and keep the same number of tokens on both sides, so the pair stays minimal. Side A has {tokens_a} tokens; side B has {tokens_b}. Stuck after a try? Swap the second ' John' for ' Mary'.
+Make a minimal pair from the Mary and John sentence where the top guess changes. Change one word in prompt B and keep the same number of tokens on both sides, so the pair stays minimal. Side A's got {tokens_a} tokens; side B's got {tokens_b}. Stuck after a try? Swap the second ' John' for ' Mary'.
 
 ```yaml
 target:

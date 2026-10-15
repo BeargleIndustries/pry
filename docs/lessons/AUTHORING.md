@@ -2,7 +2,7 @@
 
 > **Preview.** Writing your own lessons is a preview in Pry 0.4.x. The format is `format: 1` and it's frozen: anything added to format 1 later is extra, never a change to what you already wrote. Format 1 lessons will keep opening; when format 2 ships, Pry converts them automatically.
 
-A Pry lesson is one Markdown file, `lesson.md`, in a folder named after the lesson's id. Pry reads it, drives the app section by section, asks the learner to guess before it shows a result, and shows every number next to the measurements it came from. You don't write code. You'll write prose, plus small blocks of YAML that name Pry's actions and readouts, and that's it.
+A Pry lesson is one Markdown file, `lesson.md`, in a folder named after the lesson's id. Pry reads it, drives the app section by section, asks the learner to guess before it shows a result, and shows every number next to the measurements it came from. You'll write prose, plus small blocks of YAML that name Pry's actions and readouts.
 
 This page walks you from the template to a lesson that's installed and running. After that it's a reference for every part of the format.
 
@@ -135,7 +135,7 @@ remember: first-guess
 | Kind | Fields | What it's for |
 |---|---|---|
 | `explain` | Prose. Optional `image` with a required `alt`. | Teaching text. Images must be local files in the lesson folder, 1 MB or under. |
-| `analogy` | `like`, `because`, `breaks` (required, not empty), optional `withdrawn_in` (a lesson id). | A comparison that helps, and where it stops helping. You don't need one at all. A section can have one on the main path, at most; analogies inside a `fold` don't count. |
+| `analogy` | `like`, `because`, `breaks` (required, not empty), optional `withdrawn_in` (a lesson id). | A comparison that helps, and where it stops helping. Analogies are optional. A section can have one on the main path, at most; analogies inside a `fold` don't count. |
 | `simplification` | Prose, plus `corrected_in` (a list of lesson ids). | An aside that admits the picture's simpler than the truth and names the lesson that fixes it. |
 | `fold` | `title`. | Collapsed extra depth: names that aren't needed on the main path, results from larger models. |
 | `recall` | An optional opening question, `from` (a lesson id), choices or free text. | Brings back something from an earlier lesson. Saved to the journal only. |
@@ -188,7 +188,7 @@ Action arguments are plain YAML values, or one of two references:
 
 ## Slots and asserts
 
-**Every number a learner reads in a lesson is a slot.** A slot is bound to a live readout, so the text always matches the screen and teaches from the learner's own run. You never type a number into prose: a typed number drifts the moment the model, the library or the prompt changes, and the checker rejects bare percentages, decimals, layer and head labels like `L9H9`, and counts in prose.
+**Every number a learner reads in a lesson is a slot.** A slot is bound to a live readout, so the text always matches the screen and teaches from the learner's own run. A number typed into prose drifts the moment the model, the library or the prompt changes, so the checker rejects bare percentages, decimals, layer and head labels like `L9H9`, and counts in prose.
 
 ```yaml
 slots:
@@ -243,8 +243,8 @@ assert:
     say: "Patching this one spot brings back a lot of the difference."
     else: "Patching this one spot brings back part of the difference."
   - require: { slot: gap, op: lt, slot2: bars_total, abs: true }
-    say: "The bars add up close to the real logit."
-    else: "The bars and the real logit are far apart here."
+    say: "The bars add up close to the logit itself."
+    else: "The bars and the logit are far apart here."
 ```
 
 `slot2` compares two live slots, and `abs: true` compares their sizes.
@@ -400,7 +400,7 @@ The checker carries Pry's style rules. The big ones:
 
 ## Voice
 
-Pry's own lessons go through a voice check that's part of Pry's toolchain. It isn't shipped. When you write a lesson, run the bundled checker, whose copy rules carry the style guide's checklist, and write like this:
+Pry's own lessons go through a voice check that's part of Pry's toolchain and stays there. When you write a lesson, run the bundled checker, whose copy rules carry the style guide's checklist, and write like this:
 
 - Write the way you'd explain it across a table. Use contractions. Don't lecture.
 - Put a person or the model in the sentence doing the thing. "The model puts Paris first" beats "Paris emerges as the top prediction."

@@ -3,7 +3,7 @@ format: 1
 id: pry.p2-1
 title: "Where does each token pull information from?"
 tool: pry
-summary: "Watch where one token's numbers draw from, one head at a time, and find out why a thick line is a suspect, not a verdict."
+summary: "Watch where one token's numbers draw from, one head at a time, and find out why a thick line only gives you a suspect."
 minutes: 12
 stage: 2
 targets: [T2, M4]
@@ -57,7 +57,7 @@ on_skip: "Here's the answer: the sentence points at Mary, and the next step show
 :::do{id=run-ioi}
 Press **Do it** to run the prompt, then read :look{at=predictions-panel}[Predictions], which stays hidden until you answer above.
 
-This whole stage asks how the model got there. Every token's residual stream is a long list of numbers that nobody can read straight off, so each view you'll meet from here on reads those numbers one particular way, and each one has a limit you'll hear about. None of them hands you a verdict, just a list of suspects.
+This whole stage asks how the model got there. Every token's residual stream's a long list of numbers nobody can read straight off, so each view you'll meet from here on reads those numbers one particular way, and each one's got a limit you'll hear about. What they hand you is a list of suspects.
 
 ```actions
 - set_prompt: { text: "When Mary and John went to the store, John gave a drink to" }
@@ -111,9 +111,7 @@ remember: word-pick
 :::
 
 :::observe{id=word-pick-saved}
-Hold on to that. A later lesson tests it.
-
-There's no reveal here, on purpose. Pry saves your pick, and when you get to switching parts off, you'll come back to it with a real test.
+Hold on to that. Pry's saved your pick, and when you get to switching parts off, you'll come back to it with a test that can settle it.
 
 ```yaml
 journal: true
@@ -123,7 +121,7 @@ journal: true
 ## A layer's two halves {id=s3-4 outline=P2.1.md#3.4}
 
 :::explain{id=two-halves}
-Back in P1.3 each layer just "added its work". Here's the fuller picture: a layer has two halves. The first half moves information into a token's residual stream from that token itself and from the tokens before it. It never reaches forward to a later token. The second half works on each token's residual stream on its own, with no mixing; you'll get its name in P2.4.
+Back in P1.3 each layer just "added its work". Here's the fuller picture: a layer's got two halves. The first half moves information into a token's residual stream from that token itself and from the tokens before it, and only backwards, so a later token stays out of reach. The second half works on each token's residual stream on its own; you'll get its name in P2.4.
 
 The half of a layer that mixes information into a token's residual stream from itself and the tokens before it is called **attention**. Every paper uses the word, and so does Pry's Attention tab, which is where you're headed next.
 
@@ -172,7 +170,7 @@ marker_share: { read: attention.avg_share, args: { from: $row.14.to_position, to
 :::
 
 :::do{id=first-line}
-Look at :look{at=panel-a-lines}[the line to the very first token]. That's the start-of-text marker from P1.2, and there's no word in it.
+Look at :look{at=panel-a-lines}[the line to the very first token]. That's the start-of-text marker from P1.2, the one Pry puts in front of your text.
 
 ```actions
 - highlight: { anchor: panel-a-lines }
@@ -190,7 +188,7 @@ breaks: "heads aren't choosing a spot; it's a habit training left in the weights
 ::::fold{title="The name researchers use"}
 
 :::explain
-Researchers call a token that soaks up spare attention like this an **attention sink**. You won't need the name again in these lessons; it's here so you'll recognise it in a paper.
+Researchers call a token that soaks up spare attention like this an **attention sink**. It's here so you'll recognise it in a paper.
 :::
 
 ::::
@@ -215,7 +213,7 @@ assert:
 ## One head at a time {id=s3-7 outline=P2.1.md#3.7}
 
 :::explain
-Attention isn't one mixer per layer. Each layer has 12 separate attention units, 144 in the whole model, and each one has its own pattern of which earlier tokens it draws from. One of those units is called an **attention head**, or **head** for short. The grid you're about to open and every later poke at the model work head by head, so you'll be seeing this word from now on.
+Each layer's got 12 separate attention units, 144 in the whole model, and each one's got its own pattern of which earlier tokens it draws from. One of those units is called an **attention head**, or **head** for short. The grid you're about to open and every later poke at the model work head by head, so you'll be seeing this word from now on.
 :::
 
 :::do{id=expert-grid}
@@ -279,7 +277,7 @@ focus_token: { text: " to", occurrence: last }
 :::
 
 :::explain-result
-You've found a head that draws heavily from ' Mary' at ' to'. Look back at :look{at=panel-a-lines}[the lines] and keep in mind what they measure: how much of each earlier token went into the mix. They don't say what information came across, and they don't say ' Mary' won because of it.
+You've found a head that draws heavily from ' Mary' at ' to'. Look back at :look{at=panel-a-lines}[the lines] and keep in mind what they measure: how much of each earlier token went into the mix. What came across, and whether ' Mary' won because of it, are two separate questions the lines can't answer.
 
 ```yaml
 supports: "Attention shows which earlier tokens a head drew from. A big weight doesn't mean that token mattered for the answer."
@@ -324,7 +322,7 @@ choices:
 :::
 
 :::observe{id=heaviest-obs}
-This head draws {weight} of its mix at ' to' from {row23_token}. That's a heavy line to a word that isn't a name at all.
+This head draws {weight} of its mix at ' to' from {row23_token}. That's a heavy line to a word with nothing to do with Mary or John.
 
 ```yaml
 check: { read: attention.top_source, args: { layer: $row.23.layer, head: $row.23.head, from: $row.14.to_position }, op: contains, value: { token: $row.23.token } }

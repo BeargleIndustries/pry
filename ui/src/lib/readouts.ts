@@ -3,7 +3,7 @@
 //
 // Honesty rules:
 // - DLA is "direct" attribution: the bars leave out the embedding's own direct
-//   push and the biases. Show the bars' total, the real logit and the gap side
+//   push and the biases. Show the bars' total, the logit itself and the gap side
 //   by side (dlaTotalLine), labelled, so the learner sees what the bars miss.
 // - Attention shows where a word looks, not what the model uses. Say "looks
 //   at", never "uses" or "because of".
@@ -517,15 +517,15 @@ export const DLA_GAP_EXPLAINED =
   "the embedding's own direct push plus the attention-output and unembedding biases, not drawn as bars.";
 
 /**
- * "Bars total … Real logit … Gap …": the bars' total, the real logit (both
+ * "Bars total … Logit … Gap …": the bars' total, the logit itself (both
  * logits and their difference with a contrast) and the gap, labelled.
  */
 export function dlaTotalLine(r: DLAResponse | null): string | null {
   if (!r || r.bars_total == null || r.answer_logit == null || r.gap == null) return null;
   const real =
     r.contrast_logit != null && r.actual != null
-      ? `Real logits ${num(r.answer_logit)} and ${num(r.contrast_logit)}, difference ${num(r.actual)}`
-      : `Real logit ${num(r.answer_logit)}`;
+      ? `Logits ${num(r.answer_logit)} and ${num(r.contrast_logit)}, difference ${num(r.actual)}`
+      : `Logit ${num(r.answer_logit)}`;
   return `Bars total ${num(r.bars_total)}. ${real}. Gap ${num(r.gap)}: ${DLA_GAP_EXPLAINED}`;
 }
 

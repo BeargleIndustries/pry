@@ -108,9 +108,7 @@ In Predictions, ' basketball' gets {basketball}, the same number lesson P1.1 sho
 ## The fixed numbers {id=s3-3 outline=P1.6.md#3.3}
 
 :::explain
-The numbers in the model's file were set during training, and using the model never changes them. They're called the **weights**, or the parameters: when people say a model has so many parameters, these are what they're counting. :look{at=lesson:spine box=training}[The spine strip] lights the training bracket around them.
-
-Same prompt in, same numbers out.
+The numbers in the model's file were set during training, and using the model never changes them. That's the whole answer to "does it learn from you?": it doesn't, and here's what the numbers are. They're called the **weights**, or the parameters: when people say a model's got so many parameters, these are what they're counting. :look{at=lesson:spine box=training}[The spine strip] lights the training bracket around them.
 :::
 
 :::analogy
@@ -132,9 +130,7 @@ tool: predictions
 ## The fresh numbers {id=s3-4 outline=P1.6.md#3.4}
 
 :::explain
-Everything else gets worked out fresh on every run: each token's residual stream, the logits at the top, the probabilities in :look{at=predictions-panel}[Predictions]. Those fresh numbers are called **activations**, as opposed to the weights. Everything Pry's tools measure is activations.
-
-The weights never change; the activations are computed fresh each run.
+Everything else gets worked out fresh on every run: each token's residual stream, the logits at the top, the probabilities in :look{at=predictions-panel}[Predictions]. Those fresh numbers are called **activations**, as opposed to the weights, and everything Pry's tools measure is activations.
 :::
 
 :::question{id=what-changed}
@@ -163,9 +159,9 @@ choices:
 :::
 
 :::explain{id=training-image}
-Here's training as a loop. Take a piece of real text, have the model guess the next token, compare the guess with what really came next, then nudge every weight a little toward a better guess. Do that again, billions of times. :look{at=lesson:image:training-image}[The picture] shows the loop.
+Here's training as a loop. Take a piece of text, have the model guess the next token, compare the guess with what came next, then nudge every weight a little toward a better guess. Do that again, billions of times. :look{at=lesson:image:training-image}[The picture] shows the loop.
 
-:refutes[Nobody wrote the rules. There aren't any rules in the file, only weights.]
+:refutes[Nobody wrote a rule about Jordan. The file holds weights and nothing else.]
 
 ```yaml
 image: images/training-loop.svg
@@ -228,7 +224,7 @@ choices:
 :::
 
 :::do{id=write-mit}
-First, the opening of the MIT License, a software licence copied into a huge number of projects. The lesson runs it, then writes on at temperature 0.
+First, the opening of the MIT License, a software licence that's been copied into a huge number of projects. The lesson runs it, then writes on at temperature 0.
 
 ```actions
 - set_prompt: { text: "The MIT License\n\nPermission is hereby granted, free of charge, to any person obtaining a copy" }

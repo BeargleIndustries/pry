@@ -184,11 +184,11 @@ describe('dlaReadout', () => {
   });
 
   // Replaces the old "never claims the parts add up" assertions (plan T4-ui,
-  // MF-2b): the bars' total, the real logit and the gap now show side by side.
-  it('DLA total line: bars total, real logit and the gap, labelled', () => {
+  // MF-2b): the bars' total, the logit itself and the gap now show side by side.
+  it('DLA total line: bars total, the logit and the gap, labelled', () => {
     const r = { ...clone(dla), bars_total: 3.5, answer_logit: 4.25, contrast_logit: null, actual: 4.25, gap: 0.75 };
     expect(dlaTotalLine(r)).toBe(
-      'Bars total 3.50. Real logit 4.25. Gap 0.75: the embedding\'s own direct push plus the attention-output and unembedding biases, not drawn as bars.',
+      'Bars total 3.50. Logit 4.25. Gap 0.75: the embedding\'s own direct push plus the attention-output and unembedding biases, not drawn as bars.',
     );
   });
 
@@ -204,13 +204,13 @@ describe('dlaReadout', () => {
       gap: 0.2,
     };
     expect(dlaTotalLine(r)).toBe(
-      'Bars total 2.90. Real logits 15.10 and 12.00, difference 3.10. Gap 0.20: the embedding\'s own direct push plus the attention-output and unembedding biases, not drawn as bars.',
+      'Bars total 2.90. Logits 15.10 and 12.00, difference 3.10. Gap 0.20: the embedding\'s own direct push plus the attention-output and unembedding biases, not drawn as bars.',
     );
   });
 
   it('DLA total line uses a real minus sign and is null on an older engine', () => {
     const r = { ...clone(dla), bars_total: -1.5, answer_logit: -0.25, contrast_logit: null, actual: -0.25, gap: 1.25 };
-    expect(dlaTotalLine(r)).toMatch(/^Bars total −1\.50\. Real logit −0\.25\. Gap 1\.25:/);
+    expect(dlaTotalLine(r)).toMatch(/^Bars total −1\.50\. Logit −0\.25\. Gap 1\.25:/);
     expect(dlaTotalLine(dla)).toBeNull();
     expect(dlaTotalLine(null)).toBeNull();
   });

@@ -107,7 +107,7 @@ choices:
 :::
 
 :::do{id=run-key-parts}
-Key parts explains the guess after the word you've selected, the same way Why (DLA) does. With the last word selected, that's the top guess, "49". It doesn't use a contrast token, and it doesn't add up the years above 32. Press **Do it** to select the last " 17" and draw :look{at=circuit-graph}[the map].
+Key parts explains the guess after the word you've selected, the same way Why (DLA) does. With the last word selected, that's the top guess, "49". It explains that one token on its own, with no contrast and no adding up of the years above 32. Press **Do it** to select the last " 17" and draw :look{at=circuit-graph}[the map].
 
 ```actions
 - focus_token: { text: " 17", occurrence: last }
@@ -117,7 +117,7 @@ Key parts explains the guess after the word you've selected, the same way Why (D
 :::
 
 :::observe{id=map-obs}
-The map is built for the selected token, the last " 17", so it explains the guess after it: "49". Each box is a head or an MLP with a big direct push, and the lines run between them.
+The map's built for the selected token, the last " 17", so it explains the guess after it: "49". Each box's a head or an MLP with a big direct push, and the lines run between them.
 
 ```yaml
 check: { read: circuit.target, op: contains, value: { token: "49", after: " 17" } }
@@ -129,7 +129,7 @@ check: { read: circuit.target, op: contains, value: { token: "49", after: " 17" 
 :::explain-result
 Look at :look{at=circuit-graph}[one edge]. A line on the map means one part's output fed straight into a later head, with nothing in between. That's called a **direct value path**. It's the exact claim each line makes, and Pry's own caveat uses the name.
 
-Two limits come with it. A missing line doesn't prove no connection: parts can talk through other parts. A part that matters by changing what other parts do can have a small direct push, so it gets left off the map.
+Two limits come with it. Parts can talk through other parts, so two boxes with no line between them can still be connected. A part that matters by changing what other parts do can have a small direct push, so it gets left off the map.
 
 ```yaml
 supports: "Each line is a direct value path: one part's output going straight into a later head. The boxes are the parts with the biggest direct pushes on the guess."

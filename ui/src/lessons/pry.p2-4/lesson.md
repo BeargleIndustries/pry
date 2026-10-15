@@ -3,7 +3,7 @@ format: 1
 id: pry.p2-4
 title: "Which parts pushed toward the answer?"
 tool: pry
-summary: "Split a logit back into each part's own push, read the bars' total against the real number, and see what the bars can't show."
+summary: "Split a logit back into each part's own push, read the bars' total against the logit itself, and see what the bars leave out."
 minutes: 12
 stage: 2
 targets: [N2, T6]
@@ -40,7 +40,7 @@ free: true
 ## The other half gets its name {id=s3-2 outline=P2.4.md#3.2}
 
 :::explain{id=layer-halves}
-In P2.1 you met attention, the half of each layer that mixes information between tokens. The other half got a description and no name. It works on each token's residual stream on its own, with no mixing between tokens, and plenty of what the model reproduces about the world seems to be stored in these halves, spread over several layers.
+In P2.1 you met attention, the half of each layer that mixes information between tokens. The other half got a description and no name. It works on each token's residual stream on its own, and plenty of what the model reproduces about the world seems to be stored in these halves, spread over several layers.
 
 The half of each layer that works on each token's residual stream alone is called the **MLP**. The bars in this lesson's tool list MLPs by layer, so you'll be reading the name on screen in a minute.
 
@@ -63,7 +63,7 @@ breaks: "both halves add to the same residual stream, and the split isn't clean.
 :::explain
 ' basketball''s logit comes from what every head and every MLP added to the last token's residual stream. Take each of those additions on its own, measure it straight to that logit, and you get each part's own push toward ' basketball', or against it.
 
-Splitting a logit into each part's own push toward or against a token is called **direct logit attribution**, or **DLA**. Papers use the name, and it's on :look{at=left-tab-strip}[Pry's "Why (DLA)" tab], which is direct logit attribution under a friendlier label. You'll open it in the next section; first, **Do it** below loads the prompt. "Direct" means each bar is one part's own push, measured straight to the logit.
+Splitting a logit into each part's own push toward or against a token is called **direct logit attribution**, or **DLA**. Papers use the name, and it's on :look{at=left-tab-strip}[Pry's "Why (DLA)" tab], that's direct logit attribution under a friendlier label. You'll open it in the next section; first, **Do it** below loads the prompt. "Direct" means each bar is one part's own push, measured straight to the logit.
 :::
 
 :::analogy
@@ -75,7 +75,7 @@ breaks: "a push is measured straight to the logit; help through later parts land
 :::
 
 :::do{id=jordan-ensure}
-Pry loads the Jordan prompt again. You know the ending: ' basketball' on top.
+Pry loads the Jordan prompt again, and you know the ending: ' basketball' on top.
 
 ```actions
 - set_prompt: { text: "Michael Jordan played the sport of" }
@@ -122,7 +122,7 @@ Pry runs DLA on ' basketball' at the last token, ' of'. Look at :look{at=dla-wat
 :::
 
 :::observe{id=bars-obs}
-You picked :earlier{key="pry.p2-4.bars-pick"}[nothing]. In :look{at=dla-waterfall}[the bars], {n} parts push harder than {x}, heads and MLPs both, with MLP.{k} among them. The three biggest pushes are {top_parts}. Each number is a push in logits, so a bar of one means that part on its own raised ' basketball''s logit by one.
+You picked :earlier{key="pry.p2-4.bars-pick"}[nothing]. In :look{at=dla-waterfall}[the bars], {n} parts push harder than {x}, heads and MLPs both, with MLP.{k} among them. The three biggest pushes are {top_parts}. Each number's a push in logits, so a bar of one means that part on its own raised ' basketball''s logit by one.
 
 ```yaml
 check: { read: dla.bars_total, op: gt, value: 0, expect: 14.799 }
@@ -130,20 +130,20 @@ check: { read: dla.bars_total, op: gt, value: 0, expect: 14.799 }
 :::
 
 :::explain-result
-Several parts push hard, and MLPs show up among the biggest. There's no single home here; there's a crowd.
+Several parts push hard, and MLPs show up among the biggest. Where lots of people expect one home for the fact, what you get's a crowd.
 
 ```yaml
-supports: "Several bars carry large pushes toward ' basketball', and MLPs appear among the top. Only direct pushes count. Help through other parts isn't counted. The bar for a part shows the push that part made most directly."
+supports: "Several bars carry large pushes toward ' basketball', and MLPs appear among the top. Only direct pushes count: the bar for a part shows the push that part made most directly."
 leaves_open: "The bars show each part's own push on the final logit. They don't show what any part read from the residual stream to make its push."
 tool: dla
 skeptic: { says: "A skeptic would say the tallest MLP bar is where the Jordan fact is stored.", check: "Keep reading: two sections on, you'll see what a bar can and can't say about where information came from." }
 ```
 :::
 
-## The total, the real logit and the gap {id=s3-6 outline=P2.4.md#3.6}
+## The total, the logit and the gap {id=s3-6 outline=P2.4.md#3.6}
 
 :::do{id=total-line}
-Look at :look{at=dla-total-line}[the total line]: the bars added up, the real logit, and what's left between them.
+Look at :look{at=dla-total-line}[the total line]: the bars added up, the logit itself, and what's left between them.
 
 ```actions
 - highlight: { anchor: dla-waterfall }
@@ -151,19 +151,19 @@ Look at :look{at=dla-total-line}[the total line]: the bars added up, the real lo
 :::
 
 :::explain-result
-The bars for ' basketball' total {bars_total}. The real logit is {actual_logit}. The {gap} left over is the embedding's own direct push plus a few fixed numbers the model adds on every run, which Pry doesn't draw as bars.
+The bars for ' basketball' total {bars_total}. The logit itself is {actual_logit}. The {gap} left over is the embedding's own direct push plus a few fixed numbers the model adds on every run, which Pry doesn't draw as bars.
 
-The gap isn't help that went missing. If a part helped by feeding a later part, that help's already inside the later part's bar.
+If a part helped by feeding a later part, that help's already inside the later part's bar, so the gap holds nothing of it.
 
 ```yaml
-supports: "The bars' total sits next to the real logit, and the gap has a known source. Only direct pushes count, so read each bar as the part that pushed most directly."
-leaves_open: "The total line shows how close the bars come to the real logit. It doesn't split the gap itself into the embedding's push and the fixed numbers."
+supports: "The bars' total sits next to the logit itself, and the gap has a known source. Only direct pushes count, so read each bar as the part that pushed most directly."
+leaves_open: "The total line shows how close the bars come to the logit itself. It doesn't split the gap itself into the embedding's push and the fixed numbers."
 tool: dla
 skeptic: { says: "A skeptic would say the gap is where the model's hidden teamwork lives.", check: "Compare the gap with the bars' total: teamwork through later parts is already in their bars, and the gap is the embedding plus fixed numbers." }
 assert:
   - require: { slot: gap, op: lt, slot2: bars_total, abs: true }
     say: "That's a small leftover."
-    else: "Here the bars total {bars_total} and the real logit is {actual_logit}, so read both before trusting either."
+    else: "Here the bars total {bars_total} and the logit itself is {actual_logit}, so read both before trusting either."
 ```
 :::
 
@@ -215,7 +215,7 @@ actual_diff: { from: [ratio], formula: ln, format: logit }
 :::
 
 :::do{id=ioi-ensure}
-Back to the Mary and John prompt from P2.1. Check :look{at=predictions-panel}[Predictions].
+Back to the Mary and John prompt from P2.1, and here's :look{at=predictions-panel}[Predictions] to check.
 
 ```actions
 - set_prompt: { text: "When Mary and John went to the store, John gave a drink to" }
@@ -247,7 +247,7 @@ gap: { read: dla.gap, expect: -1.203 }
 :::
 
 :::predict{id=which-layers checks=mary-john-obs}
-Which layers push ' Mary' over ' John' hardest?
+Which layers push ' Mary' over ' John' hardest? Here's your chance to guess before the bars draw.
 
 ```yaml
 choices:
@@ -269,7 +269,7 @@ Pry runs DLA on ' Mary' with ' John' as the contrast, at the last ' to'. Read :l
 :::
 
 :::observe{id=mary-john-obs}
-The three biggest bars by size are {top_parts}, all heads in the last few layers. Read the signs: two push ' Mary' over ' John', and one pushes the other way, against ' Mary'. Parts don't all pull the same way. The bars total {bars_total}, the real logit difference is {actual_logit}, and the gap is {gap}.
+The three biggest bars by size are {top_parts}, all heads in the last few layers. Read the signs: two push ' Mary' over ' John', and one pushes the other way, against ' Mary'. So the parts push both ways at once. The bars total {bars_total}, the logit difference itself is {actual_logit}, and the gap is {gap}.
 
 ```yaml
 check: { read: dla.target, op: equals, value: { answer: " Mary", contrast: " John" } }
@@ -301,9 +301,9 @@ Pry opens the head with the biggest push toward ' Mary' and shows its attention 
 :::
 
 :::explain-result
-DLA names the parts that pushed directly. A part that helped by changing what a later part did gets no bar for that help, so the bars aren't a full explanation, however close their total comes. Here, on :look{at=dla-total-line}[the total line], the bars total {bars_total} against a real logit difference of {actual_logit}.
+DLA names the parts that pushed directly. A part that helped by changing what a later part did gets no bar for that help, so the bars aren't a full explanation, however close their total comes. Here, on :look{at=dla-total-line}[the total line], the bars total {bars_total} against a logit difference of {actual_logit}.
 
-:refutes{target=T6}[The bars come close to the real number, and they still don't say how the parts worked together.]
+:refutes{target=T6}[The bars come close to the logit, and they still can't say how the parts worked together.]
 
 ```yaml
 supports: "Each bar is one part's direct push on the logit difference. Only direct pushes count, so treat the tall bars as suspects."
@@ -333,7 +333,7 @@ he_p: { read: prediction, args: { token: " he" }, field: prob, format: probabili
 ::::transfer{id=nurse-dla}
 ```yaml
 prompt: "The nurse said that"
-expect_if_explanation_holds: "Reading the bars the same way, you should find a few parts carrying the push, a total near the real logit difference, and a gap from the embedding and fixed numbers."
+expect_if_explanation_holds: "Reading the bars the same way, you should find a few parts carrying the push, a total near the logit difference, and a gap from the embedding and fixed numbers."
 limits: "Each bar is one part's own push. When a head helps by changing what a later part does, that help shows up in the later part's bar, not the head's."
 ```
 
@@ -346,7 +346,7 @@ free: true
 :::
 
 :::task{id=pick-pair}
-The nurse prompt is in and :look{at=dla-waterfall}[Why (DLA)] is open, explaining ' she' on its own. Pick the two tokens to compare in its Answer and Contrast menus, above the bars; the bars redraw on their own. Each has to be a single token; ' she' against ' he' is the pair to try first. Then press **Check my result**. Start over puts the nurse prompt back.
+The nurse prompt's in and :look{at=dla-waterfall}[Why (DLA)] is open, explaining ' she' on its own. Pick the two tokens to compare in its Answer and Contrast menus, above the bars; the bars redraw on their own. Each has to be a single token; ' she' against ' he' is the pair to try first. Then press **Check my result**. Start over puts the nurse prompt back.
 
 ```yaml
 target:
@@ -360,7 +360,7 @@ reset: { prompt: "The nurse said that" }
 :::
 
 :::observe{id=she-he-obs}
-The biggest pushes are {top_parts}. The bars total {bars_total}, the real logit difference is {actual_logit}, and the gap is {gap}, all three on :look{at=dla-total-line}[the total line] under the bars. For scale, ' he' gets {he_p} on this prompt, in :look{at=predictions-panel}[Predictions].
+The biggest pushes are {top_parts}. The bars total {bars_total}, the logit difference itself is {actual_logit}, and the gap is {gap}, all three on :look{at=dla-total-line}[the total line] under the bars. For scale, ' he' gets {he_p} on this prompt, in :look{at=predictions-panel}[Predictions].
 
 ```yaml
 journal: true
@@ -370,7 +370,7 @@ journal: true
 ::::
 
 :::explain-result
-Same reading routine on a new prompt: name the tall bars, then check their total against the real logit difference and the gap before you trust them.
+Same reading routine on a new prompt: name the tall bars, then check their total against the logit difference and the gap before you trust them.
 
 ```yaml
 supports: "The tall bars are the parts that pushed ' she' over ' he' directly. Only direct pushes count."
@@ -384,7 +384,7 @@ skeptic: { says: "A skeptic would say the tallest head on the nurse prompt is a 
 
 :::explain-chain
 ```yaml
-prompt: "In a few sentences: what does a tall DLA bar for ' Mary' minus ' John' tell you, why don't the bars match the real logit difference exactly, and what can't the bars show?"
+prompt: "In a few sentences: what does a tall DLA bar for ' Mary' minus ' John' tell you, why don't the bars match the logit difference exactly, and what can't the bars show?"
 model_answer: "Every head and MLP adds to the last token's residual stream; DLA measures each addition straight to the logit difference; tall bars are direct pushes, so they're suspects; the bars total close to the real difference, and the gap is the embedding's own push plus a few fixed numbers, not missing help; a part that helps by changing a later part gets no bar of its own; switching parts off is the test."
 ```
 :::

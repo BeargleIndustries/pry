@@ -179,15 +179,15 @@ Whether the steered text still reads like sensible text is called its **coherenc
 :::
 
 :::explain-result
-You judge a steer by four things, each with its source in view: what changed (the texts side by side), whether the label's idea shows up, coherence, and the control. Never by how many words changed, since the control changes words too.
+You judge a steer by four things, each with its source in view: what changed (the texts side by side), whether the label's idea shows up, coherence, and the control. A count of changed words tells you nothing on its own, since the control changes words too.
 
 Look at the two coherence numbers next to the texts. The model finds repetition very predictable, so this measure can score a text that goes round in circles as coherent.
 
 ```yaml
 assert:
   - require: { slot: coh_control, op: gt, slot2: coh_steered }
-    say: "Here the control's coherence is closer to zero than the target's, and the control's text is the one that repeats itself. That's why coherence is one readout of four, not the verdict."
-    else: "Here the target's coherence is closer to zero than the control's. Read both texts before you lean on either number: coherence is one readout of four, not the verdict."
+    say: "Here the control's coherence is closer to zero than the target's, and the control's text is the one that repeats itself. That's why coherence is one readout of four."
+    else: "Here the target's coherence is closer to zero than the control's. Read both texts before you lean on either number: coherence is one readout of four."
 supports: "The target is the one to check for its label's idea, against a control pushing just as hard. Coherence says how predictable the model finds each text, so read it next to the texts themselves."
 leaves_open: "This is one prompt at one steering strength. Coherence measures predictability, not sense, so repetitive text can score well, and none of the four readouts shows what the feature does when nobody's steering it."
 tool: steering
@@ -246,10 +246,10 @@ breaks: "mush is a symptom you see; coherence is the measure."
 :::explain-result
 The tempting guess was that only the target would change the text. It's reasonable: you only turned one feature up. The control rules it out, because it changed the text too. What set the target apart was the direction of the change.
 
-A steer that doesn't bring out the label's idea doesn't show the feature's unused, either. The steering strength may be small next to the feature's usual activation range, the idea may show up in the probabilities but not in the text, or this layer may not be where that idea gets used.
+A steer that leaves the label's idea out of the text still leaves the feature in play. The steering strength may be small next to the feature's usual activation range, the idea may show up in the probabilities without reaching the text, or this layer may be the wrong place for that idea to get used.
 
 ```yaml
-supports: "Steering pushes at every token, prompt included, at one layer. A match with the label shows the label fits at least that much, so check coherence and the control before reading more into it. Labels are written by an AI and can be wrong."
+supports: "Steering pushes at every token, prompt included, at one layer. A match with the label shows the label fits at least that much, so check coherence and the control before reading more into it."
 leaves_open: "A steer shows what adding this direction does to the text on this prompt. It doesn't show the model uses the feature this way on its own, or that the label covers everything the feature does."
 tool: steering
 skeptic: { says: "A skeptic would say the prompt's already about the beach, so any push drifts toward sea words.", check: "Here's the check: the control on the same prompt, then the same steer on a prompt with no beach in it." }

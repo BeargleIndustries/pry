@@ -63,7 +63,7 @@ Right before the unembedding there's a normalising step called LayerNorm, which 
 ## Read any layer with it {id=s3-3 outline=P2.3.md#3.3}
 
 :::explain
-The unembedding only runs once, at the top. There's nothing stopping you from running it on the residual stream partway up, though, after `L0`, after `L1`, all the way to `L11`, as if the model had to answer right there. Reading any layer's residual stream with the unembedding like this is called the **logit lens**. The same name sits on :look{at=left-tab-strip}[Pry's Logit Lens tab], which you'll open once you've made a guess.
+The unembedding only runs once, at the top. You can run it on the residual stream partway up, though, after `L0`, after `L1`, all the way to `L11`, as if the model had to answer right there. Reading any layer's residual stream with the unembedding like this is called the **logit lens**. The same name sits on :look{at=left-tab-strip}[Pry's Logit Lens tab], which you'll open once you've made a guess.
 :::
 
 :::analogy
@@ -141,7 +141,7 @@ Read each row as what that layer would guess, read through the logit lens.
 :refutes[Being on top partway up didn't settle anything: the last two layers still changed the probabilities.]
 
 ```yaml
-supports: "The logit lens shows ' basketball' leading from the middle-to-late layers and losing probability at the end. It's an approximation, since the middle layers weren't built to be read this way. It's a hint, not proof."
+supports: "The logit lens shows ' basketball' leading from the middle-to-late layers and losing probability at the end. It's an approximation, since the middle layers weren't built to be read this way."
 leaves_open: "The rows show what the unembedding makes of each layer, not which part of the model raised or lowered ' basketball'."
 tool: logit-lens
 skeptic: { says: "A skeptic would say the drop at the end means the late layers are working against the answer.", check: "Check where ' basketball' sits at the end: it's still the top token, just with a smaller share." }
@@ -202,7 +202,7 @@ Here's the same kind of couplet for GPT-2 small. Pry runs it through the logit l
 :::
 
 :::explain
-' rabbit' isn't the top guess in any row. This tool, on this model, doesn't show it. Pry's chart only shows each row's top token, so a word sitting lower down stays out of sight; what you can say is that GPT-2 small doesn't put the rhyme on top anywhere.
+' rabbit' stays off the top in every row. Pry's chart only shows each row's top token, so a word sitting lower down stays out of sight; what you can say is that GPT-2 small never puts the rhyme on top, and this tool can't tell you whether it's lurking underneath.
 :::
 
 ::::
@@ -251,10 +251,10 @@ check: { read: lens.first_top_layer, args: { token: " Mary" }, op: equals, value
 ::::
 
 :::explain-result
-Hold that against your guess above. Same shape a third time: the answer shows up late in :look{at=logit-lens-heatmap}[the ' to' column], and the last layer lowers it. Even close to certain partway up isn't the answer you'd get out the other end. So read the early rows as a rough hint.
+Hold that against your guess above. Same shape a third time: the answer shows up late in :look{at=logit-lens-heatmap}[the ' to' column], and the last layer lowers it. Close to certain partway up still got trimmed by the end. So read the early rows as a rough hint.
 
 ```yaml
-supports: "The middle layers weren't built to be read this way, so early rows are a rough hint. It's a hint, not proof."
+supports: "The middle layers weren't built to be read this way, so early rows are a rough hint."
 leaves_open: "It shows what the unembedding would make of each layer's residual stream. It doesn't show which part added the answer, or what else the residual stream holds that this read can't see."
 tool: logit-lens
 skeptic: { says: "A skeptic would say ' Mary' wasn't there at all before the row where it first leads.", check: "This chart can't settle that: it shows only each row's top token, so a word climbing just below the top stays out of sight. Read the first row where a word leads as the latest it could have started, not the earliest." }
@@ -266,6 +266,6 @@ skeptic: { says: "A skeptic would say ' Mary' wasn't there at all before the row
 :::explain-chain
 ```yaml
 prompt: "In a few sentences: what is a logit lens row, and why is {peak_p} at {peak_layer} not what GPT-2 'believed' there?"
-model_answer: "Each layer adds to the residual stream; the logit lens reads it with the unembedding, the model's last step; that step was built for the top, so middle reads are rough; ' basketball' climbs late, peaks at {peak_layer} and falls at the end because later layers add more; the row is a measurement, not a belief."
+model_answer: "Each layer adds to the residual stream; the logit lens reads it with the unembedding, the model's last step; that step was built for the top, so middle reads are rough; ' basketball' climbs late, peaks at {peak_layer} and falls at the end because later layers add more; the row's a measurement of what that layer would guess if the model had to stop there."
 ```
 :::

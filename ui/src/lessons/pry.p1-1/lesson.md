@@ -30,7 +30,7 @@ prompt: "Michael Jordan played the sport of"
 :::
 
 :::explain
-:look{at=prompt-input}[The prompt box] has a sentence in it: "Michael Jordan played the sport of". It hasn't run yet. Before it does, you'll make a call about what's going to happen when it runs.
+:look{at=prompt-input}[The prompt box] has a sentence in it: "Michael Jordan played the sport of". It hasn't run yet, and before it does you'll make a call about what's going to happen when it runs.
 :::
 
 :::simplification
@@ -76,7 +76,7 @@ check: { read: top_guess.token, op: equals, value: " basketball" }
 :::
 
 :::explain
-" basketball" gets {basketball}. After it come " football" at {football}, " golf" at {golf} and " the" at {the_jordan}. Those four together hold {top_four}. The rest is spread thin: the panel's "everything else" row, every word outside the top ten, holds {rest}. So the model doesn't hand back one answer. It hands back a chance for every word it could say next.
+" basketball" gets {basketball}. After it come " football" at {football}, " golf" at {golf} and " the" at {the_jordan}. Those four together hold {top_four}. The rest's spread thin: the panel's "everything else" row, every word outside the top ten, holds {rest}. So what comes back is a chance for every word the model could say next, with one of them out front.
 
 ```yaml
 assert:
@@ -91,7 +91,7 @@ assert:
 :::explain
 :refutes[Lots of people expect a search or a table. It's what you'd see if the model looked things up, and some chat products really do run a web search and paste the results in. GPT-2 in Pry has nothing like that: it ran on your computer, and nothing went out to compute it.]
 
-What ran is a file of numbers that sits on your disk. It turns your text into a score for every possible next word, then turns the scores into the chances in :look{at=predictions-panel}[Predictions]. A fixed file of numbers that does that is called a **language model**. GPT-2 is one, and so is whatever sits underneath ChatGPT and its cousins, so it's the name you'll hear everywhere.
+What ran is a file of numbers that sits on your disk. It turns your text into a score for every possible next word, then turns the scores into the chances in :look{at=predictions-panel}[Predictions]. A fixed file of numbers that does that is called a **language model**. GPT-2's one, and so is whatever sits underneath ChatGPT and its cousins, so it's the name you'll hear everywhere.
 :::
 
 :::analogy
@@ -152,7 +152,7 @@ Look at :look{at=left-tab-strip}[the left panel's tab row]. Each tab measures so
 :::
 
 :::explain
-Pry exists to measure what goes on inside a model. GPT-2 small is small, open and well studied, which is why lessons use it. It's also plain: no chat training, no search and no tools. Measuring what goes on inside a model, to find out how it got to its guess, is called **interpretability**. It's the research field Pry's tools come from, and the word you'd search for to read more.
+Pry exists to measure what goes on inside a model. GPT-2 small's small, open and well studied, which is why the lessons use it, and it's plain: no chat training, no search and no tools. Measuring what goes on inside a model, to find out how it got to its guess, is called **interpretability**. It's the research field Pry's tools come from, and the word you'd search for to read more.
 :::
 
 :::analogy
@@ -252,7 +252,7 @@ Now add three words and run it again, to see what happens when the text points a
 :::
 
 :::explain
-Predictions now shows the longer sentence: " Paris" gets {paris} and " Marse" (the start of Marseille) gets {marse}, a gap of {paris_lead}. Lesson P1.4 comes back to this one.
+Predictions now shows the longer sentence: " Paris" gets {paris} and " Marse" (the start of Marseille) gets {marse}, a gap of {paris_lead}. Lesson P1.4's going to come back to this one.
 
 ```yaml
 assert:

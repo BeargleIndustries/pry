@@ -63,7 +63,7 @@ hidden: { patching-grid: true }
 :::
 
 :::do{id=patch-resid}
-Researchers call the run on the first prompt the **clean run** and the run on the second the **corrupted run**. Nothing's broken: "corrupted" just means changed. Papers say clean and corrupted, and Pry's boxes say "Original prompt" and "Changed prompt". The Original prompt here is P3.1's Mary and John sentence, and the Changed prompt swaps the second ' John' for ' Mary'. Press **Do it** to run the Swap test, then find :look{at=patch-three-logits}[the three logits]. The grid of results stays covered until you've made a guess in the next section.
+Researchers call the run on the first prompt the **clean run** and the run on the second the **corrupted run**. Nothing's broken: "corrupted" just means changed. Papers say clean and corrupted, and Pry's boxes say "Original prompt" and "Changed prompt". The Original prompt here's P3.1's Mary and John sentence, and the Changed prompt swaps the second ' John' for ' Mary'. Press **Do it** to run the Swap test, then find :look{at=patch-three-logits}[the three logits]. The grid of results stays covered until you've made a guess in the next section.
 
 ```actions
 - run_patching: { clean: "When Mary and John went to the store, John gave a drink to", corrupted: "When Mary and John went to the store, Mary gave a drink to", type: resid }
@@ -71,7 +71,7 @@ Researchers call the run on the first prompt the **clean run** and the run on th
 :::
 
 :::explain
-Start with two of them. In the clean run, ' Mary' gets a logit of {clean}. In the corrupted run it's {corrupted}. They're logits, not probabilities. The logit's the score before the scores turn into probabilities, and it's the better ruler for a swap: one token's logit doesn't shift just because other tokens' scores did.
+Start with two of them. In the clean run, ' Mary' gets a logit of {clean}. In the corrupted run it's {corrupted}. Both are logits, the score before it turns into a probability, and the logit's the better ruler for a swap: one token's logit stays put when other tokens' scores move.
 :::
 
 ## Which word and which layer? {id=s3-4 outline=P3.3.md#3.4}
@@ -136,7 +136,7 @@ Press **Do it** to select the ' store' column in :look{at=patching-grid}[the gri
 :::
 
 :::observe{id=store-obs}
-The patched logit equals the corrupted one, so the share's zero. It isn't just this layer, either: every cell in the ' store' column reads the same. Didn't expect nothing at all? Lots of people don't.
+The patched logit equals the corrupted one, so the share's zero, and every cell in the ' store' column reads the same whichever layer you pick. Didn't expect nothing at all? Lots of people don't.
 
 ```yaml
 check: { read: patch.cell, args: { layer: $row.27.peak_layer, position: $row.14.store_position }, field: share, op: within, value: 0, tolerance: 0.0001, expect: 0 }
@@ -178,7 +178,7 @@ head_patched: { read: patch.peak, args: { type: head }, field: patched, format: 
 :::
 
 :::do{id=patch-heads}
-Now swap heads instead of the residual stream. A head swap covers every token at once, so this grid has a cell per head, not per word. Press **Do it** to run it and open :look{at=patching-grid}[the head grid].
+Now swap heads instead of the residual stream. A head swap covers every token at once, so this grid's got a cell per head, not per word. Press **Do it** to run it and open :look{at=patching-grid}[the head grid].
 
 ```actions
 - run_patching: { clean: "When Mary and John went to the store, John gave a drink to", corrupted: "When Mary and John went to the store, Mary gave a drink to", type: head }

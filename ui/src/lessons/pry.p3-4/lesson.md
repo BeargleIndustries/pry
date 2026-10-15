@@ -36,9 +36,9 @@ free: true
 ## Knocking out a feature {id=s3-2 outline=P3.4.md#3.2}
 
 :::explain
-Every feature comes with its own fixed list of numbers, one for each number in the residual stream. Adding that list in pushes the residual stream one particular way, and a feature's activation says how much of it there is. That list is called the feature's **direction**, a name you'll see again when you turn a feature up instead of off.
+Every feature comes with its own fixed list of numbers, one for each number in the residual stream. Adding that list in pushes the residual stream one particular way, and a feature's activation says how much of it there is. That list's called the feature's **direction**, a name you'll see again when you turn a feature up instead of off.
 
-Ablation (P3.2) applies to features too. At one layer, the SAE measures each feature's activation at every token; Pry subtracts the feature's own share (its activation times its direction's numbers) from the residual stream, at that layer, at every token where the feature fires, and lets the run carry on. Nothing gets rebuilt, and the edit isn't limited to ' nurse'.
+Ablation (P3.2) applies to features too. At one layer, the SAE measures each feature's activation at every token; Pry subtracts the feature's own share (its activation times its direction's numbers) from the residual stream, at that layer, at every token where the feature fires, and lets the run carry on from there.
 
 In Pry it's "Knock out features:", with results in "Knockout results" and "Ablated top-5". It's the same ablation you ran on heads, done to a feature.
 :::
@@ -54,7 +54,7 @@ breaks: "other parts take over; zero is harsh; and the SAE doesn't capture every
 ::::fold{title="The part the SAE doesn't capture"}
 
 :::explain
-Rebuild a residual stream from its SAE features and you don't get it back exactly. What's left over has a real name: **reconstruction error**. A feature knockout never touches it, so whatever the leftover carries keeps flowing through the run.
+Rebuild a residual stream from its SAE features and you get it back close, with a bit left over. That leftover's called the **reconstruction error**. A feature knockout never touches it, so whatever the leftover carries keeps flowing through the run.
 :::
 
 ::::
@@ -112,7 +112,7 @@ capture: target
 :::
 
 :::observe{id=top-obs}
-You picked :earlier{key="pry.p3-4.top-pick"}[nothing]. In :look{at=ablation-results}[the knockout results], ' she' went from {before} to {after}. It fell, and it's still on top, so the features weren't the whole story. The labels sounded like they'd explain ' she' on their own, and the run says they don't.
+You picked :earlier{key="pry.p3-4.top-pick"}[nothing]. In :look{at=ablation-results}[the knockout results], ' she' went from {before} to {after}. It fell, and it's still on top, so the features are part of the story and the labels oversold them.
 
 ```yaml
 check: { read: feature_ablation.delta, args: { token: " she" }, op: lt, value: 0, expect: -0.011518552899360657 }
@@ -148,7 +148,7 @@ capture: control
 :::
 
 :::observe{id=control-obs}
-The unrelated feature moved ' she' by {control_delta}, against {target_delta} for the top features. That's the floor any real effect has to beat, and the top features beat it.
+The unrelated feature moved ' she' by {control_delta}, against {target_delta} for the top features. That's the floor any effect has to beat, and the top features beat it.
 
 ```yaml
 check: { read: feature_ablation.delta, args: { token: " she" }, from: target, op: lt, value: $capture.control.feature_ablation.delta, value_args: { token: " she" } }
@@ -167,7 +167,7 @@ model_answer: "Removing any active feature's share changes the residual stream, 
 ## What the knockout supports {id=s3-6 outline=P3.4.md#3.6}
 
 :::explain-result
-The common guess is that these are the features that make ' she', so ' she' should vanish. It's reasonable: they're active on ' nurse' and their labels sound right. The run doesn't back all of that, though. ' she' fell further than with an unrelated feature, so these features affect ' she' on this prompt, at this layer. They were removed at every token where they fire, not only at ' nurse'.
+The common guess is that these are the features that make ' she', so ' she' should vanish. It's reasonable: they're active on ' nurse' and their labels sound right. The run backs part of it. ' she' fell further than with an unrelated feature, so these features affect ' she' on this prompt, at this layer, and they were removed at every token where they fire.
 
 The other way round needs care too. A feature whose knockout changes nothing may still be used. The same information can sit in other features, or earlier layers may already have copied it into later tokens' residual streams, before the layer you edited.
 
@@ -233,7 +233,7 @@ free: true
 :::
 
 :::do{id=doctor-knockout}
-Press **Do it** to clear the knockouts, run the doctor prompt and knock out the top features at ' doctor'. One of them's labelled after a TV show. Labels can be odd like that, and it's worth remembering they're guesses.
+Press **Do it** to clear the knockouts, run the doctor prompt and knock out the top features at ' doctor'. One of them's labelled after a TV show. Labels can be odd like that... they're an AI's guesses, after all.
 
 ```actions
 - reset: {}
@@ -257,7 +257,7 @@ journal: true
 ::::
 
 :::question{id=two-reasons}
-If ' he' barely moves, list two reasons that don't mean the features are unused.
+If ' he' barely moves, list two reasons it could still be using those features.
 
 ```yaml
 free: true

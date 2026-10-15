@@ -88,10 +88,10 @@ Effects: `view` and `compute` run freely and replay when a section opens; `downl
 | `lens.peak_prob` | number (probability) | `{ token: string }` | The token's highest logit lens probability. |
 | `lens.final_prob` | number (probability) | `{ token: string }` | The token's probability at the last layer. |
 | `dla.bars_total` | number (logit) |  | The sum of the DLA bars. |
-| `dla.answer_logit` | number (logit) |  | The answer token's real logit. |
-| `dla.contrast_logit` | number (logit) |  | The contrast token's real logit. |
-| `dla.actual` | number (logit) |  | The real logit, or with a contrast, the difference between the two logits. |
-| `dla.gap` | number (logit) |  | The gap between the bars' total and the real logit. |
+| `dla.answer_logit` | number (logit) |  | The answer token's logit, as the model gave it. |
+| `dla.contrast_logit` | number (logit) |  | The contrast token's logit, as the model gave it. |
+| `dla.actual` | number (logit) |  | The answer token's logit, or with a contrast, the difference between the two logits. |
+| `dla.gap` | number (logit) |  | The gap between the bars' total and the logit itself. |
 | `dla.top_parts` | list | `{ n: integer }` | The parts with the biggest DLA bars. |
 | `dla.target` | record |  | The DLA answer and contrast tokens. |
 | `dla.parts_above` | number (count) | `{ threshold: number }` | How many DLA bars push harder than a threshold, in logits (P2.4:53). |
@@ -172,7 +172,7 @@ Effects: `view` and `compute` run freely and replay when a section opens; `downl
 | `steering-strength` |  |  | The Steering strength control. |
 | `embedding-view` |  |  | The mounted embedding-compare view, inside the sidebar. |
 | `patch-three-logits` |  |  | The clean, corrupted and patched logits with the share formula. |
-| `dla-total-line` |  |  | The DLA line with the bars' total, the real logit and the gap. |
+| `dla-total-line` |  |  | The DLA line with the bars' total, the logit itself and the gap. |
 | `write-it-step` |  |  | The control that writes one more token in Watch it write. |
 | `write-it-temperature` |  |  | The temperature setting in Watch it write. |
 | `write-it-seed` |  |  | The seed setting in Watch it write. |

@@ -96,9 +96,9 @@ check:
 :::
 
 :::explain
-You picked :earlier{key="pry.p1-4.top-pick"}[nothing] for the top, and :earlier{key="pry.p1-4.share-pick"}[nothing] for its share. Here's what the model did: ' one' gets {one_p}. ' two' gets {two_p}, ' four' gets {four_p} and ' three' gets {three_p}. Those four hold {top_four} between them. Everything outside the top ten holds {rest}. So the top token isn't the right answer, and even it doesn't get anywhere near all of the 100%.
+You picked :earlier{key="pry.p1-4.top-pick"}[nothing] for the top, and :earlier{key="pry.p1-4.share-pick"}[nothing] for its share. Here's what the model did: ' one' gets {one_p}. ' two' gets {two_p}, ' four' gets {four_p} and ' three' gets {three_p}. Those four hold {top_four} between them, and everything outside the top ten holds {rest}. So the top token's wrong, and even it's nowhere near all of the 100%.
 
-If you went with ' four', that's what you'd expect from something that checks the sum. Nothing here checks anything: a probability is about what text tends to follow, not what's true.
+If you went with ' four', that's what you'd expect from something that checks the sum. Nothing in there checks the sum: a probability's about what text tends to follow.
 :::
 
 ## What the percentages are {id=s3-3 outline=P1.4.md#3.3}
@@ -108,9 +108,9 @@ shape: { read: shape, expect: "few" }
 :::
 
 :::explain
-Each percentage says how likely that token is to come next as a continuation of this text, and across the whole vocabulary they add up to 100%. That's called a **probability**, and the whole spread across the vocabulary is the probability distribution. Every number in Predictions is one, and they're about text, not truth. Pry's one-word summary of this spread is {shape}. Look at :look{at=prediction-bar token=" one"}[a bar], then at :look{at=everything-else-row}[the everything-else row].
+Each percentage says how likely that token is to come next as a continuation of this text, and across the whole vocabulary they add up to 100%. That's called a **probability**, and the whole spread across the vocabulary's the probability distribution. Every number in Predictions is one. Pry's one-word summary of this spread is {shape}. Look at :look{at=prediction-bar token=" one"}[a bar], then at :look{at=everything-else-row}[the everything-else row].
 
-Each bar's length is its probability on a 0-100% scale. The 'everything else' row is the rest.
+Each bar's length is its probability on a 0-100% scale, and the 'everything else' row's the rest.
 
 ```yaml
 assert:
@@ -139,13 +139,13 @@ tool: predictions
 ## The raw scores underneath {id=s3-4 outline=P1.4.md#3.4}
 
 :::explain
-Before they're probabilities, the numbers start as raw scores. Every token in the vocabulary gets one at the top of the last token's residual stream, and a bigger score means a bigger probability. That score is called a **logit**. Plenty of the tools in later lessons measure in logits, so it's worth knowing where to find them: click :look{at=prediction-bar token=" one"}[the ' one' bar] to see its logit.
+Before they're probabilities, the numbers start as raw scores. Every token in the vocabulary gets one at the top of the last token's residual stream, and a bigger score means a bigger probability. That score's called a **logit**. Plenty of the tools in later lessons measure in logits, and they're one click away: click :look{at=prediction-bar token=" one"}[the ' one' bar] to see its logit.
 :::
 
 ::::fold{title="How do scores become probabilities?"}
 
 :::explain
-The step that turns logits into probabilities that add up to 100% is called softmax.
+The step that turns logits into probabilities that add up to 100% is called softmax, and that's all you need to know about it for now.
 :::
 
 ::::
@@ -161,7 +161,7 @@ choices:
 :::
 
 :::observe{id=bigger-obs}
-' one''s logit is bigger, and so is its probability. The order of the logits is the order of the bars.
+' one''s logit's bigger, and so is its probability. The order of the logits is the order of the bars.
 
 ```yaml
 check: { read: prediction, args: { token: " one" }, field: logit, op: gt, value: $read.prediction, value_args: { token: " four" }, value_field: logit }
@@ -242,7 +242,7 @@ choices:
 :::
 
 :::explain-result
-' one' is a fluent wrong answer, and it came from the same process as a right one. That's called a **hallucination**. It's the word people use for chatbots' made-up answers, and it comes back in lesson P4.1. :look{at=predictions-panel}[Predictions] still shows it.
+' one''s a fluent wrong answer, and it came from the same process as a right one. That's called a **hallucination**. It's the word people use for chatbots' made-up answers, and it comes back in lesson P4.1. :look{at=predictions-panel}[Predictions] still shows it.
 
 :refutes[Lots of people read a wrong answer as a lie or a glitch. A lie needs someone aiming to mislead, and nothing in here aims at anything. A glitch would be a bug, and this is the same arithmetic that put ' basketball' on top in lesson 1.]
 
