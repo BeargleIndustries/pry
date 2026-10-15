@@ -160,6 +160,9 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
   // --- front matter --------------------------------------------------------------
   const fm = { line: 1, section: 0 };
   if (!opts.bundled && meta.id.startsWith(tool.idPrefix)) err('id-prefix', { prefix: tool.idPrefix }, fm);
+  // The folder is the id (AUTHORING.md step 3); `_template` and other `_` folders never load as lessons.
+  const folder = lesson.file?.split(/[\\/]/).slice(-2, -1)[0];
+  if (folder && !folder.startsWith('_') && folder !== meta.id) err('folder-id', { folder, id: meta.id }, fm);
   if (meta.tool_min !== undefined) {
     const have = opts.appVersion ?? tool.version;
     if (compareVersions(String(meta.tool_min), have) > 0) err('tool-min', { tool: tool.tool, need: meta.tool_min, have }, fm);
@@ -273,6 +276,52 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
     return out;
   };
 
+  /** The scalar type a check's value compares as, when the lint can tell (`$prediction` from the predict's choices). */
+  const scalar = (v: unknown): string | undefined =>
+    typeof v === 'number' ? 'number' : typeof v === 'boolean' ? 'boolean' : typeof v === 'string' ? 'string' : undefined;
+  const readType = (name: string, field?: string): string | undefined => {
+    const def = tool.readouts[name];
+    return field !== undefined ? def?.fields?.[field] : def?.type;
+  };
+  const valueType = (c: CheckItem, o: Ordered): { type: string; what: string } | undefined => {
+    const v = c.value;
+    if (c.op === 'in' && Array.isArray(v)) {
+      const types = new Set(v.map(scalar));
+      const only = types.size === 1 ? [...types][0] : undefined;
+      return only ? { type: only, what: 'the list in `value`' } : undefined;
+    }
+    if (c.op === 'in' || c.op === 'contains') return undefined;
+    if (v === undefined) {
+      const e = c.expect;
+      const t = e === 'pending' || e === 'learner' || e === 'absent' ? undefined : scalar(e);
+      return t ? { type: t, what: '`expect`' } : undefined;
+    }
+    if (typeof v !== 'string' || !v.startsWith('$')) {
+      const t = scalar(v);
+      return t ? { type: t, what: '`value`' } : undefined;
+    }
+    let m: RegExpExecArray | null;
+    if (v === '$prediction') {
+      const p = steps.find((x) => x.step.kind === 'predict' && x.step.fields.checks === o.step.id);
+      const choices: unknown[] | null = p && Array.isArray(p.step.fields.choices) ? p.step.fields.choices : null;
+      if (!choices?.length) return undefined;
+      // Choice text compares with its quotes removed (runner/checks.ts predictionValue).
+      const numeric = choices.every((ch: any) => typeof ch?.text === 'string' && /^\s*-?\d+(?:\.\d+)?%?\s*$/.test(ch.text.replace(/^\s*["“'‘](.*)["”'’]\s*$/s, '$1')));
+      return { type: numeric ? 'number' : 'string', what: 'the predict choices, `$prediction`' };
+    }
+    if ((m = /^\$slot\.(.+)$/.exec(v))) {
+      const sl = slotsFor(o.section)[m[1]];
+      if (!sl?.read || sl.formula) return undefined;
+      const t = readType(sl.read, sl.field);
+      return t ? { type: t, what: `the slot \`{${m[1]}}\`` } : undefined;
+    }
+    if ((m = /^\$(?:read|before|baseline)\.(.+)$/.exec(v)) || (m = /^\$capture\.[^.]+\.(.+)$/.exec(v))) {
+      const t = readType(m[1], c.value_field);
+      return t ? { type: t, what: `\`${m[1]}\`` } : undefined;
+    }
+    return undefined;
+  };
+
   const checkItem = (c: CheckItem, o: Ordered, inTask: boolean) => {
     const where = at(o);
     const def = checkReadout(c.read, c.args, where);
@@ -284,6 +333,10 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
         // A field's own type picks the operators (`rank` is a number).
         const type = c.field !== undefined ? def.fields![c.field] : def.type;
         if (!OPS_BY_TYPE[type]?.includes(c.op)) err('op-type', { op: c.op, read: c.field ? `${c.read}.${c.field}` : c.read, type, ops: OPS_BY_TYPE[type] }, where);
+        else if (type === 'number' || type === 'string' || type === 'boolean') {
+          const got = valueType(c, o);
+          if (got && got.type !== type) err('value-type', { read: c.field ? `${c.read}.${c.field}` : c.read, type, what: got.what, got: got.type }, where);
+        }
       }
     }
     if (c.value_field !== undefined && typeof c.value === 'string' && /^\$(read|capture|before|baseline)\./.test(c.value)) {
@@ -421,6 +474,8 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
       case 'observe': {
         const list = Array.isArray(f.check) ? f.check : f.check ? [f.check] : [];
         for (const c of list) if (isObj(c)) checkItem(c as CheckItem, o, false);
+        // Nothing reads an observe's own `expect`: the value goes on the check item, or `value: $slot.<name>`.
+        if (f.expect !== undefined) err('observe-expect', { hint: typeof f.expect === 'string' && slots[f.expect] ? f.expect : undefined }, where);
         break;
       }
       case 'compare':
@@ -560,7 +615,9 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
 
   // Slot uses before the step that produces the value.
   const firstCompute = steps.find((o) => o.step.kind === 'do' && o.step.actions.some((a) => tool.actions[a.name]?.effect === 'compute'));
-  const firstEnter = lesson.sections.find((s) => s.enter);
+  // A baseline or `enter` that sets a prompt doesn't run the model; only `run: true` does (pry-apply.ts).
+  const runs = (v: unknown) => isObj(v) && v.run === true;
+  const firstEnter = lesson.sections.find((s) => s.enter && runs(s.enter.value));
   for (const o of steps) {
     const slots = slotsFor(o.section);
     for (const t of stepTexts(o.step)) {
@@ -575,7 +632,8 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
           const cap = captures.get(slot.from_capture);
           before = !!cap && shownAt < cap.order;
         } else if (slot.read) {
-          const ran = (firstCompute && firstCompute.order < o.order) || meta.baseline !== undefined || (firstEnter && firstEnter.index <= o.section.index);
+          // The do step that runs it may name it: its text fills in when it runs.
+          const ran = (firstCompute && firstCompute.order <= shownAt) || runs(meta.baseline) || (firstEnter && firstEnter.index <= o.section.index);
           before = !ran;
         }
         if (before) err('slot-before-readout', { name: m[1] }, at(o, t.line));
