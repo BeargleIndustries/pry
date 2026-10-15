@@ -489,6 +489,9 @@ export class LessonRunner<VS = unknown> {
         if (!st.locked && !st.skipped) this.hide.hide(list(step.fields.hides));
       }
       this.#expected = this.snapshotKey();
+      // `$before` is what this section set up: a change the learner makes with the
+      // app's own controls (a menu, a cell) counts from here, not from their first Run it.
+      if (r.status === 'done') this.markBefore();
     } finally {
       clearTimeout(timer);
       if (this.#nav.current(ticket)) {

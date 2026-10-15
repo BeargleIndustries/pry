@@ -224,7 +224,7 @@ paris_lead: { from: [paris, marse], formula: difference, format: probability }
 :::
 
 :::explain
-" now" gets {now}, " the" gets {the_france}, " a" gets {a_france} and " home" gets {home}. A sentence like "The capital of France is" turns up in lots of different text, and plenty of it doesn't go on to name a city ("...is now home to", "...is a short train ride away"), so the chance gets shared out.
+On the France run in :look{at=predictions-panel}[Predictions], " now" gets {now}, " the" gets {the_france}, " a" gets {a_france} and " home" gets {home}. A sentence like "The capital of France is" turns up in lots of different text, and plenty of it doesn't go on to name a city ("...is now home to", "...is a short train ride away"), so the chance gets shared out.
 
 ```yaml
 assert:
@@ -243,7 +243,7 @@ breaks: "there's no person in there, and nothing in it aims at being true."
 :::
 
 :::do{id=city-of}
-Now add three words and run it again, to see what happens when the text points at a city.
+Now add three words and run it again, to see what happens when the text points at a city. Predictions swaps the France run for this one, so the numbers above stay with the run before.
 
 ```actions
 - set_prompt: { text: "The capital of France is the city of" }
@@ -252,7 +252,7 @@ Now add three words and run it again, to see what happens when the text points a
 :::
 
 :::explain
-" Paris" gets {paris} and " Marse" (the start of Marseille) gets {marse}, a gap of {paris_lead}. Lesson P1.4 comes back to this one.
+Predictions now shows the longer sentence: " Paris" gets {paris} and " Marse" (the start of Marseille) gets {marse}, a gap of {paris_lead}. Lesson P1.4 comes back to this one.
 
 ```yaml
 assert:

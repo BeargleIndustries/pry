@@ -149,7 +149,7 @@ columns:
 :::
 
 :::observe{id=changed-obs}
-You picked :earlier{key="pry.p3-5.change-pick"}[nothing]. Both texts changed, so counting changed words won't tell you which one moved toward the label: the control changes words too. What matters is which way each text went. Read the steered text for weather words, since the target's label is about rain, and look for rain in the control's text too. When we recorded this lesson, the steered text filled up with sun, clouds, wind and rain, and the control's went round in circles about the ocean with no rain in it, so only the target moved toward its label. Steered text can come out a little differently on another computer, so trust the panes over this paragraph. Now the scale: you pushed at steering strength {s}, and on its own the feature's activation on this prompt peaks at {act_max}. Pry shows both next to :look{at=steering-strength}[Steering strength].
+You picked :earlier{key="pry.p3-5.change-pick"}[nothing]. Both texts changed, so counting changed words won't tell you which one moved toward the label: the control changes words too. What matters is which way each text went. All three sit side by side in :look{at=lesson:step:three-texts}[the columns above], unsteered, steered and control: read the steered one for weather words, since the target's label is about rain, and look for rain in the control's too. The check under this step says which of them has it. Now the scale: you pushed at steering strength {s}, and on its own the feature's activation on this prompt peaks at {act_max}. Pry shows both next to :look{at=steering-strength}[Steering strength].
 
 ```yaml
 check:
@@ -302,7 +302,7 @@ journal: true
 ::::
 
 :::task{id=find-strength}
-Find a steering strength where the label's idea shows up in the text. Then read the coherence line next to it: you've seen that a number closer to zero can just mean repetition, so judge it beside the text. Change only the steering strength, type your guess before each run, and you've got four runs.
+Find a steering strength where the target's idea, rain, shows up in the Saturday text. Change only the strength box below, type your guess, then press **Run it**: it steers with what the boxes say, and you've got four runs. Then read :look{at=steering-coherence}[the coherence line] next to the text: you've seen that a number closer to zero can just mean repetition, so judge it beside the text.
 
 ```yaml
 target:
