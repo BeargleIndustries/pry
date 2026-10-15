@@ -2,6 +2,7 @@
   // Two captured top 5 lists side by side. From a knockout capture the list is
   // the knocked-out run's; otherwise it's the run's own predictions.
   import type { PrySource } from '../pry-readouts';
+  import { formatProbability } from '../../slots';
 
   interface Props {
     args: { a: string; b: string };
@@ -22,7 +23,7 @@
     { name: args.a, list: top5(captures[args.a]) },
     { name: args.b, list: top5(captures[args.b]) },
   ]);
-  const pct = (p: number) => `${(p * 100).toFixed(1)}%`;
+  const pct = (p: number) => formatProbability(p);
 </script>
 
 <section class="grid grid-cols-2 gap-3 rounded-md border border-zinc-800 bg-zinc-950 p-3 text-xs text-zinc-300">

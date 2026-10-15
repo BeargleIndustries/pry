@@ -22,21 +22,30 @@ function rowOf(slot: Slot, row: SlotSource['row'] = rowConstant): RowConstant | 
   return row(id, field.join('.'));
 }
 
-export type SlotFormat = NonNullable<Slot['format']>;
+/** The authored formats, plus `points`: a change in probability (a delta), never a probability itself. */
+export type SlotFormat = NonNullable<Slot['format']> | 'points';
 
-const PERCENT = (p: number) => `${(p * 100).toFixed(1).replace(/\.0$/, '')}%`;
+const PERCENT = (p: number) => {
+  const pct = p * 100;
+  // Under 1%, two significant figures, so a small chance doesn't read as 0.1% or 0%.
+  const s = Math.abs(pct) < 1 && pct !== 0 ? String(Number(pct.toPrecision(2))) : pct.toFixed(1).replace(/\.0$/, '');
+  return `${s}%`;
+};
 
-/** "about 1 in N" (or "about k in n" above one half), the natural frequency beside a percentage. */
+/** N rounded to two significant figures past 100, with a thousands separator: 1094 -> "1,100". */
+const roundN = (n: number) => (n >= 100 ? Number(n.toPrecision(2)) : n).toLocaleString('en-US');
+
+/** "about 1 in N" (or "about k in n" above one half), the natural frequency beside a percentage. Only for 0 < p <= 1. */
 export function naturalFrequency(p: number): string {
-  if (p <= 0) return 'about 0 in 1';
+  if (p <= 0 || p > 1) return '';
   if (p <= 0.5) {
     const n = Math.round(1 / p);
     const rel = Math.abs(1 / n - p) / p;
-    if (rel <= 0.1 || p < 0.2) return `about 1 in ${n}`;
+    if (rel <= 0.1 || p < 0.2) return `about 1 in ${roundN(n)}`;
   }
   if (p > 0.95) {
-    const n = Math.round(1 / (1 - p));
-    return `about ${n - 1} in ${n}`;
+    const n = Math.min(1000, Math.round(1 / (1 - p)));
+    return `about ${(n - 1).toLocaleString('en-US')} in ${n.toLocaleString('en-US')}`;
   }
   let best = { k: 1, n: 2, err: Infinity };
   for (let n = 2; n <= 10; n++) {
@@ -48,22 +57,60 @@ export function naturalFrequency(p: number): string {
   return `about ${best.k} in ${best.n}`;
 }
 
+/** A probability with its natural frequency; a value outside (0, 1] is a change, so it prints as points. */
 export function formatProbability(p: number): string {
-  return `${PERCENT(p)} (${naturalFrequency(p)})`;
+  if (p < 0 || p > 1) return formatPoints(p);
+  const nf = naturalFrequency(p);
+  return nf ? `${PERCENT(p)} (${nf})` : PERCENT(p);
+}
+
+/** A change in probability as signed percentage points: "−12.5 points", "+3.6 points". */
+export function formatPoints(d: number): string {
+  const pts = Math.abs(d * 100);
+  const s = pts < 1 && pts !== 0 ? String(Number(pts.toPrecision(2))) : pts.toFixed(1).replace(/\.0$/, '');
+  const sign = d > 0 ? '+' : d < 0 ? '−' : '';
+  return `${sign}${s} points`;
+}
+
+/** Record fields that hold a logit (Swap test cells, predictions). */
+const LOGIT_FIELDS = new Set(['logit', 'clean', 'corrupted', 'patched', 'answer_logit', 'contrast_logit']);
+
+/** A record read out in words: `" Paris" 9.7% (about 1 in 10)`, `L2 at position 10: clean 18.47, ...`. */
+function formatRecord(o: Record<string, unknown>, format: SlotFormat): string {
+  const head = typeof o.layer === 'number' ? (typeof o.head === 'number' ? `L${o.layer}H${o.head}` : `L${o.layer}`) : null;
+  const tok = typeof o.token === 'string' ? `"${o.token}"` : null;
+  const parts: string[] = [];
+  for (const [k, v] of Object.entries(o)) {
+    if (v === undefined || v === null || k === 'layer' || k === 'head' || k === 'token') continue;
+    if (k === 'prob' || k === 'probability') parts.push(typeof v === 'number' ? formatProbability(v) : String(v));
+    else if (k === 'delta') parts.push(typeof v === 'number' ? formatPoints(v) : String(v));
+    else if (k === 'share') parts.push(`share ${typeof v === 'number' ? PERCENT(v) : String(v)}`);
+    else if (k === 'position' || k === 'rank') parts.push(`${k} ${typeof v === 'number' ? Math.round(v) : String(v)}`);
+    else if (LOGIT_FIELDS.has(k)) parts.push(`${k.replace(/_/g, ' ')} ${typeof v === 'number' ? v.toFixed(2) : String(v)}`);
+    else if (typeof v === 'number') parts.push(`${k.replace(/_/g, ' ')} ${Number(v.toFixed(3))}`);
+    else if (typeof v === 'string') parts.push(`${k.replace(/_/g, ' ')} "${v}"`);
+    else if (typeof v === 'boolean') parts.push(`${k.replace(/_/g, ' ')} ${v ? 'yes' : 'no'}`);
+    else parts.push(`${k.replace(/_/g, ' ')} ${formatValue(v, format)}`);
+  }
+  const lead = [head, tok].filter(Boolean).join(' ');
+  if (!parts.length) return lead || '';
+  return lead ? `${lead}${head && !tok ? ':' : ''} ${parts.join(', ')}` : parts.join(', ');
 }
 
 /** Formats one value the way the plan names: probability, logit, layer, count, position, string. */
 export function formatValue(v: unknown, format: SlotFormat): string {
   if (v === undefined || v === null) return PLACEHOLDER;
-  if (format === 'string') return `"${String(v)}"`;
+  if (format === 'string' && (typeof v !== 'object' || v === null)) return `"${String(v)}"`;
   if (Array.isArray(v)) return v.map((x) => formatValue(x, format)).join(', ');
   if (typeof v === 'object') {
     const o = v as Record<string, unknown>;
-    if (typeof o.layer === 'number' && typeof o.head === 'number') return `L${o.layer}H${o.head}`;
-    return JSON.stringify(v);
+    if (typeof o.layer === 'number' && typeof o.head === 'number' && Object.keys(o).length === 2) return `L${o.layer}H${o.head}`;
+    return formatRecord(o, format);
   }
   if (typeof v !== 'number') return String(v);
   switch (format) {
+    case 'points':
+      return formatPoints(v);
     case 'probability':
       return formatProbability(v);
     case 'logit':
@@ -86,12 +133,26 @@ function rowFormat(c: RowConstant | undefined): SlotFormat {
 
 /** The format a slot renders with: its own `format`, else from the row constant's or readout's unit and type. */
 export function slotFormat(slot: Slot, readouts?: SlotSource['readouts'], src?: SlotSource): SlotFormat {
+  // A difference of two probabilities is a change: points, never "about 1 in N".
+  if (slot.formula === 'difference' && slot.format === 'probability') return 'points';
   if (slot.format) return slot.format;
   if (slot.row !== undefined) return rowFormat(rowOf(slot, src?.row));
   if (slot.formula === 'share') return 'probability';
   const def = slot.read ? readouts?.[slot.read] : undefined;
+  return readoutFormat(slot.read, def, slot.field);
+}
+
+/** The format for a readout (or one field of a record readout): a `prob` field is a probability, a `*delta` readout a change in points. */
+export function readoutFormat(read: string | undefined, def: Pick<ReadoutDef, 'type' | 'unit'> | undefined, field?: string): SlotFormat {
+  if (field === 'prob' || field === 'probability') return 'probability';
+  if (field === 'delta') return 'points';
+  if (field && LOGIT_FIELDS.has(field)) return 'logit';
+  if (field === 'share') return 'probability';
+  if (field === 'layer') return 'layer';
+  if (field === 'position' || field === 'rank') return 'position';
+  if (def?.unit === 'probability' && read && /(^|[._])(top_)?delta$/.test(read)) return 'points';
   if (def?.unit === 'probability' || def?.unit === 'logit' || def?.unit === 'layer' || def?.unit === 'count') return def.unit;
-  if (def?.type === 'string') return 'string';
+  if (def?.type === 'string' || field === 'token') return 'string';
   return 'number';
 }
 
