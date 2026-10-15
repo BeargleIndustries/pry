@@ -19,6 +19,8 @@ verified_rows: [1, 18, 30]
 ## Recall {id=s3-0 depth=optional outline=P1.3.md#3.0}
 
 :::recall{id=recall-basketball}
+Why this matters: this lesson opens up that file of numbers and follows your prompt through it.
+
 ```yaml
 from: pry.p1-1
 question: "Where did ' basketball' come from in lesson 1?"
@@ -203,7 +205,7 @@ The lesson turns on :look{at=compare-panel}[Compare] and runs both sentences sid
 :::
 
 :::observe{id=differ-obs}
-After Jordan, ' basketball' gets {jordan_bb} and ' football' gets {jordan_fb}. After Brady, ' football' gets {brady_fb} and ' basketball' gets {brady_bb}. Same last token, same start, different chances at the top.
+In :look{at=compare-panel}[Compare's next-token table], the A column is Jordan and the B column is Brady. After Jordan, ' basketball' gets {jordan_bb} and ' football' gets {jordan_fb}. After Brady, ' football' gets {brady_fb} and ' basketball' gets {brady_bb}. Same last token, same start, different chances at the top.
 
 ```yaml
 check: { read: compare.top, args: { side: a }, op: equals, value: $read.compare.top, value_args: { side: b }, not: true }
