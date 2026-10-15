@@ -49,7 +49,7 @@
 </script>
 
 <script lang="ts">
-  import type { Component } from 'svelte';
+  import { untrack, type Component } from 'svelte';
   import { X, PanelLeftClose, PanelRightClose, ChevronLeft, ChevronRight } from 'lucide-svelte';
   import Pointer from '../components/Pointer.svelte';
   import { occupied, OCCUPIED, tipHold } from '../popup/occupied.svelte';
@@ -186,11 +186,15 @@
   }
 
   // ---- `highlight` action: point at each anchor in turn ----
-  let lastSeq = -1;
+  // Only a highlight issued while this sidebar shows a settled section counts:
+  // one left over from before it mounted, or replayed by the section fold,
+  // isn't for the step on screen.
+  let lastSeq = untrack(() => highlight?.seq ?? -1);
   $effect(() => {
     const h = highlight;
     if (!h || h.seq === lastSeq || !step) return;
     lastSeq = h.seq;
+    if (step.entering) return;
     model.clearPointer();
     if (h.anchors.length === 1) model.point({ anchor: h.anchors[0] });
     else h.anchors.forEach((a, i) => model.point({ anchor: a }, i));
@@ -206,6 +210,7 @@
       tipHold.set([]);
       return;
     }
+    const scrolled = new WeakSet<HTMLElement>();
     const plan = () => {
       const sb = root!.getBoundingClientRect();
       const env = {
@@ -225,6 +230,12 @@
         },
       };
       const next = targets.map((t) => planPointer(t, env));
+      // A target scrolled out of its panel comes into view once, when it's first pointed at.
+      for (const p of next) {
+        if (p?.kind !== 'ring' || !p.el || scrolled.has(p.el)) continue;
+        scrolled.add(p.el);
+        p.el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      }
       if (JSON.stringify(next.map(sig)) !== JSON.stringify(plans.map(sig))) plans = next;
       tipHold.set(next.flatMap((p) => (p && p.kind === 'ring' && p.el ? [p.el] : [])));
     };
@@ -246,6 +257,40 @@
   const spineHighlight = $derived(plans.find((p) => p?.kind === 'in-place' && p.target === 'spine') as Extract<PointerPlan, { kind: 'in-place' }> | undefined);
   const hiddenPlans = $derived(plans.filter((p): p is Extract<PointerPlan, { kind: 'hidden' }> => p?.kind === 'hidden'));
   const activeIndex = $derived(plans.length - 1);
+
+  // ---- The step's action stays in reach: a sticky "Do it" when the next do step's button is scrolled out of view ----
+  let scroller: HTMLElement | null = $state(null);
+  const flatBlocks = (bs: RenderedBlock[]): RenderedBlock[] => bs.flatMap((b) => [b, ...flatBlocks(b.children)]);
+  const pendingDo = $derived.by(() => {
+    if (!step) return null;
+    const first = flatBlocks(step.blocks).find(
+      (b) => (b.ask ? !b.ask.locked : false) || (b.act ? b.act.state !== 'done' : false) || (b.observe ? !b.observe.revealed && !b.observe.journal : false) || (b.task ? !b.task.met : false),
+    );
+    return first?.act ? first : null;
+  });
+  let doOutOfView = $state(false);
+  $effect(() => {
+    const b = pendingDo;
+    const box = scroller;
+    if (!b || !box) {
+      doOutOfView = false;
+      return;
+    }
+    const measure = () => {
+      const btn = box.querySelector<HTMLElement>(`[data-step-id="${CSS.escape(b.stepId ?? b.key)}"] [data-do-button]`);
+      if (!btn) return void (doOutOfView = false);
+      const r = btn.getBoundingClientRect();
+      const v = box.getBoundingClientRect();
+      doOutOfView = r.bottom > v.bottom || r.top < v.top;
+    };
+    measure();
+    box.addEventListener('scroll', measure, { passive: true });
+    const timer = setInterval(measure, 250);
+    return () => {
+      box.removeEventListener('scroll', measure);
+      clearInterval(timer);
+    };
+  });
 
   function viewComponent(name: string): Component<any> | null {
     return (views[name]?.component as Component<any>) ?? null;
@@ -364,6 +409,7 @@
         <div class="mt-2 flex items-center gap-2">
           <button
             type="button"
+            data-do-button
             onclick={() => send({ type: 'do', step: b.key })}
             disabled={b.act.state === 'running'}
             class="rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
@@ -487,6 +533,11 @@
         {#if b.asserts && (ch.written || ch.skipped)}{#each b.asserts as line, i (i)}<p class="mt-2 text-xs text-zinc-400">{@render nodes(line)}</p>{/each}{/if}
       {/if}
 
+      {#if b.mount}
+        {@const Mounted = viewComponent(b.mount.view)}
+        {#if Mounted}<div class="mt-2"><Mounted args={b.mount.args} captures={captures()} /></div>{/if}
+      {/if}
+
       {#if b.kind !== 'transfer'}
         {#each b.children as child (child.key)}{@render block(child)}{/each}
       {/if}
@@ -513,7 +564,7 @@
         <div class="min-w-0 flex-1">
           <p class="text-[10px] font-semibold uppercase tracking-widest text-indigo-400">{c.title}</p>
           {#if step}
-            <p class="truncate text-sm font-medium text-zinc-100" title={step.lesson.title}>{step.lesson.title}</p>
+            <p class="break-words text-sm font-medium leading-snug text-zinc-100" title={step.lesson.title}>{step.lesson.title}</p>
             <p class="text-[11px] text-zinc-400">{c.minutes(step.lesson.minutes)}{#if step.lesson.draft} · {c.draft}{/if}</p>
           {/if}
         </div>
@@ -570,7 +621,7 @@
           </div>
         {/each}
 
-        <div class="min-h-0 flex-1 overflow-y-auto px-3 py-3">
+        <div bind:this={scroller} class="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 [overflow-wrap:anywhere]">
           {#if step.authorMode && step.authorNotes.length}
             <div class="mb-3 rounded-md border border-zinc-800 p-2 text-[11px] text-zinc-400">
               <p class="font-medium text-zinc-400">{c.authorNotes}</p>
@@ -589,6 +640,20 @@
         </div>
 
         <footer class="flex-shrink-0 border-t border-zinc-800">
+          {#if pendingDo?.act && doOutOfView}
+            {@const pd = pendingDo}
+            <div class="flex items-center gap-2 border-b border-zinc-800 px-3 py-2" data-testid="lesson-sticky-do">
+              <button
+                type="button"
+                onclick={() => send({ type: 'do', step: pd.key })}
+                disabled={pd.act!.state === 'running'}
+                class="rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
+              >
+                {#if pd.act!.state === 'running'}<span class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent align-[-2px]" aria-hidden="true"></span>{/if}
+                {c.doIt}
+              </button>
+            </div>
+          {/if}
           {#if step.honesty}
             {@const h = step.honesty}
             <div class="px-3 pt-2 text-[11px] text-zinc-400" data-testid="honesty-box" aria-label={c.honesty} role="note">

@@ -15,7 +15,7 @@
 
 import type { ReadoutDef, ToolActionSet } from '../registry/contract';
 import type { CheckItem } from '../format/schema';
-import { formatValue, type SlotFormat } from '../slots';
+import { formatValue, readoutFormat, type SlotFormat } from '../slots';
 import { lessonsCopy } from '../copy';
 
 export type Binding = 'prediction' | 'lesson' | 'run' | 'before' | 'baseline' | 'earlier' | 'other';
@@ -140,17 +140,11 @@ export function compareOp(op: string, actual: unknown, value: unknown, tolerance
   }
 }
 
-function formatFor(def: ReadoutDef | undefined): SlotFormat {
-  if (def?.unit === 'probability' || def?.unit === 'logit' || def?.unit === 'layer' || def?.unit === 'count') return def.unit;
-  if (def?.type === 'string') return 'string';
-  return 'number';
-}
-
-/** A reading for a message: "9.7% (about 1 in 10)", `" Paris"`, `L9H9`. */
-export function formatReading(v: unknown, def: ReadoutDef | undefined, field?: string): string {
+/** A reading for a message: "9.7% (about 1 in 10)", `" Paris"`, `L9H9`, a change as "−2.2 points". */
+export function formatReading(v: unknown, def: ReadoutDef | undefined, field?: string, read?: string): string {
   if (v === undefined || v === null) return 'nothing yet';
   const fieldType = field ? def?.fields?.[field] : undefined;
-  const fmt = fieldType === 'string' ? 'string' : field && fieldType === 'number' && field === 'prob' ? 'probability' : formatFor(def);
+  const fmt: SlotFormat = fieldType === 'string' ? 'string' : readoutFormat(read, def, field);
   if (Array.isArray(v)) return v.map((x) => (typeof x === 'string' ? `"${x}"` : formatValue(x, fmt === 'string' ? 'number' : fmt))).join(', ');
   return formatValue(v, fmt);
 }
@@ -173,7 +167,9 @@ export function resolveValue(item: CheckItem, env: CheckEnv): { value: unknown; 
   const field = (v: unknown) => pickField(v, item.value_field);
   if (!r) {
     if (item.value === undefined && expectUsable(item.expect)) return { value: item.expect, binding: 'lesson', missing: false };
-    return { value: item.value, binding: 'lesson', missing: false };
+    // A record or list may hold `$row` / `$earlier` values (`contains {layer: $row.27.peak_layer}`).
+    const v = typeof item.value === 'object' && item.value !== null && env.resolveArgs ? env.resolveArgs({ v: item.value })?.v : item.value;
+    return { value: v, binding: 'lesson', missing: false };
   }
   switch (r.kind) {
     case 'prediction': {
@@ -234,7 +230,7 @@ function tolerance(item: CheckItem, env: CheckEnv, def: ReadoutDef | undefined):
 
 function message(o: Omit<CheckOutcome, 'text'>, def: ReadoutDef | undefined, env: CheckEnv): string {
   if (o.agrees === null) return lessonsCopy.missingReadout;
-  const shows = formatReading(o.actual, def, o.item.field);
+  const shows = formatReading(o.actual, def, o.item.field, o.item.read);
   if (env.mismatch) return lessonsCopy.modelCaveat(env.mismatch.model, shows);
   const c = lessonsCopy;
   switch (o.binding) {

@@ -81,6 +81,8 @@ function initialUi() {
       view: 'lines' as 'lines' | 'expert',
       /** Head picked for the Lines view; null = pick automatically. */
       linesPick: null as HeadPick | null,
+      /** The Lines view draws the average over every head (a lesson's set_attention_view lines) until a head is picked. */
+      linesAverage: false,
       focusMode: 'from' as 'from' | 'to',
       expandedLayer: null as number | null,
       expandedHead: null as number | null,
@@ -150,6 +152,12 @@ export interface PryViewState {
   run: boolean;
   left_panel: string;
   right_panel: string;
+  /**
+   * The half an `open_panel` named last, which the one-panel (tabbed) layout
+   * brings forward. Only scenes built by `target` carry it; `snapshot` leaves
+   * it out, so applying a snapshot keeps whichever half is in front.
+   */
+  front?: 'left' | 'right';
   focus: FocusSpec | null;
   compare_mode: boolean;
   compare: { a: string; b: string };
@@ -157,6 +165,8 @@ export interface PryViewState {
   aggregation: Aggregation;
   focus_mode: 'from' | 'to';
   lines_head: HeadPick | null;
+  /** The Lines view shows the average over every head (attention.avg_* reads the same). */
+  lines_average: boolean;
   open_head: HeadPick | null;
   head_ablation: { heads: HeadPick[]; on: boolean };
   feature_ablation: { ids: number[]; on: boolean };

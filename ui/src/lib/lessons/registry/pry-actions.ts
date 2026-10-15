@@ -14,7 +14,7 @@
 // steps and stops.
 
 import { z } from 'zod';
-import type { ActionContext, ActionDef } from './contract';
+import { NotReadyError, type ActionContext, type ActionDef } from './contract';
 import type { RunnerActionContext } from './dispatcher';
 import { PRY_MODELS } from './pry-models';
 import { directCall, type SidecarCaller } from '../../analysis-core';
@@ -97,6 +97,9 @@ export async function openPanel(panel: string, call: SidecarCaller): Promise<voi
   const a = h.analysis;
   const s = a.state;
   const p = panel === 'watch-it-write' ? 'predictions' : panel;
+  // Compare covers both panels: opening one means leaving Compare, or the
+  // learner is pointed at a tab they can't see.
+  if (h.getCompareMode()) h.setCompareMode(false);
   if (!LEFT_PANELS.includes(p)) {
     h.openRightTab(p);
     return;
@@ -110,6 +113,18 @@ export async function openPanel(panel: string, call: SidecarCaller): Promise<voi
   }
   h.openLeftTab(p);
   if (pending) await pending;
+}
+
+/**
+ * Brings forward the tab a compute action's result shows in (after the result
+ * is in, so the tab's own fetch finds it there), leaving Compare, which covers
+ * both panels. Without it a Done step can leave its result on a closed tab.
+ */
+function showPanel(panel: string): void {
+  const h = pryHost();
+  if (h.getCompareMode()) h.setCompareMode(false);
+  if (LEFT_PANELS.includes(panel)) h.openLeftTab(panel);
+  else h.openRightTab(panel);
 }
 
 /** Patching results per type, so set_patch_view can switch without a new run. */
@@ -205,12 +220,15 @@ const switch_model: ActionDef = {
   },
 };
 
+const EMPTY_PROMPT = 'The prompt box is empty. Type a prompt first.';
+
 const run: ActionDef = {
   args: noArgs,
   doc: 'Runs the prompt. Runner-issued runs are memoised.',
   effect: 'compute',
   run: async (_a, ctx) => {
     const h = pryHost();
+    if (!h.getPrompt().trim()) throw new NotReadyError(EMPTY_PROMPT);
     await h.analysis.generate(h.getPrompt(), callerOf(ctx));
   },
 };
@@ -331,14 +349,19 @@ export const pryActions: Record<string, ActionDef> = {
         { temperature: a.temperature, seed: a.seed ?? null, maxTokens: a.max_tokens },
         callerOf(ctx),
       );
+      showPanel('predictions');
     },
   },
   set_attention_view: {
     args: z.object({ view: z.enum(['lines', 'expert']) }).strict(),
-    doc: 'Picks the attention view: Lines or Expert.',
+    doc: 'Picks the attention view: Lines or Expert. Lines opens on the average over every head (what attention.avg_* reads) until a head is picked.',
     effect: 'view',
     run: async (a: { view: 'lines' | 'expert' }) => {
       pryUi.attention.view = a.view;
+      if (a.view === 'lines') {
+        pryUi.attention.linesPick = null;
+        pryUi.attention.linesAverage = true;
+      }
     },
   },
   set_aggregation: {
@@ -355,6 +378,7 @@ export const pryActions: Record<string, ActionDef> = {
     effect: 'view',
     run: async (a: { layer: number; head: number }) => {
       pryUi.attention.linesPick = { layer: a.layer, head: a.head };
+      pryUi.attention.linesAverage = false;
     },
   },
   set_focus_mode: {
@@ -393,6 +417,7 @@ export const pryActions: Record<string, ActionDef> = {
     effect: 'compute',
     run: async (_a, ctx) => {
       await pryHost().analysis.logitLens(callerOf(ctx));
+      showPanel('logit-lens');
     },
   },
   run_dla: {
@@ -406,6 +431,7 @@ export const pryActions: Record<string, ActionDef> = {
         an.setSceneDlaTarget(a.answer ?? null, a.contrast ?? null);
       }
       await an.dla(callerOf(ctx));
+      showPanel('dla');
     },
   },
   switch_sae_layer: {
@@ -466,6 +492,7 @@ export const pryActions: Record<string, ActionDef> = {
     effect: 'compute',
     run: async (_a, ctx) => {
       await pryHost().analysis.runHeadAblation(callerOf(ctx));
+      showPanel('attention');
     },
   },
   run_patching: {
@@ -482,6 +509,7 @@ export const pryActions: Record<string, ActionDef> = {
       h.setPatchingPreset({ clean: a.clean, corrupted: a.corrupted, patchType: a.type });
       await h.analysis.patching(a.clean, a.corrupted, a.type, callerOf(ctx));
       rememberPatch();
+      showPanel('patching');
     },
   },
   set_patch_view: {
@@ -527,6 +555,7 @@ export const pryActions: Record<string, ActionDef> = {
     effect: 'compute',
     run: async (_a, ctx) => {
       await pryHost().analysis.runFeatureAblation(callerOf(ctx));
+      showPanel('features');
     },
   },
   set_steering: {
@@ -545,9 +574,11 @@ export const pryActions: Record<string, ActionDef> = {
     run: async (a: { control?: true }, ctx) => {
       const s = pryHost().analysis.state;
       const fid = pryUi.steering.selectedFeatureId;
-      if (fid === null || s.saeLayer === undefined) throw new Error('Pick a feature to steer first.');
+      if (!pryHost().getPrompt().trim()) throw new NotReadyError(EMPTY_PROMPT);
+      if (fid === null || s.saeLayer === undefined) throw new NotReadyError('Pick a feature to steer first.');
       pryUi.steerControl = a.control === true;
       await pryHost().analysis.steer(fid, s.saeLayer, pryUi.steering.alpha, callerOf(ctx), a.control === true);
+      showPanel('steering');
     },
   },
   steer_across: {
@@ -582,6 +613,7 @@ export const pryActions: Record<string, ActionDef> = {
     run: async (a: { threshold?: number }, ctx) => {
       if (a.threshold !== undefined) pryUi.circuit.thresholdInput = String(a.threshold);
       await pryHost().analysis.circuit('dla', a.threshold, callerOf(ctx));
+      showPanel('circuit');
     },
   },
   show_embedding: {

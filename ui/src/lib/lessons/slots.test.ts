@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { pryReadouts } from './registry/pry-readouts';
 import type { Slot } from './format/schema';
-import { derive, evaluateAssert, PLACEHOLDER, renderSlot, renderText, type SlotSource } from './slots';
+import { derive, evaluateAssert, formatValue, PLACEHOLDER, renderSlot, renderText, type SlotSource } from './slots';
+import { formatReading } from './runner/checks';
 
 function source(values: Record<string, unknown>): SlotSource {
   return { read: (name, args) => values[args ? `${name}${JSON.stringify(args)}` : name], readouts: pryReadouts };
@@ -84,5 +85,64 @@ describe('slots', () => {
     expect(derive('ln', [29.43])).toBeCloseTo(3.38, 2);
     expect(derive('ratio', [1, 0])).toBeUndefined();
     expect(derive('ln', [0])).toBeUndefined();
+  });
+
+  describe('formatting (first-timer rubric)', () => {
+    it('› natural frequency only for a probability in (0, 1]; a change prints as signed points', () => {
+      expect(formatValue(-0.125, 'probability')).toBe('−12.5 points');
+      expect(formatValue(0.036, 'points')).toBe('+3.6 points');
+      expect(formatValue(-0.022, 'points')).toBe('−2.2 points');
+      expect(formatValue(0, 'probability')).toBe('0%');
+      expect(formatValue(0.677, 'probability')).toBe('67.7% (about 2 in 3)');
+    });
+
+    it('› a small probability keeps two significant figures and a rounded 1 in N', () => {
+      expect(formatValue(0.000914, 'probability')).toBe('0.091% (about 1 in 1,100)');
+    });
+
+    it('› a *delta readout and a difference slot print as points', () => {
+      const slots: Record<string, Slot> = {
+        d: { read: 'ablation.delta', args: { token: ' Mary' } },
+        a: { read: 'top_guess.prob' },
+        b: { read: 'rest_mass' },
+        gap: { from: ['a', 'b'], formula: 'difference', format: 'probability' },
+      };
+      const src = source({ 'ablation.delta{"token":" Mary"}': -0.125, 'top_guess.prob': 0.097, rest_mass: 0.049 });
+      expect(renderSlot('d', slots, src)).toBe('−12.5 points');
+      expect(renderSlot('gap', slots, src)).toBe('+4.8 points');
+    });
+
+    it('› a prob field reads as a probability and a Swap test logit field to two decimals, not a bare decimal', () => {
+      const slots: Record<string, Slot> = {
+        p: { read: 'prediction', args: { token: ' golf' }, field: 'prob' },
+        c: { read: 'patch.cell', args: { layer: 2, position: 10 }, field: 'clean' },
+      };
+      const src = source({ 'prediction{"token":" golf"}': { prob: 0.677 }, 'patch.cell{"layer":2,"position":10}': { clean: 18.46638 } });
+      expect(renderSlot('p', slots, src)).toBe('67.7% (about 2 in 3)');
+      expect(renderSlot('c', slots, src)).toBe('18.47');
+    });
+
+    it('› an assert can gate a text claim with contains', () => {
+      const slots: Record<string, Slot> = { t: { read: 'steer.text', args: { which: 'steered' } } };
+      const item = { require: { slot: 't', op: 'contains' as const, value: 'rain' }, say: 'Rain shows up.', else: 'No rain in it.' };
+      expect(evaluateAssert(item, slots, source({ 'steer.text{"which":"steered"}': 'clouds and rain' }))).toBe('Rain shows up.');
+      expect(evaluateAssert(item, slots, source({ 'steer.text{"which":"steered"}': 'the ocean' }))).toBe('No rain in it.');
+    });
+
+    it('› records and lists read in words, never as JSON', () => {
+      const top = [
+        { token: ' Mary', prob: 0.677 },
+        { token: ' them', prob: 0.128 },
+      ];
+      const shown = formatReading(top, pryReadouts.top_k, undefined, 'top_k');
+      expect(shown).toBe('" Mary" 67.7% (about 2 in 3), " them" 12.8% (about 1 in 8)');
+      expect(shown).not.toContain('{');
+      const scale = formatValue({ strength: 25, activation_p50: 0, activation_p99: 0.12, activation_max: 0.31 }, 'number');
+      expect(scale).toBe('strength 25, activation p50 0, activation p99 0.12, activation max 0.31');
+      const cell = formatValue({ layer: 2, position: 10, clean: 18.4664, corrupted: 14.967, patched: 18.4751, share: 1.0024 }, 'number');
+      expect(cell).toBe('L2: position 10, clean 18.47, corrupted 14.97, patched 18.48, share 100.2%');
+      expect(formatValue({ layer: 9, head: 9 }, 'number')).toBe('L9H9');
+      expect(formatValue([{ part: 'L9H9', contribution: 1.234 }, { part: 'MLP 9', contribution: -0.5 }], 'number')).toBe('L9H9 contribution 1.23, MLP 9 contribution -0.50');
+    });
   });
 });

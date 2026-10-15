@@ -60,6 +60,8 @@ export interface AnchorDef {
   hide?(on: boolean): void;
   large?: boolean;
   focus?: [number, number];
+  /** The anchor is a tool view the presenter mounts in the lesson itself (the embedding reader): pointing at it mounts it. */
+  view?: string;
 }
 
 export interface ViewDef {
@@ -122,6 +124,19 @@ export interface Presenter {
   point(target: PointerTarget, seq?: number): void;
   clearPointer(): void;
   onCommand(cb: (c: PresenterCommand) => void): void;
+}
+
+/**
+ * An action that can't start yet, for a reason the learner can fix (an empty
+ * prompt box, no feature picked). Its message is plain words; the runner shows
+ * it as "Not there yet" instead of a failure.
+ */
+export class NotReadyError extends Error {
+  override name = 'NotReadyError';
+}
+
+export function isNotReady(e: unknown): e is NotReadyError {
+  return e instanceof Error && e.name === 'NotReadyError';
 }
 
 /** Error every T2a stub throws until T2b fills it in. */

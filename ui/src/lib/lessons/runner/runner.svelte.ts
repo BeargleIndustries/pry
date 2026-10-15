@@ -11,7 +11,7 @@
 // the next entry waits for it ("Waiting for the model").
 
 import type { Lesson, Section, Step, CheckItem, Slot } from '../format/schema';
-import type { PointerTarget, Presenter, PresenterCommand, ToolActionSet } from '../registry/contract';
+import { isNotReady, type PointerTarget, type Presenter, type PresenterCommand, type ToolActionSet } from '../registry/contract';
 import type { RequestMemo } from '../registry/memo';
 import { createDispatcher, resolveBindings, type BindingSources, type Dispatcher, type LessonSource } from '../registry/dispatcher';
 import { allSteps } from '../format/normalise';
@@ -270,14 +270,16 @@ export class LessonRunner<VS = unknown> {
         return this.goto(this.index);
       case 'link':
         return this.openLink(r.href);
-      case 'look':
-        this.#looks = r.at;
+      case 'look': {
+        const at = this.resolveLooks(r.at);
+        this.#looks = at;
         for (const p of this.#presenters) {
           p.clearPointer();
-          if (r.at.length === 1) p.point(r.at[0]);
-          else r.at.forEach((t, i) => p.point(t, i));
+          if (at.length === 1) p.point(at[0]);
+          else at.forEach((t, i) => p.point(t, i));
         }
         return;
+      }
     }
   }
 
@@ -306,6 +308,20 @@ export class LessonRunner<VS = unknown> {
     this.#notes = [...lesson.authorNotes];
     const start = opts.sectionId ? this.sectionIndex(opts.sectionId) : this.resumeIndex(lesson);
     await this.goto(start);
+  }
+
+  /**
+   * Swaps in a new version of the open lesson (hot reload) and re-enters the
+   * section the learner is on, keeping their answers and captures.
+   */
+  async reload(lesson: Lesson, images?: Record<string, string>): Promise<void> {
+    if (!this.lesson || this.lesson.meta.id !== lesson.meta.id) return;
+    const at = this.section?.id ?? null;
+    this.lesson = lesson;
+    if (images) this.#images = images;
+    this.#notes = [...lesson.authorNotes];
+    const i = at ? lesson.sections.findIndex((s) => s.id === at) : 0;
+    await this.goto(Math.max(0, Math.min(i < 0 ? this.index : i, lesson.sections.length - 1)));
   }
 
   private resumeIndex(lesson: Lesson): number {
@@ -394,6 +410,11 @@ export class LessonRunner<VS = unknown> {
     this.hide.reveal();
   }
 
+  /** Resolves once every piece of runner-issued work (the fold, do steps, task runs) has landed. */
+  async idle(): Promise<void> {
+    while (this.#pending.size) await Promise.allSettled([...this.#pending]);
+  }
+
   /** Tracks runner-issued work so the next navigation can let it settle first. */
   private track<T>(p: Promise<T>): Promise<T> {
     this.#pending.add(p);
@@ -415,6 +436,10 @@ export class LessonRunner<VS = unknown> {
     const ticket = this.#nav.begin();
     this.#visit = ticket;
     this.hide.reveal();
+    // Pointers belong to one section: whatever the last section (or a replayed
+    // `highlight`) pointed at goes, so no stale "isn't on screen" line carries over.
+    this.#looks = [];
+    for (const p of this.#presenters) p.clearPointer();
     this.index = target;
     this.error = null;
     this.entering = true;
@@ -729,10 +754,12 @@ export class LessonRunner<VS = unknown> {
           this.write(section, step, 'capture', { capture: { name: cap, readouts: { result: v } } });
         }
       }
-      // A revealed observe re-checks after its do step runs again.
-      for (const s2 of allSteps(section.steps)) {
+      // A revealed observe re-checks after its do step runs again: only the
+      // observes this do step feeds (after it, before the next do step), so a
+      // later run never re-reads an earlier observe against the wrong result.
+      for (const s2 of this.observesOf(section, step)) {
         const o = this.#states.get(this.keyOf(section, s2));
-        if (s2.kind === 'observe' && o?.revealed && isObj(s2.fields) && s2.fields.check) o.result = this.checkObserve(section, s2);
+        if (o?.revealed && isObj(s2.fields) && s2.fields.check) o.result = this.checkObserve(section, s2);
       }
       this.#expected = this.snapshotKey();
     } catch (e) {
@@ -744,6 +771,34 @@ export class LessonRunner<VS = unknown> {
       if (this.busy && !this.entering) this.busy = null;
       if (this.#nav.current(ticket)) this.refresh();
     }
+  }
+
+  /** The observes a do step feeds: after it in the section, up to the next do step. */
+  private observesOf(sec: Section, doStep: Step): Step[] {
+    const flat = allSteps(sec.steps);
+    const out: Step[] = [];
+    for (let i = flat.indexOf(doStep) + 1; i < flat.length; i++) {
+      if (flat[i].kind === 'do') break;
+      if (flat[i].kind === 'observe') out.push(flat[i]);
+    }
+    return out;
+  }
+
+  /**
+   * A predict's choice feedback talks about the result, so it waits for it:
+   * after commit, and once the observe it `checks=` is shown (or, with none,
+   * once every do step after it in the section has run this visit).
+   */
+  private feedbackWaiting(sec: Section, step: Step): boolean {
+    if (step.kind !== 'predict') return false;
+    const target = typeof step.fields.checks === 'string' ? this.findStep(step.fields.checks) : null;
+    if (target) return !this.state(target.section, target.step).revealed;
+    const flat = allSteps(sec.steps);
+    for (let i = flat.indexOf(step) + 1; i < flat.length; i++) {
+      const s = flat[i];
+      if (s.kind === 'do' && this.whenHolds(s) && this.state(sec, s).doState !== 'done') return true;
+    }
+    return false;
   }
 
   /** The predict that `checks=` this observe. */
@@ -863,7 +918,7 @@ export class LessonRunner<VS = unknown> {
     if (typeof oc !== 'string') return null;
     const reset = step.fields.reset;
     const noun = oc.replace(/^set_/, '');
-    if (isObj(reset) && isObj(reset[noun])) return { ...(reset[noun] as Record<string, unknown>) };
+    if (isObj(reset) && isObj(reset[noun])) return { ...(resolveBindings(reset[noun], this.bindings()) as Record<string, unknown>) };
     return {};
   }
 
@@ -877,7 +932,11 @@ export class LessonRunner<VS = unknown> {
   async taskArgs(key: string, args: Record<string, unknown>): Promise<void> {
     const t = this.taskOf(key);
     if (!t) return;
-    t.ts.pendingArgs = { ...(t.ts.pendingArgs ?? {}), ...args };
+    // A form field gives text: a number typed in it is a number.
+    const typed = Object.fromEntries(
+      Object.entries(args).map(([k, v]) => [k, typeof v === 'string' && /^\s*-?\d+(\.\d+)?\s*$/.test(v) ? Number(v) : v]),
+    );
+    t.ts.pendingArgs = { ...(t.ts.pendingArgs ?? {}), ...typed };
     this.rev++;
   }
 
@@ -891,6 +950,18 @@ export class LessonRunner<VS = unknown> {
       ts.message = gate.message;
       this.refresh();
       return;
+    }
+    // Every value in the form must be filled in and valid before a run goes out
+    // (an unresolved `$row...` or an empty field would send a broken request).
+    const pending = ts.pendingArgs;
+    if (pending && task.one_change) {
+      const unresolved = Object.values(pending).some((v) => v === undefined || v === null || v === '' || (typeof v === 'string' && v.startsWith('$')));
+      const schema = this.set.actions[task.one_change]?.args;
+      if (unresolved || (schema && !schema.safeParse(pending).success)) {
+        ts.message = lessonsCopy.taskArgsMissing;
+        this.refresh();
+        return;
+      }
     }
     this.markBefore();
     try {
@@ -906,7 +977,9 @@ export class LessonRunner<VS = unknown> {
     } catch (e) {
       if (isAbort(e) || !this.#nav.current(ticket)) return;
       // A failed run is never judged: the checks would read the run before it (critic r3).
-      ts.message = lessonsCopy.stepFailed(e instanceof Error ? e.message : String(e));
+      // The learner reads plain words; the raw error goes to the log.
+      ts.message = isNotReady(e) ? lessonsCopy.taskNotReady(e.message) : lessonsCopy.taskRunFailed;
+      if (!isNotReady(e)) this.deps.log?.({ lessonId: this.lesson?.meta.id, stepId: key, message: `task run failed: ${String(e)}` });
       this.refresh();
       return;
     }
@@ -1087,7 +1160,8 @@ export class LessonRunner<VS = unknown> {
         ? (name) => {
             const s = slots[name];
             if (!s || s.expect === undefined) return null;
-            return lessonsCopy.expectBeside(typeof s.expect === 'number' ? formatValue(s.expect, slotFormat(s, src.readouts)) : String(s.expect));
+            const shown = typeof s.expect === 'number' || (typeof s.expect === 'object' && s.expect !== null) ? formatValue(s.expect, slotFormat(s, src.readouts)) : String(s.expect);
+            return lessonsCopy.expectBeside(shown);
           }
         : undefined,
       earlier: (key, fallback) => earlierText(this.journal, key, fallback),
@@ -1130,6 +1204,11 @@ export class LessonRunner<VS = unknown> {
     const body = step.prose.flatMap((p) => renderProse(p.text, ctx));
     const children = step.children.map((c) => this.renderBlock(sec, c)).filter((b): b is RenderedBlock => b !== null);
     const b: RenderedBlock = { key, kind: step.kind, stepId: step.id, body, children };
+    const mounted = looksIn(body)
+      .flat()
+      .map((t) => ('anchor' in t ? this.set.anchors[t.anchor]?.view : undefined))
+      .find((v): v is string => typeof v === 'string' && !!this.set.views[v]);
+    if (mounted) b.mount = { view: mounted, args: {} };
     const asserts = this.assertLines(step, sec);
     switch (step.kind) {
       case 'explain':
@@ -1154,7 +1233,7 @@ export class LessonRunner<VS = unknown> {
         const choices = Array.isArray(f.choices) ? (f.choices as { text: string; feedback?: string; reveal?: boolean }[]) : null;
         const picked = st.choice !== null && choices ? choices[st.choice] : undefined;
         let feedback: RNode[] | null = null;
-        if (st.locked && !st.skipped && picked?.feedback && picked.reveal !== false) feedback = this.nodes(picked.feedback, sec);
+        if (st.locked && !st.skipped && picked?.feedback && picked.reveal !== false && !this.feedbackWaiting(sec, step)) feedback = this.nodes(picked.feedback, sec);
         b.ask = {
           question: f.question ? this.nodes(String(f.question), sec) : null,
           choices: choices ? choices.map((c, i) => ({ index: i, text: this.nodes(c.text, sec), picked: st.choice === i })) : null,
@@ -1211,7 +1290,7 @@ export class LessonRunner<VS = unknown> {
           const cap = typeof c.from === 'string' ? this.captures.get(c.from) : undefined;
           const v = typeof c.from === 'string' && cap === undefined ? undefined : readFrom(this.set, c.read, this.resolveArgs(c.args), cap);
           const label = typeof c.from === 'string' ? `${c.from}` : String(c.read);
-          return { kind: 'read' as const, label, value: formatReading(v, def) };
+          return { kind: 'read' as const, label, value: formatReading(v, def, typeof c.field === 'string' ? c.field : undefined, String(c.read)) };
         });
         b.sameQuestion = f.same_question ? (f.same_question === 'journal' || f.same_question === 'pick' ? lessonsCopy.sameQuestion : String(f.same_question)) : null;
         if (asserts.length) b.asserts = asserts;
@@ -1263,7 +1342,7 @@ export class LessonRunner<VS = unknown> {
 
   private lastLine(o: CheckOutcome): string {
     const c = lessonsCopy;
-    const shows = formatReading(o.actual, this.set.readouts[o.item.read]);
+    const shows = formatReading(o.actual, this.set.readouts[o.item.read], o.item.field, o.item.read);
     switch (o.binding) {
       case 'prediction':
         return o.agrees ? c.agreesPrediction : c.differsPrediction(shows);
@@ -1282,9 +1361,14 @@ export class LessonRunner<VS = unknown> {
     const pool = first ? blocks.slice(0, blocks.indexOf(first) + 1).reverse() : blocks;
     for (const b of pool) {
       const looks = looksIn(b.body);
-      if (looks.length) return looks[0] as PointerTarget[];
+      if (looks.length) return this.resolveLooks(looks[0] as PointerTarget[]);
     }
     return [];
+  }
+
+  /** `:look` args may name `$row` / `$earlier` values (`feature-row id=$row.25.target_id`): resolved before pointing. */
+  private resolveLooks(at: PointerTarget[]): PointerTarget[] {
+    return at.map((t) => (t.args === undefined ? t : { ...t, args: resolveBindings(t.args, this.bindings()) }));
   }
 
   /** The current section as presenters draw it. */
@@ -1294,10 +1378,19 @@ export class LessonRunner<VS = unknown> {
     const sec = lesson.sections[this.index];
     const blocks = sec.steps.map((s) => this.renderBlock(sec, s)).filter((b): b is RenderedBlock => b !== null);
     const all = (bs: RenderedBlock[]): RenderedBlock[] => bs.flatMap((b) => [b, ...all(b.children)]);
+    // A view is mounted once per section: under the first step that points at
+    // it, and not at all when a compare column already shows it.
+    const shown = new Set(all(blocks).flatMap((b) => (b.columns ?? []).flatMap((c) => (c.kind === 'view' ? [c.view] : []))));
+    for (const b of all(blocks)) {
+      if (!b.mount) continue;
+      if (shown.has(b.mount.view)) delete b.mount;
+      else shown.add(b.mount.view);
+    }
     const results = all(blocks).filter((b) => b.explainResult);
-    const leavesOpen = results.flatMap((b) => b.explainResult!.leavesOpen);
+    const honest = this.currentLimits(this.index);
+    const leavesOpen = honest.leavesOpen;
     const skeptic = results.find((b) => b.explainResult!.skeptic)?.explainResult!.skeptic?.says ?? null;
-    const limits = list(lesson.meta.limits).map((s) => this.nodes(s, sec));
+    const limits = [...list(lesson.meta.limits).map((s) => this.nodes(s, sec)), ...honest.limits];
     const prereqs = lesson.meta.prerequisites ?? [];
     const cold =
       // `opened`, not `visited`: a lesson marked from 0.3.8 tour progress still shows its cold entry.
@@ -1329,12 +1422,48 @@ export class LessonRunner<VS = unknown> {
       coldEntry: cold,
       honesty: limits.length || leavesOpen.length || skeptic ? { limits, leavesOpen, skeptic } : null,
       busy: this.busy,
+      entering: this.entering,
       drift: this.drift(),
       banner: this.banner ? { model: this.deps.modelName?.(this.banner.model) ?? this.banner.model } : null,
       error: this.error,
       authorMode: this.deps.authorMode?.() ?? false,
       authorNotes: [...this.#notes],
     };
+  }
+
+  /**
+   * The honesty box's current limits: this section's explain-result
+   * `leaves_open` / `limits` and transfer `limits`; a section with none shows
+   * the latest earlier section's, and a section with an observe but nothing
+   * earlier shows the next one's (the limit of the result it builds toward).
+   */
+  private currentLimits(index: number): { leavesOpen: RNode[][]; limits: RNode[][] } {
+    const lesson = this.lesson!;
+    const of = (i: number) => {
+      const sec = lesson.sections[i];
+      const leavesOpen: RNode[][] = [];
+      const limits: RNode[][] = [];
+      for (const st of allSteps(sec.steps)) {
+        if (!this.whenHolds(st)) continue;
+        if (st.kind === 'explain-result') {
+          leavesOpen.push(...list(st.fields.leaves_open).map((t) => this.nodes(t, sec)));
+          limits.push(...list(st.fields.limits).map((t) => this.nodes(t, sec)));
+        } else if (st.kind === 'transfer') limits.push(...list(st.fields.limits).map((t) => this.nodes(t, sec)));
+      }
+      return leavesOpen.length || limits.length ? { leavesOpen, limits } : null;
+    };
+    const here = of(index);
+    if (here) return here;
+    for (let i = index - 1; i >= 0; i--) {
+      const r = of(i);
+      if (r) return r;
+    }
+    const observes = allSteps(lesson.sections[index].steps).some((st) => st.kind === 'observe');
+    for (let i = index + 1; observes && i < lesson.sections.length; i++) {
+      const r = of(i);
+      if (r) return r;
+    }
+    return { leavesOpen: [], limits: [] };
   }
 
   /** Every capture the lesson declares, for views over captured runs. */

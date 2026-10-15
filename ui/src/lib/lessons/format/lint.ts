@@ -600,6 +600,7 @@ export function lintLesson(lesson: Lesson, opts: LintOptions): LessonIssue[] {
     if (!slot.read) continue;
     const def = checkReadout(slot.read, slot.args, where);
     if (def?.type === 'prose') err('prose-check', { read: slot.read }, where);
+    if (def?.type === 'record' && !slot.field) err('slot-record-no-field', { name, read: slot.read, fields: Object.keys(def.fields ?? {}).join(', ') }, where, 'warning');
     if (slot.from_capture && !captures.has(slot.from_capture)) err('capture-unknown', { name: slot.from_capture }, where);
     let learnerOk = false;
     if (slot.from_capture) {

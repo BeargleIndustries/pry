@@ -50,6 +50,8 @@ const args = Object.fromEntries(
   }, []),
 );
 const PORT = Number(args.port ?? 9333);
+// --suffix -r2 names a re-take next to the first walk's files (lesson-<id>-s<n>-1280-r2.png).
+const SFX = args.suffix && args.suffix !== 'true' ? args.suffix : '';
 const OUT = resolve(args.out ?? 'lesson-walk');
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(HERE, '..', '..');
@@ -137,6 +139,8 @@ window.__t8 = (() => {
   const flat = (steps) => steps.flatMap((s) => [s, ...flat(s.children ?? [])]);
   const has = (steps, kind) => flat(steps).some((s) => s.kind === kind);
   const settled = () => { const r = R(); return !!r && !r.entering && !r.busy; };
+  // The runner's idle signal: every fold, do step and task run it issued has landed.
+  const idle = async () => { await until(settled); if (R()?.idle) await R().idle(); await until(settled); };
   const until = async (fn, ms = 120000) => { const end = Date.now() + ms; while (Date.now() < end) { if (fn()) return true; await new Promise((r) => setTimeout(r, 200)); } return false; };
   const slotsOnScreen = () => [...document.querySelectorAll('[data-lesson-sidebar] [data-slot]')].map((el) => ({
     name: el.getAttribute('data-slot'), text: el.textContent.trim(),
@@ -153,9 +157,9 @@ window.__t8 = (() => {
     },
     close() { L().close(); return true; },
     sections() { return R().lesson.sections.map((s) => ({ id: s.id, er: has(s.steps, 'explain-result') })); },
-    async goto(i) { await R().goto(i); await until(settled); return R().index; },
-    async next() { await R().next(); await until(settled); return R().index; },
-    async back() { await R().back(); await until(settled); return R().index; },
+    async goto(i) { await R().goto(i); await idle(); return R().index; },
+    async next() { await R().next(); await idle(); return R().index; },
+    async back() { await R().back(); await idle(); return R().index; },
     state() {
       const r = R();
       return { snap: L().snapshot(), blocks: JSON.parse(JSON.stringify(r.render().blocks)), slots: slotsOnScreen().map((s) => [s.name, s.text]) };
@@ -173,9 +177,13 @@ window.__t8 = (() => {
       for (const s of flat(sec.steps)) {
         if (s.kind === 'transfer' && typeof s.fields.prompt === 'string') { typed = { prompt: s.fields.prompt, ran: false }; continue; }
         if (s.kind === 'observe' && typed && !typed.ran) {
-          try { await A().runAction('set_prompt', { prompt: typed.prompt }); await A().runAction('run', {}); log.push('typed:' + typed.prompt); } catch (e) { log.push('typed:err ' + (e && e.message)); }
+          // Only when the app isn't already showing that prompt's run (a do step may have run it).
+          const snap = L().snapshot();
+          if (snap.prompt !== typed.prompt || !snap.run) {
+            try { await A().runAction('set_prompt', { text: typed.prompt }); await A().runAction('run', {}); log.push('typed:' + typed.prompt); } catch (e) { log.push('typed:err ' + (e && e.message)); }
+          } else log.push('typed:already');
           typed.ran = true;
-          await until(settled, 120000);
+          await idle();
         }
         if (!['predict', 'question', 'recall', 'do', 'observe', 'task'].includes(s.kind)) continue;
         try { if (!r.whenHolds(s)) { log.push(s.kind + ':when-off'); continue; } } catch {}
@@ -186,12 +194,18 @@ window.__t8 = (() => {
             if (choices.length) await r.answer(key, { choice: 0 });
             else if (s.fields.pick) await r.skipStep(key);
             else await r.answer(key, { text: 'My guess' });
-          } else if (s.kind === 'do') await r.doStep(key);
+          } else if (s.kind === 'do') {
+            await r.doStep(key);
+            await idle();
+            // A do step that asks the learner to press Run (and doesn't run itself): press it, as they would.
+            const asksRun = s.prose.some((p) => /at=run-button/.test(p.text)) && !s.actions.some((a) => a.name === 'run');
+            if (asksRun) { await A().runAction('run', {}); log.push('pressed:run'); }
+          }
           else if (s.kind === 'observe') await r.showObserve(key);
           else if (s.kind === 'task') { await r.taskRun(key); await r.taskCheck(key); }
           log.push(s.kind + ':ok');
         } catch (e) { log.push(s.kind + ':err ' + (e && e.message)); }
-        await until(settled, 120000);
+        await idle();
       }
       return log;
     },
@@ -285,7 +299,7 @@ async function walk() {
     const backed = await ev('window.__t8.state()');
     const equal = { snapshot: deepEqual(forward.snap, backed.snap), blocks: deepEqual(forward.blocks, backed.blocks), slots: deepEqual(forward.slots, backed.slots) };
     const allEqual = equal.snapshot && equal.blocks && equal.slots;
-    writeFileSync(join(OUT, `back-${id}.json`), JSON.stringify({ lesson: id, section: secs[0].id, equal: allEqual, parts: equal, forward, back: backed }, null, 2));
+    writeFileSync(join(OUT, `back-${id}${SFX}.json`), JSON.stringify({ lesson: id, section: secs[0].id, equal: allEqual, parts: equal, forward, back: backed }, null, 2));
     manifest.back.push({ lesson: id, section: secs[0].id, equal: allEqual, parts: equal });
     console.log(`  back-${id}.json equal=${allEqual}`);
 
@@ -296,7 +310,7 @@ async function walk() {
       await ev('window.__t8.close()');
       await ev(`window.__t8.open(${JSON.stringify(id)}, ${JSON.stringify(secs[er].id)})`);
       await sleep(1500);
-      await snap(`carry-${id}.png`);
+      await snap(`carry-${id}${SFX}.png`);
       const err = await ev('window.__t8.error()');
       if (err) manifest.errors.push({ where: `carry ${id}/${secs[er].id}`, error: err });
     } else manifest.notes.push(`${id}: no explain-result section`);
@@ -321,7 +335,7 @@ async function walk() {
       }
       await ev('window.__t8.scrollToResult()');
       await sleep(1000);
-      await snap(`lesson-${id}-s${i + 1}-1280.png`);
+      await snap(`lesson-${id}-s${i + 1}-1280${SFX}.png`);
     }
   }
 
@@ -335,7 +349,7 @@ async function walk() {
     await ev('window.__t8.drive()');
     await ev('window.__t8.scrollToResult()');
     await sleep(1000);
-    await snap(`lesson-${id}-1024.png`);
+    await snap(`lesson-${id}-1024${SFX}.png`);
   }
   await ev('window.__t8.close()');
 }

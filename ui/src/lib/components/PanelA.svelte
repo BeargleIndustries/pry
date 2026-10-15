@@ -278,6 +278,7 @@
     att.expandedHead = h;
     // Remember the pick so the lines view shows the same head if the user switches.
     att.linesPick = { layer: l, head: h };
+    att.linesAverage = false;
     notifyPick('head', { layer: l, head: h });
     // The grid unmounts; move focus into the detail view so keyboard users aren't stranded.
     await tick();
@@ -512,7 +513,13 @@
   const aggLabel = $derived(aggOptions.find((o) => o.id === aggregation)?.label ?? aggregation);
 
   const LINES_GEOM = DEFAULT_GEOMETRY;
-  const linesMatrix = $derived(attention[linesHead.layer]?.heads?.[linesHead.head] ?? []);
+  /** Every head's pattern averaged, cell by cell (a lesson's Lines view before a head is picked). */
+  const averageMatrix = $derived.by((): number[][] => {
+    const all = attention.flatMap((l) => l?.heads ?? []);
+    if (!all.length) return [];
+    return all[0].map((row, i) => row.map((_, j) => all.reduce((s, m) => s + (m[i]?.[j] ?? 0), 0) / all.length));
+  });
+  const linesMatrix = $derived(att.linesAverage ? averageMatrix : (attention[linesHead.layer]?.heads?.[linesHead.head] ?? []));
   const linesN = $derived(Math.min(tokens.length, linesMatrix.length));
   const linesArcs = $derived(buildArcs(linesMatrix, linesN, LINES_GEOM));
   const linesHidden = $derived(hiddenCount(linesMatrix, linesN));
@@ -521,7 +528,7 @@
   const otherArcs = $derived(linesArcs.filter((a) => !isFocusArc(a, linesFocus, att.focusMode)));
   const linesSvgW = LINES_GEOM.rightX - LINES_GEOM.leftX;
   const linesSvgH = $derived(linesHeight(linesN, LINES_GEOM));
-  const linesHeadDesc = $derived(`layer ${linesHead.layer}, head ${linesHead.head}`);
+  const linesHeadDesc = $derived(att.linesAverage ? 'the average over every head' : `layer ${linesHead.layer}, head ${linesHead.head}`);
 
   // Readout follows whatever head is on screen.
   const readoutHead = $derived<HeadPick | null>(
@@ -529,10 +536,13 @@
       ? att.expandedLayer !== null && att.expandedHead !== null
         ? { layer: att.expandedLayer, head: att.expandedHead }
         : null
-      : linesHead,
+      : att.linesAverage
+        ? null
+        : linesHead,
   );
 
   function setPickLayer(value: string) {
+    att.linesAverage = false;
     if (value === 'auto') {
       att.linesPick = null;
       return;
@@ -541,6 +551,7 @@
   }
 
   function setPickHead(value: string) {
+    att.linesAverage = false;
     if (value === 'auto') {
       att.linesPick = null;
       return;
@@ -1045,7 +1056,9 @@
           </label>
         </div>
         <p class="mb-3 text-[11px] leading-relaxed text-zinc-500">
-          {#if validPick}
+          {#if att.linesAverage}
+            Showing the average over all {nLayers * nHeads} heads ({nLayers} layers, {nHeads} heads each). Pick a layer or head to see one head.
+          {:else if validPick}
             Showing layer {linesHead.layer}, head {linesHead.head}. Set Layer or Head to Auto to let Pry pick.
           {:else if autoHead}
             Showing layer {linesHead.layer}, head {linesHead.head}: the head with the highest "{aggLabel}"

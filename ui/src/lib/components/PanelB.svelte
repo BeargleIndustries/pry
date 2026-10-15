@@ -3,6 +3,7 @@
   import type { GenerateResponse, TokenFeatures, AblateResponse, PresetDisplay } from '$lib/types';
   import FeatureCard from './FeatureCard.svelte';
   import Readout from './Readout.svelte';
+  import { isHidden } from '$lib/lessons/registry/pry-state.svelte';
   import { FEATURE_KNOCKOUT_NOTE, featuresReadout } from '$lib/readouts';
   import { signedHex, signedNumber } from '$lib/signed-color';
 
@@ -177,7 +178,7 @@
     {/if}
   </div>
 
-  <Readout text={readout} />
+  <Readout text={readout} hidden={isHidden('feature-labels')} />
 
   {#if ablationMode}
     <p class="text-[11px] text-zinc-500">{FEATURE_KNOCKOUT_NOTE}</p>
@@ -185,7 +186,7 @@
 
   <!-- Ablation results -->
   {#if ablateResponse && ablationMode}
-    <div class="rounded-lg border border-red-800/50 bg-red-950/20 p-3">
+    <div class="rounded-lg border border-red-800/50 bg-red-950/20 p-3" data-tour="ablation-results">
       <h4 class="mb-2 text-xs font-semibold text-zinc-300">Knockout results</h4>
       <div class="grid grid-cols-2 gap-3">
         <div>

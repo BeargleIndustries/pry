@@ -69,17 +69,17 @@
       </div>
     {/if}
 
-    <div class="flex flex-col gap-1.5">
+    <div class="pred-list flex flex-col gap-1.5">
       <!-- The track's scale: every bar is drawn on the same 0-100% track. -->
-      <div class="flex items-center gap-3 px-3 text-[10px] text-zinc-600" aria-hidden="true">
+      <div class="pred-row flex items-center gap-3 px-3 text-[10px] text-zinc-600" aria-hidden="true">
         <span class="w-5 shrink-0"></span>
-        <span class="w-28 shrink-0"></span>
+        <span class="pred-tok w-28 shrink-0"></span>
         <div class="flex flex-1 justify-between">
           <span>0%</span>
           <span>50%</span>
           <span>100%</span>
         </div>
-        <span class="w-36 shrink-0"></span>
+        <span class="pred-val pred-spacer w-36 shrink-0"></span>
       </div>
 
       {#each predictions as pred (pred.rank)}
@@ -89,7 +89,7 @@
           data-token={pred.token}
           aria-pressed={selectedRank === pred.rank}
           onclick={() => { selectedRank = selectedRank === pred.rank ? null : pred.rank; }}
-          class="group flex items-center gap-3 rounded-md px-3 py-1.5 text-left transition-colors {selectedRank === pred.rank ? 'bg-zinc-800/80' : pred.rank === 1 ? 'bg-zinc-900/80' : 'hover:bg-zinc-900/50'}"
+          class="pred-row group flex items-center gap-3 rounded-md px-3 py-1.5 text-left transition-colors {selectedRank === pred.rank ? 'bg-zinc-800/80' : pred.rank === 1 ? 'bg-zinc-900/80' : 'hover:bg-zinc-900/50'}"
         >
           <!-- Rank badge -->
           <span
@@ -99,7 +99,7 @@
           </span>
 
           <!-- Token text -->
-          <span class="w-28 shrink-0 truncate font-mono text-xs text-zinc-200">
+          <span class="pred-tok w-28 shrink-0 truncate font-mono text-xs text-zinc-200">
             {displayToken(pred.token)}
           </span>
 
@@ -114,7 +114,7 @@
           </div>
 
           <!-- Probability with its natural frequency -->
-          <span class="w-36 shrink-0 text-right font-mono text-xs text-zinc-400">
+          <span class="pred-val w-36 shrink-0 text-right font-mono text-xs text-zinc-400">
             {probabilityWithFrequency(pred.probability)}
           </span>
         </button>
@@ -123,16 +123,16 @@
       <!-- Everything outside the top ten -->
       <div
         data-tour="everything-else-row"
-        class="flex items-center gap-3 rounded-md border-t border-zinc-800 px-3 py-1.5"
+        class="pred-row flex items-center gap-3 rounded-md border-t border-zinc-800 px-3 py-1.5"
       >
         <span class="w-5 shrink-0"></span>
-        <span class="w-28 shrink-0 truncate text-xs text-zinc-400">Everything else</span>
+        <span class="pred-tok w-28 shrink-0 truncate text-xs text-zinc-400">Everything else</span>
         <div class="flex-1">
           <div class="h-2 w-full overflow-hidden rounded-full bg-zinc-800">
             <div class="h-full rounded-full bg-zinc-700" style:width={barWidthPct(rest)}></div>
           </div>
         </div>
-        <span class="w-36 shrink-0 text-right font-mono text-xs text-zinc-400">
+        <span class="pred-val w-36 shrink-0 text-right font-mono text-xs text-zinc-400">
           {probabilityWithFrequency(rest)}
         </span>
       </div>
@@ -149,3 +149,30 @@
 
   <WatchItWrite {response} />
 </section>
+
+<style>
+  /* A narrow panel (Lessons open beside a split workspace): the number moves
+     under its bar, so the 0-100% track keeps most of the panel's width. */
+  .pred-list {
+    container-type: inline-size;
+  }
+  @container (max-width: 440px) {
+    .pred-row {
+      display: grid;
+      grid-template-columns: 1.25rem 4.5rem 1fr;
+      column-gap: 0.75rem;
+      row-gap: 0.125rem;
+    }
+    .pred-tok {
+      width: auto;
+    }
+    .pred-val {
+      grid-column: 2 / 4;
+      width: auto;
+      text-align: left;
+    }
+    .pred-spacer {
+      display: none;
+    }
+  }
+</style>

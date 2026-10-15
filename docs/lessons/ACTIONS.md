@@ -23,7 +23,7 @@ Effects: `view` and `compute` run freely and replay when a section opens; `downl
 | `set_compare` | view | `{ a: string, b: string }` | Sets the two Compare prompts. |
 | `run_compare` | compute | `{}` | Runs both Compare prompts. |
 | `write_it` | compute | `{ temperature: number, seed?: integer, max_tokens?: integer }` | Runs Watch it write and returns the text. |
-| `set_attention_view` | view | `{ view: "lines" \| "expert" }` | Picks the attention view: Lines or Expert. |
+| `set_attention_view` | view | `{ view: "lines" \| "expert" }` | Picks the attention view: Lines or Expert. Lines opens on the average over every head (what attention.avg_* reads) until a head is picked. |
 | `set_aggregation` | view | `{ aggregation: "max" \| "spread" \| "looks-back" \| "previous" \| "mean" }` | Picks the Score by option for the attention grid. |
 | `set_lines_head` | view | `{ layer: integer, head: integer }` | Picks the head the Lines view draws. |
 | `set_focus_mode` | view | `{ mode: "from" \| "to" }` | Picks FROM or TO for the attention grid. |
