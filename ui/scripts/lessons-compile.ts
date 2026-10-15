@@ -3,6 +3,7 @@
 //   npm run lessons:compile -- <folder> [--out file.json]
 //   npm run lessons:compile -- --rows [--out file.json]
 //   npm run lessons:compile -- --expectations
+//   npm run lessons:compile -- --expectations --dir <folder> [--out file.json]
 //
 // <folder> is one lesson folder or a folder of lesson folders. Exits 1 when a
 // lesson doesn't parse.
@@ -15,6 +16,12 @@
 // `constants:` (row constants, plan:297/:299) from that row's recorded values
 // in rows.json and writes them back as `rows[].constants`; nothing else in
 // rows.json changes. Re-run it after `pytest ... --record`.
+//
+// --expectations --dir <folder> walks a lesson set outside the app (one lesson
+// folder or a folder of them, e.g. docs/lessons/examples/community-sample) and
+// writes <set>/__generated__/expectations.json (or --out). Then
+// `pytest tests/test_lessons.py --record --lesson-dir <folder>` records its
+// requests through the sidecar, so the lesson's `expect` values come from a real run.
 
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
@@ -490,13 +497,20 @@ if (!process.env.VITEST) {
     // Plan T6: the bundled lessons walk through the real registry (svelte runes),
     // so the walk runs under vitest: lessons-compile.test.ts writes the file.
     const { spawnSync } = await import('node:child_process');
+    const dirAt = argv.indexOf('--dir');
+    const dir = dirAt >= 0 ? argv[dirAt + 1] : undefined;
+    if (dirAt >= 0 && (!dir || dir.startsWith('--'))) {
+      console.error('Usage: npm run lessons:compile -- --expectations --dir <folder> [--out file.json]');
+      process.exit(2);
+    }
+    const lessonEnv: Record<string, string> = dir ? { PRY_LESSON_DIR: resolve(process.env.INIT_CWD ?? process.cwd(), dir), ...(out ? { PRY_EXPECTATIONS_OUT: resolve(process.env.INIT_CWD ?? process.cwd(), out) } : {}) } : {};
     const r = spawnSync('npx', ['vitest', 'run', 'src/lib/lessons/lessons-compile.test.ts'], {
       cwd: UI,
       stdio: 'inherit',
       shell: process.platform === 'win32',
-      env: { ...process.env, PRY_WRITE_EXPECTATIONS: '1' },
+      env: { ...process.env, PRY_WRITE_EXPECTATIONS: '1', ...lessonEnv },
     });
-    if (r.status === 0) console.log('wrote src/lessons/__generated__/expectations.json');
+    if (r.status === 0) console.log(dir ? `wrote ${lessonEnv.PRY_EXPECTATIONS_OUT ?? 'its __generated__/expectations.json'}` : 'wrote src/lessons/__generated__/expectations.json');
     process.exit(r.status ?? 1);
   }
   if (argv.includes('--rows')) {

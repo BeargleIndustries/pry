@@ -25,6 +25,16 @@ function bundledLessonFiles(): string[] {
     .map((d) => join(LESSONS, d, 'lesson.md'));
 }
 
+/** docs/lessons/examples/<set>/<id>/lesson.md: example lessons recorded with test_lessons.py --record --lesson-dir. */
+const EXAMPLES = fileURLToPath(new URL('../../../../docs/lessons/examples', import.meta.url));
+function exampleLessonFiles(): string[] {
+  if (!existsSync(EXAMPLES)) return [];
+  return readdirSync(EXAMPLES)
+    .flatMap((set) => (existsSync(join(EXAMPLES, set)) && !set.startsWith('.') ? readdirSync(join(EXAMPLES, set)).map((d) => join(EXAMPLES, set, d, 'lesson.md')) : []))
+    .filter((f) => existsSync(f))
+    .sort();
+}
+
 const recorded = loadRecorded(join(GEN, 'responses'));
 const rows = loadRows(join(GEN, 'rows.json'));
 const files = bundledLessonFiles();
@@ -57,6 +67,23 @@ describe('lesson checks', () => {
       expect(failed).toEqual([]);
       const pending = r.checks.filter((c) => c.skipped === 'pending').map((c) => `${c.where}: ${c.name}`);
       expect(pending, 'expect: pending in a bundled lesson').toEqual([]);
+    },
+    60_000,
+  );
+
+  it.each(exampleLessonFiles().map((f) => [f.split(/[\\/]/).slice(-2, -1)[0], f]))(
+    '› every slot expect and check in an example lesson matches its recorded responses (%s)',
+    async (_id, file) => {
+      const { lesson, issues } = loadLessonSource(readFileSync(file, 'utf8'), { mode: 'strict', tool: pryToolSet, file });
+      expect(issues.filter((i) => i.severity === 'error').map((i) => i.message)).toEqual([]);
+      const r = await walkLesson(lesson!, { recorded, rows });
+      expect(r.errors, 'actions that failed').toEqual([]);
+      expect(
+        r.missing.map((m) => `${m.endpoint} ${JSON.stringify(m.body)}`),
+        'requests with no recorded response (run npm run lessons:compile -- --expectations --dir <set>, then pytest sidecar/tests/test_lessons.py --record --lesson-dir <set>)',
+      ).toEqual([]);
+      expect(r.checks.filter((c) => !c.ok).map((c) => `${c.where}: ${c.kind} ${c.name}: ${c.detail}`)).toEqual([]);
+      expect(r.checks.filter((c) => !c.skipped).length, 'nothing was checked').toBeGreaterThan(0);
     },
     60_000,
   );

@@ -5,6 +5,8 @@
     pytest tests/test_lessons.py                     # drift mode: replay and compare
     pytest tests/test_lessons.py --network           # drift mode, Neuronpedia strings too
     pytest tests/test_lessons.py --record --from-lessons   # also lesson requests (T6)
+    pytest tests/test_lessons.py --record --lesson-dir ../docs/lessons/examples/community-sample
+                     # only a lesson set outside the app (its __generated__/expectations.json)
 
 Requests come from ui/src/lessons/__generated__/row-requests.json, written by
 `npm run lessons:compile -- --rows` from verified-rows.yaml through the app's
@@ -60,6 +62,8 @@ HASH_PATHSPECS = [
 LABEL_FIELDS = {"description", "label_detail", "confidence", "top_activating_snippets"}
 PROB_HINTS = ("prob", "share", "heads", "cosine", "attention")
 BOS = "<|endoftext|>"
+# Endpoints whose whole answer is a Neuronpedia lookup (search_concepts).
+NETWORK_ONLY = {"/concept-search"}
 
 
 def _load_row_requests():
@@ -195,6 +199,7 @@ class Session:
         self.revision = getattr(loaded, "model_revision", None)
         self.today = _dt.date.today().isoformat()
         self.libs = _libs()
+        self.lesson_dir: str | None = None
 
     def call(self, req: dict, variant: str) -> None:
         key, endpoint, body = req["key"], req["endpoint"], req["body"]
@@ -324,8 +329,14 @@ def lessons(request):
 
     record = request.config.getoption("--record")
     s = Session(None, loaded, record, request.config.getoption("--network"), request.config.getoption("--diff"))
+    lesson_dir = request.config.getoption("--lesson-dir")
     with TestClient(app) as client:
         s.client = client
+        if lesson_dir:
+            s.lesson_dir = lesson_dir
+            # A lesson set outside the app: its own requests only; rows and rows.json untouched.
+            _lesson_requests(s, set(), _lesson_dir_expectations(lesson_dir))
+            return s
         seen: dict[tuple[str, str], dict] = {}
         for row in ROWDOC["rows"]:
             for req in row["requests"]:
@@ -346,18 +357,39 @@ def lessons(request):
     return s
 
 
-def _lesson_requests(s: Session, covered: set[str]) -> None:
-    """--from-lessons: record (or replay) lesson requests from expectations.json not already covered.
+def _lesson_dir_expectations(lesson_dir: str) -> Path:
+    """--lesson-dir: <set>/__generated__/expectations.json, where <set> is the folder, or its parent when it holds lesson.md."""
+    root = Path(lesson_dir).resolve()
+    if (root / "lesson.md").exists():
+        root = root.parent
+    path = root / "__generated__" / "expectations.json"
+    if not path.exists():
+        pytest.fail(f"no {path}: run `npm run lessons:compile -- --expectations --dir {lesson_dir}` in ui/ first")
+    return path
 
-    Expects T6's expectations.json to list requests as {"requests": [{"endpoint", "model", "body"}]}.
+
+def _lesson_requests(s: Session, covered: set[str], path: Path = EXPECTATIONS) -> None:
+    """--from-lessons / --lesson-dir: record (or replay) lesson requests from an expectations.json not already covered.
+
+    Expects expectations.json to list requests as {"requests": [{"endpoint", "model", "body"}]}.
     """
-    doc = json.loads(EXPECTATIONS.read_text(encoding="utf-8"))
+    doc = json.loads(path.read_text(encoding="utf-8"))
     for item in doc.get("requests", []):
         key = request_key(item["endpoint"], item.get("model", ROWDOC["model"]), item["body"])
         if key in covered:
             continue
         covered.add(key)
-        s.call({"name": f"lesson:{key[:8]}", "key": key, "endpoint": item["endpoint"], "body": item["body"], "network": False}, "r1")
+        req = {"name": f"lesson:{key[:8]}", "key": key, "endpoint": item["endpoint"], "body": item["body"], "network": False}
+        if item["endpoint"] in NETWORK_ONLY and not (s.record or s.network):
+            # The whole answer comes from Neuronpedia: drift mode keeps the record unless --network.
+            path = _file(key, "r1")
+            if path.exists():
+                s.responses[(key, "r1")] = json.loads(path.read_text(encoding="utf-8"))["response"]
+                s.calls[key] = s.calls.get(key, 0)
+            else:
+                s.problems[(key, "r1")] = [f"no recorded response {path.name}: run with --record"]
+            continue
+        s.call(req, "r1")
 
 
 def _row(row_id: int) -> dict:
@@ -1118,8 +1150,14 @@ RESULTS: dict[int, dict] = {}
 # ---------------------------------------------------------------------------
 
 
+def _skip_for_lesson_dir(s: Session) -> None:
+    if s.lesson_dir:
+        pytest.skip("--lesson-dir: rows not run")
+
+
 @pytest.mark.parametrize("row_id", ROW_IDS)
 def test_row(lessons, row_id):
+    _skip_for_lesson_dir(lessons)
     row = _row(row_id)
     keys = [(q["key"], v) for q in row["requests"] for v in variants_of(q)]
     problems = [f"{q['name']}: {p}" for q in row["requests"] for v in variants_of(q) for p in lessons.problems.get((q["key"], v), [])]
@@ -1146,6 +1184,7 @@ def test_row(lessons, row_id):
 
 
 def test_row_28_repeats_are_separate_sidecar_calls_and_identical(lessons):
+    _skip_for_lesson_dir(lessons)
     row = _row(28)
     for q in row["requests"]:
         assert q["repeat"] == 2
@@ -1159,6 +1198,7 @@ def test_row_28_repeats_are_separate_sidecar_calls_and_identical(lessons):
 
 def test_rows_json(lessons, request):
     """Record mode writes rows.json; drift mode re-stamps its sidecar hash once every row passed."""
+    _skip_for_lesson_dir(lessons)
     assert set(RESULTS) == set(ROW_IDS), "run the whole file: rows.json needs every row"
     stamp = sidecar_hash()
     if lessons.record:
@@ -1195,3 +1235,11 @@ def test_lesson_requests_from_expectations(request, lessons):
         pytest.skip("no __generated__/expectations.json yet (T6 writes it)")
     bad = {k: p for k, p in lessons.problems.items() if k[0] not in {q["key"] for r in ROWDOC["rows"] for q in r["requests"]}}
     assert not bad, f"lesson requests drifted: {bad}"
+
+
+def test_lesson_dir_requests(request, lessons):
+    """--lesson-dir: every request of the lesson set was recorded, or replays without drift."""
+    if not request.config.getoption("--lesson-dir"):
+        pytest.skip("--lesson-dir not given")
+    assert lessons.calls, "the lesson set's expectations.json lists no requests"
+    assert not lessons.problems, f"lesson requests drifted or aren't recorded: {lessons.problems}"
