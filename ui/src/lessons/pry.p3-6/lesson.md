@@ -29,11 +29,11 @@ free: true
 ## The pair {id=s3-2 outline=P3.6.md#3.2}
 
 :::slots
-jordan_bb: { read: compare.prediction, args: { side: a, token: " basketball" }, field: prob, expect: 0.42208388447761536, tolerance: 0.02 }
-jordan_fb: { read: compare.prediction, args: { side: a, token: " football" }, field: prob, expect: 0.0471893772482872, tolerance: 0.02 }
-jordan_golf: { read: compare.prediction, args: { side: a, token: " golf" }, field: prob, expect: 0.041473932564258575, tolerance: 0.02 }
-brady_fb: { read: compare.prediction, args: { side: b, token: " football" }, field: prob, expect: 0.4862939715385437, tolerance: 0.02 }
-brady_bb: { read: compare.prediction, args: { side: b, token: " basketball" }, field: prob, expect: 0.022681239992380142, tolerance: 0.02 }
+jordan_bb: { read: compare.prediction, args: { side: a, token: " basketball" }, field: prob, format: probability, expect: 0.42208388447761536, tolerance: 0.02 }
+jordan_fb: { read: compare.prediction, args: { side: a, token: " football" }, field: prob, format: probability, expect: 0.0471893772482872, tolerance: 0.02 }
+jordan_golf: { read: compare.prediction, args: { side: a, token: " golf" }, field: prob, format: probability, expect: 0.041473932564258575, tolerance: 0.02 }
+brady_fb: { read: compare.prediction, args: { side: b, token: " football" }, field: prob, format: probability, expect: 0.4862939715385437, tolerance: 0.02 }
+brady_bb: { read: compare.prediction, args: { side: b, token: " basketball" }, field: prob, format: probability, expect: 0.022681239992380142, tolerance: 0.02 }
 :::
 
 :::do{id=pair-compare}
@@ -80,9 +80,9 @@ choices:
 ## MLP swaps {id=s3-4 outline=P3.6.md#3.4}
 
 :::slots
-clean: { read: patch.peak, args: { type: mlp }, field: clean, expect: 15.96245288848877, tolerance: 0.05 }
-corrupted: { read: patch.peak, args: { type: mlp }, field: corrupted, expect: 13.080302238464355, tolerance: 0.05 }
-patched_l: { read: patch.peak, args: { type: mlp }, field: patched, expect: 15.456536293029785, tolerance: 0.05 }
+clean: { read: patch.peak, args: { type: mlp }, field: clean, format: logit, expect: 15.96245288848877, tolerance: 0.05 }
+corrupted: { read: patch.peak, args: { type: mlp }, field: corrupted, format: logit, expect: 13.080302238464355, tolerance: 0.05 }
+patched_l: { read: patch.peak, args: { type: mlp }, field: patched, format: logit, expect: 15.456536293029785, tolerance: 0.05 }
 share: { from: [clean, corrupted, patched_l], formula: share, format: probability }
 l2_share: { read: patch.cell, args: { layer: 2, position: 0 }, field: share, expect: 0.40324814685155025, tolerance: 0.02 }
 l11_share: { read: patch.cell, args: { layer: 11, position: 0 }, field: share, expect: -0.3850042056096413, tolerance: 0.02 }

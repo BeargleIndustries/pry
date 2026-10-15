@@ -58,10 +58,10 @@ hides: [predictions-panel]
 ## A flat shape {id=s3-3 outline=P3.7.md#3.3}
 
 :::slots
-p49: { read: prediction, args: { token: "49" }, field: prob, expect: 0.05795148387551308, tolerance: 0.02 }
-p50: { read: prediction, args: { token: "50" }, field: prob, expect: 0.050567593425512314, tolerance: 0.02 }
-p45: { read: prediction, args: { token: "45" }, field: prob, expect: 0.03358353301882744, tolerance: 0.02 }
-p43: { read: prediction, args: { token: "43" }, field: prob, expect: 0.031525228172540665, tolerance: 0.02 }
+p49: { read: prediction, args: { token: "49" }, field: prob, format: probability, expect: 0.05795148387551308, tolerance: 0.02 }
+p50: { read: prediction, args: { token: "50" }, field: prob, format: probability, expect: 0.050567593425512314, tolerance: 0.02 }
+p45: { read: prediction, args: { token: "45" }, field: prob, format: probability, expect: 0.03358353301882744, tolerance: 0.02 }
+p43: { read: prediction, args: { token: "43" }, field: prob, format: probability, expect: 0.031525228172540665, tolerance: 0.02 }
 top_four: { from: [p49, p50, p45, p43], formula: sum, format: probability }
 :::
 

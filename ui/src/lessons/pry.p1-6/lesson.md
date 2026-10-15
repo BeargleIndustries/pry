@@ -45,8 +45,8 @@ choices:
 ## Same text, then gone {id=s3-2 outline=P1.6.md#3.2}
 
 :::slots
-basketball: { read: prediction, args: { token: " basketball" }, field: prob, expect: 0.42208 }
-sam_a: { read: compare.prediction, args: { side: a, token: " Sam" }, field: prob, expect: 0.19151 }
+basketball: { read: prediction, args: { token: " basketball" }, field: prob, format: probability, expect: 0.42208 }
+sam_a: { read: compare.prediction, args: { side: a, token: " Sam" }, field: prob, format: probability, expect: 0.19151 }
 :::
 
 :::do{id=sam-compare}

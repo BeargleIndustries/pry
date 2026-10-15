@@ -15,10 +15,10 @@ model: gpt2-small
 baseline: { prompt: "Two plus two equals" }
 verified_rows: [3, 4, 5]
 slots:
-  one_p: { read: prediction, args: { token: " one" }, field: prob, expect: 0.34206 }
-  two_p: { read: prediction, args: { token: " two" }, field: prob, expect: 0.16224 }
-  four_p: { read: prediction, args: { token: " four" }, field: prob, expect: 0.069509 }
-  three_p: { read: prediction, args: { token: " three" }, field: prob, expect: 0.068916 }
+  one_p: { read: prediction, args: { token: " one" }, field: prob, format: probability, expect: 0.34206 }
+  two_p: { read: prediction, args: { token: " two" }, field: prob, format: probability, expect: 0.16224 }
+  four_p: { read: prediction, args: { token: " four" }, field: prob, format: probability, expect: 0.069509 }
+  three_p: { read: prediction, args: { token: " three" }, field: prob, format: probability, expect: 0.068916 }
   top_four: { from: [one_p, two_p, four_p, three_p], formula: sum, format: probability }
   rest: { read: rest_mass, expect: 0.24460 }
 ---
@@ -164,10 +164,10 @@ check: { read: prediction, args: { token: " one" }, field: logit, op: gt, value:
 ## A near-tie {id=s3-5 outline=P1.4.md#3.5}
 
 :::slots
-paris: { read: prediction, args: { token: " Paris" }, field: prob, expect: 0.097184 }
-marse: { read: prediction, args: { token: " Marse" }, field: prob, expect: 0.089123 }
-saint: { read: prediction, args: { token: " Saint" }, field: prob, expect: 0.030925 }
-st: { read: prediction, args: { token: " St" }, field: prob, expect: 0.027857 }
+paris: { read: prediction, args: { token: " Paris" }, field: prob, format: probability, expect: 0.097184 }
+marse: { read: prediction, args: { token: " Marse" }, field: prob, format: probability, expect: 0.089123 }
+saint: { read: prediction, args: { token: " Saint" }, field: prob, format: probability, expect: 0.030925 }
+st: { read: prediction, args: { token: " St" }, field: prob, format: probability, expect: 0.027857 }
 city_four: { from: [paris, marse, saint, st], formula: sum, format: probability }
 paris_lead: { from: [paris, marse], formula: difference, format: probability }
 :::
@@ -251,10 +251,10 @@ tool: predictions
 ## Transfer {id=s5 outline=P1.4.md#5}
 
 :::slots
-brains: { read: prediction, args: { token: " brains" }, field: prob, expect: 0.12701 }
-energy: { read: prediction, args: { token: " energy" }, field: prob, expect: 0.11460 }
-body: { read: prediction, args: { token: " body" }, field: prob, expect: 0.10270 }
-bodies: { read: prediction, args: { token: " bodies" }, field: prob, expect: 0.072989 }
+brains: { read: prediction, args: { token: " brains" }, field: prob, format: probability, expect: 0.12701 }
+energy: { read: prediction, args: { token: " energy" }, field: prob, format: probability, expect: 0.11460 }
+body: { read: prediction, args: { token: " body" }, field: prob, format: probability, expect: 0.10270 }
+bodies: { read: prediction, args: { token: " bodies" }, field: prob, format: probability, expect: 0.072989 }
 myth_four: { from: [brains, energy, body, bodies], formula: sum, format: probability }
 :::
 

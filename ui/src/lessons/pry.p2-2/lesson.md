@@ -15,8 +15,8 @@ model: gpt2-small
 baseline: { prompt: "Pip ordered zebra lamps from Quorn. Pip ordered zebra lamps from" }
 verified_rows: [15, 16, 48, 49]
 slots:
-  qu: { read: prediction, args: { token: " Qu" }, field: prob, expect: 0.3195 }
-  the_p: { read: prediction, args: { token: " the" }, field: prob, expect: 0.0172 }
+  qu: { read: prediction, args: { token: " Qu" }, field: prob, format: probability, expect: 0.3195 }
+  the_p: { read: prediction, args: { token: " the" }, field: prob, format: probability, expect: 0.0172 }
 ---
 
 ## Recall {id=s3-1 depth=optional outline=P2.2.md#3.1}
@@ -142,7 +142,7 @@ model_answer: "not this way, since the token after ' from' would have no note th
 ## Catch it on your prompt {id=s3-7 outline=P2.2.md#3.7}
 
 :::slots
-from_weight: { read: attention.weight, args: { layer: $row.15.top_induction_layer, head: $row.15.top_induction_head, from: $row.15.last_from_position, to: $row.15.qu_position }, expect: 0.7523 }
+from_weight: { read: attention.weight, args: { layer: $row.15.top_induction_layer, head: $row.15.top_induction_head, from: $row.15.last_from_position, to: $row.15.qu_position }, format: probability, expect: 0.7523 }
 :::
 
 :::do{id=lines-on-pip}
@@ -201,8 +201,8 @@ Picking up a pattern from earlier in the prompt, with no change to the weights, 
 
 :::slots
 qu_before: { row: "15.qu_prob", format: probability }
-qu: { read: prediction, args: { token: " Qu" }, field: prob, expect: 0.1158 }
-the_p: { read: prediction, args: { token: " the" }, field: prob, expect: 0.0169 }
+qu: { read: prediction, args: { token: " Qu" }, field: prob, format: probability, expect: 0.1158 }
+the_p: { read: prediction, args: { token: " the" }, field: prob, format: probability, expect: 0.0169 }
 :::
 
 ::::transfer{id=yellow}

@@ -71,8 +71,8 @@ Press **Do it** to run the nurse prompt and open :look{at=panel-b-features-list}
 ## Knock out the top features at ' nurse' {id=s3-3 outline=P3.4.md#3.3}
 
 :::slots
-before: { read: feature_ablation.prediction, args: { side: original, token: " she" }, field: prob, expect: 0.1896977424621582, tolerance: 0.02 }
-after: { read: feature_ablation.prediction, args: { side: ablated, token: " she" }, field: prob, expect: 0.17817918956279755, tolerance: 0.02 }
+before: { read: feature_ablation.prediction, args: { side: original, token: " she" }, field: prob, format: probability, expect: 0.1896977424621582, tolerance: 0.02 }
+after: { read: feature_ablation.prediction, args: { side: ablated, token: " she" }, field: prob, format: probability, expect: 0.17817918956279755, tolerance: 0.02 }
 :::
 
 :::predict{id=top-off checks=top-obs}
@@ -90,8 +90,8 @@ choices:
 ## Do and observe {id=s3-4 outline=P3.4.md#3.4}
 
 :::slots
-before: { read: feature_ablation.prediction, args: { side: original, token: " she" }, field: prob, expect: 0.1896977424621582, tolerance: 0.02 }
-after: { read: feature_ablation.prediction, args: { side: ablated, token: " she" }, field: prob, expect: 0.17817918956279755, tolerance: 0.02 }
+before: { read: feature_ablation.prediction, args: { side: original, token: " she" }, field: prob, format: probability, expect: 0.1896977424621582, tolerance: 0.02 }
+after: { read: feature_ablation.prediction, args: { side: ablated, token: " she" }, field: prob, format: probability, expect: 0.17817918956279755, tolerance: 0.02 }
 :::
 
 :::do{id=top-knockout}

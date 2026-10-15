@@ -15,9 +15,9 @@ model: gpt2-small
 baseline: { prompt: "When Mary and John went to the store, John gave a drink to" }
 verified_rows: [14, 27, 32, 59, 60]
 slots:
-  clean: { read: patch.cell, args: { layer: $row.27.peak_layer, position: $row.27.peak_position }, field: clean, expect: 18.466388702392578, tolerance: 0.05 }
-  corrupted: { read: patch.cell, args: { layer: $row.27.peak_layer, position: $row.27.peak_position }, field: corrupted, expect: 14.966815948486328, tolerance: 0.05 }
-  patched: { read: patch.cell, args: { layer: $row.27.peak_layer, position: $row.27.peak_position }, field: patched, expect: 18.474945068359375, tolerance: 0.05 }
+  clean: { read: patch.cell, args: { layer: $row.27.peak_layer, position: $row.27.peak_position }, field: clean, format: logit, expect: 18.466388702392578, tolerance: 0.05 }
+  corrupted: { read: patch.cell, args: { layer: $row.27.peak_layer, position: $row.27.peak_position }, field: corrupted, format: logit, expect: 14.966815948486328, tolerance: 0.05 }
+  patched: { read: patch.cell, args: { layer: $row.27.peak_layer, position: $row.27.peak_position }, field: patched, format: logit, expect: 18.474945068359375, tolerance: 0.05 }
   share: { from: [clean, corrupted, patched], formula: share, format: probability }
   peak_layer: { row: "27.peak_layer", format: layer }
   word: { row: "27.peak_word", format: string }
@@ -157,11 +157,11 @@ skeptic: { says: "A skeptic would say these cells light up because of this one p
 ## Heads, one at a time {id=s3-8 outline=P3.3.md#3.8}
 
 :::slots
-top_head_layer: { read: patch.peak, args: { type: head }, field: layer, expect: 8 }
-top_head: { read: patch.peak, args: { type: head }, field: position, expect: 10 }
-head_clean: { read: patch.peak, args: { type: head }, field: clean, expect: 18.466388702392578, tolerance: 0.05 }
-head_corrupted: { read: patch.peak, args: { type: head }, field: corrupted, expect: 14.966815948486328, tolerance: 0.05 }
-head_patched: { read: patch.peak, args: { type: head }, field: patched, expect: 16.252490997314453, tolerance: 0.05 }
+top_head_layer: { read: patch.peak, args: { type: head }, field: layer, format: layer, expect: 8 }
+top_head: { read: patch.peak, args: { type: head }, field: position, format: count, expect: 10 }
+head_clean: { read: patch.peak, args: { type: head }, field: clean, format: logit, expect: 18.466388702392578, tolerance: 0.05 }
+head_corrupted: { read: patch.peak, args: { type: head }, field: corrupted, format: logit, expect: 14.966815948486328, tolerance: 0.05 }
+head_patched: { read: patch.peak, args: { type: head }, field: patched, format: logit, expect: 16.252490997314453, tolerance: 0.05 }
 :::
 
 :::do{id=patch-heads}

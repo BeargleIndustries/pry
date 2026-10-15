@@ -66,8 +66,8 @@ Press **Do it** to run the Mary and John sentence, open Attention and find :look
 ## Knock out the heavy-line head {id=s3-3 outline=P3.2.md#3.3}
 
 :::slots
-mary_before: { read: ablation.prediction, args: { side: original, token: " Mary" }, field: prob, expect: 0.6769932508468628, tolerance: 0.02 }
-mary_after: { read: ablation.prediction, args: { side: ablated, token: " Mary" }, field: prob, expect: 0.6741434931755066, tolerance: 0.02 }
+mary_before: { read: ablation.prediction, args: { side: original, token: " Mary" }, field: prob, format: probability, expect: 0.6769932508468628, tolerance: 0.02 }
+mary_after: { read: ablation.prediction, args: { side: ablated, token: " Mary" }, field: prob, format: probability, expect: 0.6741434931755066, tolerance: 0.02 }
 :::
 
 :::predict{id=heavy-off checks=heavy-obs}
@@ -85,8 +85,8 @@ choices:
 ## The heavy line didn't matter much {id=s3-4 outline=P3.2.md#3.4}
 
 :::slots
-before: { read: ablation.prediction, args: { side: original, token: " Mary" }, field: prob, expect: 0.6769932508468628, tolerance: 0.02 }
-after: { read: ablation.prediction, args: { side: ablated, token: " Mary" }, field: prob, expect: 0.6741434931755066, tolerance: 0.02 }
+before: { read: ablation.prediction, args: { side: original, token: " Mary" }, field: prob, format: probability, expect: 0.6769932508468628, tolerance: 0.02 }
+after: { read: ablation.prediction, args: { side: ablated, token: " Mary" }, field: prob, format: probability, expect: 0.6741434931755066, tolerance: 0.02 }
 :::
 
 :::do{id=heavy-knockout}

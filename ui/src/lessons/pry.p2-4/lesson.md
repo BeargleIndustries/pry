@@ -200,8 +200,8 @@ model_answer: "The MLP's; the head gets credit only for its own direct push."
 ## A fair question compares two tokens {id=s3-8 outline=P2.4.md#3.8}
 
 :::slots
-mary: { read: prediction, args: { token: " Mary" }, field: prob, expect: 0.677 }
-john: { read: prediction, args: { token: " John" }, field: prob, expect: 0.0235 }
+mary: { read: prediction, args: { token: " Mary" }, field: prob, format: probability, expect: 0.677 }
+john: { read: prediction, args: { token: " John" }, field: prob, format: probability, expect: 0.0235 }
 ratio: { from: [mary, john], formula: ratio, format: number }
 actual_diff: { from: [ratio], formula: ln, format: logit }
 :::
@@ -307,7 +307,7 @@ top_parts: { read: dla.top_parts, args: { n: 3 }, expect: [{ part: "L10.H9", con
 bars_total: { read: dla.bars_total, expect: 2.823 }
 actual_logit: { read: dla.actual, expect: 2.12 }
 gap: { read: dla.gap, expect: -0.703 }
-he_p: { read: prediction, args: { token: " he" }, field: prob, expect: 0.0228 }
+he_p: { read: prediction, args: { token: " he" }, field: prob, format: probability, expect: 0.0228 }
 :::
 
 ::::transfer{id=nurse-dla}

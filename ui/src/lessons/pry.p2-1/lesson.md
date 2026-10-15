@@ -31,8 +31,8 @@ choices:
 ## Looking inside gives suspects {id=s3-2 outline=P2.1.md#3.2}
 
 :::slots
-mary: { read: prediction, args: { token: " Mary" }, field: prob, expect: 0.677 }
-john: { read: prediction, args: { token: " John" }, field: prob, expect: 0.0235 }
+mary: { read: prediction, args: { token: " Mary" }, field: prob, format: probability, expect: 0.677 }
+john: { read: prediction, args: { token: " John" }, field: prob, format: probability, expect: 0.0235 }
 :::
 
 :::do{id=run-ioi}
@@ -137,7 +137,7 @@ check: { read: attention.avg_top_source, args: { from: $row.14.to_position }, op
 ## The parking spot {id=s3-6 outline=P2.1.md#3.6}
 
 :::slots
-marker_share: { read: attention.avg_share, args: { from: $row.14.to_position, to: 0 }, expect: 0.44 }
+marker_share: { read: attention.avg_share, args: { from: $row.14.to_position, to: 0 }, format: probability, expect: 0.44 }
 :::
 
 :::do{id=first-line}
@@ -257,7 +257,7 @@ skeptic: { says: "A skeptic would say the head you found draws from ' Mary', so 
 
 :::slots
 row23_token: { row: "23.token", format: string }
-weight: { read: attention.weight, args: { layer: $row.23.layer, head: $row.23.head, from: $row.14.to_position, to: $row.23.position }, expect: 0.808 }
+weight: { read: attention.weight, args: { layer: $row.23.layer, head: $row.23.head, from: $row.14.to_position, to: $row.23.position }, format: probability, expect: 0.808 }
 :::
 
 ::::transfer{id=other-head}

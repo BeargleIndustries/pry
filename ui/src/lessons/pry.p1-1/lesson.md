@@ -14,10 +14,10 @@ model: gpt2-small
 baseline: { prompt: "Michael Jordan played the sport of" }
 verified_rows: [1, 2, 3, 40, 41]
 slots:
-  basketball: { read: prediction, args: { token: " basketball" }, field: prob, expect: 0.42208 }
-  football: { read: prediction, args: { token: " football" }, field: prob, expect: 0.047189 }
-  golf: { read: prediction, args: { token: " golf" }, field: prob, expect: 0.041474 }
-  the_jordan: { read: prediction, args: { token: " the" }, field: prob, expect: 0.021034 }
+  basketball: { read: prediction, args: { token: " basketball" }, field: prob, format: probability, expect: 0.42208 }
+  football: { read: prediction, args: { token: " football" }, field: prob, format: probability, expect: 0.047189 }
+  golf: { read: prediction, args: { token: " golf" }, field: prob, format: probability, expect: 0.041474 }
+  the_jordan: { read: prediction, args: { token: " the" }, field: prob, format: probability, expect: 0.021034 }
   top_four: { from: [basketball, football, golf, the_jordan], formula: sum, format: probability }
   rest: { read: rest_mass, expect: 0.37020 }
 ---
@@ -213,12 +213,12 @@ check: { read: top_guess.token, op: equals, value: " now" }
 ::::
 
 :::slots
-now: { read: prediction, args: { token: " now" }, field: prob, from_capture: france, expect: 0.047506 }
-the_france: { read: prediction, args: { token: " the" }, field: prob, from_capture: france, expect: 0.037447 }
-a_france: { read: prediction, args: { token: " a" }, field: prob, from_capture: france, expect: 0.035461 }
-home: { read: prediction, args: { token: " home" }, field: prob, from_capture: france, expect: 0.030921 }
-paris: { read: prediction, args: { token: " Paris" }, field: prob, expect: 0.097184 }
-marse: { read: prediction, args: { token: " Marse" }, field: prob, expect: 0.089123 }
+now: { read: prediction, args: { token: " now" }, field: prob, format: probability, from_capture: france, expect: 0.047506 }
+the_france: { read: prediction, args: { token: " the" }, field: prob, format: probability, from_capture: france, expect: 0.037447 }
+a_france: { read: prediction, args: { token: " a" }, field: prob, format: probability, from_capture: france, expect: 0.035461 }
+home: { read: prediction, args: { token: " home" }, field: prob, format: probability, from_capture: france, expect: 0.030921 }
+paris: { read: prediction, args: { token: " Paris" }, field: prob, format: probability, expect: 0.097184 }
+marse: { read: prediction, args: { token: " Marse" }, field: prob, format: probability, expect: 0.089123 }
 paris_lead: { from: [paris, marse], formula: difference, format: probability }
 :::
 

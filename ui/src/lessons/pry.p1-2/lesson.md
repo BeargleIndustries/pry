@@ -214,9 +214,9 @@ breaks: "nobody wrote the entries; training set them."
 ## Counting positions {id=s3-7 outline=P1.2.md#3.7}
 
 :::slots
-bank_pos: { read: focus.position, from_capture: river, expect: 5 }
-bank_word: { read: focus.word_number, from_capture: river, expect: 6 }
-the_bank_pos: { read: focus.position, from_capture: thebank, expect: 2 }
+bank_pos: { read: focus.position, format: position, from_capture: river, expect: 5 }
+bank_word: { read: focus.word_number, format: position, from_capture: river, expect: 6 }
+the_bank_pos: { read: focus.position, format: position, from_capture: thebank, expect: 2 }
 :::
 
 :::do{id=count-positions}
@@ -296,8 +296,8 @@ breaks: "it isn't a label the model reads off; it's 768 more numbers mixed into 
 embed_matches: { read: embedding.matches, args: { part: embed }, expect: 768 }
 pos_matches: { read: embedding.matches, args: { part: pos }, expect: 0 }
 cosine: { read: embedding.cosine, args: { part: sum }, expect: 0.95732 }
-pos_two: { read: focus.position, from_capture: thebank, expect: 2 }
-pos_five: { read: focus.position, from_capture: river, expect: 5 }
+pos_two: { read: focus.position, format: position, from_capture: thebank, expect: 2 }
+pos_five: { read: focus.position, format: position, from_capture: river, expect: 5 }
 :::
 
 ::::transfer{id=bank-two-five}

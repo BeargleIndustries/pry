@@ -176,10 +176,10 @@ corrected_in: [pry.p2-1]
 ## Same last token, different guess {id=s3-5 outline=P1.3.md#3.5}
 
 :::slots
-jordan_bb: { read: compare.prediction, args: { side: a, token: " basketball" }, field: prob, expect: 0.42208 }
-jordan_fb: { read: compare.prediction, args: { side: a, token: " football" }, field: prob, expect: 0.047189 }
-brady_fb: { read: compare.prediction, args: { side: b, token: " football" }, field: prob, expect: 0.48629 }
-brady_bb: { read: compare.prediction, args: { side: b, token: " basketball" }, field: prob, expect: 0.022681 }
+jordan_bb: { read: compare.prediction, args: { side: a, token: " basketball" }, field: prob, format: probability, expect: 0.42208 }
+jordan_fb: { read: compare.prediction, args: { side: a, token: " football" }, field: prob, format: probability, expect: 0.047189 }
+brady_fb: { read: compare.prediction, args: { side: b, token: " football" }, field: prob, format: probability, expect: 0.48629 }
+brady_bb: { read: compare.prediction, args: { side: b, token: " basketball" }, field: prob, format: probability, expect: 0.022681 }
 :::
 
 :::predict{id=same-chances checks=differ-obs}
@@ -230,7 +230,7 @@ tool: compare
 ## Transfer {id=s5 outline=P1.3.md#5}
 
 :::slots
-tiger_golf: { read: prediction, args: { token: " golf" }, field: prob, expect: 0.55911 }
+tiger_golf: { read: prediction, args: { token: " golf" }, field: prob, format: probability, expect: 0.55911 }
 :::
 
 ::::transfer{id=tiger}

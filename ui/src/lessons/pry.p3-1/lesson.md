@@ -29,8 +29,8 @@ free: true
 ## How does ' she' move? {id=s3-2 outline=P3.1.md#3.2}
 
 :::slots
-she_nurse: { read: prediction, args: { token: " she" }, field: prob, expect: 0.1896977424621582, tolerance: 0.02 }
-she_doctor: { read: compare.prediction, args: { side: b, token: " she" }, field: prob, expect: 0.04582584276795387, tolerance: 0.02 }
+she_nurse: { read: prediction, args: { token: " she" }, field: prob, format: probability, expect: 0.1896977424621582, tolerance: 0.02 }
+she_doctor: { read: compare.prediction, args: { side: b, token: " she" }, field: prob, format: probability, expect: 0.04582584276795387, tolerance: 0.02 }
 :::
 
 :::do{id=nurse-ensure}
@@ -58,9 +58,9 @@ choices:
 ## Compare {id=s3-3 outline=P3.1.md#3.3}
 
 :::slots
-she_nurse: { read: compare.prediction, args: { side: a, token: " she" }, field: prob, expect: 0.1896977424621582, tolerance: 0.02 }
-she_doctor: { read: compare.prediction, args: { side: b, token: " she" }, field: prob, expect: 0.04582584276795387, tolerance: 0.02 }
-he_doctor: { read: compare.prediction, args: { side: b, token: " he" }, field: prob, expect: 0.14450117945671082, tolerance: 0.02 }
+she_nurse: { read: compare.prediction, args: { side: a, token: " she" }, field: prob, format: probability, expect: 0.1896977424621582, tolerance: 0.02 }
+she_doctor: { read: compare.prediction, args: { side: b, token: " she" }, field: prob, format: probability, expect: 0.04582584276795387, tolerance: 0.02 }
+he_doctor: { read: compare.prediction, args: { side: b, token: " he" }, field: prob, format: probability, expect: 0.14450117945671082, tolerance: 0.02 }
 she_delta: { read: compare.delta, args: { token: " she" }, expect: -0.14387189704179764, tolerance: 0.02 }
 he_delta: { read: compare.delta, args: { token: " he" }, expect: 0.12173311971127987, tolerance: 0.02 }
 :::
@@ -186,9 +186,9 @@ breaks: "only a test shows which one is driving and which is riding."
 ## Transfer {id=s5 outline=P3.1.md#5}
 
 :::slots
-mary: { read: compare.prediction, args: { side: a, token: " Mary" }, field: prob, expect: 0.6769932508468628, tolerance: 0.02 }
-them: { read: compare.prediction, args: { side: a, token: " them" }, field: prob, expect: 0.12825962901115417, tolerance: 0.02 }
-john: { read: compare.prediction, args: { side: a, token: " John" }, field: prob, expect: 0.02347848005592823, tolerance: 0.02 }
+mary: { read: compare.prediction, args: { side: a, token: " Mary" }, field: prob, format: probability, expect: 0.6769932508468628, tolerance: 0.02 }
+them: { read: compare.prediction, args: { side: a, token: " them" }, field: prob, format: probability, expect: 0.12825962901115417, tolerance: 0.02 }
+john: { read: compare.prediction, args: { side: a, token: " John" }, field: prob, format: probability, expect: 0.02347848005592823, tolerance: 0.02 }
 tokens_a: { read: compare.token_count, args: { side: a }, expect: 15 }
 tokens_b: { read: compare.token_count, args: { side: b }, expect: learner }
 :::

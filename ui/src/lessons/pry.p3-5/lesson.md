@@ -78,9 +78,9 @@ breaks: "it pushes at every token including the prompt, too much turns the text 
 ## Target vs control {id=s3-3 outline=P3.5.md#3.3}
 
 :::slots
-period: { read: prediction, args: { token: "." }, field: prob, expect: 0.10398386418819427, tolerance: 0.02 }
-rise: { read: prediction, args: { token: " rise" }, field: prob, expect: 0.04655522480607033, tolerance: 0.02 }
-breeze: { read: prediction, args: { token: " breeze" }, field: prob, expect: 0.03423939272761345, tolerance: 0.02 }
+period: { read: prediction, args: { token: "." }, field: prob, format: probability, expect: 0.10398386418819427, tolerance: 0.02 }
+rise: { read: prediction, args: { token: " rise" }, field: prob, format: probability, expect: 0.04655522480607033, tolerance: 0.02 }
+breeze: { read: prediction, args: { token: " breeze" }, field: prob, format: probability, expect: 0.03423939272761345, tolerance: 0.02 }
 :::
 
 :::explain
