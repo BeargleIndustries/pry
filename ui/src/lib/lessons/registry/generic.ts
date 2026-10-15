@@ -13,8 +13,4 @@ export const GENERIC_ACTIONS = [
   'switch_model',
 ] as const;
 
-export type GenericAction = (typeof GENERIC_ACTIONS)[number];
-
 export const GENERIC_READOUTS = ['result'] as const;
-
-export type GenericReadout = (typeof GENERIC_READOUTS)[number];

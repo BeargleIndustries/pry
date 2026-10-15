@@ -47,7 +47,6 @@ export const PANELS = [
   'watch-it-write',
 ] as const;
 
-export type PryPanel = (typeof PANELS)[number];
 export const LEFT_PANELS: readonly string[] = ['attention', 'logit-lens', 'dla', 'patching', 'circuit'];
 
 const layer = z.number().int().min(0);
