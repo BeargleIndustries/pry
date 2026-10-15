@@ -2215,6 +2215,13 @@
           }
         },
         {
+          "where": "s3-3/explain-result",
+          "kind": "slot",
+          "name": "qu",
+          "prompt": "Pip ordered zebra lamps from Quorn. Pip ordered zebra lamps from",
+          "expect": 0.3195
+        },
+        {
           "where": "s3-5/ringed-layers",
           "kind": "slot",
           "name": "top_induction_heads",
@@ -2300,6 +2307,13 @@
             "op": "equals",
             "value": " Qu"
           }
+        },
+        {
+          "where": "s5/explain-result",
+          "kind": "slot",
+          "name": "qu",
+          "prompt": "Pip ordered zebra lamps from Quorn. Pip ordered yellow lamps from",
+          "expect": 0.1158
         }
       ]
     },

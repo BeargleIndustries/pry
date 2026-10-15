@@ -45,14 +45,19 @@ Pip, zebra lamps and a shop called Quorn are all made up, and the sentence repea
 
 ```yaml
 choices:
-  - { text: "\" the\"", feedback: "' Qu' got {qu}; ' the' got {the_p}. Lots of people expect a common word here. That's what you'd see if the model could only reproduce what it was trained on. It's unlikely GPT-2 memorized this phrase, so the answer had to come from earlier in this prompt." }
-  - { text: "\" Qu\" (the start of \" Quorn\")", feedback: "That's what happened: ' Qu' got {qu}, and ' the' got {the_p}. The interesting part is how, since the model's weights can't have picked up Quorn from you." }
-  - { text: "\" a\"", feedback: "' Qu' got {qu}; ' the' got {the_p}. Lots of people expect a common word here. That's what you'd see if the model could only reproduce what it was trained on. It's unlikely GPT-2 memorized this phrase, so the answer had to come from earlier in this prompt." }
-  - { text: "something else", feedback: "' Qu' got {qu}; ' the' got {the_p}. Lots of people expect a common word here. That's what you'd see if the model could only reproduce what it was trained on. It's unlikely GPT-2 memorized this phrase, so the answer had to come from earlier in this prompt." }
+  - { text: "\" the\"" }
+  - { text: "\" Qu\" (the start of \" Quorn\")" }
+  - { text: "\" a\"" }
+  - { text: "something else" }
+remember: pip-pick
 ```
 :::
 
 ## The reveal {id=s3-3 outline=P2.2.md#3.3}
+
+:::enter
+open_panel: predictions
+:::
 
 :::do{id=pip-run}
 Run it and check :look{at=predictions-panel}[Predictions], then :look{at=token-strip}[the token strip]. Quorn isn't one token: it's ' Qu' followed by 'orn', so ' Qu' is the piece that'd have to come first.
@@ -63,7 +68,7 @@ Run it and check :look{at=predictions-panel}[Predictions], then :look{at=token-s
 :::
 
 :::observe{id=pip-obs}
-' Qu' comes out on top with {qu}. ' the' gets {the_p}. The model's continuing a name you made up a second ago, one it can't have been trained on.
+You picked :earlier{key="pry.p2-2.pip-pick"}[nothing]. In :look{at=predictions-panel}[Predictions], ' Qu' comes out on top with {qu}, and ' the' gets {the_p}. If you expected a common word, that's what you'd see if the model could only reproduce what it was trained on. The model's continuing a name you made up a second ago, one it can't have been trained on.
 
 ```yaml
 check: { read: top_guess.token, op: equals, value: " Qu" }
@@ -83,7 +88,7 @@ model_answer: "the token after the first ' from'."
 The model's weights didn't change when you typed Quorn, and it's unlikely GPT-2 saw this exact sentence in training. So the push toward ' Qu' had to come from inside this prompt: the first time round, ' from' was followed by ' Qu'.
 
 ```yaml
-supports: "' Qu' leads at the second ' from', and the only place ' Qu' follows ' from' is earlier in this same prompt."
+supports: "' Qu' leads with {qu} at the second ' from', and the only place ' Qu' follows ' from' is earlier in this same prompt."
 leaves_open: "Predictions show what came out, not which parts of the model brought ' Qu' forward."
 tool: predictions
 skeptic: { says: "A skeptic would say ' Qu' is just a common start for shop names, and the repeat has nothing to do with it.", check: "Change the repeat later in this lesson and see whether ' Qu' still leads." }
@@ -114,7 +119,7 @@ Open :look{at=copying-heads-view}[the copying-heads view]. Pry feeds the model a
 :::
 
 :::observe{id=ringed-layers}
-Which layers hold the ringed heads? The top three scorers are {top_induction_heads}, all in the middle of the model.
+Which layers hold the ringed heads? The top three scorers are {top_induction_heads}, all in the middle of the model. Pry names a head by its layer and then its number within that layer, both counted from 0, so in `L5H5` the first 5 is the layer and the second is the head.
 
 The scores come from Pry's random repeated sequence, not from your prompt.
 
@@ -178,6 +183,10 @@ model_answer: "A repeat."
 :::
 
 ## One job, one test {id=s3-8 outline=P2.2.md#3.8}
+
+:::enter
+analyses: [copying_heads]
+:::
 
 :::explain-result
 You caught a head doing a job: on a repeat, it draws from what came next last time. Look back at :look{at=copying-heads-view}[the copying-heads view] and keep in mind it ran one test, on one kind of input.
@@ -246,7 +255,7 @@ check: { read: top_guess.token, op: equals, value: " Qu" }
 The copy still works, since ' from' itself still repeats and still had ' Qu' after it the first time round. Less of the probability goes to ' Qu', though, so the changed word made a difference somewhere, and this view can't say where.
 
 ```yaml
-supports: "' Qu' stays top after one word in the repeat changes, and its probability drops from the first run to this one."
+supports: "' Qu' stays top after one word in the repeat changes, and its probability drops from {qu_before} on the first run to {qu} on this one."
 leaves_open: "Predictions show the copy survived and got weaker. They don't show which heads carried it or why the changed word cost it probability."
 limits: "this shows the copy survives one change, not which heads did it."
 tool: predictions
