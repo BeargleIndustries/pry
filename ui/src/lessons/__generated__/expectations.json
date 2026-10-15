@@ -2472,6 +2472,13 @@
         {
           "where": "s3-5/bars-obs",
           "kind": "slot",
+          "name": "n",
+          "prompt": "Michael Jordan played the sport of",
+          "expect": 2
+        },
+        {
+          "where": "s3-5/bars-obs",
+          "kind": "slot",
           "name": "top_parts",
           "prompt": "Michael Jordan played the sport of",
           "expect": [
@@ -2500,13 +2507,6 @@
             "value": 0,
             "expect": 14.799
           }
-        },
-        {
-          "where": "s3-5/bars-obs",
-          "kind": "slot",
-          "name": "n",
-          "prompt": "Michael Jordan played the sport of",
-          "expect": 2
         },
         {
           "where": "s3-6/explain-result",
@@ -2603,6 +2603,20 @@
               "contrast": " John"
             }
           }
+        },
+        {
+          "where": "s3-10/explain-result",
+          "kind": "slot",
+          "name": "bars_total",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": 4.564
+        },
+        {
+          "where": "s3-10/explain-result",
+          "kind": "slot",
+          "name": "actual_logit",
+          "prompt": "When Mary and John went to the store, John gave a drink to",
+          "expect": 3.362
         }
       ]
     },

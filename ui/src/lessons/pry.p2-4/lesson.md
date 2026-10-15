@@ -63,7 +63,7 @@ breaks: "both halves add to the same residual stream, and the split isn't clean.
 :::explain
 ' basketball''s logit comes from what every head and every MLP added to the last token's residual stream. Take each of those additions on its own, measure it straight to that logit, and you get each part's own push toward ' basketball', or against it.
 
-Splitting a logit into each part's own push toward or against a token is called **direct logit attribution**, or **DLA**. Papers use the name, and it's on Pry's "Why (DLA)" tab, which is direct logit attribution under a friendlier label. "Direct" means each bar is one part's own push, measured straight to the logit.
+Splitting a logit into each part's own push toward or against a token is called **direct logit attribution**, or **DLA**. Papers use the name, and it's on :look{at=left-tab-strip}[Pry's "Why (DLA)" tab], which is direct logit attribution under a friendlier label. "Direct" means each bar is one part's own push, measured straight to the logit.
 :::
 
 :::analogy
@@ -90,10 +90,11 @@ What will the bars for ' basketball' look like?
 
 ```yaml
 choices:
-  - { text: "one part towers over the rest", target: N2, feedback: "Lots of people expect that, because facts feel like they live somewhere. The bars went another way: {n} parts push harder than {x}, and MLP.{k} is among them. No single bar towers." }
-  - { text: "a handful of parts, heads and MLPs mixed", feedback: "That's what happened: {n} parts push harder than {x}, heads and MLPs both, with MLP.{k} among them." }
-  - { text: "every part about equal", feedback: "The bars went another way: {n} parts push harder than {x}, and plenty of others barely register. A few parts carry the big pushes." }
+  - { text: "one part towers over the rest", target: N2, feedback: "Lots of people expect that, because facts feel like they live somewhere. The bars come up in the next section." }
+  - { text: "a handful of parts, heads and MLPs mixed" }
+  - { text: "every part about equal" }
   - { text: "something else" }
+remember: bars-pick
 ```
 :::
 
@@ -121,7 +122,7 @@ Pry runs DLA on ' basketball' at the last token, ' of'. Look at :look{at=dla-wat
 :::
 
 :::observe{id=bars-obs}
-The three biggest pushes are {top_parts}. Each number is a push in logits, so a bar of one means that part on its own raised ' basketball''s logit by one.
+You picked :earlier{key="pry.p2-4.bars-pick"}[nothing]. In :look{at=dla-waterfall}[the bars], {n} parts push harder than {x}, heads and MLPs both, with MLP.{k} among them. The three biggest pushes are {top_parts}. Each number is a push in logits, so a bar of one means that part on its own raised ' basketball''s logit by one.
 
 ```yaml
 check: { read: dla.bars_total, op: gt, value: 0, expect: 14.799 }
@@ -201,6 +202,10 @@ model_answer: "The MLP's; the head gets credit only for its own direct push."
 :::
 
 ## A fair question compares two tokens {id=s3-8 outline=P2.4.md#3.8}
+
+:::enter
+open_panel: predictions
+:::
 
 :::slots
 mary: { read: prediction, args: { token: " Mary" }, field: prob, format: probability, expect: 0.677 }
@@ -282,6 +287,11 @@ model_answer: "The embedding's own direct push plus a few fixed numbers the mode
 
 ## What DLA can and can't show {id=s3-10 outline=P2.4.md#3.10}
 
+:::slots
+bars_total: { read: dla.bars_total, expect: 4.564 }
+actual_logit: { read: dla.actual, expect: 3.362 }
+:::
+
 :::do{id=open-top-head}
 Pry opens the head with the biggest push toward ' Mary' and shows its attention lines from ' to', the view from P2.1.
 
@@ -291,9 +301,9 @@ Pry opens the head with the biggest push toward ' Mary' and shows its attention 
 :::
 
 :::explain-result
-DLA names the parts that pushed directly. A part that helped by changing what a later part did gets no bar for that help, so the bars aren't a full explanation, however close their total comes.
+DLA names the parts that pushed directly. A part that helped by changing what a later part did gets no bar for that help, so the bars aren't a full explanation, however close their total comes. Here, on :look{at=dla-total-line}[the total line], the bars total {bars_total} against a real logit difference of {actual_logit}.
 
-:refutes{target=T6}[the bars nearly add up, and they still don't say how the parts worked together]
+:refutes{target=T6}[The bars come close to the real number, and they still don't say how the parts worked together.]
 
 ```yaml
 supports: "Each bar is one part's direct push on the logit difference. Only direct pushes count, so treat the tall bars as suspects."
