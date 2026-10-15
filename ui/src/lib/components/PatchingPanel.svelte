@@ -281,7 +281,7 @@
       <p class="text-sm text-zinc-600">Type an original prompt and a changed one, then press Run swap test to see which parts carry the difference.</p>
     </div>
   {:else if response}
-    <Readout text={patchingReadout(response)} />
+    <Readout text={patchingReadout(response)} hidden={isHidden('patching-grid')} />
 
     <!-- Info bar -->
     <div class="flex flex-wrap items-center gap-2 rounded-md border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-xs">

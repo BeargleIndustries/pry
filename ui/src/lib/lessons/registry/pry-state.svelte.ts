@@ -81,6 +81,8 @@ function initialUi() {
       view: 'lines' as 'lines' | 'expert',
       /** Head picked for the Lines view; null = pick automatically. */
       linesPick: null as HeadPick | null,
+      /** The Lines view draws the average over every head (a lesson's set_attention_view lines) until a head is picked. */
+      linesAverage: false,
       focusMode: 'from' as 'from' | 'to',
       expandedLayer: null as number | null,
       expandedHead: null as number | null,
@@ -163,6 +165,8 @@ export interface PryViewState {
   aggregation: Aggregation;
   focus_mode: 'from' | 'to';
   lines_head: HeadPick | null;
+  /** The Lines view shows the average over every head (attention.avg_* reads the same). */
+  lines_average: boolean;
   open_head: HeadPick | null;
   head_ablation: { heads: HeadPick[]; on: boolean };
   feature_ablation: { ids: number[]; on: boolean };

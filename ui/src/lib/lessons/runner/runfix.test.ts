@@ -12,6 +12,9 @@ import { lessonsCopy } from '../copy';
 import { allSteps } from '../format/normalise';
 import { pryToolSet } from '../registry/pry-set';
 import { pryUi } from '../registry/pry-state.svelte';
+import { evaluateCheck } from './checks';
+import { resolveBindings } from '../registry/dispatcher';
+import type { CheckItem } from '../format/schema';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -175,6 +178,32 @@ describe('runfix', () => {
     expect(plainText(kit.runner.render().blocks[0].body)).toContain('Edited on disk.');
     await send(kit, 'back');
     expect(block(kit, 'top').ask?.locked).toBe(true);
+  });
+
+  it('› a $row value nested inside a check record resolves before comparing', () => {
+    const o = evaluateCheck(
+      { read: 'patch.peak', args: { type: 'resid' }, op: 'contains', value: { layer: '$row.27.peak_layer' } } as CheckItem,
+      {
+        set: { readouts: { 'patch.peak': { type: 'record', doc: '', read: () => undefined } } },
+        read: () => ({ layer: 2, position: 10 }),
+        resolveArgs: (a) => resolveBindings(a, { earlier: () => undefined, row: (id, f) => (id === '27' && f === 'peak_layer' ? 2 : undefined) }) as Record<string, unknown>,
+      },
+    );
+    expect(o.agrees).toBe(true);
+  });
+
+  it('› set_attention_view lines draws the average over every head until a head is picked', async () => {
+    const kit = makeKit();
+    await kit.runner.open(lessonSource(TWO_RUNS), { source: { kind: 'bundled' } });
+    const c = { signal: new AbortController().signal, wait: () => {} };
+    await pryToolSet.actions.set_attention_view.run({ view: 'lines' }, c);
+    expect(pryUi.attention.linesAverage).toBe(true);
+    expect(pryToolSet.snapshot().lines_average).toBe(true);
+    await pryToolSet.actions.set_lines_head.run({ layer: 9, head: 9 }, c);
+    expect(pryUi.attention.linesAverage).toBe(false);
+    // A new lesson's scene starts with one head again.
+    await kit.runner.open(lessonSource(TWO_RUNS), { source: { kind: 'bundled' } });
+    expect(pryToolSet.snapshot().lines_average).toBe(false);
   });
 
   it('› the embedding reader mounts under the step that points at it, once per section', async () => {

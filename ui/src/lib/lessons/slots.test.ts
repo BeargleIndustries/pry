@@ -122,6 +122,13 @@ describe('slots', () => {
       expect(renderSlot('c', slots, src)).toBe('18.47');
     });
 
+    it('› an assert can gate a text claim with contains', () => {
+      const slots: Record<string, Slot> = { t: { read: 'steer.text', args: { which: 'steered' } } };
+      const item = { require: { slot: 't', op: 'contains' as const, value: 'rain' }, say: 'Rain shows up.', else: 'No rain in it.' };
+      expect(evaluateAssert(item, slots, source({ 'steer.text{"which":"steered"}': 'clouds and rain' }))).toBe('Rain shows up.');
+      expect(evaluateAssert(item, slots, source({ 'steer.text{"which":"steered"}': 'the ocean' }))).toBe('No rain in it.');
+    });
+
     it('› records and lists read in words, never as JSON', () => {
       const top = [
         { token: ' Mary', prob: 0.677 },

@@ -167,7 +167,9 @@ export function resolveValue(item: CheckItem, env: CheckEnv): { value: unknown; 
   const field = (v: unknown) => pickField(v, item.value_field);
   if (!r) {
     if (item.value === undefined && expectUsable(item.expect)) return { value: item.expect, binding: 'lesson', missing: false };
-    return { value: item.value, binding: 'lesson', missing: false };
+    // A record or list may hold `$row` / `$earlier` values (`contains {layer: $row.27.peak_layer}`).
+    const v = typeof item.value === 'object' && item.value !== null && env.resolveArgs ? env.resolveArgs({ v: item.value })?.v : item.value;
+    return { value: v, binding: 'lesson', missing: false };
   }
   switch (r.kind) {
     case 'prediction': {

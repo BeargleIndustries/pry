@@ -58,7 +58,7 @@ export type StepKind = (typeof STEP_KINDS)[number];
 export const PRESENTATIONAL_KINDS: readonly string[] = ['explain', 'analogy', 'fold'];
 
 export const FORMULAS = ['share', 'difference', 'sum', 'abs', 'ratio', 'ln'] as const;
-export const SLOT_FORMATS = ['probability', 'logit', 'layer', 'count', 'position', 'string', 'number'] as const;
+export const SLOT_FORMATS = ['probability', 'points', 'logit', 'layer', 'count', 'position', 'string', 'number'] as const;
 
 const args = z.record(z.string(), z.unknown());
 const str = z.string();

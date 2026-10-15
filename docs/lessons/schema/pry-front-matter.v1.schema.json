@@ -588,6 +588,7 @@
             "type": "string",
             "enum": [
               "probability",
+              "points",
               "logit",
               "layer",
               "count",

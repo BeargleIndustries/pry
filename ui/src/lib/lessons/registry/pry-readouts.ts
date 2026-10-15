@@ -70,6 +70,8 @@ export interface PrySource {
   writeIt: GenerateResponse | null;
   embedding: typeof pryUi.embedding;
   linesPick: HeadPick | null;
+  /** The Lines view draws the average over every head (no one head on screen). */
+  linesAverage?: boolean;
   aggregation: Aggregation;
   focusMode: 'from' | 'to';
   hidden: Record<string, boolean>;
@@ -105,6 +107,7 @@ export function liveSource(): PrySource {
     writeIt: pryUi.writeIt.result,
     embedding: pryUi.embedding,
     linesPick: pryUi.attention.linesPick,
+    linesAverage: pryUi.attention.linesAverage,
     aggregation: h.getAggregation(),
     focusMode: pryUi.attention.focusMode,
     hidden: pryUi.hidden,
@@ -207,6 +210,7 @@ function argmax(row: number[]): number {
 
 /** The head the Lines view shows: the learner's pick if it fits, else the brightest Expert cell. */
 export function linesHeadOf(src: PrySource): HeadPick | undefined {
+  if (src.linesAverage) return undefined;
   const att = src.response?.attention ?? [];
   const nL = att.length;
   const nH = att[0]?.heads?.length ?? 0;

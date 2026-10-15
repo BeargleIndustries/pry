@@ -3,6 +3,7 @@
   import type { GenerateResponse, TokenFeatures, AblateResponse, PresetDisplay } from '$lib/types';
   import FeatureCard from './FeatureCard.svelte';
   import Readout from './Readout.svelte';
+  import { isHidden } from '$lib/lessons/registry/pry-state.svelte';
   import { FEATURE_KNOCKOUT_NOTE, featuresReadout } from '$lib/readouts';
   import { signedHex, signedNumber } from '$lib/signed-color';
 
@@ -177,7 +178,7 @@
     {/if}
   </div>
 
-  <Readout text={readout} />
+  <Readout text={readout} hidden={isHidden('feature-labels')} />
 
   {#if ablationMode}
     <p class="text-[11px] text-zinc-500">{FEATURE_KNOCKOUT_NOTE}</p>

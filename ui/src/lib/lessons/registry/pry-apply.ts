@@ -94,6 +94,7 @@ export function defaultScene(): PryViewState & { prompt: string } {
     aggregation: 'max',
     focus_mode: 'from',
     lines_head: null,
+    lines_average: false,
     open_head: null,
     head_ablation: { heads: [], on: false },
     feature_ablation: { ids: [], on: false },
@@ -131,7 +132,10 @@ function overlayOnto(s: PryViewState, o: Record<string, unknown>): PryViewState 
   if (v.attention_view !== undefined) out.attention_view = v.attention_view;
   if (v.aggregation !== undefined) out.aggregation = v.aggregation;
   if (v.focus_mode !== undefined) out.focus_mode = v.focus_mode;
-  if (v.lines_head !== undefined) out.lines_head = { ...v.lines_head };
+  if (v.lines_head !== undefined) {
+    out.lines_head = { ...v.lines_head };
+    out.lines_average = false;
+  }
   if (v.open_head !== undefined) out.open_head = { ...v.open_head };
   if (v.head_ablation !== undefined) out.head_ablation = structuredClone(v.head_ablation);
   if (v.feature_ablation !== undefined) out.feature_ablation = structuredClone(v.feature_ablation);
@@ -213,6 +217,7 @@ export const pryApply: PrySet['apply'] = async (t, ctx) => {
   if (h.getAggregation() !== t.aggregation) h.setAggregation(t.aggregation);
   att.focusMode = t.focus_mode;
   if (!sameJson(att.linesPick, t.lines_head)) att.linesPick = t.lines_head ? { ...t.lines_head } : null;
+  att.linesAverage = (t.lines_average ?? false) && !t.lines_head;
   att.expandedLayer = t.open_head?.layer ?? null;
   att.expandedHead = t.open_head?.head ?? null;
   if (!sameJson(s.headAblations, t.head_ablation.heads)) s.headAblations = t.head_ablation.heads.map((x) => ({ ...x }));
@@ -363,6 +368,7 @@ export const prySnapshot: PrySet['snapshot'] = () => {
     aggregation: h.getAggregation(),
     focus_mode: att.focusMode,
     lines_head: att.linesPick ? { ...att.linesPick } : null,
+    lines_average: att.linesAverage,
     open_head: att.expandedLayer !== null && att.expandedHead !== null ? { layer: att.expandedLayer, head: att.expandedHead } : null,
     head_ablation: { heads: s.headAblations.map((x) => ({ layer: x.layer, head: x.head })), on: s.headAblationMode },
     feature_ablation: { ids: s.featureAblations.map((f) => f.feature_index), on: s.featureAblationMode },

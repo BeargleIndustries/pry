@@ -210,6 +210,7 @@
       tipHold.set([]);
       return;
     }
+    const scrolled = new WeakSet<HTMLElement>();
     const plan = () => {
       const sb = root!.getBoundingClientRect();
       const env = {
@@ -229,6 +230,12 @@
         },
       };
       const next = targets.map((t) => planPointer(t, env));
+      // A target scrolled out of its panel comes into view once, when it's first pointed at.
+      for (const p of next) {
+        if (p?.kind !== 'ring' || !p.el || scrolled.has(p.el)) continue;
+        scrolled.add(p.el);
+        p.el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      }
       if (JSON.stringify(next.map(sig)) !== JSON.stringify(plans.map(sig))) plans = next;
       tipHold.set(next.flatMap((p) => (p && p.kind === 'ring' && p.el ? [p.el] : [])));
     };

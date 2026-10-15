@@ -23,7 +23,7 @@ function rowOf(slot: Slot, row: SlotSource['row'] = rowConstant): RowConstant | 
 }
 
 /** The authored formats, plus `points`: a change in probability (a delta), never a probability itself. */
-export type SlotFormat = NonNullable<Slot['format']> | 'points';
+export type SlotFormat = NonNullable<Slot['format']>;
 
 const PERCENT = (p: number) => {
   const pct = p * 100;
@@ -222,6 +222,13 @@ export interface AssertLog {
 }
 
 function compare(a: unknown, op: string, b: unknown): boolean {
+  // Text claims: a string slot contains a word (or any of a list of words).
+  if (op === 'contains') {
+    if (typeof a === 'string') return Array.isArray(b) ? b.some((w) => typeof w === 'string' && a.includes(w)) : typeof b === 'string' && a.includes(b);
+    if (Array.isArray(a)) return a.some((x) => x === b);
+    return false;
+  }
+  if (op === 'starts_with') return typeof a === 'string' && typeof b === 'string' && a.startsWith(b);
   if (typeof a !== 'number' || typeof b !== 'number') return op === 'equals' ? a === b : false;
   switch (op) {
     case 'gt':

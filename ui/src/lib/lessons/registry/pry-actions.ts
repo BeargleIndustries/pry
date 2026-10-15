@@ -354,10 +354,14 @@ export const pryActions: Record<string, ActionDef> = {
   },
   set_attention_view: {
     args: z.object({ view: z.enum(['lines', 'expert']) }).strict(),
-    doc: 'Picks the attention view: Lines or Expert.',
+    doc: 'Picks the attention view: Lines or Expert. Lines opens on the average over every head (what attention.avg_* reads) until a head is picked.',
     effect: 'view',
     run: async (a: { view: 'lines' | 'expert' }) => {
       pryUi.attention.view = a.view;
+      if (a.view === 'lines') {
+        pryUi.attention.linesPick = null;
+        pryUi.attention.linesAverage = true;
+      }
     },
   },
   set_aggregation: {
@@ -374,6 +378,7 @@ export const pryActions: Record<string, ActionDef> = {
     effect: 'view',
     run: async (a: { layer: number; head: number }) => {
       pryUi.attention.linesPick = { layer: a.layer, head: a.head };
+      pryUi.attention.linesAverage = false;
     },
   },
   set_focus_mode: {

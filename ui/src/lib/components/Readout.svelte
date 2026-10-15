@@ -8,15 +8,18 @@
   interface Props {
     text: string | null;
     id?: string;
+    /** A lesson hides what this summary gives away until the learner answers (hide-until-predict). */
+    hidden?: boolean;
   }
 
-  let { text, id }: Props = $props();
+  let { text, id, hidden = false }: Props = $props();
 </script>
 
 <div class="contents" role="status" aria-live="polite" aria-atomic="true">
   {#if text}
     <p
       {id}
+      data-lesson-hidden={hidden || undefined}
       class="rounded-md border border-indigo-900/50 bg-indigo-950/30 px-3 py-2 text-xs leading-relaxed text-zinc-300"
     >
       <span class="sr-only">In plain words: </span>{text}
