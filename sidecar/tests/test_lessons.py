@@ -68,6 +68,9 @@ HASH_PATHSPECS = [
 
 LABEL_FIELDS = {"description", "label_detail", "confidence", "top_activating_snippets"}
 PROB_HINTS = ("prob", "share", "heads", "cosine", "attention")
+# Ranked lists (peak cells, top parts, top features, top-k predictions) are matched
+# item by item on the first of these fields every entry has.
+ORDER_KEYS = ("name", "id", "token")
 BOS = "<|endoftext|>"
 # Endpoints whose whole answer is a Neuronpedia lookup (search_concepts).
 NETWORK_ONLY = {"/concept-search"}
@@ -275,8 +278,47 @@ def variants_of(req: dict) -> list[str]:
     return ["r1"] + [f"r{i}" for i in range(2, int(req.get("repeat", 1)) + 1)]
 
 
+def _tol(p: str) -> float:
+    return 0.02 if any(h in p.lower() for h in PROB_HINTS) else 0.05
+
+
+def _order_key(a: list, b: list, p: str) -> str | None:
+    """The field a ranked list is keyed on, when a and b hold the same items (each key once).
+
+    Token sequences (generation steps) never qualify: their order is the answer."""
+    if "generation" in p or not a or len(a) != len(b):
+        return None
+    for k in ORDER_KEYS:
+        if all(isinstance(x, dict) and k in x for x in a + b):
+            ka, kb = [x[k] for x in a], [x[k] for x in b]
+            try:
+                same = len(set(ka)) == len(ka) and set(ka) == set(kb)
+            except TypeError:
+                return None
+            return k if same else None
+    return None
+
+
+def _near_tie(x: dict, y: dict, p: str) -> bool:
+    """Every float the two recorded items share differs by less than its tolerance."""
+    for f in set(x) & set(y):
+        u, v = x[f], y[f]
+        if isinstance(u, bool) or isinstance(v, bool) or not isinstance(u, (int, float)) or not isinstance(v, (int, float)):
+            continue
+        if not (isinstance(u, float) or isinstance(v, float)):
+            continue  # layers, heads, positions, ids: integers, not values
+        if abs(float(u) - float(v)) >= _tol(f"{p}.{f}"):
+            return False
+    return True
+
+
 def compare(old, new, body, old_device, new_device, compare_labels=True, path="response"):
-    """(problems, warnings) between a recorded and a fresh response, with the plan's tolerances."""
+    """(problems, warnings) between a recorded and a fresh response, with the plan's tolerances.
+
+    A ranked list compares as the same set of items by key, each value within tolerance;
+    two items may trade places only when their recorded values are a near tie (every
+    shared float closer than its tolerance). A new item, a lost item, or a swap of
+    items that are not tied is a problem."""
     diffs: list[str] = []
     warns: list[str] = []
     seeded = bool(body.get("temperature", 0)) and body.get("seed") is not None if isinstance(body, dict) else False
@@ -297,6 +339,20 @@ def compare(old, new, body, old_device, new_device, compare_labels=True, path="r
                 out = warns if (seeded and not same_device and "generation" in p) else diffs
                 out.append(f"{p}: length {len(a)} -> {len(b)}")
                 return
+            k = _order_key(a, b, p)
+            if k is not None and [x[k] for x in a] != [y[k] for y in b]:
+                at = {y[k]: j for j, y in enumerate(b)}
+                for i, x in enumerate(a):
+                    for y in a[i + 1:]:
+                        if at[x[k]] > at[y[k]] and not _near_tie(x, y, p):
+                            diffs.append(f"{p}: {x[k]!r} and {y[k]!r} swapped places but are not a near tie")
+                for i, x in enumerate(a):
+                    y = b[at[x[k]]]
+                    if at[x[k]] != i:  # rank follows the place, already checked above
+                        x = {f: v for f, v in x.items() if f != "rank"}
+                        y = {f: v for f, v in y.items() if f != "rank"}
+                    walk(x, y, f"{p}[{k}={a[i][k]!r}]")
+                return
             for i, (x, y) in enumerate(zip(a, b)):
                 walk(x, y, f"{p}[{i}]")
             return
@@ -311,7 +367,7 @@ def compare(old, new, body, old_device, new_device, compare_labels=True, path="r
                 out.append(f"{p}: {a} -> {b}")
             return
         if isinstance(a, (int, float)) and isinstance(b, (int, float)):
-            tol = 0.02 if any(h in p.lower() for h in PROB_HINTS) else 0.05
+            tol = _tol(p)
             if abs(float(a) - float(b)) > tol:
                 diffs.append(f"{p}: {a} -> {b} (tolerance {tol})")
             return
@@ -898,7 +954,13 @@ def c39(R, REP, OFF):
 
 def c40(R, REP, OFF):
     a, b = R["jordan"], OFF["jordanoffline"]
-    return {"online_top4": top(a), "offline_top4": top(b)}, [("offline Run gives identical numbers", a["top_predictions"] == b["top_predictions"] and a["tokens"] == b["tokens"])]
+
+    # As displayed: probabilities to 0.1%, logits to 2 decimals. CPU float sums can
+    # differ in the 6th digit between the first and a later call of the same request.
+    def shown(r):
+        return [(p["token"], pct(p["probability"]), None if p.get("logit") is None else round(p["logit"], 2)) for p in r["top_predictions"]]
+
+    return {"online_top4": top(a), "offline_top4": top(b)}, [("offline Run gives identical numbers", shown(a) == shown(b) and a["tokens"] == b["tokens"])]
 
 
 def c41(R, REP, OFF):
