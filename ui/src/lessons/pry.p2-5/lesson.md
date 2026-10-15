@@ -135,9 +135,9 @@ What do these examples have in common?
 ```yaml
 free: true
 choices:
-  - { text: "names of basketball players" }
-  - { text: "proper nouns, specifically the name \"Jordan.\"" }
-  - { text: "famous names or personalities" }
+  - { text: "basketball players" }
+  - { text: "the name Jordan, whoever has it" }
+  - { text: "famous people in general" }
 hides: [feature-labels]
 ```
 :::
@@ -149,7 +149,7 @@ label: { row: "53.label", format: string }
 :::
 
 :::observe{id=label-obs}
-The label's back: {label}. It comes from a public website that catalogues SAE features, with labels written by an AI from each feature's top examples, and that site's called **Neuronpedia**. Pry shows its labels and examples, and its name's on screen next to them.
+The label's back on :look{at=feature-row id=$row.53.fid}[the feature's card]: {label}. It comes from a public website that catalogues SAE features, with labels written by an AI from each feature's top examples, and that site's called **Neuronpedia**. Pry shows its labels and examples, and its name's on screen next to them.
 
 Here's the label Neuronpedia gives it. How does your guess compare? Both of you worked from the same examples.
 
