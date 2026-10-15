@@ -290,7 +290,9 @@ export const tipsRegistry: TipDef[] = [
     id: 'lessons-toggle',
     title: 'Lessons',
     target: '[data-tour="lessons-toggle"]',
-    placement: 'bottom',
+    // Beside the button, not under it: below sits the Lessons sidebar when it's
+    // open on the right, and a tip pushed clear of it ends up too far away.
+    placement: 'left',
     blurb:
       "The old guided tour's teaching lives in Lessons now. The chapters you finished count as visited there.",
     why:
