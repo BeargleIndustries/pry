@@ -1,0 +1,262 @@
+{
+ "key": "e003484146dfccb4b5ebb0cf8101328d466b3d3ca2b070900f0f99bd562fe859",
+ "variant": "r1",
+ "request": {
+  "endpoint": "/concept-search",
+  "model": "gpt2-small",
+  "body": {
+   "query": "politics",
+   "preset_id": "gpt2-small"
+  }
+ },
+ "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+ "device": "cpu",
+ "libs": {
+  "python": "3.12.13",
+  "torch": "2.5.1+cpu",
+  "transformer_lens": "2.15.4",
+  "sae_lens": "5.11.0",
+  "transformers": "4.57.6",
+  "numpy": "1.26.4"
+ },
+ "recorded": "2026-10-14",
+ "neuronpedia_fetched": null,
+ "offline": false,
+ "trimmed": [],
+ "response": {
+  "preset_id": "gpt2-small",
+  "sae_layer": 8,
+  "query": "politics",
+  "results": [
+   {
+    "feature_id": 4731,
+    "description": "political news related to government actions and decisions",
+    "similarity": 0.6839538826451399,
+    "top_boosted_tokens": [
+     " transgender",
+     " Donald",
+     " Ivanka",
+     " underwater",
+     " watchdog"
+    ]
+   },
+   {
+    "feature_id": 15350,
+    "description": "information related to politics and government, particularly in terms of decision-making and actions taken",
+    "similarity": 0.6350807989946408,
+    "top_boosted_tokens": [
+     " damn",
+     " thereafter",
+     " damned",
+     " darn",
+     " therein"
+    ]
+   },
+   {
+    "feature_id": 1817,
+    "description": "information related to politics and current events, such as political candidates and government agencies",
+    "similarity": 0.6239734847141041,
+    "top_boosted_tokens": [
+     " currently",
+     " notoriously",
+     " rumored",
+     " traditionally",
+     " famously"
+    ]
+   },
+   {
+    "feature_id": 20604,
+    "description": "political or governmental terms and concepts",
+    "similarity": 0.6188787787873726,
+    "top_boosted_tokens": [
+     "iest",
+     " woes",
+     " population",
+     " heritage",
+     " legislature"
+    ]
+   },
+   {
+    "feature_id": 5392,
+    "description": "discussions surrounding political actions and decisions",
+    "similarity": 0.611162832703015,
+    "top_boosted_tokens": [
+     "Either",
+     "Meanwhile",
+     "Assuming",
+     "Sources",
+     "Regardless"
+    ]
+   },
+   {
+    "feature_id": 10443,
+    "description": "topics related to politics and political entities",
+    "similarity": 0.6077962798049599,
+    "top_boosted_tokens": [
+     ")âĢĶ",
+     ")?",
+     ")--",
+     ")",
+     "*)"
+    ]
+   },
+   {
+    "feature_id": 3902,
+    "description": "political and social topics and actions",
+    "similarity": 0.5948016360084473,
+    "top_boosted_tokens": [
+     "?).",
+     " etc",
+     ")).",
+     "?),",
+     " TBA"
+    ]
+   },
+   {
+    "feature_id": 3695,
+    "description": "government-related terms and political actions",
+    "similarity": 0.5937298122715766,
+    "top_boosted_tokens": [
+     " regulators",
+     " legislation",
+     " lawmakers",
+     " mandated",
+     " policymakers"
+    ]
+   },
+   {
+    "feature_id": 12959,
+    "description": "mentions of politics",
+    "similarity": 0.5934059149667257,
+    "top_boosted_tokens": [
+     " correctness",
+     "eering",
+     "hare",
+     "cape",
+     "atism"
+    ]
+   },
+   {
+    "feature_id": 21576,
+    "description": "government-related terms in a political context",
+    "similarity": 0.5879825279393743,
+    "top_boosted_tokens": [
+     " Labour",
+     "Labour",
+     " Ukip",
+     " MPs",
+     " UKIP"
+    ]
+   },
+   {
+    "feature_id": 14458,
+    "description": "discussions related to political and social issues",
+    "similarity": 0.5879251696619794,
+    "top_boosted_tokens": [
+     " myself",
+     " I",
+     " my",
+     " My",
+     "My"
+    ]
+   },
+   {
+    "feature_id": 16336,
+    "description": "information related to politics and current events, including political figures and actions such as behavior, instability, crime family, and danger",
+    "similarity": 0.585903814295799,
+    "top_boosted_tokens": [
+     " ...\"",
+     "?'",
+     " âĢ¦\"",
+     ".,\"",
+     ",''"
+    ]
+   },
+   {
+    "feature_id": 18058,
+    "description": "governmental or political-related terms",
+    "similarity": 0.5854632820868721,
+    "top_boosted_tokens": [
+     " aforementioned",
+     " respective",
+     " likes",
+     " outset",
+     " same"
+    ]
+   },
+   {
+    "feature_id": 20535,
+    "description": "political news related to elections and government appointments",
+    "similarity": 0.5848015371396716,
+    "top_boosted_tokens": [
+     " parliamentary",
+     " electoral",
+     " parliament",
+     "election",
+     " Elections"
+    ]
+   },
+   {
+    "feature_id": 12244,
+    "description": "terms related to politics and policy",
+    "similarity": 0.5847585782887702,
+    "top_boosted_tokens": [
+     " beverage",
+     " ammunition",
+     " lobbying",
+     " beverages",
+     "rage"
+    ]
+   },
+   {
+    "feature_id": 6863,
+    "description": "significant political events or discussions",
+    "similarity": 0.5812028965768011,
+    "top_boosted_tokens": [
+     " Canaver",
+     " NASCAR",
+     " Hillary",
+     " Bernie",
+     " Donald"
+    ]
+   },
+   {
+    "feature_id": 6505,
+    "description": "texts related to political and government actions or reform",
+    "similarity": 0.5795658999298258,
+    "top_boosted_tokens": [
+     " urgently",
+     " policymakers",
+     " equitable",
+     " legisl",
+     " reforms"
+    ]
+   },
+   {
+    "feature_id": 21930,
+    "description": "words related to political discussions or topics",
+    "similarity": 0.5779319595262573,
+    "top_boosted_tokens": [
+     "wagen",
+     "geist",
+     "opal",
+     "ãĤ´ãĥ³",
+     "Cola"
+    ]
+   },
+   {
+    "feature_id": 19054,
+    "description": "political events or gatherings",
+    "similarity": 0.577569491522114,
+    "top_boosted_tokens": [
+     "hips",
+     "hops",
+     "hare",
+     "chool",
+     "paces"
+    ]
+   }
+  ],
+  "status": "ok"
+ }
+}
