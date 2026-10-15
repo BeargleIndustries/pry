@@ -13,6 +13,7 @@
 // to state. Every other action is abort-and-drop: it checks the signal between
 // steps and stops.
 
+import { tick } from 'svelte';
 import { z } from 'zod';
 import { NotReadyError, type ActionContext, type ActionDef } from './contract';
 import type { RunnerActionContext } from './dispatcher';
@@ -575,9 +576,23 @@ export const pryActions: Record<string, ActionDef> = {
     doc: 'Runs steering. With control, also runs a norm-matched control feature at the same strength.',
     effect: 'compute',
     run: async (a: { control?: true }, ctx) => {
-      const s = pryHost().analysis.state;
+      const h = pryHost();
+      const s = h.analysis.state;
+      if (!h.getPrompt().trim()) throw new NotReadyError(EMPTY_PROMPT);
+      // Steering continues a run: run the prompt box first when it hasn't been
+      // (P3.5's transfer puts a new prompt in, then steers it). The Steering panel
+      // swaps its pick for the new run's top feature; the feature and strength set
+      // before this step come back once it has.
+      const r = s.response;
+      if (!r || r.prompt !== h.getPrompt() || r.preset_id !== h.activePresetId()) {
+        const keep = { id: pryUi.steering.selectedFeatureId, alpha: pryUi.steering.alpha };
+        await h.analysis.generate(h.getPrompt(), callerOf(ctx));
+        abortIf(ctx);
+        await tick();
+        pryUi.steering.selectedFeatureId = keep.id;
+        pryUi.steering.alpha = keep.alpha;
+      }
       const fid = pryUi.steering.selectedFeatureId;
-      if (!pryHost().getPrompt().trim()) throw new NotReadyError(EMPTY_PROMPT);
       if (fid === null || s.saeLayer === undefined) throw new NotReadyError('Pick a feature to steer first.');
       pryUi.steerControl = a.control === true;
       await pryHost().analysis.steer(fid, s.saeLayer, pryUi.steering.alpha, callerOf(ctx), a.control === true);

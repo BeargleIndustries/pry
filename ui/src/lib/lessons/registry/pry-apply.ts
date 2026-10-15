@@ -8,6 +8,7 @@
 // result is written; an abort only stops what comes after. `snapshot` reads
 // the state back, so apply(snapshot()) changes nothing.
 
+import { tick } from 'svelte';
 import { z } from 'zod';
 import type { ActionContext, ToolActionSet } from './contract';
 import { PRY_MODELS } from './pry-models';
@@ -195,7 +196,12 @@ export const pryApply: PrySet['apply'] = async (t, ctx) => {
     s.response = null;
     s.focusTokenIndex = undefined;
   }
-  if (t.run && !ran()) await an.generate(prompt, call);
+  if (t.run && !ran()) {
+    await an.generate(prompt, call);
+    // Let the panels take the new run first (Steering picks the run's top
+    // feature), so the scene's own panel state below is what stays.
+    await tick();
+  }
   abortIf(ctx);
   await switchLayer();
   abortIf(ctx);
