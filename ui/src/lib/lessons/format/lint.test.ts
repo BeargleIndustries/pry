@@ -349,6 +349,22 @@ describe('lint: outline-coverage additions', () => {
     expect(errors(lint(`## A\n\n${task('run_head_ablashun')}`, BASE))).toContain('unknown-action');
   });
 
+  it('› a record slot without a field warns (it would print every field in one line)', () => {
+    const t = (slot: string) => `## A
+
+:::slots
+${slot}
+:::
+
+${run('r')}
+:::explain
+It reads {s}.
+:::
+`;
+    expect(warnings(lint(t('s: { read: steer.scale, expect: learner }'), BASE))).toContain('slot-record-no-field');
+    expect(warnings(lint(t('s: { read: prediction, args: { token: " Paris" }, field: prob, expect: 0.1 }'), BASE))).not.toContain('slot-record-no-field');
+  });
+
   it('› a check tolerance may bind a slot (P3.5:77)', () => {
     const t = (tol: string) =>
       step('task{id=t}', yaml(`target:\n  - { read: steer.coherence, args: { which: steered }, op: within, value: $read.steer.coherence, value_args: { which: original }, tolerance: ${tol} }`));

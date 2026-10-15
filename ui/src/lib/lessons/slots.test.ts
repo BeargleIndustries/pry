@@ -135,6 +135,7 @@ describe('slots', () => {
       const cell = formatValue({ layer: 2, position: 10, clean: 18.4664, corrupted: 14.967, patched: 18.4751, share: 1.0024 }, 'number');
       expect(cell).toBe('L2: position 10, clean 18.47, corrupted 14.97, patched 18.48, share 100.2%');
       expect(formatValue({ layer: 9, head: 9 }, 'number')).toBe('L9H9');
+      expect(formatValue([{ part: 'L9H9', contribution: 1.234 }, { part: 'MLP 9', contribution: -0.5 }], 'number')).toBe('L9H9 contribution 1.23, MLP 9 contribution -0.50');
     });
   });
 });

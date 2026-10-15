@@ -310,6 +310,20 @@ export class LessonRunner<VS = unknown> {
     await this.goto(start);
   }
 
+  /**
+   * Swaps in a new version of the open lesson (hot reload) and re-enters the
+   * section the learner is on, keeping their answers and captures.
+   */
+  async reload(lesson: Lesson, images?: Record<string, string>): Promise<void> {
+    if (!this.lesson || this.lesson.meta.id !== lesson.meta.id) return;
+    const at = this.section?.id ?? null;
+    this.lesson = lesson;
+    if (images) this.#images = images;
+    this.#notes = [...lesson.authorNotes];
+    const i = at ? lesson.sections.findIndex((s) => s.id === at) : 0;
+    await this.goto(Math.max(0, Math.min(i < 0 ? this.index : i, lesson.sections.length - 1)));
+  }
+
   private resumeIndex(lesson: Lesson): number {
     const last = this.deps.progress?.of(lesson.meta.id)?.last;
     const i = last ? lesson.sections.findIndex((s) => s.id === last) : -1;
@@ -1146,7 +1160,8 @@ export class LessonRunner<VS = unknown> {
         ? (name) => {
             const s = slots[name];
             if (!s || s.expect === undefined) return null;
-            return lessonsCopy.expectBeside(typeof s.expect === 'number' ? formatValue(s.expect, slotFormat(s, src.readouts)) : String(s.expect));
+            const shown = typeof s.expect === 'number' || (typeof s.expect === 'object' && s.expect !== null) ? formatValue(s.expect, slotFormat(s, src.readouts)) : String(s.expect);
+            return lessonsCopy.expectBeside(shown);
           }
         : undefined,
       earlier: (key, fallback) => earlierText(this.journal, key, fallback),

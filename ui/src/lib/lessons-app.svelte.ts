@@ -168,7 +168,10 @@ export function createLessonsApp(deps: LessonsAppDeps) {
         library = library ?? (await openLessonLibrary({ lessonDir: pryToolSet.lessonDir, idPrefix: pryToolSet.idPrefix, log: deps.log }));
         await library.ensureTemplate().catch(() => {});
         await library.load();
-        library.onChange(() => refreshLibrary(extra));
+        library.onChange(() => {
+          refreshLibrary(extra);
+          void reloadOpenLesson();
+        });
         state.grants = await readGrants();
       } catch (e) {
         void deps.log?.log({ message: `library failed: ${String(e)}` });
@@ -222,6 +225,16 @@ export function createLessonsApp(deps: LessonsAppDeps) {
     const text = await lessonText(entry);
     if (!text) return null;
     return loadLessonSource(text, { mode: 'lenient', tool: pryToolSet, file: entry.file }).lesson;
+  }
+
+  /** Hot reload: a user lesson changed on disk while it's open re-renders in place, on the same section. */
+  async function reloadOpenLesson(): Promise<void> {
+    const open = runner.lesson;
+    if (!open || tourOpen()) return;
+    const entry = state.entries.find((e) => e.id === open.meta.id && e.source === 'user' && e.lesson);
+    if (!entry) return;
+    const lesson = await fullLesson(entry);
+    if (lesson) await runner.reload(lesson, entry.images);
   }
 
   async function openLesson(id: string, sectionId: string | null = null): Promise<boolean> {

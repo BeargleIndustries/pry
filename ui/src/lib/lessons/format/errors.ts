@@ -116,6 +116,8 @@ export const MESSAGES: Record<string, (d: D) => string> = {
     `This lesson has ${d.what ?? '`expect` values'}, and there's no recorded response for its ${d.request} in ${d.folder}, so the checker can't test them (it can't run the model). Record them in Pry's author mode, or with the recorder: AUTHORING.md, "Getting real expected values".`,
   'expect-recorded': (d) =>
     `${d.what} doesn't match the recorded response: ${d.detail}.${d.declared ? ` Its \`expect\` is on line ${d.declared}.` : ''} Set the \`expect\` from the response in ${d.folder}, or record again (AUTHORING.md, "Getting real expected values").`,
+  'slot-record-no-field': (d) =>
+    `\`{${d.name}}\` reads all of \`${d.read}\`, a record, so the learner gets every field in one line. Add \`field:\`${d.fields ? ` (one of: ${d.fields})` : ''} to show the one number the text talks about.`,
   'slot-unknown': (d) => `There's no slot called \`{${d.name}}\`. Declare it under \`slots:\`.`,
   'slot-before-readout': (d) => `\`{${d.name}}\` shows before the step that produces its value, so it would read "(appears after you run it)".`,
   'spine-unknown': (d) => `\`${d.name}\` isn't a box on the spine strip.`,

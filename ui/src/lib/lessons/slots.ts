@@ -73,15 +73,15 @@ export function formatPoints(d: number): string {
 }
 
 /** Record fields that hold a logit (Swap test cells, predictions). */
-const LOGIT_FIELDS = new Set(['logit', 'clean', 'corrupted', 'patched', 'answer_logit', 'contrast_logit']);
+const LOGIT_FIELDS = new Set(['logit', 'clean', 'corrupted', 'patched', 'answer_logit', 'contrast_logit', 'contribution']);
 
 /** A record read out in words: `" Paris" 9.7% (about 1 in 10)`, `L2 at position 10: clean 18.47, ...`. */
 function formatRecord(o: Record<string, unknown>, format: SlotFormat): string {
   const head = typeof o.layer === 'number' ? (typeof o.head === 'number' ? `L${o.layer}H${o.head}` : `L${o.layer}`) : null;
-  const tok = typeof o.token === 'string' ? `"${o.token}"` : null;
+  const tok = typeof o.token === 'string' ? `"${o.token}"` : typeof o.part === 'string' ? o.part : null;
   const parts: string[] = [];
   for (const [k, v] of Object.entries(o)) {
-    if (v === undefined || v === null || k === 'layer' || k === 'head' || k === 'token') continue;
+    if (v === undefined || v === null || k === 'layer' || k === 'head' || k === 'token' || (k === 'part' && typeof v === 'string')) continue;
     if (k === 'prob' || k === 'probability') parts.push(typeof v === 'number' ? formatProbability(v) : String(v));
     else if (k === 'delta') parts.push(typeof v === 'number' ? formatPoints(v) : String(v));
     else if (k === 'share') parts.push(`share ${typeof v === 'number' ? PERCENT(v) : String(v)}`);

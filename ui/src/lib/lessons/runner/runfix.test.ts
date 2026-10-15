@@ -165,6 +165,18 @@ describe('runfix', () => {
     expect(msg).not.toMatch(/failed|400/);
   });
 
+  it('› hot reload re-renders the open lesson in place, on the same section, keeping answers', async () => {
+    const kit = makeKit();
+    await kit.runner.open(lessonSource(TWO_RUNS), { source: { kind: 'bundled' } });
+    await send(kit, { type: 'answer', step: 'top', choice: 1 });
+    await send(kit, 'next');
+    await kit.runner.reload(lessonSource(TWO_RUNS.replace('Nothing to point at here.', 'Edited on disk.')));
+    expect(kit.runner.section?.id).toBe('next');
+    expect(plainText(kit.runner.render().blocks[0].body)).toContain('Edited on disk.');
+    await send(kit, 'back');
+    expect(block(kit, 'top').ask?.locked).toBe(true);
+  });
+
   it('› the embedding reader mounts under the step that points at it, once per section', async () => {
     const lesson = lessonFile('../../lessons/pry.p1-2/lesson.md');
     const sec = lesson.sections.find((s) => s.title === 'Same start?')!;
