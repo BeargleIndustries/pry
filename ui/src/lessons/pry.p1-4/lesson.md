@@ -14,6 +14,7 @@ cold_entry: "What you need from before: the last token's residual stream, after 
 model: gpt2-small
 baseline: { prompt: "Two plus two equals" }
 verified_rows: [3, 4, 5]
+limits: "These are next-token probabilities for one prompt. They don't say what's true, and they don't show how the model got them."
 slots:
   one_p: { read: prediction, args: { token: " one" }, field: prob, format: probability, expect: 0.34206 }
   two_p: { read: prediction, args: { token: " two" }, field: prob, format: probability, expect: 0.16224 }
@@ -53,10 +54,11 @@ What will GPT-2 put on top?
 
 ```yaml
 choices:
-  - { text: "\" four\"", target: M8, feedback: "The model went another way: ' one' got {one_p}, and your pick ' four' got {four_p}. A probability is about what text tends to follow, not what's true." }
-  - { text: "\" one\"", feedback: "That's what happened: ' one' on top at {one_p}, and ' four' back at {four_p}. Why would that be?" }
+  - { text: "\" four\"", target: M8 }
+  - { text: "\" one\"" }
   - { text: "\" two\"" }
   - { text: "something else" }
+remember: top-pick
 ```
 :::
 
@@ -68,6 +70,7 @@ choices:
   - { text: "under 10%" }
   - { text: "10-50%" }
   - { text: "over 50%", target: T1 }
+remember: share-pick
 ```
 :::
 
@@ -93,7 +96,9 @@ check:
 :::
 
 :::explain
-' one' gets {one_p}. ' two' gets {two_p}, ' four' gets {four_p} and ' three' gets {three_p}. Those four hold {top_four} between them. Everything outside the top ten holds {rest}. So the top token isn't the right answer, and even it doesn't get anywhere near all of the 100%.
+You picked :earlier{key="pry.p1-4.top-pick"}[nothing] for the top, and :earlier{key="pry.p1-4.share-pick"}[nothing] for its share. Here's what the model did: ' one' gets {one_p}. ' two' gets {two_p}, ' four' gets {four_p} and ' three' gets {three_p}. Those four hold {top_four} between them. Everything outside the top ten holds {rest}. So the top token isn't the right answer, and even it doesn't get anywhere near all of the 100%.
+
+If you went with ' four', that's what you'd expect from something that checks the sum. Nothing here checks anything: a probability is about what text tends to follow, not what's true.
 :::
 
 ## What the percentages are {id=s3-3 outline=P1.4.md#3.3}

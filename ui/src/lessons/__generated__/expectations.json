@@ -1400,6 +1400,7 @@
           "prompt": "The capital of France is",
           "check": {
             "read": "top_guess.token",
+            "from": "france",
             "op": "equals",
             "value": " now"
           }
