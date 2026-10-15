@@ -56,8 +56,12 @@ breaks: "the parts aren't separate modules, and a head or MLP swap in Pry covers
 
 ## Clean run and corrupted run {id=s3-3 outline=P3.3.md#3.3}
 
+:::enter
+hidden: { patching-grid: true }
+:::
+
 :::do{id=patch-resid}
-Researchers call the run on the first prompt the **clean run** and the run on the second the **corrupted run**. Nothing's broken: "corrupted" just means changed. Papers say clean and corrupted, and Pry's boxes say "Original prompt" and "Changed prompt". The Original prompt here is P3.1's Mary and John sentence, and the Changed prompt swaps the second ' John' for ' Mary'. Press **Do it** to run the Swap test, then find :look{at=patch-three-logits}[the three logits].
+Researchers call the run on the first prompt the **clean run** and the run on the second the **corrupted run**. Nothing's broken: "corrupted" just means changed. Papers say clean and corrupted, and Pry's boxes say "Original prompt" and "Changed prompt". The Original prompt here is P3.1's Mary and John sentence, and the Changed prompt swaps the second ' John' for ' Mary'. Press **Do it** to run the Swap test, then find :look{at=patch-three-logits}[the three logits]. The grid of results stays covered until you've made a guess in the next section.
 
 ```actions
 - run_patching: { clean: "When Mary and John went to the store, John gave a drink to", corrupted: "When Mary and John went to the store, Mary gave a drink to", type: resid }
@@ -85,6 +89,10 @@ hides: [patching-grid]
 
 ## Three logits first, colours second {id=s3-5 outline=P3.3.md#3.5}
 
+:::enter
+hidden: { patching-grid: false }
+:::
+
 :::do{id=peak-cell}
 Each cell in :look{at=patching-grid}[the grid] is one layer at one word. Press **Do it** to select the brightest one, then read :look{at=patch-three-logits}[the three logits] before you look at its colour.
 
@@ -94,7 +102,7 @@ Each cell in :look{at=patching-grid}[the grid] is one layer at one word. Press *
 :::
 
 :::observe{id=peak-obs}
-All three are the logit for ' Mary' at the last token. Clean: {clean}. Corrupted: {corrupted}. Copy layer {peak_layer}'s residual stream at ' {word}' into the corrupted run, and it becomes {patched}, {share} of the way from {corrupted} back to {clean}.
+All three are the logit for ' Mary' at the last token. Clean: {clean}. Corrupted: {corrupted}. Copy the residual stream at {peak_layer}, at the token {word}, into the corrupted run, and it becomes {patched}, {share} of the way from {corrupted} back to {clean}.
 
 Formula on screen: ({patched} - {corrupted}) / ({clean} - {corrupted}).
 
@@ -194,7 +202,7 @@ Is it one of the name movers from P3.2?
 choices:
   - { text: "yes" }
   - { text: "no" }
-model_answer: "No. The top head is layer {top_head_layer}, head {top_head}: clean {head_clean}, corrupted {head_corrupted}, patched {head_patched}. It sits in layers `L8` to `L9`, right where the name movers are, and `L9H9`, one of P3.2's name movers, comes second. So the difference runs through more heads than the three you knocked out."
+model_answer: "No. The top head is head {top_head} in {top_head_layer}: clean {head_clean}, corrupted {head_corrupted}, patched {head_patched}. It sits in layers `L8` to `L9`, right where the name movers are, and `L9H9`, one of P3.2's name movers, comes second. So the difference runs through more heads than the three you knocked out."
 ```
 :::
 
