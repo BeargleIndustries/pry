@@ -15,7 +15,7 @@ import { isNotReady, type PointerTarget, type Presenter, type PresenterCommand, 
 import type { RequestMemo } from '../registry/memo';
 import { createDispatcher, resolveBindings, type BindingSources, type Dispatcher, type LessonSource } from '../registry/dispatcher';
 import { allSteps } from '../format/normalise';
-import { evaluateAssert, formatValue, renderSlot, slotFormat, slotValue, type SlotSource } from '../slots';
+import { PLACEHOLDER, evaluateAssert, formatValue, renderSlot, slotFormat, slotValue, type SlotSource } from '../slots';
 import { lessonsCopy } from '../copy';
 import {
   looksIn,
@@ -116,6 +116,8 @@ interface StepState {
   same: string | null;
   task: TaskState | null;
   taskRan: boolean;
+  /** The task was run or checked this visit (an observe after it can show). */
+  taskTried: boolean;
 }
 
 function blankState(): StepState {
@@ -138,6 +140,7 @@ function blankState(): StepState {
     same: null,
     task: null,
     taskRan: false,
+    taskTried: false,
   };
 }
 
@@ -175,6 +178,12 @@ export class LessonRunner<VS = unknown> {
   #presenters: Presenter[] = [];
   #notes: string[] = [];
   #looks: PointerTarget[] = [];
+  /**
+   * What a replayed capture step left on screen, for this entry only: a cold
+   * entry's explanation reads the replayed run until the learner's own "Do it"
+   * writes the real capture. Never journaled, never in `captures` (R4-6).
+   */
+  #replayed = new Map<string, unknown>();
   readonly captures: CaptureStore;
   readonly hide: HideControl;
   readonly journal: RunnerJournal;
@@ -446,6 +455,7 @@ export class LessonRunner<VS = unknown> {
     this.#expected = null;
     this.#before = undefined;
     const sec = lesson.sections[target];
+    this.#replayed.clear();
     this.resetVisit(sec);
     this.#visited.add(sec.id);
     this.deps.progress?.visitSection(lesson.meta.id, sec.id);
@@ -519,6 +529,12 @@ export class LessonRunner<VS = unknown> {
       onBaseline: () => {
         this.#baseline = takeCapture(this.set);
       },
+      onReplayed: (step: Step) => {
+        const cap = step.fields.capture;
+        if (typeof cap !== 'string') return;
+        const v = takeCapture(this.set);
+        if (v !== undefined) this.#replayed.set(cap, v);
+      },
       debug: this.deps.debug,
       log: (msg: string, step?: Step) => this.deps.log?.({ lessonId: lesson.meta.id, stepId: step?.id, message: msg }),
     };
@@ -536,6 +552,7 @@ export class LessonRunner<VS = unknown> {
       st.nudging = false;
       st.task = step.kind === 'task' ? newTaskState() : null;
       st.taskRan = false;
+      st.taskTried = false;
       if (step.kind === 'task') st.task!.pendingArgs = this.initialChangeArgs(step);
     }
   }
@@ -830,7 +847,11 @@ export class LessonRunner<VS = unknown> {
     return evaluateChecks(check, this.env({ prediction }));
   }
 
-  /** An observe can show its result once its predict is answered and the section's do steps before it ran this visit. */
+  /**
+   * An observe can show its result once its predict is answered and the
+   * section's do steps and tasks before it ran this visit (a task counts once
+   * the learner has run it or pressed "Check my result").
+   */
   private observeWaiting(sec: Section, step: Step): boolean {
     const p = this.predictFor(step);
     if (p) {
@@ -839,9 +860,30 @@ export class LessonRunner<VS = unknown> {
     }
     for (const s of allSteps(sec.steps)) {
       if (s === step) break;
-      if (s.kind === 'do' && this.whenHolds(s) && this.state(sec, s).doState !== 'done') return true;
+      if (!this.whenHolds(s)) continue;
+      if (s.kind === 'do' && this.state(sec, s).doState !== 'done') return true;
+      if (s.kind === 'task' && !this.state(sec, s).taskTried) return true;
     }
     return false;
+  }
+
+  /**
+   * A capture as the current section may read it. One that a step in this
+   * section takes waits for that step to run this visit, so a result never
+   * shows before its own "Do it" (an older run's capture stays out of sight).
+   * Otherwise the learner's capture, else what a replayed step left this entry.
+   */
+  captureFor(name: string): unknown | undefined {
+    const sec = this.section;
+    if (sec) {
+      for (const s of allSteps(sec.steps)) {
+        const takes = s.kind === 'task' ? (s.fields as TaskFields).capture : s.fields.capture;
+        if (takes !== name) continue;
+        const st = this.state(sec, s);
+        if (s.kind === 'task' ? !st.task?.stored : st.doState !== 'done') return undefined;
+      }
+    }
+    return this.captures.get(name) ?? this.#replayed.get(name);
   }
 
   async showObserve(key: string): Promise<void> {
@@ -997,6 +1039,7 @@ export class LessonRunner<VS = unknown> {
     const prediction = ts.prediction;
     ts.prediction = '';
     t.st.taskRan = true;
+    t.st.taskTried = true;
     const j = judgeTask(task, this.env({ prediction }), this.set);
     ts.met = j.met;
     ts.message = j.met ? j.message : j.message;
@@ -1012,6 +1055,7 @@ export class LessonRunner<VS = unknown> {
     const j = judgeTask(t.task, this.env({ prediction: t.ts.prediction }), this.set);
     t.ts.met = j.met;
     t.ts.message = j.message;
+    t.st.taskTried = true;
     if (j.met) {
       t.st.taskRan = true;
       this.storeTask(t.section, t.step, t.st);
@@ -1085,7 +1129,7 @@ export class LessonRunner<VS = unknown> {
   slotSource(): SlotSource {
     return {
       read: (name, args, capture) => {
-        const cap = capture ? this.captures.get(capture) : undefined;
+        const cap = capture ? this.captureFor(capture) : undefined;
         if (capture && cap === undefined) return undefined;
         return readFrom(this.set, name, this.resolveArgs(args), cap);
       },
@@ -1110,7 +1154,7 @@ export class LessonRunner<VS = unknown> {
       set: this.set,
       read: (readout, args, from) => {
         if (from) {
-          const cap = this.captures.get(from);
+          const cap = this.captureFor(from);
           return cap === undefined ? undefined : readFrom(this.set, readout, args, cap);
         }
         return readFrom(this.set, readout, args);
@@ -1152,6 +1196,10 @@ export class LessonRunner<VS = unknown> {
   /** The app moved away from what this section set up (and the learner's steps since). */
   drift(): boolean {
     if (this.entering || this.#expected === null || this.busy) return false;
+    // A task section hands the app to the learner: their own changes there are
+    // the task, not drift ("Start over" is the task's way back).
+    const sec = this.section;
+    if (sec && allSteps(sec.steps).some((s) => s.kind === 'task' && this.whenHolds(s))) return false;
     return this.snapshotKey() !== this.#expected;
   }
 
@@ -1173,7 +1221,7 @@ export class LessonRunner<VS = unknown> {
             return lessonsCopy.expectBeside(shown);
           }
         : undefined,
-      earlier: (key, fallback) => earlierText(this.journal, key, fallback),
+      earlier: (key, fallback) => earlierText(this.journal, key, fallback, this.lesson?.meta.id),
       image: (p) => this.#images[p] ?? null,
       note: (m) => {
         if (!this.#notes.includes(m)) this.#notes.push(m);
@@ -1190,7 +1238,17 @@ export class LessonRunner<VS = unknown> {
     if (!Array.isArray(a)) return [];
     const slots = this.slots(sec);
     const src = this.slotSource();
-    return a.map((item) =>
+    // A line about a captured run waits for that run: while the capture its slot
+    // reads isn't there yet, neither the line nor its fallback shows.
+    const waits = (name: string, seen = new Set<string>()): boolean => {
+      const s = slots[name];
+      if (!s || seen.has(name)) return false;
+      seen.add(name);
+      if (s.from_capture && this.captureFor(s.from_capture) === undefined) return true;
+      return (s.from ?? []).some((f) => waits(f, seen));
+    };
+    const ready = (item: Parameters<typeof evaluateAssert>[0]) => !waits(item.require.slot) && !(item.require.slot2 && waits(item.require.slot2));
+    return (a as Parameters<typeof evaluateAssert>[0][]).filter(ready).map((item) =>
       this.nodes(
         evaluateAssert(item, slots, src, (e) => this.deps.log?.({ lessonId: this.lesson?.meta.id, stepId: step.id, message: `${e.message}: ${e.slot}` })),
         sec,
@@ -1206,7 +1264,11 @@ export class LessonRunner<VS = unknown> {
 
   private renderBlock(sec: Section, step: Step): RenderedBlock | null {
     if (!this.whenHolds(step)) return null;
-    const ctx = this.renderCtx(sec);
+    const base = this.renderCtx(sec);
+    // An observe's numbers belong to the run it reads: until it can show (its
+    // predict answered, the steps before it run this visit) they stay placeholders.
+    const ctx: RenderContext =
+      step.kind === 'observe' && this.observeWaiting(sec, step) ? { ...base, slot: (name) => (base.slot(name) === null ? null : PLACEHOLDER) } : base;
     const st = this.state(sec, step);
     const f = step.fields;
     const key = this.keyOf(sec, step);
@@ -1257,6 +1319,7 @@ export class LessonRunner<VS = unknown> {
           modelAnswer: st.locked && f.model_answer ? this.nodes(String(f.model_answer), sec) : null,
           canSkip: step.kind === 'predict' || step.kind === 'question',
           hidden: step.kind === 'predict' && !st.locked ? list(f.hides).map((a) => this.set.anchors[a]?.label ?? a) : [],
+          shown: step.kind === 'predict' && st.locked ? list(f.hides).map((a) => this.set.anchors[a]?.label ?? a) : [],
         };
         break;
       }
@@ -1296,7 +1359,7 @@ export class LessonRunner<VS = unknown> {
           if (typeof c.text === 'string') return { kind: 'text' as const, text: this.nodes(c.text, sec) };
           if (typeof c.view === 'string') return { kind: 'view' as const, view: c.view, args: (this.resolveArgs(c.args) ?? {}) as Record<string, unknown> };
           const def = this.set.readouts[c.read];
-          const cap = typeof c.from === 'string' ? this.captures.get(c.from) : undefined;
+          const cap = typeof c.from === 'string' ? this.captureFor(c.from) : undefined;
           const v = typeof c.from === 'string' && cap === undefined ? undefined : readFrom(this.set, c.read, this.resolveArgs(c.args), cap);
           const label = typeof c.from === 'string' ? `${c.from}` : String(c.read);
           return { kind: 'read' as const, label, value: formatReading(v, def, typeof c.field === 'string' ? c.field : undefined, String(c.read)) };
@@ -1490,7 +1553,12 @@ export class LessonRunner<VS = unknown> {
   captureMap(): Record<string, unknown> {
     const lesson = this.lesson;
     if (!lesson) return {};
-    return this.captures.all(captureNames(lesson.sections.flatMap((s) => s.steps)));
+    const out: Record<string, unknown> = {};
+    for (const n of captureNames(lesson.sections.flatMap((s) => s.steps))) {
+      const v = this.captureFor(n);
+      if (v !== undefined) out[n] = v;
+    }
+    return out;
   }
 }
 

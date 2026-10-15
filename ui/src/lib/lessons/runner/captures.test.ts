@@ -42,7 +42,9 @@ describe('captures', () => {
     await send(kit, { type: 'do', step: 'movers-knockout' });
     await send(kit, { type: 'do', step: 'control-knockout' }); // starts with `reset: {}`
     const caps = kit.runner.captureMap();
-    expect(Object.keys(caps).sort()).toEqual(['control', 'movers']);
+    // `heavy` is section 3.4's run, replayed on this direct entry: readable here, never journaled.
+    expect(Object.keys(caps).sort()).toEqual(['control', 'heavy', 'movers']);
+    expect(kit.journal.entries.filter((e) => e.capture).map((e) => e.capture!.name).sort()).toEqual(['control', 'movers']);
     const html = render(Top5Pair, { props: { args: { a: 'movers', b: 'control' }, captures: caps as never } }).body;
     expect(html).toContain('movers');
     expect(html).toContain('control');

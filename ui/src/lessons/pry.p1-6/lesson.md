@@ -48,6 +48,11 @@ remember: remember-pick
 
 ## Same text, then gone {id=s3-2 outline=P1.6.md#3.2}
 
+:::enter
+compare_mode: true
+compare: { a: "My name is Sam. Nice to meet you. My name is", b: "Nice to meet you. My name is" }
+:::
+
 :::slots
 basketball: { read: prediction, args: { token: " basketball" }, field: prob, format: probability, expect: 0.42208 }
 sam_a: { read: compare.prediction, args: { side: a, token: " Sam" }, field: prob, format: probability, from_capture: sam, expect: 0.19151 }

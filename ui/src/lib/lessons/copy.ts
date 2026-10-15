@@ -43,6 +43,7 @@ export const lessonsCopy = {
   skipAnyway: 'Skip anyway',
   keepWriting: 'Keep writing',
   hiddenUntilAnswer: 'Hidden until you answer',
+  shownNow: 'Your answer is in. Showing now',
   openIt: 'Open it',
   coldEntry: 'What you need from before',
   recall: 'From an earlier lesson',
@@ -109,6 +110,7 @@ export const lessonsCopy = {
   // Earlier answers (`:earlier`).
   skipped: 'skipped',
   notYet: "You haven't done that lesson yet",
+  notAnswered: '(not answered yet)',
 
   // Layout.
   widen: 'Widen window',

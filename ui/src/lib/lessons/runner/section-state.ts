@@ -42,6 +42,11 @@ export interface FoldDeps<VS> {
   when?(step: Step): boolean;
   /** Called with the scene right after the first section's setup (the `$baseline` reading). */
   onBaseline?(): void;
+  /**
+   * Called after each replayed step: the runner reads the scene the step left
+   * (for this entry only; a replay never writes a capture).
+   */
+  onReplayed?(step: Step): void;
   /** Debug builds: reconcile snapshot() after each replayed step and log any that isn't idempotent. */
   debug?: boolean;
   log?(msg: string, step?: Step): void;
@@ -138,6 +143,7 @@ export async function foldTo<VS>(lesson: Lesson, n: number, deps: FoldDeps<VS>, 
           const r = await replayStep(step, deps, signal);
           if (r === 'aborted') return { status: 'aborted' };
           if (typeof r === 'object') return { status: 'model', model: r.model, section: k };
+          deps.onReplayed?.(step);
           if (deps.debug) {
             const once = JSON.stringify(set.snapshot());
             await replayStep(step, deps, signal);

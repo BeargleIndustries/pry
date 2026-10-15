@@ -398,6 +398,9 @@
         {#if a.hidden.length}
           <p class="mt-2 text-xs text-zinc-400" role="status">{c.hiddenUntilAnswer}: {a.hidden.join(', ')}</p>
         {/if}
+        {#if a.shown?.length}
+          <p class="mt-2 text-xs text-zinc-400" role="status">{c.shownNow}: {a.shown.join(', ')}</p>
+        {/if}
         {#if a.choices}
           <div class="mt-2 flex flex-col gap-1" role="group" aria-label={c.yourAnswer}>
             {#each a.choices as ch (ch.index)}

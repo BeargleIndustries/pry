@@ -17,12 +17,16 @@ export function earlierWords(value: unknown): string {
 
 /**
  * What `:earlier{key}[fallback]` shows: the learner's own words; for a skipped
- * step the fallback (or "skipped"); "You haven't done that lesson yet" when
- * the key was never answered.
+ * step the fallback (or "skipped"); when the key was never answered, "(not
+ * answered yet)" for a step of the lesson that's open (`lessonId`, a section
+ * entered directly) and "You haven't done that lesson yet" for another lesson's.
  */
-export function earlierText(journal: RunnerJournal, key: string, fallback = ''): { text: string; state: EarlierState } {
+export function earlierText(journal: RunnerJournal, key: string, fallback = '', lessonId?: string): { text: string; state: EarlierState } {
   const e = journal.earlier(key);
-  if (!e) return { text: lessonsCopy.notYet, state: 'missing' };
+  if (!e) {
+    const own = !!lessonId && (key.startsWith(`${lessonId}.`) || !key.includes('.'));
+    return { text: own ? lessonsCopy.notAnswered : lessonsCopy.notYet, state: 'missing' };
+  }
   if (e.skipped) return { text: fallback.trim() || lessonsCopy.skipped, state: 'skipped' };
   return { text: earlierWords(e.value), state: 'answer' };
 }

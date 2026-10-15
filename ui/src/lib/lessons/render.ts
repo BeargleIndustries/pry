@@ -315,6 +315,8 @@ export interface RenderedBlock {
     canSkip: boolean;
     /** Labels of the regions this predict hides until the learner answers. */
     hidden: string[];
+    /** After the answer: what the predict had hidden, showing now. */
+    shown?: string[];
   };
   act?: { state: 'ready' | 'running' | 'done' | 'failed' | 'blocked'; message: string | null };
   observe?: { journal: boolean; revealed: boolean; result: CheckView | null; note: string | null; waiting: boolean; asserts: RNode[][] };
