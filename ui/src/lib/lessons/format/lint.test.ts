@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { errors, lint, warnings } from './fixtures/helpers';
-import { hostMatches } from './lint';
+import { errors, lint, src, warnings } from './fixtures/helpers';
+import { hostMatches, lintLesson } from './lint';
+import { loadLessonSource } from './normalise';
+import { pryToolSet } from '../registry/pry-set';
 
 const F = '```';
 const yaml = (s: string) => `${F}yaml\n${s}\n${F}`;
@@ -11,7 +13,7 @@ const predictObserve = (p: string, o: string, extraPredict = '') =>
   '\n' +
   step(`observe{id=${o}}`, yaml('check: { read: top_guess.token, op: equals, value: $prediction }'));
 const result = (extra = '') => step('explain-result{id=er}', yaml(`supports: ["This run."]\nleaves_open: ["Other runs."]${extra}`));
-const BASE = { model: 'gpt2-small', baseline: { prompt: 'The capital of France is' } };
+const BASE = { model: 'gpt2-small', baseline: { prompt: 'The capital of France is', run: true } };
 
 describe('lint', () => {
   it('› analogy without breaks is an error', () => {
@@ -72,6 +74,66 @@ describe('lint', () => {
     // With no baseline and nothing run yet, a live slot has nothing to show.
     const live = `:::slots\nlive: { read: top_guess.token, expect: " Paris" }\n:::\n`;
     expect(errors(lint(`## A\n\n${live}\n${step('explain{id=e}', 'It gave {live}.')}`, { model: 'gpt2-small' }))).toContain('slot-before-readout');
+  });
+
+  it('› a baseline that only sets a prompt produces no readout: a slot before the first run is an error for user lessons too', () => {
+    const live = `:::slots\nlive: { read: top_guess.token, expect: " Paris" }\n:::\n`;
+    const use = step('explain{id=e}', 'It gave {live}.');
+    const promptOnly = { model: 'gpt2-small', baseline: { prompt: 'The capital of France is' } };
+    expect(errors(lint(`## A\n\n${live}\n${use}\n${run('d')}`, promptOnly))).toContain('slot-before-readout');
+    expect(errors(lint(`## A\n\n${live}\n${use}\n${run('d')}`, promptOnly, { bundled: true }))).toContain('slot-before-readout');
+    // After the run, in the run's own instruction, or with a baseline that runs: fine.
+    expect(errors(lint(`## A\n\n${live}\n${run('d')}\n${use}`, promptOnly))).toEqual([]);
+    expect(errors(lint(`## A\n\n${live}\n${step('do{id=d}', `Run it to see {live}.\n\n${F}actions\n- run: {}\n${F}`)}`, promptOnly))).toEqual([]);
+    expect(errors(lint(`## A\n\n${live}\n${use}`, BASE))).toEqual([]);
+    // An `enter` that sets a prompt doesn't run either; one with `run: true` does.
+    expect(errors(lint(`## A\n\n:::enter\nprompt: "Hi there"\n:::\n\n${live}\n${use}`, { model: 'gpt2-small' }))).toContain('slot-before-readout');
+    expect(errors(lint(`## A\n\n:::enter\nprompt: "Hi there"\nrun: true\n:::\n\n${live}\n${use}`, { model: 'gpt2-small' }))).toEqual([]);
+  });
+
+  it('› the folder name must equal the id, for user lessons too; `_` folders are exempt', () => {
+    const lintAt = (file: string, opts = {}) => {
+      const { lesson } = loadLessonSource(src(`## A\n\n${step('explain{id=e}', 'Hello.')}`), { tool: pryToolSet, file });
+      return lintLesson(lesson!, { tool: pryToolSet, ...opts });
+    };
+    expect(errors(lintAt('lessons/community-sample/lesson.md'))).toContain('folder-id');
+    expect(errors(lintAt('lessons\\other.name\\lesson.md', { bundled: true }))).toContain('folder-id');
+    expect(errors(lintAt('lessons/test.lesson/lesson.md'))).toEqual([]);
+    expect(errors(lintAt('lessons/_template/lesson.md'))).toEqual([]);
+  });
+
+  it('› a check value whose type can never match the readout is an error', () => {
+    const po = (choices: string, check: string) =>
+      `## A\n\n${step('predict{id=p checks=o}', `Which?\n\n${yaml(`choices:\n${choices}`)}`)}\n${run('d')}\n${step('observe{id=o}', yaml(`check: ${check}`))}`;
+    const tokens = '  - { text: "\\" Paris\\"", feedback: "Run it." }\n  - { text: "\\" London\\"", feedback: "Run it." }';
+    const numbers = '  - { text: "2", feedback: "Run it." }\n  - { text: "4", feedback: "Run it." }';
+    // A probability against token choices (the outsider's case), and the right pairings.
+    expect(errors(lint(po(tokens, '{ read: top_guess.prob, op: equals, value: $prediction }'), BASE))).toContain('value-type');
+    expect(errors(lint(po(tokens, '{ read: top_guess.token, op: equals, value: $prediction }'), BASE))).toEqual([]);
+    expect(errors(lint(po(numbers, '{ read: top_guess.prob, op: gt, value: $prediction }'), BASE))).not.toContain('value-type');
+    // Constants, slots and second readouts.
+    const obs = (check: string, slots = '') => `## A\n\n${slots}${run('d')}\n${step('observe{id=o}', yaml(`check: ${check}`))}`;
+    expect(errors(lint(obs('{ read: top_guess.prob, op: gt, value: " Paris", expect: 0.1 }'), BASE))).toContain('value-type');
+    expect(errors(lint(obs('{ read: top_guess.token, op: equals, value: 0.5, expect: " Paris" }'), BASE))).toContain('value-type');
+    expect(errors(lint(obs('{ read: top_guess.token, op: equals, expect: 0.5 }'), BASE))).toContain('value-type');
+    const sl = ':::slots\ntop_p: { read: top_guess.prob, expect: 0.08, tolerance: 0.02 }\n:::\n\n';
+    expect(errors(lint(obs('{ read: top_guess.token, op: equals, value: $slot.top_p }', sl), BASE))).toContain('value-type');
+    expect(errors(lint(obs('{ read: top_guess.prob, op: within, value: $slot.top_p, tolerance: 0.02 }', sl), BASE))).toEqual([]);
+    expect(errors(lint(obs('{ read: top_guess.token, op: equals, value: $read.top_guess.prob }'), BASE))).toContain('value-type');
+    expect(errors(lint(obs('{ read: top_guess.token, op: in, value: [" Paris", " London"], expect: " Paris" }'), BASE))).toEqual([]);
+    expect(errors(lint(obs('{ read: top_guess.token, op: in, value: [1, 2], expect: " Paris" }'), BASE))).toContain('value-type');
+  });
+
+  it('› an observe binds a slot\'s expect with `value: $slot.<name>`; a missing slot or an observe-level expect is an error', () => {
+    const sl = ':::slots\ntop: { read: top_guess.token, expect: " London" }\n:::\n\n';
+    const obs = (fields: string) => `## A\n\n${sl}${run('d')}\n${step('observe{id=o}', yaml(fields))}`;
+    expect(errors(lint(obs('check: { read: top_guess.token, op: equals, value: $slot.top }'), BASE))).toEqual([]);
+    expect(errors(lint(obs('check: { read: top_guess.token, op: equals, value: $slot.banana }'), BASE))).toContain('slot-unknown');
+    for (const e of ['top', 'banana', '0.5']) {
+      expect(errors(lint(obs(`check: { read: top_guess.token, op: equals, value: $slot.top }\nexpect: ${e}`), BASE)), e).toContain('observe-expect');
+    }
+    const named = lint(obs('check: { read: top_guess.token, op: equals, value: $slot.top }\nexpect: top'), BASE).find((i) => i.code === 'observe-expect');
+    expect(named?.message).toContain('value: $slot.top');
   });
 
   it('› anchor args checked like action args', () => {

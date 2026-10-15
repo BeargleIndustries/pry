@@ -1,0 +1,250 @@
+{
+ "key": "81f62100f74064cc9ce4f8cb5b6a0378c507b4ecf1b88466ca95b322d68d707f",
+ "variant": "r1",
+ "request": {
+  "endpoint": "/concept-search",
+  "model": "gpt2-small",
+  "body": {
+   "query": "Paris",
+   "preset_id": "gpt2-small"
+  }
+ },
+ "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
+ "device": "cpu",
+ "libs": {
+  "python": "3.12.13",
+  "torch": "2.5.1+cpu",
+  "transformer_lens": "2.15.4",
+  "sae_lens": "5.11.0",
+  "transformers": "4.57.6",
+  "numpy": "1.26.4"
+ },
+ "recorded": "2026-10-14",
+ "neuronpedia_fetched": null,
+ "offline": false,
+ "trimmed": [],
+ "response": {
+  "preset_id": "gpt2-small",
+  "sae_layer": 8,
+  "query": "Paris",
+  "results": [
+   {
+    "feature_id": 974,
+    "description": "mentions of Paris",
+    "similarity": 0.5169880018061793,
+    "top_boosted_tokens": [
+     " Hilton",
+     "ienne",
+     "ian",
+     "furt",
+     "ians"
+    ]
+   },
+   {
+    "feature_id": 6371,
+    "description": "locations",
+    "similarity": 0.4854246715508137,
+    "top_boosted_tokens": [
+     "geist",
+     "ranean",
+     "rane",
+     "rors",
+     "gom"
+    ]
+   },
+   {
+    "feature_id": 24181,
+    "description": "locations",
+    "similarity": 0.4853733736527117,
+    "top_boosted_tokens": [
+     " lieu",
+     "clusions",
+     " vitro",
+     " accordance",
+     "clus"
+    ]
+   },
+   {
+    "feature_id": 24180,
+    "description": "locations",
+    "similarity": 0.4853733736527117,
+    "top_boosted_tokens": [
+     " Korea",
+     "Ire",
+     "Y",
+     " Hampshire",
+     "J"
+    ]
+   },
+   {
+    "feature_id": 19130,
+    "description": "locations in a city",
+    "similarity": 0.46752124758121116,
+    "top_boosted_tokens": [
+     " Boulevard",
+     " Avenue",
+     " Highway",
+     " Route",
+     " Interstate"
+    ]
+   },
+   {
+    "feature_id": 16246,
+    "description": "locations and events",
+    "similarity": 0.45241939574856216,
+    "top_boosted_tokens": [
+     " photographed",
+     " PHOTO",
+     " Photograph",
+     " photo",
+     " Photographer"
+    ]
+   },
+   {
+    "feature_id": 21028,
+    "description": "city names",
+    "similarity": 0.4507118636065466,
+    "top_boosted_tokens": [
+     " Sa",
+     " Kas",
+     " Sud",
+     " Ort",
+     " Th"
+    ]
+   },
+   {
+    "feature_id": 14568,
+    "description": "prices",
+    "similarity": 0.4455036263044587,
+    "top_boosted_tokens": [
+     "99",
+     "00",
+     "95",
+     "98",
+     "499"
+    ]
+   },
+   {
+    "feature_id": 17027,
+    "description": "locations and dates",
+    "similarity": 0.4426282568462283,
+    "top_boosted_tokens": [
+     "schild",
+     "riz",
+     "Operation",
+     " Maiden",
+     "osure"
+    ]
+   },
+   {
+    "feature_id": 12112,
+    "description": "locations and dates",
+    "similarity": 0.44255948620792407,
+    "top_boosted_tokens": [
+     " Week",
+     " winter",
+     " July",
+     " 1893",
+     " August"
+    ]
+   },
+   {
+    "feature_id": 19935,
+    "description": "addresses and locations",
+    "similarity": 0.44198262100964114,
+    "top_boosted_tokens": [
+     " Meadow",
+     " Avenue",
+     " Rue",
+     " Parkway",
+     " NW"
+    ]
+   },
+   {
+    "feature_id": 21443,
+    "description": "addresses and locations",
+    "similarity": 0.44007694549570453,
+    "top_boosted_tokens": [
+     " Street",
+     " avenue",
+     " Avenue",
+     " Boulevard",
+     " Blvd"
+    ]
+   },
+   {
+    "feature_id": 7525,
+    "description": "cities and locations",
+    "similarity": 0.4400429422748462,
+    "top_boosted_tokens": [
+     " City",
+     " Zoo",
+     " skyline",
+     " Region",
+     " resident"
+    ]
+   },
+   {
+    "feature_id": 8628,
+    "description": "cities and locations",
+    "similarity": 0.4399435953472982,
+    "top_boosted_tokens": [
+     " Paris",
+     " London",
+     " Shanghai",
+     " Cairo",
+     " Frankfurt"
+    ]
+   },
+   {
+    "feature_id": 21625,
+    "description": "references to different cities around the world",
+    "similarity": 0.43900260419026993,
+    "top_boosted_tokens": [
+     "scape",
+     " outskirts",
+     " centre",
+     " skyline",
+     " suburbs"
+    ]
+   },
+   {
+    "feature_id": 17261,
+    "description": "locations and addresses",
+    "similarity": 0.43659521055376604,
+    "top_boosted_tokens": [
+     ";;;;;;;;;;;;",
+     "Tel",
+     "tel",
+     "soType",
+     " Telephone"
+    ]
+   },
+   {
+    "feature_id": 18589,
+    "description": "locations and addresses",
+    "similarity": 0.43659521055376604,
+    "top_boosted_tokens": [
+     "nesota",
+     " southwest",
+     " northwest",
+     " Northeast",
+     " Northwest"
+    ]
+   },
+   {
+    "feature_id": 17476,
+    "description": "locations or cities",
+    "similarity": 0.43643003958214077,
+    "top_boosted_tokens": [
+     " Rapids",
+     " CITY",
+     " COUNTY",
+     " Clippers",
+     " Residents"
+    ]
+   }
+  ],
+  "status": "ok"
+ }
+}

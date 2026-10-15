@@ -204,6 +204,14 @@ Effects: `view` and `compute` run freely and replay when a section opens; `downl
 | `token` | The learner clicks a token in the strip. |
 | `head` | The learner clicks a cell in the attention grid; resolves to its layer and head. |
 
+## Services
+
+The names a lesson lists under `permissions.network`. A `network` action needs the service it uses listed there.
+
+| Service | Host | Actions that use it | What it is |
+|---|---|---|---|
+| `neuronpedia` | neuronpedia.org | `search_concepts` | Neuronpedia, for concept search, feature labels and example snippets. |
+
 ## Models
 
 `gpt2-small`, `pythia-70m`, `gemma-2-2b`, `gemma-2-9b`

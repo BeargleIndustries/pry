@@ -45,12 +45,14 @@ export function isBundledTarget(root: string): boolean {
   return !name.startsWith('_') && existsSync(join(root, 'lesson.md')) && isSet(resolve(root, '..'));
 }
 
-function lessonFiles(root: string): string[] {
+/** Lesson folders at or below `root` (a folder of example sets, e.g. docs/lessons/examples, holds them one level down). */
+function lessonFiles(root: string, depth = 0): string[] {
   if (existsSync(join(root, 'lesson.md'))) return [join(root, 'lesson.md')];
+  if (depth > 2) return [];
   return readdirSync(root)
-    .filter((d) => !d.startsWith('_') && !d.startsWith('.') && existsSync(join(root, d, 'lesson.md')))
+    .filter((d) => !d.startsWith('_') && !d.startsWith('.') && d !== 'node_modules' && statSync(join(root, d)).isDirectory())
     .sort()
-    .map((d) => join(root, d, 'lesson.md'));
+    .flatMap((d) => lessonFiles(join(root, d), depth + 1));
 }
 
 const readIf = (p: string) => (existsSync(p) ? readFileSync(p, 'utf8') : undefined);
@@ -63,10 +65,22 @@ function strings(v: unknown, out: Set<string>): Set<string> {
   return out;
 }
 
+const USAGE = [
+  'Usage: node lessons-lint.mjs <folder> [--release] [--skeleton] [--bundled]',
+  '',
+  '<folder> is one lesson folder (with lesson.md), or a folder that holds lesson folders.',
+  '  --release   also fails `draft: true` and `expect: pending`. Use it before you share a lesson.',
+  '  --skeleton  allows `expect: pending` while you draft. --release overrides it.',
+  '  --bundled   checks the lesson as one that ships inside Pry: stricter on `expect` and recorded prompts,',
+  '              no permission checks, and `pry.` ids allowed. Pry still refuses a `pry.` id from you.',
+  '',
+  'Exits 0 when every lesson is clean, 1 when any lesson has an error, 2 when the folder is wrong.',
+];
+
 export function runLint(argv: string[]): LintRun {
   const flags = new Set(argv.filter((a) => a.startsWith('--')));
   const target = argv.find((a) => !a.startsWith('--'));
-  if (!target) return { code: 2, lines: ['Usage: node lessons-lint.mjs <folder> [--release] [--skeleton] [--bundled]'] };
+  if (!target || flags.has('--help')) return { code: flags.has('--help') ? 0 : 2, lines: USAGE };
   const root = resolve(target);
   if (!existsSync(root) || !statSync(root).isDirectory()) return { code: 2, lines: [`${target} isn't a folder.`] };
   const setRoot = existsSync(join(root, 'lesson.md')) ? resolve(root, '..') : root;

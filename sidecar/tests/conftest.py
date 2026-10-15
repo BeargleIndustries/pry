@@ -41,6 +41,14 @@ def pytest_addoption(parser):
         help="also send every request in __generated__/expectations.json not covered by a row",
     )
     group.addoption(
+        "--lesson-dir",
+        action="store",
+        default=None,
+        metavar="PATH",
+        help="only the requests of a lesson set outside the app: reads <set>/__generated__/expectations.json "
+        "(written by `npm run lessons:compile -- --expectations --dir PATH`); rows and rows.json are left alone",
+    )
+    group.addoption(
         "--network",
         action="store_true",
         default=False,

@@ -10,7 +10,7 @@ const uiDir = fileURLToPath(new URL('../../..', import.meta.url));
 const cli = join(uiDir, 'build-cli', 'lessons-lint.mjs');
 const fixtures = join(uiDir, 'src/lib/lessons/format/fixtures/cli');
 // The shipped template (lane T1-app) once merged; the fixture copy of it until then.
-const templates = [join(fixtures, 'template'), join(uiDir, 'src/lessons/_template')].filter((d) => existsSync(join(d, 'lesson.md')));
+const templates = [join(fixtures, 'my.first-lesson'), join(uiDir, 'src/lessons/_template')].filter((d) => existsSync(join(d, 'lesson.md')));
 
 function lintCli(folder: string) {
   const env = { ...process.env };
