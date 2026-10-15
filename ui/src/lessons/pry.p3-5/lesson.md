@@ -21,7 +21,7 @@ slots:
   s: { row: "25.strength", format: number }
   s_high: { row: "25.strength_high", format: number }
   coh_at_s: { read: steer.coherence, args: { which: steered }, from_capture: at_s, expect: -1.0579530000686646, tolerance: 0.05 }
-  scale: { read: steer.scale, from_capture: at_s, expect: { strength: 25, activation_p50: 0, activation_p99: 0, activation_max: 0 } }
+  act_max: { read: steer.scale, field: activation_max, from_capture: at_s, format: number, expect: 0 }
 ---
 
 ## Direction {id=s3-1 outline=P3.5.md#3.1}
@@ -80,6 +80,10 @@ breaks: "it pushes at every token including the prompt, too much turns the text 
 
 ## Target vs control {id=s3-3 outline=P3.5.md#3.3}
 
+:::enter
+open_panel: predictions
+:::
+
 :::slots
 period: { read: prediction, args: { token: "." }, field: prob, format: probability, expect: 0.10398386418819427, tolerance: 0.02 }
 rise: { read: prediction, args: { token: " rise" }, field: prob, format: probability, expect: 0.04655522480607033, tolerance: 0.02 }
@@ -95,9 +99,10 @@ Steer the target feature (label: {target_label}) and a control feature (label: {
 
 ```yaml
 choices:
-  - { text: "only the target", target: [T5, N7, M4], feedback: "The model went another way: the control changed the text too, just not toward {target_label}. Any push this size moves the text, so 'it changed' can't be the test." }
-  - { text: "both", feedback: "That's what happened. Both texts change. So 'it changed' can't be the test. What else would you look at?" }
-  - { text: "neither", feedback: "The model went another way: both texts changed. A push this size moves the text whichever way it points." }
+  - { text: "only the target", target: [T5, N7, M4], feedback: "Lots of people expect that: you only turned one feature up. The next section steers both." }
+  - { text: "both", feedback: "The next section steers both. If both change, what else would you look at?" }
+  - { text: "neither", feedback: "The next section steers both." }
+remember: change-pick
 ```
 :::
 
@@ -113,6 +118,10 @@ choices:
 :::
 
 ## What changed {id=s3-4 outline=P3.5.md#3.4}
+
+:::enter
+open_panel: steering
+:::
 
 :::do{id=steer-both}
 Press **Do it** to steer the target and the control. Read :look{at=steering-panel}[the two text panes], with the changed tokens marked, and then the line that says whether the label's idea shows up in each.
@@ -140,7 +149,7 @@ columns:
 :::
 
 :::observe{id=changed-obs}
-Both texts changed. The steered one fills up with sun, clouds, wind and rain. The control's text changed too, and it went round in circles about the ocean, with no rain in it. So only the target moved toward its label. Counting changed words wouldn't have told you that: the control changed nearly as many. Now the scale: steering strength beside the feature's usual activation on this prompt reads {scale}. The feature doesn't fire here at all on its own, so every bit of that push is added.
+You picked :earlier{key="pry.p3-5.change-pick"}[nothing]. Both texts changed. The steered one fills up with sun, clouds, wind and rain. The control's text changed too, and it went round in circles about the ocean, with no rain in it. So only the target moved toward its label. Counting changed words wouldn't have told you that: the control changed nearly as many. Now the scale: you pushed at steering strength {s}, and on its own the feature's activation on this prompt peaks at {act_max}. Pry shows both next to :look{at=steering-strength}[Steering strength]. The feature doesn't fire here at all on its own, so every bit of that push is added.
 
 ```yaml
 check:

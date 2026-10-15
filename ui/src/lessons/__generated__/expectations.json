@@ -3101,14 +3101,9 @@
         {
           "where": "s3-4/changed-obs",
           "kind": "slot",
-          "name": "scale",
+          "name": "act_max",
           "prompt": "On our trip we walked along the beach and watched the ocean",
-          "expect": {
-            "strength": 25,
-            "activation_p50": 0,
-            "activation_p99": 0,
-            "activation_max": 0
-          }
+          "expect": 0
         },
         {
           "where": "s3-4/changed-obs",
