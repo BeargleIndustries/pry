@@ -135,7 +135,7 @@ remember: first-guess
 | Kind | Fields | What it's for |
 |---|---|---|
 | `explain` | Prose. Optional `image` with a required `alt`. | Teaching text. Images must be local files in the lesson folder, 1 MB or under. |
-| `analogy` | `like`, `because`, `breaks` (required, not empty), optional `withdrawn_in` (a lesson id). | A comparison that helps, and where it stops helping. One per section on the main path; analogies inside a `fold` don't count. |
+| `analogy` | `like`, `because`, `breaks` (required, not empty), optional `withdrawn_in` (a lesson id). | A comparison that helps, and where it stops helping. You don't need one at all. A section can have one on the main path, at most; analogies inside a `fold` don't count. |
 | `simplification` | Prose, plus `corrected_in` (a list of lesson ids). | An aside that admits the picture's simpler than the truth and names the lesson that fixes it. |
 | `fold` | `title`. | Collapsed extra depth: names that aren't needed on the main path, results from larger models. |
 | `recall` | An optional opening question, `from` (a lesson id), choices or free text. | Brings back something from an earlier lesson. Saved to the journal only. |
@@ -208,7 +208,15 @@ Each slot renders through its readout's unit:
 | count, position | A whole number. Token counts and positions include the start marker Pry puts first (see [Getting real expected values](#getting-real-expected-values)). |
 | string | Quoted as Pry returns it |
 
-A slot whose readout doesn't exist yet shows "(appears after you run it)". If you use one in text the learner reads before the step that produces it, that's an error, on your lessons too. A baseline or `enter` that only sets a prompt hasn't run anything yet, so a slot that reads a result can't sit above the first do step that runs. Three places are fine: anywhere after that do step, in the do step's own instruction (it fills in when the step runs), and in a predict choice's feedback (that shows once its observe answers it, after the run).
+A slot whose readout doesn't exist yet shows "(appears after you run it)".
+
+**Where a slot can go.** A slot that reads a result can sit in three places:
+
+- anywhere after the first do step that runs the model,
+- in that do step's own instruction (it fills in when the step runs),
+- in a predict choice's feedback, even when the predict sits above the do step. Feedback shows once its observe answers it, and that's after the run.
+
+Anywhere else above that do step is an error, on your lessons too, because the learner would read "(appears after you run it)" there. A baseline or `enter` that only sets a prompt hasn't run anything yet, so it doesn't count as the run.
 
 - **`expect`** is the value a real run showed. Checks and Pry's drift tests compare against it, and author mode shows it beside the live value. It's required on lessons that ship with Pry. On yours, a missing one is a warning. [Getting real expected values](#getting-real-expected-values) says how to record it.
 - **`tolerance`** is how far the live value may sit from `expect`, in the readout's own units, either way. `expect: 0.08, tolerance: 0.02` on a probability accepts anything from 0.06 to 0.10. Without one, a number has to match almost exactly, so give probabilities and logits a tolerance.
@@ -243,6 +251,8 @@ assert:
 
 ## Checks
 
+**One observe, one comparison.** Read this first. An observe answers its predict with one message. A list of check items must all hold, so a list that mixes `$prediction` with an expected value fails whenever the learner guessed something else, even when the app shows exactly what you expected. Pick one: `$prediction` to tell the learner how their guess did, or `$slot.<name>` / `expect` to confirm the app shows what the lesson says. The predict's choice `feedback` can then say the rest, with slots in it. With `$slot.<name>`, the learner's guess gets "The app shows what the lesson expected" as its reply whatever they picked, so put what the slots show in each choice's feedback, and that's where the guess gets its answer. The rest of this section says how each one is written.
+
 An observe's `check` is one item or a list, and a list must all hold:
 
 ```yaml
@@ -264,8 +274,6 @@ check: { read: top_guess.token, op: equals, expect: " London" }
 `$slot.<name>` means that slot's `expect`, not its live value (a slot always equals its own live value, so that check would mean nothing). The slot has to exist; a typo like `$slot.tpo` is an error. An `expect` written on the observe itself is an error too, because nothing reads it.
 
 **Checking against the prediction.** `value: $prediction` compares with the choice the learner picked. Choice text written in quotes compares as the text inside them, so `"\" Paris\""` compares as ` Paris`, leading space included. Write the space the way the model's token has it: ` Paris` and `Paris` are different tokens.
-
-**One observe, one comparison.** An observe answers its predict with one message. A list of check items must all hold, so a list that mixes `$prediction` with an expected value fails whenever the learner guessed something else, even when the app shows exactly what you expected. Pick one: `$prediction` to tell the learner how their guess did, or `$slot.<name>` / `expect` to confirm the app shows what the lesson says. The predict's choice `feedback` can then say the rest, with slots in it. With `$slot.<name>`, the learner's guess gets "The app shows what the lesson expected" as its reply whatever they picked, so put what the slots show in each choice's feedback, and that's where the guess gets its answer.
 
 A check item can also take:
 
@@ -349,7 +357,7 @@ permissions:
 
 The checker fails a lesson that uses anything it didn't declare, and Pry blocks it at run time and writes it to the log. It warns about a declared permission you never use.
 
-**Network steps can't be checked.** A network action opens its own panel (`search_concepts` opens the Steering tab, so you don't need `open_panel` first) and shows what the service sends back. No readout reads that answer, so no observe can check it, and it doesn't replay when a learner goes back. Put a lookup in its own section, often an optional one, and don't build a later check on it. Recording the lesson from a terminal leaves the lookup out unless you add `--network`, because sending it contacts `www.neuronpedia.org` (see [Getting real expected values](#getting-real-expected-values)).
+**Network steps can't be checked.** A network action opens its own panel (`search_concepts` opens the Steering tab, so you don't need `open_panel` first) and shows what the service sends back. For `search_concepts`, the results show inside the Find a concept box, so point a `:look` at `concept-search` to send the learner there. No readout reads that answer, so no observe can check it, and it doesn't replay when a learner goes back. Put a lookup in its own section, often an optional one, and don't build a later check on it. Recording the lesson from a terminal leaves the lookup out unless you add `--network`, because sending it contacts `www.neuronpedia.org` (see [Getting real expected values](#getting-real-expected-values)).
 
 Pry stores what the learner OK'd against the lesson's id, its folder and its permissions. If you add a permission later, Pry asks for the new one only. If you remove one, it drops without asking. A different folder with the same id gets nothing. Learners can revoke a lesson's permissions in Settings > Lessons.
 
@@ -381,7 +389,7 @@ Write for strict. Lenient's there so a lesson written for a slightly newer Pry s
 
 The checker carries Pry's style rules. The big ones:
 
-- **Explain, don't rename.** Real names stay: logit, residual stream, DLA, SAE, activation patching, embedding, attention head. Put plain language beside the name. A term has to be introduced before it's used, at most one new term per section and three per lesson. "Term" means a name from Pry's term list, `terms.yaml` (it ships inside the linter). Pry's own lessons are checked against the order of that list. Yours sit outside it, so the checker counts only what you declare in `new_terms`: list each name your lesson teaches for the first time, and explain it the first time it appears. Whether a word is also in `terms.yaml` doesn't matter for your lesson, and the checker says nothing while you're within the budget. (With Pry's source, the list is `ui/src/lessons/terms.yaml`.) If you need more than three, set `term_budget_exception` with your reason.
+- **Explain, don't rename.** Real names stay: logit, residual stream, DLA, SAE, activation patching, embedding, attention head. Put plain language beside the name. A term has to be introduced before it's used, at most one new term per section and three per lesson. "Term" means a name from Pry's term list, `terms.yaml` (it ships inside the linter). Pry's own lessons are checked against the order of that list. Yours sit outside it, so the checker counts only what you declare in `new_terms`: list each name your lesson teaches for the first time, and explain it the first time it appears. A word you only gloss in passing, in one clause, on the way to something else, doesn't need to go on the list. List the ones the lesson is there to teach. Whether a word is also in `terms.yaml` doesn't matter for your lesson, and the checker says nothing while you're within the budget. (With Pry's source, the list is `ui/src/lessons/terms.yaml`.) If you need more than three, set `term_budget_exception` with your reason.
 - **Metaphors explain; they never name.** Every `analogy` needs a `breaks` field that says where the comparison stops working.
 - **Banned model verbs.** Don't say the model "knows", "thinks", "wants" or "understands" in your own prose. Those words are fine inside a predict or question choice, its feedback, a `:refutes[...]` span or a code block, because that's where a learner tests them.
 - **Numbers are slots.** No bare percentages, decimals, layer or head labels, or counts in prose. Wrap fixed labels in inline code or use a constant slot.
@@ -424,11 +432,29 @@ docs/lessons/examples/
     __generated__/...
 ```
 
-Put your lesson in a set of its own, like `my-lessons/yourname.first-lesson/`, so your `__generated__` folder never lands beside someone else's lessons.
+Put your lesson in a set of its own, like `my-lessons/yourname.first-lesson/`, so your `__generated__` folder never lands beside someone else's lessons. The set doesn't have to be inside Pry's repo. You run the commands from the repo's `ui/` and `sidecar/` folders, and `--dir` and `--lesson-dir` take any path, so `C:\Users\you\Documents\my-lessons` works as well as a folder in the repo.
 
-1. In `ui/`, run `npm ci`, then `npm run lessons:compile -- --expectations --dir <set>`. That walks each lesson through Pry's real actions and writes `<set>/__generated__/expectations.json`: every request the lesson sends (each with its `key`), its prompts, and the expected values it declares. It prints the file it wrote. Slots still marked `expect: pending` are left out of the file until they have a value; that's expected.
-2. In `sidecar/`, run `python -m pytest tests/test_lessons.py --record --lesson-dir <set>`. That sends each request to the sidecar and saves the response in `<set>/__generated__/responses/<key>.json`, one file per request, with the model revision and device inside. It ends by listing each file it wrote. Pytest also prints a line like `1 passed, 75 skipped`: the skips are Pry's own recorded rows, which a `--lesson-dir` run leaves alone.
-3. Open the response for your prompt: the file named after the request's `key` in `expectations.json`. Its `top_predictions` list holds each token's probability, logit and rank. Its `tokens` list is the prompt as tokens, and it starts with the start marker, `<|endoftext|>`, which Pry puts in front of every prompt. Set your `expect` values from these. Then run step 1 again so `expectations.json` carries them.
+1. In `ui/`, run `npm ci`, then `npm run lessons:compile -- --expectations --dir <set>`. That walks each lesson through Pry's real actions and writes `<set>/__generated__/expectations.json`: every request the lesson sends (each with its `key`), its prompts, and the expected values it declares. It runs as one of Pry's tests, so you'll see a test banner first, something like `Tests 3 passed | 1 skipped`. That's Pry checking its own files, and the skip is one of Pry's own checks that a `--dir` run doesn't need, not your lesson. The last line is the one that matters: `wrote <set>\__generated__\expectations.json: ...`. Slots still marked `expect: pending` are left out of the file until they have a value; that's expected. A lookup like `/concept-search` is listed too, with its `key`, because the recorder reads its list from this file. Listed isn't sent: step 2 still leaves it out unless you add `--network`.
+2. In `sidecar/`, run `python -m pytest tests/test_lessons.py --record --lesson-dir <set>`. That sends each request to the sidecar and saves the response in `<set>/__generated__/responses/<key>.json`, one file per request, with the model revision and device inside. It ends with a block headed `lesson set`, after pytest's warnings and just above the `1 passed, 75 skipped` line, so `| tail` shows it. The block lists each file it wrote and any lookup it didn't send. The skips are Pry's own recorded rows, which a `--lesson-dir` run leaves alone. The warnings (an SAE `UserWarning`, a starlette `DeprecationWarning`) come from the libraries and don't mean anything went wrong.
+3. Open the response for your prompt: the file named after the request's `key` in `expectations.json`. The sidecar's answer sits under its `response` key. Next to it, at the top level, are `key`, `request`, `model_revision`, `device` and a few more fields about the recording. So the readouts are at `response.top_predictions` and `response.tokens`:
+
+   ```
+   {
+     "key": "9eef2a75...",
+     "request": { ... },
+     "model_revision": "...",
+     "device": "cpu",
+     "response": {
+       "tokens": ["<|endoftext|>", "On", " a", ...],
+       "top_predictions": [
+         { "token": " a", "probability": 0.11580509692430496, "rank": 1, "logit": 14.844558715820312 },
+         ...
+       ]
+     }
+   }
+   ```
+
+   `top_predictions` holds each token's probability, logit and rank. `tokens` is the prompt as tokens, and it starts with the start marker, `<|endoftext|>`, which Pry puts in front of every prompt. Set your `expect` values from these. Rounding is fine: three or four significant figures, like `0.1158` for the probability above, with a `tolerance` (say `0.02` on a probability) that covers the difference. Tokens and counts get copied exactly. Then run step 1 again so `expectations.json` carries them.
 4. Run the checker on the set (see [Checking your lesson](#checking-your-lesson)). It walks your lesson against the responses in `<set>/__generated__/responses/` and reports any `expect` the recording doesn't back. Later, `pytest tests/test_lessons.py --lesson-dir <set>` (no `--record`) replays the requests and fails if the model's answers drift.
 5. **Commit the `__generated__` folder with your lessons.** The responses are what the checker tests your `expect` values against, on your machine and on anyone else's. A set shared without them still checks, but every `expect` gets a warning that it can't be tested.
 
@@ -445,17 +471,20 @@ Put your lesson in a set of its own, like `my-lessons/yourname.first-lesson/`, s
 
 ## Set up the sidecar for recording
 
-The terminal route runs Pry's sidecar from a fresh clone of Pry's repo. You need Python 3.11 or 3.12 (`sidecar/pyproject.toml` allows nothing newer yet). The steps are the ones in `sidecar/README.md`:
+The terminal route runs Pry's sidecar from a fresh clone of Pry's repo. You need Python 3.11 or 3.12 (`sidecar/pyproject.toml` allows nothing newer yet). Plain `python` may be a newer one, so make the venv with a 3.12 by name. The steps are the ones in `sidecar/README.md`:
 
 ```
 cd sidecar
-python -m venv .venv
+py -3.12 -m venv .venv          (macOS/Linux: python3.12 -m venv .venv)
 .venv\Scripts\activate          (macOS/Linux: source .venv/bin/activate)
+python --version                (should say 3.11 or 3.12)
 pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install -e ".[dev]"
 ```
 
-Install CPU torch first, from the CPU index, so the second step doesn't pull a CUDA build.
+Install CPU torch first, from the CPU index, so the second step doesn't pull a CUDA build. It stays the CPU build after the second step. The second step can take ten minutes or more, most of it downloads, and it can sit quiet for a while. It hasn't hung.
+
+If the venv ended up on 3.13 or 3.14, torch still installs into it, and then `pip install -e ".[dev]"` stops with `requires a different Python: 3.14.2 not in '<3.13,>=3.11'`. Delete the `.venv` folder and make it again with the command above. The recorder checks too: on any Python other than 3.11 or 3.12, `--record` and `--lesson-dir` stop straight away and say which Python you have and the command to fix it.
 
 Then download GPT-2 small and its SAE once (about 600 MB, into the Hugging Face cache). The recorder doesn't download them itself; it stops and prints this same command if GPT-2 small is missing:
 
@@ -476,6 +505,14 @@ my-lessons\yourname.first-lesson\lesson.md:27: Section 2, step `run-it`, line 27
 ```
 
 A warning has `warning:` after the line number. Front matter messages point at the field's own line where the checker can tell which field it is (`draft`, `new_terms`), and at line 1 otherwise.
+
+An `expect` the recording disagrees with gets one message for each step that shows the slot or checks against it, pointing at that step. Each one also names the line where the slot's `expect` sits, which is the line you'll change:
+
+```
+my-lessons\yourname.first-lesson\lesson.md:54: Section 1, step `see-top`, line 54: The slot `{top_tok}` doesn't match the recorded response: live " a", expect " the". Its `expect` is on line 16. Set the `expect` from the response in ...
+```
+
+A predict choice's feedback that shows the slot doesn't get a message of its own. It's checked at the observe that reveals it, and that observe's message covers it.
 
 **From a terminal:** Pry ships the same checker as a single file. Settings > Lessons > **Copy linter command** copies the full command. Without Pry installed, build it from Pry's source: in `ui/`, run `npm ci` and then `npm run build:cli`, which writes `ui/build-cli/lessons-lint.mjs`. It needs Node 18 or newer:
 

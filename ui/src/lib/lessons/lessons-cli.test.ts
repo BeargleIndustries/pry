@@ -93,6 +93,38 @@ describe('lessons-cli', () => {
     expect(out).toMatch(/AUTHORING\.md, "Getting real expected values"/);
   });
 
+  it('› a wrong expect names the line that declares the slot, as well as the step that uses it', () => {
+    const { set, lesson } = secondLookCopy((t) => t.replace('read: token_count, expect: 15', 'read: token_count, expect: 14'));
+    const declared = readFileSync(lesson, 'utf8').split(/\r?\n/).findIndex((l) => l.includes('chips: { read: token_count')) + 1;
+    expect(declared).toBeGreaterThan(1);
+    const { out } = lintCli(set, '--release');
+    const msg = out.split(/\r?\n/).find((l) => l.includes('The slot `{chips}`'));
+    expect(msg, out).toMatch(/lesson\.md:(\d+): Section \d+, step `[^`]+`, line \1: /);
+    expect(msg).not.toMatch(new RegExp(`lesson\\.md:${declared}:`));
+    expect(msg).toContain(`live 15, expect 14. Its \`expect\` is on line ${declared}.`);
+  });
+
+  it('› a $slot check against a wrong expect names the slot\'s declaration line too', () => {
+    const set = join(mkdtempSync(join(tmpdir(), 'pry-lint-')), 'third-time');
+    cpSync(join(uiDir, '../docs/lessons/examples/third-time'), set, { recursive: true });
+    const lesson = join(set, 'community.third-time', 'lesson.md');
+    writeFileSync(lesson, readFileSync(lesson, 'utf8').replace('expect: " a"', 'expect: " the"'));
+    const declared = readFileSync(lesson, 'utf8').split(/\r?\n/).findIndex((l) => l.includes('top_tok: {')) + 1;
+    const { out } = lintCli(set, '--release');
+    const msg = out.split(/\r?\n/).find((l) => l.includes('The check `top_guess.token equals "$slot.top_tok"`'));
+    expect(msg, out).toContain(`got " a", want " the". Its \`expect\` is on line ${declared}.`);
+  });
+
+  it('› with every slot still pending and nothing recorded, the warning says pending, not expect values', () => {
+    const { set } = secondLookCopy((t) =>
+      t.replace(/expect: (15|5|" that"|0\.34, tolerance: 0\.02)/g, 'expect: pending'),
+    );
+    rmSync(join(set, '__generated__', 'responses'), { recursive: true });
+    const { out } = lintCli(set, '--skeleton');
+    expect(out).toMatch(/warning: .*This lesson has slots marked `expect: pending`, and there's no recorded response/);
+    expect(out).not.toMatch(/This lesson has `expect` values/);
+  });
+
   it('› the draft warning points at the draft line, not line 1', () => {
     const { set, lesson } = secondLookCopy((t) => t.replace(/^(id: .*)$/m, '$1\ndraft: true'));
     const line = readFileSync(lesson, 'utf8').split(/\r?\n/).indexOf('draft: true') + 1;

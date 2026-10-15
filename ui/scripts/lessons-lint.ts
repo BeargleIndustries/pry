@@ -107,6 +107,33 @@ function whereOf(lesson: Lesson, where: string) {
   return { section: section?.index ?? 0, step: step?.id, line: step?.line ?? section?.line ?? 1, file: lesson.file };
 }
 
+/**
+ * The line that declares slot `name`, where its `expect` sits: in the `:::slots` block of the
+ * section the check is in, else in the front matter's `slots:`. Undefined when it can't tell.
+ */
+function slotLine(lesson: Lesson, text: string, where: string, name: string): number | undefined {
+  const lines = text.split(/\r?\n/);
+  // Slot names are [a-z_][a-z0-9_]*, so they're safe inside a pattern.
+  const key = new RegExp(`(^\\s*|[{,]\\s*)${name}\\s*:`);
+  const section = lesson.sections.find((s) => s.id === where.split('/')[0]);
+  if (section?.slots?.[name] && section.slotsLine) {
+    const at = lines.findIndex((l, i) => i >= section.slotsLine! - 1 && key.test(l));
+    return at < 0 ? section.slotsLine : at + 1;
+  }
+  const end = lines.indexOf('---', 1);
+  const start = lines.findIndex((l, i) => i < end && /^slots\s*:/.test(l));
+  if (start < 0) return undefined;
+  for (let i = start + 1; i < end && /^\s/.test(lines[i]); i++) if (key.test(lines[i])) return i + 1;
+  return start + 1;
+}
+
+/** The slot whose `expect` a failed walk check holds the readout to: the slot itself, or a check's `$slot.<name>`. */
+function declaredSlot(c: WalkCheck): string | undefined {
+  if (c.kind === 'slot') return c.name;
+  const m = /^\$slot\.([a-z_][a-z0-9_]*)$/.exec(String(c.check?.value ?? ''));
+  return m?.[1];
+}
+
 /** A user lesson's expects against the responses recorded in its set's __generated__/responses/. */
 async function recordedIssues(lesson: Lesson, release: boolean): Promise<LessonIssue[]> {
   // The set is the folder that holds this lesson's folder, however far down the linted folder it sits.
@@ -120,14 +147,26 @@ async function recordedIssues(lesson: Lesson, release: boolean): Promise<LessonI
   if (missing.length) {
     const prompt = (missing[0].body as { prompt?: unknown } | null)?.prompt;
     const request = `\`${missing[0].endpoint}\` request${typeof prompt === 'string' ? ` on "${prompt}"` : ''}${missing.length > 1 ? ` (and ${missing.length - 1} more)` : ''}`;
-    return [makeIssue('expect-unrecorded', { request, folder }, { line: 1, section: 0, file: lesson.file }, 'warning')];
+    // With every slot still `expect: pending` there's nothing recorded to test yet, so say that instead.
+    const slots = [lesson.meta.slots ?? {}, ...lesson.sections.map((s) => s.slots ?? {})].flatMap((o) => Object.values(o));
+    const real =
+      slots.some((s) => s.expect !== undefined && s.expect !== 'pending' && s.expect !== 'learner') ||
+      checks.some((c) => c.kind === 'check' && c.check?.expect !== undefined && c.check.expect !== 'pending');
+    const what = real ? '`expect` values' : 'slots marked `expect: pending`';
+    return [makeIssue('expect-unrecorded', { what, request, folder }, { line: 1, section: 0, file: lesson.file }, 'warning')];
   }
+  const text = readFileSync(lesson.file!, 'utf8');
   return checks
     .filter((c) => !c.ok)
     .map((c) =>
       makeIssue(
         'expect-recorded',
-        { what: c.kind === 'slot' ? `The slot \`{${c.name}}\`` : `The check \`${c.name}\``, detail: c.detail, folder },
+        {
+          what: c.kind === 'slot' ? `The slot \`{${c.name}}\`` : `The check \`${c.name}\``,
+          detail: c.detail,
+          folder,
+          declared: declaredSlot(c) ? slotLine(lesson, text, c.where, declaredSlot(c)!) : undefined,
+        },
         whereOf(lesson, c.where),
         release ? 'error' : 'warning',
       ),

@@ -83,8 +83,10 @@ describe('lesson checks', () => {
       expect(issues.filter((i) => i.severity === 'error').map((i) => i.message)).toEqual([]);
       const r = await walkLesson(lesson!, { recorded: loadRecorded(join(dirname(dirname(file)), '__generated__', 'responses')), rows });
       expect(r.errors, 'actions that failed').toEqual([]);
+      // A lookup no readout reads may stay unrecorded: the offline route (no --network) is enough,
+      // as AUTHORING.md says and lessons-lint.ts's LOOKUP_ONLY allows.
       expect(
-        r.missing.map((m) => `${m.endpoint} ${JSON.stringify(m.body)}`),
+        r.missing.filter((m) => m.endpoint !== '/concept-search').map((m) => `${m.endpoint} ${JSON.stringify(m.body)}`),
         'requests with no recorded response (run npm run lessons:compile -- --expectations --dir <set>, then pytest sidecar/tests/test_lessons.py --record --lesson-dir <set>)',
       ).toEqual([]);
       expect(r.checks.filter((c) => !c.ok).map((c) => `${c.where}: ${c.kind} ${c.name}: ${c.detail}`)).toEqual([]);
