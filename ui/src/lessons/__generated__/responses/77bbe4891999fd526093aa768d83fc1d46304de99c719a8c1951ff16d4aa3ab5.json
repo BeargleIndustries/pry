@@ -12,16 +12,16 @@
   }
  },
  "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
- "device": "cpu",
+ "device": "cuda",
  "libs": {
   "python": "3.12.13",
-  "torch": "2.5.1+cpu",
+  "torch": "2.5.1+cu124",
   "transformer_lens": "2.15.4",
   "sae_lens": "5.11.0",
   "transformers": "4.57.6",
   "numpy": "1.26.4"
  },
- "recorded": "2026-10-14",
+ "recorded": "2026-10-15",
  "neuronpedia_fetched": null,
  "offline": false,
  "trimmed": [],
@@ -34,8 +34,8 @@
   "clean_predicted_token": " Mary",
   "corrupted_predicted_token": " John",
   "target_token": " Mary",
-  "clean_logit": 18.466388702392578,
-  "corrupted_logit": 14.966815948486328,
+  "clean_logit": 18.466384887695312,
+  "corrupted_logit": 14.966814994812012,
   "tokens": [
    "<|endoftext|>",
    "When",
@@ -59,32 +59,32 @@
     "layer": 2,
     "head": null,
     "position": 10,
-    "effect": 3.508129119873047,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 18.474945068359375,
-    "share": 1.0024449744493085
+    "effect": 3.5081262588500977,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 18.47494125366211,
+    "share": 1.0024449764481622
    },
    {
     "name": "L1@10",
     "layer": 1,
     "head": null,
     "position": 10,
-    "effect": 3.5066452026367188,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
+    "effect": 3.506646156311035,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
     "patched_logit": 18.473461151123047,
-    "share": 1.0020209463348275
+    "share": 1.0020220380344809
    },
    {
     "name": "L0@10",
     "layer": 0,
     "head": null,
     "position": 10,
-    "effect": 3.49957275390625,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 18.466388702392578,
+    "effect": 3.499569892883301,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 18.466384887695312,
     "share": 1.0
    },
    {
@@ -92,110 +92,110 @@
     "layer": 3,
     "head": null,
     "position": 10,
-    "effect": 3.4583282470703125,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 18.42514419555664,
-    "share": 0.9882144165198737
+    "effect": 3.4583253860473633,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 18.425140380859375,
+    "share": 0.9882144068847397
    },
    {
     "name": "L4@10",
     "layer": 4,
     "head": null,
     "position": 10,
-    "effect": 3.428741455078125,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 18.395557403564453,
-    "share": 0.9797600153478556
+    "effect": 3.42873477935791,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 18.395549774169922,
+    "share": 0.9797589087534898
    },
    {
     "name": "L11@14",
     "layer": 11,
     "head": null,
     "position": 14,
-    "effect": 3.3966751098632812,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 18.36349105834961,
-    "share": 0.9705970839074245
+    "effect": 3.396672248840332,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 18.363487243652344,
+    "share": 0.9705970598694941
    },
    {
     "name": "L6@10",
     "layer": 6,
     "head": null,
     "position": 10,
-    "effect": 3.3084335327148438,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 18.275249481201172,
-    "share": 0.9453821267244537
+    "effect": 3.3084306716918945,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 18.275245666503906,
+    "share": 0.9453820820723983
    },
    {
     "name": "L5@10",
     "layer": 5,
     "head": null,
     "position": 10,
-    "effect": 3.2985610961914062,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 18.265377044677734,
-    "share": 0.9425610862096029
+    "effect": 3.298558235168457,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 18.26537322998047,
+    "share": 0.9425610392512463
    },
    {
     "name": "L10@14",
     "layer": 10,
     "head": null,
     "position": 14,
-    "effect": 3.273651123046875,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 18.240467071533203,
-    "share": 0.9354430821284685
+    "effect": 3.2736597061157227,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 18.240474700927734,
+    "share": 0.9354462994932642
    },
    {
     "name": "L7@10",
     "layer": 7,
     "head": null,
     "position": 10,
-    "effect": 3.0791549682617188,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
+    "effect": 3.079155921936035,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
     "patched_logit": 18.045970916748047,
-    "share": 0.8798659678741476
+    "share": 0.8798669597077583
    },
    {
     "name": "L9@14",
     "layer": 9,
     "head": null,
     "position": 14,
-    "effect": 2.906963348388672,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 17.873779296875,
-    "share": 0.8306623558958439
+    "effect": 2.906968116760254,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 17.873783111572266,
+    "share": 0.8306643975512084
    },
    {
     "name": "L8@10",
     "layer": 8,
     "head": null,
     "position": 10,
-    "effect": 2.494182586669922,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 17.46099853515625,
-    "share": 0.7127105969967037
+    "effect": 2.494187355041504,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 17.461002349853516,
+    "share": 0.712712542222307
    },
    {
     "name": "L8@14",
     "layer": 8,
     "head": null,
     "position": 14,
-    "effect": 1.7890243530273438,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 16.755840301513672,
-    "share": 0.5112122189859951
+    "effect": 1.7890291213989258,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 16.755844116210938,
+    "share": 0.5112139994795023
    },
    {
     "name": "L9@10",
@@ -203,54 +203,54 @@
     "head": null,
     "position": 10,
     "effect": 0.4872732162475586,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 15.454089164733887,
-    "share": 0.13923791574376057
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 15.45408821105957,
+    "share": 0.13923802957571266
    },
    {
     "name": "L7@11",
     "layer": 7,
     "head": null,
     "position": 11,
-    "effect": 0.4435873031616211,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
+    "effect": 0.4435882568359375,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
     "patched_logit": 15.41040325164795,
-    "share": 0.12675470246088913
+    "share": 0.12675507859923452
    },
    {
     "name": "L5@11",
     "layer": 5,
     "head": null,
     "position": 11,
-    "effect": 0.31760311126708984,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 15.284419059753418,
-    "share": 0.0907548245461046
+    "effect": 0.31760597229003906,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 15.28442096710205,
+    "share": 0.09075571627699741
    },
    {
     "name": "L7@14",
     "layer": 7,
     "head": null,
     "position": 14,
-    "effect": 0.3128633499145508,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 15.279679298400879,
-    "share": 0.08940044168686886
+    "effect": 0.31286048889160156,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 15.279675483703613,
+    "share": 0.08939969723931855
    },
    {
     "name": "L6@11",
     "layer": 6,
     "head": null,
     "position": 11,
-    "effect": 0.27950286865234375,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
+    "effect": 0.27950382232666016,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
     "patched_logit": 15.246318817138672,
-    "share": 0.07986771194865444
+    "share": 0.07986804975521622
    },
    {
     "name": "L10@10",
@@ -258,54 +258,54 @@
     "head": null,
     "position": 10,
     "effect": 0.23273563385009766,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 15.199551582336426,
-    "share": 0.06650401355145892
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 15.19955062866211,
+    "share": 0.0665040679208571
    },
    {
     "name": "L8@11",
     "layer": 8,
     "head": null,
     "position": 11,
-    "effect": 0.2322092056274414,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 15.19902515411377,
-    "share": 0.06635358712524199
+    "effect": 0.23220443725585938,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 15.199019432067871,
+    "share": 0.0663522788123388
    },
    {
     "name": "L11@10",
     "layer": 11,
     "head": null,
     "position": 10,
-    "effect": 0.14367198944091797,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 15.110487937927246,
-    "share": 0.04105415133334496
+    "effect": 0.14367008209228516,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 15.110485076904297,
+    "share": 0.041053639872845965
    },
    {
     "name": "L9@11",
     "layer": 9,
     "head": null,
     "position": 11,
-    "effect": 0.11191272735595703,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 15.078728675842285,
-    "share": 0.031978968641540366
+    "effect": 0.11191558837890625,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 15.078730583190918,
+    "share": 0.03197981232107893
    },
    {
     "name": "L4@11",
     "layer": 4,
     "head": null,
     "position": 11,
-    "effect": 0.06164073944091797,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 15.028456687927246,
-    "share": 0.01761378996110714
+    "effect": 0.06163978576660156,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 15.028454780578613,
+    "share": 0.017613531849142883
    },
    {
     "name": "L10@11",
@@ -313,109 +313,109 @@
     "head": null,
     "position": 11,
     "effect": 0.05703163146972656,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 15.023847579956055,
-    "share": 0.016296741196783926
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 15.023846626281738,
+    "share": 0.016296754519949913
    },
    {
     "name": "L11@11",
     "layer": 11,
     "head": null,
     "position": 11,
-    "effect": 0.04887104034423828,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 15.015686988830566,
-    "share": 0.013964859078779845
+    "effect": 0.048870086669921875,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 15.015685081481934,
+    "share": 0.013964597983684714
    },
    {
     "name": "L7@12",
     "layer": 7,
     "head": null,
     "position": 12,
-    "effect": 0.04472064971923828,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 15.011536598205566,
-    "share": 0.012778888414113052
+    "effect": 0.044719696044921875,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 15.011534690856934,
+    "share": 0.01277862634944469
    },
    {
     "name": "L4@14",
     "layer": 4,
     "head": null,
     "position": 14,
-    "effect": 0.032853126525878906,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.999669075012207,
-    "share": 0.009387753544831436
+    "effect": 0.032848358154296875,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.999663352966309,
+    "share": 0.009386398660331674
    },
    {
     "name": "L3@14",
     "layer": 3,
     "head": null,
     "position": 14,
-    "effect": 0.028855323791503906,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.995671272277832,
-    "share": 0.008245384742836214
+    "effect": 0.028853416442871094,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.995668411254883,
+    "share": 0.008244846460002753
    },
    {
     "name": "L6@14",
     "layer": 6,
     "head": null,
     "position": 14,
-    "effect": 0.02238941192626953,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.989205360412598,
-    "share": 0.006397755812128294
+    "effect": 0.02238750457763672,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.989202499389648,
+    "share": 0.006397216018792418
    },
    {
     "name": "L5@12",
     "layer": 5,
     "head": null,
     "position": 12,
-    "effect": 0.017910003662109375,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.984725952148438,
-    "share": 0.00511776863107592
+    "effect": 0.017911911010742188,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.984726905822754,
+    "share": 0.005118317838762905
    },
    {
     "name": "L2@14",
     "layer": 2,
     "head": null,
     "position": 14,
-    "effect": 0.015549659729003906,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.982365608215332,
-    "share": 0.004443302317875019
+    "effect": 0.015545845031738281,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.98236083984375,
+    "share": 0.004442215902974876
    },
    {
     "name": "L6@12",
     "layer": 6,
     "head": null,
     "position": 12,
-    "effect": 0.014387130737304688,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.981203079223633,
-    "share": 0.004111110626645971
+    "effect": 0.014385223388671875,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.981200218200684,
+    "share": 0.004110568963896266
    },
    {
     "name": "L3@11",
     "layer": 3,
     "head": null,
     "position": 11,
-    "effect": 0.013853073120117188,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.980669021606445,
-    "share": 0.003958504107295464
+    "effect": 0.013845443725585938,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.980660438537598,
+    "share": 0.003956327248597586
    },
    {
     "name": "L9@12",
@@ -423,10 +423,10 @@
     "head": null,
     "position": 12,
     "effect": 0.010149002075195312,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.976964950561523,
-    "share": 0.002900068890943021
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.976963996887207,
+    "share": 0.002900071261852563
    },
    {
     "name": "L5@14",
@@ -434,131 +434,131 @@
     "head": null,
     "position": 14,
     "effect": 0.009302139282226562,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.976118087768555,
-    "share": 0.002658078553115789
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.976117134094238,
+    "share": 0.0026580807261896164
    },
    {
     "name": "L8@12",
     "layer": 8,
     "head": null,
     "position": 12,
-    "effect": 0.00901031494140625,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.975826263427734,
-    "share": 0.002574689990756405
+    "effect": 0.009009361267089844,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.975824356079102,
+    "share": 0.0025744195837926294
    },
    {
     "name": "L3@12",
     "layer": 3,
     "head": null,
     "position": 12,
-    "effect": -0.008810043334960938,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.958005905151367,
-    "share": -0.002517462545999965
+    "effect": -0.008812904357910156,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.958002090454102,
+    "share": -0.0025182821397086576
    },
    {
     "name": "L2@11",
     "layer": 2,
     "head": null,
     "position": 11,
-    "effect": -0.008032798767089844,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.958783149719238,
-    "share": -0.0022953655580166383
-   },
-   {
-    "name": "L8@13",
-    "layer": 8,
-    "head": null,
-    "position": 13,
-    "effect": -0.007332801818847656,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.95948314666748,
-    "share": -0.002095342013010796
+    "effect": -0.00803375244140625,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.958781242370605,
+    "share": -0.0022956399464241673
    },
    {
     "name": "L4@13",
     "layer": 4,
     "head": null,
     "position": 13,
-    "effect": -0.007330894470214844,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.959485054016113,
-    "share": -0.002094796989727401
+    "effect": -0.0073337554931640625,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.959481239318848,
+    "share": -0.0020956162378919572
+   },
+   {
+    "name": "L8@13",
+    "layer": 8,
+    "head": null,
+    "position": 13,
+    "effect": -0.00733184814453125,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.95948314666748,
+    "share": -0.002095071214162987
    },
    {
     "name": "L10@12",
     "layer": 10,
     "head": null,
     "position": 12,
-    "effect": 0.006913185119628906,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
+    "effect": 0.0069141387939453125,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
     "patched_logit": 14.973729133605957,
-    "share": 0.0019754368906639693
+    "share": 0.0019757110175184253
    },
    {
     "name": "L1@14",
     "layer": 1,
     "head": null,
     "position": 14,
-    "effect": 0.006900787353515625,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.973716735839844,
-    "share": 0.001971894239321904
+    "effect": 0.006903648376464844,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.973718643188477,
+    "share": 0.0019727133870090867
    },
    {
     "name": "L9@13",
     "layer": 9,
     "head": null,
     "position": 13,
-    "effect": 0.006638526916503906,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.973454475402832,
-    "share": 0.0018969535378551372
+    "effect": 0.006640434265136719,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.973455429077148,
+    "share": 0.001897500112411144
    },
    {
     "name": "L4@12",
     "layer": 4,
     "head": null,
     "position": 12,
-    "effect": -0.006567955017089844,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.960247993469238,
-    "share": -0.0018767876763695346
+    "effect": -0.006573677062988281,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.960241317749023,
+    "share": -0.0018784242818971732
    },
    {
     "name": "L7@13",
     "layer": 7,
     "head": null,
     "position": 13,
-    "effect": 0.006552696228027344,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
+    "effect": 0.00655364990234375,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
     "patched_logit": 14.973368644714355,
-    "share": 0.0018724274901023772
+    "share": 0.0018727015327429817
    },
    {
     "name": "L1@13",
     "layer": 1,
     "head": null,
     "position": 13,
-    "effect": -0.0064601898193359375,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.960355758666992,
-    "share": -0.0018459938608577358
+    "effect": -0.006466865539550781,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.960348129272461,
+    "share": -0.0018479029530748196
    },
    {
     "name": "L3@13",
@@ -566,10 +566,10 @@
     "head": null,
     "position": 13,
     "effect": 0.004993438720703125,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.971809387207031,
-    "share": 0.0014268709559272371
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.971808433532715,
+    "share": 0.001426872122445031
    },
    {
     "name": "L11@13",
@@ -577,43 +577,43 @@
     "head": null,
     "position": 13,
     "effect": -0.003996849060058594,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.96281909942627,
-    "share": -0.001142096290353524
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.962818145751953,
+    "share": -0.0011420972240578924
    },
    {
     "name": "L2@13",
     "layer": 2,
     "head": null,
     "position": 13,
-    "effect": -0.00382232666015625,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.962993621826172,
-    "share": -0.0010922266599229119
+    "effect": -0.0038242340087890625,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.962990760803223,
+    "share": -0.001092772576586053
    },
    {
     "name": "L5@13",
     "layer": 5,
     "head": null,
     "position": 13,
-    "effect": -0.0032949447631835938,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.963521003723145,
-    "share": -0.0009415277220642866
+    "effect": -0.0032958984375,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.963519096374512,
+    "share": -0.0009418010036611969
    },
    {
     "name": "L6@13",
     "layer": 6,
     "head": null,
     "position": 13,
-    "effect": 0.0026998519897460938,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.969515800476074,
-    "share": 0.0007714804576451506
+    "effect": 0.0026988983154296875,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.969513893127441,
+    "share": 0.000771208576493399
    },
    {
     "name": "L2@12",
@@ -621,32 +621,32 @@
     "head": null,
     "position": 12,
     "effect": 0.002185821533203125,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.969001770019531,
-    "share": 0.000624596682770288
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.969000816345215,
+    "share": 0.0006245971934003077
    },
    {
     "name": "L11@12",
     "layer": 11,
     "head": null,
     "position": 12,
-    "effect": 0.0020418167114257812,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.968857765197754,
-    "share": 0.0005834474248739907
+    "effect": 0.0020399093627929688,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.968854904174805,
+    "share": 0.0005829028781340567
    },
    {
     "name": "L1@12",
     "layer": 1,
     "head": null,
     "position": 12,
-    "effect": 0.0018014907836914062,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.96861743927002,
-    "share": 0.0005147744911662626
+    "effect": 0.0017976760864257812,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.968612670898438,
+    "share": 0.0005136848645547905
    },
    {
     "name": "L10@13",
@@ -654,21 +654,21 @@
     "head": null,
     "position": 13,
     "effect": -0.001735687255859375,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.965080261230469,
-    "share": -0.0004959711878891466
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.965079307556152,
+    "share": -0.000495971593363246
    },
    {
     "name": "L1@11",
     "layer": 1,
     "head": null,
     "position": 11,
-    "effect": 0.0013170242309570312,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.968132972717285,
-    "share": 0.0003763385771840173
+    "effect": 0.0013103485107421875,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.968125343322754,
+    "share": 0.00037443130180280225
    },
    {
     "name": "L0@0",
@@ -676,9 +676,9 @@
     "head": null,
     "position": 0,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -687,9 +687,9 @@
     "head": null,
     "position": 1,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -698,9 +698,9 @@
     "head": null,
     "position": 2,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -709,9 +709,9 @@
     "head": null,
     "position": 3,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -720,9 +720,9 @@
     "head": null,
     "position": 4,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -731,9 +731,9 @@
     "head": null,
     "position": 5,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -742,9 +742,9 @@
     "head": null,
     "position": 6,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -753,9 +753,9 @@
     "head": null,
     "position": 7,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -764,9 +764,9 @@
     "head": null,
     "position": 8,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -775,9 +775,9 @@
     "head": null,
     "position": 9,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -786,9 +786,9 @@
     "head": null,
     "position": 11,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -797,9 +797,9 @@
     "head": null,
     "position": 12,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -808,9 +808,9 @@
     "head": null,
     "position": 13,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -819,9 +819,9 @@
     "head": null,
     "position": 14,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -830,9 +830,9 @@
     "head": null,
     "position": 0,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -841,9 +841,9 @@
     "head": null,
     "position": 1,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -852,9 +852,9 @@
     "head": null,
     "position": 2,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -863,9 +863,9 @@
     "head": null,
     "position": 3,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -874,9 +874,9 @@
     "head": null,
     "position": 4,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -885,9 +885,9 @@
     "head": null,
     "position": 5,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -896,9 +896,9 @@
     "head": null,
     "position": 6,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -907,9 +907,9 @@
     "head": null,
     "position": 7,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -918,9 +918,9 @@
     "head": null,
     "position": 8,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -929,9 +929,9 @@
     "head": null,
     "position": 9,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -940,9 +940,9 @@
     "head": null,
     "position": 0,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -951,9 +951,9 @@
     "head": null,
     "position": 1,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -962,9 +962,9 @@
     "head": null,
     "position": 2,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -973,9 +973,9 @@
     "head": null,
     "position": 3,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -984,9 +984,9 @@
     "head": null,
     "position": 4,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -995,9 +995,9 @@
     "head": null,
     "position": 5,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1006,9 +1006,9 @@
     "head": null,
     "position": 6,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1017,9 +1017,9 @@
     "head": null,
     "position": 7,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1028,9 +1028,9 @@
     "head": null,
     "position": 8,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1039,9 +1039,9 @@
     "head": null,
     "position": 9,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1050,9 +1050,9 @@
     "head": null,
     "position": 0,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1061,9 +1061,9 @@
     "head": null,
     "position": 1,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1072,9 +1072,9 @@
     "head": null,
     "position": 2,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1083,9 +1083,9 @@
     "head": null,
     "position": 3,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1094,9 +1094,9 @@
     "head": null,
     "position": 4,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1105,9 +1105,9 @@
     "head": null,
     "position": 5,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1116,9 +1116,9 @@
     "head": null,
     "position": 6,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1127,9 +1127,9 @@
     "head": null,
     "position": 7,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1138,9 +1138,9 @@
     "head": null,
     "position": 8,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1149,9 +1149,9 @@
     "head": null,
     "position": 9,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1160,9 +1160,9 @@
     "head": null,
     "position": 0,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1171,9 +1171,9 @@
     "head": null,
     "position": 1,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1182,9 +1182,9 @@
     "head": null,
     "position": 2,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1193,9 +1193,9 @@
     "head": null,
     "position": 3,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1204,9 +1204,9 @@
     "head": null,
     "position": 4,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1215,9 +1215,9 @@
     "head": null,
     "position": 5,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1226,9 +1226,9 @@
     "head": null,
     "position": 6,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1237,9 +1237,9 @@
     "head": null,
     "position": 7,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1248,9 +1248,9 @@
     "head": null,
     "position": 8,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1259,9 +1259,9 @@
     "head": null,
     "position": 9,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1270,9 +1270,9 @@
     "head": null,
     "position": 0,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1281,9 +1281,9 @@
     "head": null,
     "position": 1,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1292,9 +1292,9 @@
     "head": null,
     "position": 2,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1303,9 +1303,9 @@
     "head": null,
     "position": 3,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1314,9 +1314,9 @@
     "head": null,
     "position": 4,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1325,9 +1325,9 @@
     "head": null,
     "position": 5,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1336,9 +1336,9 @@
     "head": null,
     "position": 6,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1347,9 +1347,9 @@
     "head": null,
     "position": 7,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1358,9 +1358,9 @@
     "head": null,
     "position": 8,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1369,9 +1369,9 @@
     "head": null,
     "position": 9,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1380,9 +1380,9 @@
     "head": null,
     "position": 0,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1391,9 +1391,9 @@
     "head": null,
     "position": 1,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1402,9 +1402,9 @@
     "head": null,
     "position": 2,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1413,9 +1413,9 @@
     "head": null,
     "position": 3,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1424,9 +1424,9 @@
     "head": null,
     "position": 4,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1435,9 +1435,9 @@
     "head": null,
     "position": 5,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1446,9 +1446,9 @@
     "head": null,
     "position": 6,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1457,9 +1457,9 @@
     "head": null,
     "position": 7,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1468,9 +1468,9 @@
     "head": null,
     "position": 8,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1479,9 +1479,9 @@
     "head": null,
     "position": 9,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1490,9 +1490,9 @@
     "head": null,
     "position": 0,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1501,9 +1501,9 @@
     "head": null,
     "position": 1,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1512,9 +1512,9 @@
     "head": null,
     "position": 2,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1523,9 +1523,9 @@
     "head": null,
     "position": 3,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1534,9 +1534,9 @@
     "head": null,
     "position": 4,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1545,9 +1545,9 @@
     "head": null,
     "position": 5,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1556,9 +1556,9 @@
     "head": null,
     "position": 6,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1567,9 +1567,9 @@
     "head": null,
     "position": 7,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1578,9 +1578,9 @@
     "head": null,
     "position": 8,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1589,9 +1589,9 @@
     "head": null,
     "position": 9,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1600,9 +1600,9 @@
     "head": null,
     "position": 0,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1611,9 +1611,9 @@
     "head": null,
     "position": 1,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1622,9 +1622,9 @@
     "head": null,
     "position": 2,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1633,9 +1633,9 @@
     "head": null,
     "position": 3,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1644,9 +1644,9 @@
     "head": null,
     "position": 4,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1655,9 +1655,9 @@
     "head": null,
     "position": 5,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1666,9 +1666,9 @@
     "head": null,
     "position": 6,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1677,9 +1677,9 @@
     "head": null,
     "position": 7,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1688,9 +1688,9 @@
     "head": null,
     "position": 8,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1699,9 +1699,9 @@
     "head": null,
     "position": 9,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1710,9 +1710,9 @@
     "head": null,
     "position": 0,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1721,9 +1721,9 @@
     "head": null,
     "position": 1,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1732,9 +1732,9 @@
     "head": null,
     "position": 2,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1743,9 +1743,9 @@
     "head": null,
     "position": 3,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1754,9 +1754,9 @@
     "head": null,
     "position": 4,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1765,9 +1765,9 @@
     "head": null,
     "position": 5,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1776,9 +1776,9 @@
     "head": null,
     "position": 6,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1787,9 +1787,9 @@
     "head": null,
     "position": 7,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1798,9 +1798,9 @@
     "head": null,
     "position": 8,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1809,9 +1809,9 @@
     "head": null,
     "position": 9,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1820,9 +1820,9 @@
     "head": null,
     "position": 0,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1831,9 +1831,9 @@
     "head": null,
     "position": 1,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1842,9 +1842,9 @@
     "head": null,
     "position": 2,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1853,9 +1853,9 @@
     "head": null,
     "position": 3,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1864,9 +1864,9 @@
     "head": null,
     "position": 4,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1875,9 +1875,9 @@
     "head": null,
     "position": 5,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1886,9 +1886,9 @@
     "head": null,
     "position": 6,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1897,9 +1897,9 @@
     "head": null,
     "position": 7,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1908,9 +1908,9 @@
     "head": null,
     "position": 8,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1919,9 +1919,9 @@
     "head": null,
     "position": 9,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1930,9 +1930,9 @@
     "head": null,
     "position": 0,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1941,9 +1941,9 @@
     "head": null,
     "position": 1,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1952,9 +1952,9 @@
     "head": null,
     "position": 2,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1963,9 +1963,9 @@
     "head": null,
     "position": 3,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1974,9 +1974,9 @@
     "head": null,
     "position": 4,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1985,9 +1985,9 @@
     "head": null,
     "position": 5,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -1996,9 +1996,9 @@
     "head": null,
     "position": 6,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -2007,9 +2007,9 @@
     "head": null,
     "position": 7,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -2018,9 +2018,9 @@
     "head": null,
     "position": 8,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    },
    {
@@ -2029,9 +2029,9 @@
     "head": null,
     "position": 9,
     "effect": 0.0,
-    "clean_logit": 18.466388702392578,
-    "corrupted_logit": 14.966815948486328,
-    "patched_logit": 14.966815948486328,
+    "clean_logit": 18.466384887695312,
+    "corrupted_logit": 14.966814994812012,
+    "patched_logit": 14.966814994812012,
     "share": 0.0
    }
   ],

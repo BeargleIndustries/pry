@@ -15,16 +15,16 @@
   }
  },
  "model_revision": "607a30d783dfa663caf39e06633721c8d4cfcd7e",
- "device": "cpu",
+ "device": "cuda",
  "libs": {
   "python": "3.12.13",
-  "torch": "2.5.1+cpu",
+  "torch": "2.5.1+cu124",
   "transformer_lens": "2.15.4",
   "sae_lens": "5.11.0",
   "transformers": "4.57.6",
   "numpy": "1.26.4"
  },
- "recorded": "2026-10-14",
+ "recorded": "2026-10-15",
  "neuronpedia_fetched": null,
  "offline": false,
  "trimmed": [],
@@ -39,61 +39,61 @@
   "original_top_predictions": [
    {
     "token": ".",
-    "probability": 0.10398386418819427,
+    "probability": 0.10398221760988235,
     "rank": 1,
     "logit": null
    },
    {
     "token": " rise",
-    "probability": 0.04655522480607033,
+    "probability": 0.046554841101169586,
     "rank": 2,
     "logit": null
    },
    {
     "token": " breeze",
-    "probability": 0.03423939272761345,
+    "probability": 0.034238722175359726,
     "rank": 3,
     "logit": null
    },
    {
     "token": ",",
-    "probability": 0.02948336862027645,
+    "probability": 0.029482845216989517,
     "rank": 4,
     "logit": null
    },
    {
     "token": " turn",
-    "probability": 0.026859022676944733,
+    "probability": 0.02685854397714138,
     "rank": 5,
     "logit": null
    },
    {
     "token": " swell",
-    "probability": 0.025494398549199104,
+    "probability": 0.02549397014081478,
     "rank": 6,
     "logit": null
    },
    {
     "token": " as",
-    "probability": 0.02444697916507721,
+    "probability": 0.02444663643836975,
     "rank": 7,
     "logit": null
    },
    {
     "token": " and",
-    "probability": 0.01909797452390194,
+    "probability": 0.019097669050097466,
     "rank": 8,
     "logit": null
    },
    {
     "token": " slowly",
-    "probability": 0.017912045121192932,
+    "probability": 0.017911793664097786,
     "rank": 9,
     "logit": null
    },
    {
     "token": " go",
-    "probability": 0.017636094242334366,
+    "probability": 0.01763586327433586,
     "rank": 10,
     "logit": null
    }
@@ -101,61 +101,61 @@
   "steered_top_predictions": [
    {
     "token": ".",
-    "probability": 0.13417142629623413,
+    "probability": 0.13416987657546997,
     "rank": 1,
     "logit": null
    },
    {
     "token": ",",
-    "probability": 0.03774213790893555,
+    "probability": 0.037741631269454956,
     "rank": 2,
     "logit": null
    },
    {
     "token": " rise",
-    "probability": 0.03772565722465515,
+    "probability": 0.03772532939910889,
     "rank": 3,
     "logit": null
    },
    {
     "token": " and",
-    "probability": 0.023311428725719452,
+    "probability": 0.023311160504817963,
     "rank": 4,
     "logit": null
    },
    {
     "token": " wash",
-    "probability": 0.018607821315526962,
+    "probability": 0.01860758848488331,
     "rank": 5,
     "logit": null
    },
    {
     "token": " turn",
-    "probability": 0.01721079833805561,
+    "probability": 0.017210617661476135,
     "rank": 6,
     "logit": null
    },
    {
     "token": " roll",
-    "probability": 0.016415001824498177,
+    "probability": 0.016414782032370567,
     "rank": 7,
     "logit": null
    },
    {
     "token": " as",
-    "probability": 0.015901941806077957,
+    "probability": 0.015901727601885796,
     "rank": 8,
     "logit": null
    },
    {
     "token": " for",
-    "probability": 0.014976320788264275,
+    "probability": 0.014976149424910545,
     "rank": 9,
     "logit": null
    },
    {
     "token": " in",
-    "probability": 0.01443217508494854,
+    "probability": 0.014431995339691639,
     "rank": 10,
     "logit": null
    }
@@ -211,8 +211,8 @@
    49
   ],
   "coherence": {
-   "original": -1.0128633975982666,
-   "steered": -1.0579530000686646
+   "original": -1.0128780603408813,
+   "steered": -1.057970404624939
   },
   "scale": {
    "strength": 30.0,
@@ -223,8 +223,8 @@
   "control": {
    "feature_id": 15662,
    "decoder_norm": 1.000022530555725,
-   "steered_decoder_norm": 1.0000394582748413,
-   "cosine": 8.002545072660724e-05,
+   "steered_decoder_norm": 1.0000393390655518,
+   "cosine": 8.002546026600908e-05,
    "method": "norm_matched_lowest_cos",
    "generation": ". We were so happy to see the ocean. We were so happy to see the ocean.\n\nWe were so happy to see the ocean. We were so happy to see the ocean.\n\nWe were so happy to see the ocean.",
    "changed_token_indices": [
@@ -276,67 +276,67 @@
     49
    ],
    "coherence": {
-    "original": -1.0128633975982666,
-    "steered": -0.7553246021270752
+    "original": -1.0128780603408813,
+    "steered": -0.7553429007530212
    },
    "top_predictions": [
     {
      "token": ".",
-     "probability": 0.07114136964082718,
+     "probability": 0.07114066928625107,
      "rank": 1,
      "logit": null
     },
     {
      "token": " turn",
-     "probability": 0.036198973655700684,
+     "probability": 0.0361986868083477,
      "rank": 2,
      "logit": null
     },
     {
      "token": " and",
-     "probability": 0.03514700382947922,
+     "probability": 0.03514659032225609,
      "rank": 3,
      "logit": null
     },
     {
      "token": " rise",
-     "probability": 0.030342478305101395,
+     "probability": 0.030342089012265205,
      "rank": 4,
      "logit": null
     },
     {
      "token": " go",
-     "probability": 0.02826862595975399,
+     "probability": 0.028268294408917427,
      "rank": 5,
      "logit": null
     },
     {
      "token": ",",
-     "probability": 0.023100515827536583,
+     "probability": 0.023100245743989944,
      "rank": 6,
      "logit": null
     },
     {
      "token": " as",
-     "probability": 0.019375119358301163,
+     "probability": 0.01937491074204445,
      "rank": 7,
      "logit": null
     },
     {
      "token": " in",
-     "probability": 0.018389273434877396,
+     "probability": 0.01838909089565277,
      "rank": 8,
      "logit": null
     },
     {
      "token": " breeze",
-     "probability": 0.015462654642760754,
+     "probability": 0.015462443232536316,
      "rank": 9,
      "logit": null
     },
     {
      "token": " slowly",
-     "probability": 0.014539485797286034,
+     "probability": 0.014539326541125774,
      "rank": 10,
      "logit": null
     }
@@ -344,33 +344,33 @@
    "top_changed": [
     {
      "token": ".",
-     "original_prob": 0.10398386418819427,
-     "steered_prob": 0.07114136964082718,
-     "delta": -0.032842494547367096
+     "original_prob": 0.10398221760988235,
+     "steered_prob": 0.07114066928625107,
+     "delta": -0.03284154832363129
     },
     {
      "token": " swell",
-     "original_prob": 0.025494398549199104,
+     "original_prob": 0.02549397014081478,
      "steered_prob": 0.0,
-     "delta": -0.025494398549199104
+     "delta": -0.02549397014081478
     },
     {
      "token": " breeze",
-     "original_prob": 0.03423939272761345,
-     "steered_prob": 0.015462654642760754,
-     "delta": -0.018776738084852695
+     "original_prob": 0.034238722175359726,
+     "steered_prob": 0.015462443232536316,
+     "delta": -0.01877627894282341
     },
     {
      "token": " in",
      "original_prob": 0.0,
-     "steered_prob": 0.018389273434877396,
-     "delta": 0.018389273434877396
+     "steered_prob": 0.01838909089565277,
+     "delta": 0.01838909089565277
     },
     {
      "token": " rise",
-     "original_prob": 0.04655522480607033,
-     "steered_prob": 0.030342478305101395,
-     "delta": -0.016212746500968933
+     "original_prob": 0.046554841101169586,
+     "steered_prob": 0.030342089012265205,
+     "delta": -0.01621275208890438
     }
    ]
   },
