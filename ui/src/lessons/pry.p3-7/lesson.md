@@ -36,6 +36,14 @@ free: true
 
 ## The years {id=s3-2 outline=P3.7.md#3.2}
 
+:::enter
+open_panel: predictions
+:::
+
+:::slots
+top_p: { read: prediction, args: { token: "49" }, field: prob, format: probability, expect: 0.05795148387551308, tolerance: 0.02 }
+:::
+
 :::do{id=war-ensure}
 This lesson puts everything together on one prompt, then hands you the controls. Press **Do it** to run the war sentence. Predictions stays hidden until you've guessed.
 
@@ -50,7 +58,7 @@ What will the model favour for the last two digits?
 
 ```yaml
 choices:
-  - { text: "one year with most of the probability", feedback: "The model went another way: the top year gets about 1 in 17. What the top years share is that they're all above 32." }
+  - { text: "one year with most of the probability", feedback: "The model went another way: in :look{at=predictions-panel}[Predictions], the top year, \"49\", gets {top_p}. What the top years share is that they're all above 32." }
   - { text: "several years above 32, none with much", feedback: "That's what happened. No year gets much, and the top ones are all later than 1732. How would a model get that?" }
   - { text: "years below 32", feedback: "The model went another way: the top years are all above 32, so the war ends after it starts." }
   - { text: "anything at all", feedback: "The model went another way: it's spread out, but not randomly. The top years are all above 32." }

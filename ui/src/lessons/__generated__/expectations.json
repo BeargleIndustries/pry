@@ -3654,6 +3654,13 @@
           }
         },
         {
+          "where": "s3-3/flat-obs",
+          "kind": "slot",
+          "name": "top_p",
+          "prompt": "The war lasted from the year 1732 to the year 17",
+          "expect": 0.05795148387551308
+        },
+        {
           "where": "s3-5/map-obs",
           "kind": "check",
           "name": "circuit.target contains {\"token\":\"49\",\"after\":\" 17\"}",
