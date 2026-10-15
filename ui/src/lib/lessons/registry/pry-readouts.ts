@@ -603,7 +603,7 @@ export const pryReadouts: Record<string, ReadoutDef> = {
   },
 
   'ablation.heads': { type: 'list', doc: 'The heads knocked out, each with its layer and head.', read: reader((s) => s.headAblations.map((x) => ({ layer: x.layer, head: x.head }))) },
-  'ablation.head_count': { type: 'number', unit: 'count', doc: 'How many heads are knocked out.', read: reader((s) => s.headAblations.length) },
+  'ablation.head_count': { type: 'number', unit: 'count', state: true, doc: 'How many heads are knocked out.', read: reader((s) => s.headAblations.length) },
   'ablation.top_guess.token': { type: 'string', doc: 'The top prediction with the heads knocked out.', read: reader((s) => s.headAblate?.ablated_predictions[0]?.token) },
   'ablation.delta': {
     args: token,
@@ -690,6 +690,7 @@ export const pryReadouts: Record<string, ReadoutDef> = {
   'feature_ablation.count': {
     type: 'number',
     unit: 'count',
+    state: true,
     doc: 'How many features are knocked out.',
     read: reader((s) => s.featureAblations.length),
   },

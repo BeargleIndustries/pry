@@ -7,7 +7,7 @@ describe('errors', () => {
     const i = makeIssue('analogy-breaks', {}, { section: 2, step: 'a1', line: 40 });
     expect(formatIssue(i)).toBe('Section 2, step `a1`, line 40: This analogy needs a `breaks` line that says where the comparison stops being true.');
     expect(formatIssue({ ...i, file: 'my.lesson/lesson.md' })).toMatch(/^my\.lesson\/lesson\.md:40: Section 2, step `a1`, line 40: /);
-    expect(formatIssue(makeIssue('draft', {}, { line: 1 }, 'warning'))).toBe('warning: line 1: This lesson is marked `draft: true`.');
+    expect(formatIssue(makeIssue('draft', {}, { line: 1 }, 'warning'))).toBe("warning: line 1: This lesson is marked `draft: true`. Delete that line, or set `draft: false`, when it's ready to share.");
   });
 
   it('has custom wording for the top ten mistakes', () => {

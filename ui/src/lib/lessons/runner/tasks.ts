@@ -5,13 +5,14 @@
 //   predict_before_each_run   - each run needs a fresh prediction first
 //   one_change: <action>      - between runs exactly one argument value of that
 //                               action changes (set_compare: one word of one
-//                               prompt, judged by the constraint on
-//                               compare.word_diff_count after the run)
-// Constraint items are checked before each learner run (refusing it, like
-// max_runs and predict_before_each_run), again after the run, and on demand.
-// A one_change task's items read the change it makes, so they're judged on
-// the run's result. `remember` writes on target met or on leaving; `capture`
-// stores the learner's last run the same way.
+//                               prompt, read from compare.word_diff_count on
+//                               the learner's next prompts)
+// The one_change rule and constraint items on readouts marked `state` (the
+// learner's settings, e.g. ablation.head_count) are checked before each
+// learner run, refusing it like max_runs and predict_before_each_run. Every
+// constraint item is checked again after the run (items reading results only
+// mean something there) and on demand. `remember` writes on target met or on
+// leaving; `capture` stores the learner's last run the same way.
 
 import type { CheckItem } from '../format/schema';
 import type { ToolActionSet } from '../registry/contract';
@@ -79,7 +80,15 @@ export function failingConstraint(items: CheckItem[] | undefined, env: CheckEnv)
   return null;
 }
 
-/** May the learner make the next run? (C5-1: constraint items checked before each run.) */
+/**
+ * one_change actions whose rule is a readout of the learner's next arguments
+ * (plan: `set_compare` is one word of one prompt, read from compare.word_diff_count).
+ */
+const ONE_CHANGE_READOUT: Record<string, { read: string; of(args: Record<string, unknown>): number }> = {
+  set_compare: { read: 'compare.word_diff_count', of: (a) => wordChanges(a.a, a.b) },
+};
+
+/** May the learner make the next run? (C5-1: the one_change rule and settings constraints checked before each run.) */
 export function gateRun(task: TaskFields, st: TaskState, env: CheckEnv, set: Pick<ToolActionSet<unknown>, 'readouts'>): RunGate {
   if (task.max_runs !== undefined && st.runs >= task.max_runs) {
     return { ok: false, reason: 'max-runs', message: lessonsCopy.noRunsLeft(task.max_runs) };
@@ -87,15 +96,22 @@ export function gateRun(task: TaskFields, st: TaskState, env: CheckEnv, set: Pic
   if (task.predict_before_each_run && !st.prediction.trim()) {
     return { ok: false, reason: 'predict', message: lessonsCopy.predictFirst };
   }
-  if (task.one_change) {
-    if (st.lastArgs && argChanges(st.lastArgs, st.pendingArgs ?? st.lastArgs) !== 1) {
+  const refuse = (o: CheckOutcome): Refusal => ({ ok: false, reason: 'constraint', message: lessonsCopy.constraintFails(itemWords(o.item, set)), outcome: o });
+  const spec = task.one_change ? ONE_CHANGE_READOUT[task.one_change] : undefined;
+  if (spec) {
+    const next = spec.of(st.pendingArgs ?? {});
+    const item = (task.constraint ?? []).find((it) => it.read === spec.read && !it.from);
+    if (item) {
+      const o = evaluateCheck(item, { ...env, read: (r, a, from) => (r === spec.read && !from ? next : env.read(r, a, from)) });
+      if (o.agrees === false) return refuse(o);
+    } else if (next !== 1) {
       return { ok: false, reason: 'one-change', message: lessonsCopy.oneChange };
     }
-    return { ok: true };
+  } else if (task.one_change && st.lastArgs && argChanges(st.lastArgs, st.pendingArgs ?? st.lastArgs) !== 1) {
+    return { ok: false, reason: 'one-change', message: lessonsCopy.oneChange };
   }
-  const bad = failingConstraint(task.constraint, env);
-  if (bad) return { ok: false, reason: 'constraint', message: lessonsCopy.constraintFails(itemWords(bad.item, set)), outcome: bad };
-  return { ok: true };
+  const bad = failingConstraint((task.constraint ?? []).filter((it) => set.readouts[it.read]?.state), env);
+  return bad ? refuse(bad) : { ok: true };
 }
 
 /** After a run, or on demand: constraint list, then target. */

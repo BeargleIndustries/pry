@@ -5,6 +5,7 @@ vi.mock('@tauri-apps/api/event', () => ({ listen: vi.fn(async () => () => {}) })
 
 import { render } from 'svelte/server';
 import { lessonFile, makeKit, send } from './test-kit';
+import TextDiff from '../registry/pry-views/text-diff.svelte';
 import Top5Pair from '../registry/pry-views/top5-pair.svelte';
 import { lessonsCopy } from '../copy';
 
@@ -53,5 +54,13 @@ describe('captures', () => {
     expect(cols.every((c) => c.kind === 'read' && c.value !== 'nothing yet')).toBe(true);
     // A slot bound to a capture reads it.
     expect(JSON.stringify(kit.runner.render().blocks)).not.toContain(lessonsCopy.missingReadout);
+  });
+  it('text-diff marks changed tokens against a literal reference', () => {
+    const caps = { decl: { writeIt: { generation: ' that they are endowed by their Creator' } } };
+    const html = render(TextDiff, { props: { args: { a: 'decl', text: ' that every man is endowed by his Creator' }, captures: caps as never } }).body;
+    expect(html).toContain('real text');
+    expect(html).toContain('bg-amber-900/50');
+    const same = render(TextDiff, { props: { args: { a: 'decl', text: ' that they are endowed by their Creator' }, captures: caps as never } }).body;
+    expect(same).not.toContain('bg-amber-900/50');
   });
 });

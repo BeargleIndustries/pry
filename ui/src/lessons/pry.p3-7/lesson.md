@@ -109,7 +109,7 @@ Key parts explains the guess after the word you've selected, the same way Why (D
 The map is built for the selected token, the last " 17", so it explains the guess after it: "49". Each box is a head or an MLP with a big direct push, and the lines run between them.
 
 ```yaml
-check: { read: circuit.target, op: contains, value: { token: " 17" } }
+check: { read: circuit.target, op: contains, value: { token: "49", after: " 17" } }
 ```
 :::
 

@@ -65,3 +65,10 @@ jobs:
           npm ci
           npm run check
           npm test
+
+      # The community sample lesson stays clean (plan T8 step 1, the outsider gate).
+      - name: Lint the example lessons
+        working-directory: ui
+        run: |
+          npm run build:cli
+          node build-cli/lessons-lint.mjs ../docs/lessons/examples/community-sample --release

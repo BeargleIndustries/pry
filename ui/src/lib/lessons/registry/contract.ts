@@ -44,6 +44,8 @@ export interface ReadoutDef {
   unit?: ReadoutUnit;
   /** A record's field types, so a check's `field` gets its operator checked (lint). */
   fields?: Record<string, ReadoutType>;
+  /** Reads the learner's settings, not a run's result, so a task checks it before each run (C5-1). */
+  state?: true;
   doc: string;
   read(args?: any): unknown | undefined;
 }
