@@ -43,9 +43,11 @@
     #handlers: ((c: PresenterCommand) => void)[] = [];
 
     show(step: RenderedStep, nav: Nav): void {
+      // The runner re-shows a step on every refresh and re-points only when
+      // its looks change, so pointers clear only when the step itself changes.
+      if (step.section.id !== this.section?.id) this.pointers = [];
       this.section = step.section;
       this.nav = nav;
-      this.pointers = [];
     }
 
     point(target: PointerTarget, seq?: number): void {

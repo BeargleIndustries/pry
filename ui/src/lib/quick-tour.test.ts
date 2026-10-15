@@ -64,6 +64,13 @@ describe('quick tour', () => {
     expect(app.overlay.nav).toMatchObject({ index: 0, total: 12 });
     // The sidebar presenter never draws the tour.
     expect(app.model.step).toBeNull();
+    // Step 2 points at the prompt box and Run, and the pointers survive the runner's later refreshes.
+    await next(app, 'step-2');
+    expect(app.overlay.pointers).toEqual([{ anchor: 'prompt-input' }, { anchor: 'run-button' }]);
+    app.runner.refresh();
+    expect(app.overlay.pointers).toHaveLength(2);
+    await app.startTour();
+    await vi.waitFor(() => expect(app.runner.entering).toBe(false));
     await walk(app);
     const p = app.progress.of('pry.quick-tour');
     expect(p?.finished).toBe(true);
