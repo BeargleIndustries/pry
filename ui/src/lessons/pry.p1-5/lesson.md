@@ -14,11 +14,14 @@ cold_entry: "What you need from before: for any prompt, GPT-2 gives every token 
 model: gpt2-small
 baseline: { prompt: "Michael Jordan played the sport of" }
 verified_rows: [1, 8, 28, 41, 43, 44]
+limits: "Watch it write shows the picked token and the runner-up at each step. It doesn't show the paths other runs would take."
 ---
 
 ## Recall {id=s3-0 depth=optional outline=P1.5.md#3.0}
 
 :::recall{id=recall-last}
+Why this matters: that last token's chances are what the model picks from when it writes, one token at a time.
+
 ```yaml
 from: pry.p1-3
 question: "Which token's residual stream gets turned into the probabilities for the next token?"
@@ -34,6 +37,7 @@ choices:
 :::enter
 prompt: "Michael Jordan played the sport of"
 run: true
+open_panel: watch-it-write
 :::
 
 :::slots

@@ -14,6 +14,7 @@ cold_entry: "Three tools from before. DLA splits a logit into each part's direct
 model: gpt2-small
 baseline: { prompt: "The war lasted from the year 1732 to the year 17" }
 verified_rows: [14, 19, 36, 68, 69, 70, 71]
+limits: "Key parts shows the parts with the biggest direct pushes on the guess after the selected word: a starting point, not an established circuit. A knockout with a control tests one link on one prompt."
 slots:
   map_head: { row: "19.map_head", format: string }
   control_head: { row: "19.control_head", format: string }
@@ -24,6 +25,8 @@ slots:
 ## Recall {id=s3-1 depth=optional outline=P3.7.md#3.1}
 
 :::recall{id=recall-control}
+Why this matters: this lesson's poke at one link comes with a control for exactly that reason.
+
 ```yaml
 from: pry.p3-5
 question: "In P3.5 the control feature changed the text too. What did that tell you about 'the text changed'?"
@@ -32,6 +35,14 @@ free: true
 :::
 
 ## The years {id=s3-2 outline=P3.7.md#3.2}
+
+:::enter
+open_panel: predictions
+:::
+
+:::slots
+top_p: { read: prediction, args: { token: "49" }, field: prob, format: probability, expect: 0.05795148387551308, tolerance: 0.02 }
+:::
 
 :::do{id=war-ensure}
 This lesson puts everything together on one prompt, then hands you the controls. Press **Do it** to run the war sentence. Predictions stays hidden until you've guessed.
@@ -47,7 +58,7 @@ What will the model favour for the last two digits?
 
 ```yaml
 choices:
-  - { text: "one year with most of the probability", feedback: "The model went another way: the top year gets about 1 in 17. What the top years share is that they're all above 32." }
+  - { text: "one year with most of the probability", feedback: "The model went another way: in :look{at=predictions-panel}[Predictions], the top year, \"49\", gets {top_p}. What the top years share is that they're all above 32." }
   - { text: "several years above 32, none with much", feedback: "That's what happened. No year gets much, and the top ones are all later than 1732. How would a model get that?" }
   - { text: "years below 32", feedback: "The model went another way: the top years are all above 32, so the war ends after it starts." }
   - { text: "anything at all", feedback: "The model went another way: it's spread out, but not randomly. The top years are all above 32." }
@@ -58,10 +69,10 @@ hides: [predictions-panel]
 ## A flat shape {id=s3-3 outline=P3.7.md#3.3}
 
 :::slots
-p49: { read: prediction, args: { token: "49" }, field: prob, expect: 0.05795148387551308, tolerance: 0.02 }
-p50: { read: prediction, args: { token: "50" }, field: prob, expect: 0.050567593425512314, tolerance: 0.02 }
-p45: { read: prediction, args: { token: "45" }, field: prob, expect: 0.03358353301882744, tolerance: 0.02 }
-p43: { read: prediction, args: { token: "43" }, field: prob, expect: 0.031525228172540665, tolerance: 0.02 }
+p49: { read: prediction, args: { token: "49" }, field: prob, format: probability, expect: 0.05795148387551308, tolerance: 0.02 }
+p50: { read: prediction, args: { token: "50" }, field: prob, format: probability, expect: 0.050567593425512314, tolerance: 0.02 }
+p45: { read: prediction, args: { token: "45" }, field: prob, format: probability, expect: 0.03358353301882744, tolerance: 0.02 }
+p43: { read: prediction, args: { token: "43" }, field: prob, format: probability, expect: 0.031525228172540665, tolerance: 0.02 }
 top_four: { from: [p49, p50, p45, p43], formula: sum, format: probability }
 :::
 

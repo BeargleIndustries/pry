@@ -14,11 +14,14 @@ cold_entry: "Each token gets its own list of 768 numbers, its residual stream, a
 model: gpt2-small
 baseline: { prompt: "When Mary and John went to the store, John gave a drink to" }
 verified_rows: [14, 23, 45, 46, 47]
+limits: "Attention shows which earlier tokens a head drew from. A big weight doesn't mean that token mattered for the answer."
 ---
 
 ## Recall {id=s3-1 depth=optional outline=P2.1.md#3.1}
 
 :::recall{id=recall-same-lines}
+Why this matters: this lesson reads the model's insides for the first time, and what you see is only worth reading if it comes out the same on every Run.
+
 ```yaml
 from: pry.p1-5
 question: "At temperature 0 the same prompt gives the same text. Will the lines you're about to see look the same on a second Run?"
@@ -30,9 +33,13 @@ choices:
 
 ## Looking inside gives suspects {id=s3-2 outline=P2.1.md#3.2}
 
+:::enter
+open_panel: predictions
+:::
+
 :::slots
-mary: { read: prediction, args: { token: " Mary" }, field: prob, expect: 0.677 }
-john: { read: prediction, args: { token: " John" }, field: prob, expect: 0.0235 }
+mary: { read: prediction, args: { token: " Mary" }, field: prob, format: probability, expect: 0.677 }
+john: { read: prediction, args: { token: " John" }, field: prob, format: probability, expect: 0.0235 }
 :::
 
 :::do{id=run-ioi}
@@ -137,7 +144,7 @@ check: { read: attention.avg_top_source, args: { from: $row.14.to_position }, op
 ## The parking spot {id=s3-6 outline=P2.1.md#3.6}
 
 :::slots
-marker_share: { read: attention.avg_share, args: { from: $row.14.to_position, to: 0 }, expect: 0.44 }
+marker_share: { read: attention.avg_share, args: { from: $row.14.to_position, to: 0 }, format: probability, expect: 0.44 }
 :::
 
 :::do{id=first-line}
@@ -165,7 +172,7 @@ Researchers call a token that soaks up spare attention like this an **attention 
 ::::
 
 :::explain-result
-Averaged over the whole model, {marker_share} of the mix at ' to' comes from the start-of-text marker, and the line to it is the thickest one on screen.
+Averaged over the whole model, {marker_share} of the mix at ' to' comes from the start-of-text marker, and :look{at=panel-a-lines}[the line to it] is the thickest one on screen.
 
 If you picked the word with the thickest line, the line to the marker shows why thickness alone can mislead.
 
@@ -242,6 +249,11 @@ model_answer: "No: attention only reaches back."
 
 ## What attention can and can't show {id=s3-9 outline=P2.1.md#3.9}
 
+:::enter
+attention_view: lines
+focus_token: { text: " to", occurrence: last }
+:::
+
 :::explain-result
 You've found a head that draws heavily from ' Mary' at ' to'. Look back at :look{at=panel-a-lines}[the lines] and keep in mind what they measure: how much of each earlier token went into the mix. They don't say what information came across, and they don't say ' Mary' won because of it.
 
@@ -257,7 +269,7 @@ skeptic: { says: "A skeptic would say the head you found draws from ' Mary', so 
 
 :::slots
 row23_token: { row: "23.token", format: string }
-weight: { read: attention.weight, args: { layer: $row.23.layer, head: $row.23.head, from: $row.14.to_position, to: $row.23.position }, expect: 0.808 }
+weight: { read: attention.weight, args: { layer: $row.23.layer, head: $row.23.head, from: $row.14.to_position, to: $row.23.position }, format: probability, expect: 0.808 }
 :::
 
 ::::transfer{id=other-head}

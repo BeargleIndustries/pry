@@ -14,11 +14,14 @@ cold_entry: "What you need from before: GPT-2 is a fixed file of numbers that tu
 model: gpt2-small
 baseline: { prompt: "Michael Jordan played the sport of" }
 verified_rows: [1, 8, 9, 10, 28, 29]
+limits: "A word-for-word match shows GPT-2 reproduces a text. It doesn't show how often that text appeared in training, which Pry can't see."
 ---
 
 ## Recall {id=s3-0 depth=optional outline=P1.6.md#3.0}
 
 :::recall{id=recall-one}
+Why this matters: if nothing checks the sum, the next question is where those numbers came from in the first place.
+
 ```yaml
 from: pry.p1-4
 question: "Why did ' one' beat ' four' for 'Two plus two equals'?"
@@ -36,17 +39,18 @@ If you tell GPT-2 in Pry your name today, will it still have it tomorrow?
 
 ```yaml
 choices:
-  - { text: "yes, it learns from what you type", target: M3, feedback: "Lots of people expect that, and some chat products do keep notes about you between chats. The model in Pry has nowhere to keep anything: the second prompt shows no trace of Sam, and the Jordan numbers are the ones you saw in lesson 1." }
-  - { text: "only while Pry stays open", feedback: "Lots of people expect that, and some chat products do keep notes about you between chats. The model in Pry has nowhere to keep anything: the second prompt shows no trace of Sam, and the Jordan numbers are the ones you saw in lesson 1." }
+  - { text: "yes, it learns from what you type", target: M3, feedback: "Lots of people expect that, and some chat products do keep notes about you between chats. The next section tests it on the model in Pry." }
+  - { text: "only while Pry stays open", feedback: "Lots of people expect that, and some chat products do keep notes about you between chats. The next section tests it on the model in Pry." }
   - { text: "no" }
+remember: remember-pick
 ```
 :::
 
 ## Same text, then gone {id=s3-2 outline=P1.6.md#3.2}
 
 :::slots
-basketball: { read: prediction, args: { token: " basketball" }, field: prob, expect: 0.42208 }
-sam_a: { read: compare.prediction, args: { side: a, token: " Sam" }, field: prob, expect: 0.19151 }
+basketball: { read: prediction, args: { token: " basketball" }, field: prob, format: probability, expect: 0.42208 }
+sam_a: { read: compare.prediction, args: { side: a, token: " Sam" }, field: prob, format: probability, from_capture: sam, expect: 0.19151 }
 :::
 
 :::do{id=sam-compare}
@@ -57,15 +61,19 @@ The lesson runs two prompts side by side in :look{at=compare-panel}[Compare]. Th
 - set_compare: { a: "My name is Sam. Nice to meet you. My name is", b: "Nice to meet you. My name is" }
 - run_compare: {}
 ```
+
+```yaml
+capture: sam
+```
 :::
 
 :::observe{id=sam-obs}
-' Sam' gets {sam_a} in the first prompt, where the name is right there in the text. In the second prompt, a separate run, ' Sam' isn't in the top ten at all.
+You said :earlier{key="pry.p1-6.remember-pick"}[nothing]. Here's the test, in :look{at=compare-panel}[Compare's table]: ' Sam' gets {sam_a} in the first prompt, where the name is right there in the text. In the second prompt, a separate run, ' Sam' isn't in the top ten at all.
 
 ```yaml
 check:
-  - { read: compare.prediction, args: { side: a, token: " Sam" }, field: rank, op: lt, value: 11, expect: 1 }
-  - { read: compare.prediction, args: { side: b, token: " Sam" }, field: rank, op: lt, value: 11, not: true, expect: absent }
+  - { read: compare.prediction, args: { side: a, token: " Sam" }, from: sam, field: rank, op: lt, value: 11, expect: 1 }
+  - { read: compare.prediction, args: { side: b, token: " Sam" }, from: sam, field: rank, op: lt, value: 11, not: true, expect: absent }
 ```
 :::
 
